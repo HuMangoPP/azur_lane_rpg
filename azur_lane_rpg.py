@@ -8,6 +8,9 @@ from engine.util import get_rect, draw_slice
 with open("data/sorties.json") as f:
     sorties = json.load(f)
 
+with open("data/shipgirls.json") as f:
+    shipgirl_data = json.load(f)
+
 pygame.init()
 
 SCREEN_SIZE = (600,600)
@@ -21,7 +24,8 @@ mouse_start_drag = None
 
 class Menus:
     PORT = 0
-    ENCOUNTER = 1
+    EQUIPMENT = 1
+    ENCOUNTER = 2
 
 current_menu = Menus.PORT
 
@@ -41,6 +45,24 @@ sortie_button = Button(
     "sortie",
     (255,255,255),
     start_sortie
+)
+
+selected_shipgirl = None
+def exit_equipment_menu():
+    global current_menu
+    current_menu = Menus.PORT
+
+    global selected_shipgirl
+    selected_shipgirl.pos.x = 0.5*TEMP_SCREEN_SIZE[0]
+    selected_shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
+    selected_shipgirl = None
+
+exit_equipment_menu_button = Button(
+    get_rect(100, 50, right=TEMP_SCREEN_SIZE[0]-20, top=20),
+    (100,100,150),
+    "go back",
+    (255,255,255),
+    exit_equipment_menu
 )
 
 current_sortie = 0
@@ -83,19 +105,6 @@ return_to_port_button = Button(
 )
 return_to_port_button.active = False
 
-SHIPGIRL_DATA = {
-    "laffey": {
-        "max_hp": 10,
-        "weapon_cooldown": 1,
-        "firepower": 1,
-    },
-    "siren": {
-        "max_hp": 5,
-        "weapon_cooldown": 5,
-        "firepower": 1,
-    },
-}
-
 class ShipgirlBattleComponent:
     def __init__(self, shipgirl_data):
         self.active = False
@@ -107,6 +116,8 @@ class ShipgirlBattleComponent:
         self.cooldown_timer = self.weapon_cooldown
         self.firepower = shipgirl_data["firepower"]
         self.target = None
+
+        self.equipment = shipgirl_data["equipment"]
     
     def reset(self):
         self.hp = self.max_hp
@@ -150,7 +161,7 @@ class Shipgirl:
         self.pos = pygame.Vector2(0,0)
         self.rect = get_rect(50, 50, centerx=self.pos.x, centery=self.pos.y)
 
-        self.battle_component = ShipgirlBattleComponent(SHIPGIRL_DATA[self.name])
+        self.battle_component = ShipgirlBattleComponent(shipgirl_data[self.name])
 
     def update(self, dt):
         self.rect.center = self.pos
@@ -199,7 +210,7 @@ class Fleet:
                 shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
 
     def update(self, dt):
-        for i, shipgirl in enumerate(self.shipgirls):
+        for shipgirl in self.shipgirls:
             if shipgirl is not None:
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
@@ -236,9 +247,22 @@ while running:
     if current_menu == Menus.PORT:
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
+                if laffey.rect.collidepoint(event.pos):
+                    selected_shipgirl = laffey
+                    selected_shipgirl.pos.x = 0.25*TEMP_SCREEN_SIZE[0]
+                    selected_shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
+                    current_menu = Menus.EQUIPMENT
+
                 sortie_button.click(event.pos)
         
         laffey.update(dt)
+    elif current_menu == Menus.EQUIPMENT:
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                exit_equipment_menu_button.click(event.pos)
+        
+        if selected_shipgirl is not None:
+            selected_shipgirl.update(dt)
     elif current_menu == Menus.ENCOUNTER:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -275,6 +299,18 @@ while running:
     if current_menu == Menus.PORT:
         laffey.draw(temp_screen)
         sortie_button.draw(temp_screen, font)
+    elif current_menu == Menus.EQUIPMENT:
+        if selected_shipgirl is not None:
+            selected_shipgirl.draw(temp_screen)
+            for i, equipment in enumerate(selected_shipgirl.battle_component.equipment):
+                x = (i-1)*75 + 0.75*TEMP_SCREEN_SIZE[0]
+                rect = get_rect(50, 50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE[1])
+                pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
+                if equipment is not None:
+                    font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+            # TODO clicking on an equipment slot brings up a menu with equipable weapons
+
+        exit_equipment_menu_button.draw(temp_screen, font)
     elif current_menu == Menus.ENCOUNTER:
         player_fleet.draw(temp_screen)
         siren_fleet.draw(temp_screen)

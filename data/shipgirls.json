@@ -1,0 +1,14 @@
+{
+    "laffey": {
+        "max_hp": 10,
+        "weapon_cooldown": 1,
+        "firepower": 1,
+        "equipment": ["twin_127", null, null]
+    },
+    "siren": {
+        "max_hp": 5,
+        "weapon_cooldown": 5,
+        "firepower": 1,
+        "equipment": ["twin_127", null, null]
+    }
+}
