@@ -32,6 +32,7 @@ def start_sortie():
     global current_encounter
     current_encounter = -1
 
+    player_fleet.begin_sortie()
     next_encounter()
 
 sortie_button = Button(
@@ -47,20 +48,15 @@ current_encounter = -1
 def next_encounter():
     global current_encounter
     current_encounter += 1
-    sortie_data = sorties[current_sortie]
-    if current_encounter >= len(sortie_data):
-        player_fleet.end_encounter()
-        siren_fleet.end_encounter()
-        global current_menu
-        current_menu = Menus.PORT
-    else:
-        siren_fleet_data = sortie_data[current_encounter]
-        siren_fleet.shipgirls = [
-            Shipgirl(siren_name) if siren_name else None
-            for siren_name in siren_fleet_data
-        ]
-        player_fleet.begin_encounter()
-        siren_fleet.begin_encounter()
+    siren_fleet_data = sorties[current_sortie][current_encounter]
+    siren_fleet.shipgirls = [
+        Shipgirl(siren_name) if siren_name else None
+        for siren_name in siren_fleet_data
+    ]
+    player_fleet.begin_encounter()
+    siren_fleet.begin_encounter()
+
+    next_encounter_button.active = False
 
 next_encounter_button = Button(
     get_rect(50, 50, right=TEMP_SCREEN_SIZE[0]-20, centery=0.5*TEMP_SCREEN_SIZE[1]),
@@ -71,10 +67,26 @@ next_encounter_button = Button(
 )
 next_encounter_button.active = False
 
+def return_to_port():
+    player_fleet.end_sortie()
+    global current_menu
+    current_menu = Menus.PORT
+
+    return_to_port_button.active = False
+
+return_to_port_button = Button(
+    get_rect(50, 50, right=TEMP_SCREEN_SIZE[0]-20, centery=0.5*TEMP_SCREEN_SIZE[1]),
+    (100,100,150),
+    "back to port",
+    (255,255,255),
+    return_to_port
+)
+return_to_port_button.active = False
+
 SHIPGIRL_DATA = {
     "laffey": {
         "max_hp": 10,
-        "weapon_cooldown": 3,
+        "weapon_cooldown": 1,
         "firepower": 1,
     },
     "siren": {
@@ -102,9 +114,6 @@ class ShipgirlBattleComponent:
 
     def update(self, dt):
         if not self.active:
-            return
-
-        if self.hp <= 0:
             return
 
         if self.target is not None and self.target.battle_component.hp <= 0:
@@ -162,28 +171,38 @@ class Fleet:
         self.is_player = is_player
         self.shipgirls = [None, None, None]
     
+    def begin_sortie(self):
+        for shipgirl in self.shipgirls:
+            if shipgirl is not None:
+                shipgirl.battle_component.reset()
+
     def begin_encounter(self):
         for i, shipgirl in enumerate(self.shipgirls):
             if shipgirl is not None:
+                shipgirl.battle_component.active = True
                 if self.is_player:
                     shipgirl.pos.x = 0.25*TEMP_SCREEN_SIZE[0] + (i-1)*75
                     shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
                 else:
                     shipgirl.pos.x = 0.75*TEMP_SCREEN_SIZE[0] + (1-i)*75
                     shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
-                shipgirl.battle_component.active = True
-                shipgirl.battle_component.reset()
 
     def end_encounter(self):
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
-                if self.is_player:
-                    shipgirl.pos.x = 0.5*TEMP_SCREEN_SIZE[0]
                 shipgirl.battle_component.active = False
 
-    def update(self, dt):
+    def end_sortie(self):
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
+                shipgirl.pos.x = 0.5*TEMP_SCREEN_SIZE[0]
+                shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
+
+    def update(self, dt):
+        for i, shipgirl in enumerate(self.shipgirls):
+            if shipgirl is not None:
+                if shipgirl.battle_component.hp <= 0:
+                    shipgirl.battle_component.active = False
                 shipgirl.update(dt)
 
     def draw(self, screen):
@@ -223,7 +242,8 @@ while running:
     elif current_menu == Menus.ENCOUNTER:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_start_drag = event.pos
+                if laffey.rect.collidepoint(event.pos):
+                    mouse_start_drag = event.pos
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
                 if mouse_start_drag is not None and laffey.rect.collidepoint(mouse_start_drag):
@@ -236,6 +256,7 @@ while running:
                 mouse_start_drag = None
 
                 next_encounter_button.click(event.pos)
+                return_to_port_button.click(event.pos)
         
         player_fleet.update(dt)
         siren_fleet.update(dt)
@@ -244,7 +265,11 @@ while running:
             for siren in siren_fleet.shipgirls
         )
         if sirens_defeated:
-            next_encounter_button.active = True
+            player_fleet.end_encounter()
+            if current_encounter+1 < len(sorties[current_sortie]):
+                next_encounter_button.active = True
+            else:
+                return_to_port_button.active = True
 
     temp_screen.fill((20,20,50))
     if current_menu == Menus.PORT:
@@ -254,6 +279,7 @@ while running:
         player_fleet.draw(temp_screen)
         siren_fleet.draw(temp_screen)
         next_encounter_button.draw(temp_screen, font)
+        return_to_port_button.draw(temp_screen, font)
 
         mpos = pygame.mouse.get_pos()
         if mouse_start_drag is not None:
