@@ -11,6 +11,12 @@ with open("data/sorties.json") as f:
 with open("data/shipgirls.json") as f:
     shipgirl_data = json.load(f)
 
+with open("data/weapons.json") as f:
+    weapon_data = json.load(f)
+
+with open("data/auxiliary_items.json") as f:
+    auxiliary_item_data = json.load(f)
+
 pygame.init()
 
 SCREEN_SIZE = (600,600)
@@ -65,6 +71,27 @@ exit_equipment_menu_button = Button(
     exit_equipment_menu
 )
 
+
+class Equipment:
+    WEAPON = 0
+    AUX1 = 1
+    AUX2 = 2
+
+equipped_rects = [
+    get_rect(50, 50, centerx=(i-1)*75+0.75*TEMP_SCREEN_SIZE[0], centery=0.5*TEMP_SCREEN_SIZE[1])
+    for i in range(3)
+]
+selected_equipment = Equipment.WEAPON
+
+equippable_rects = [
+    get_rect(
+        50, 50,
+        centerx=(i%3-1)*75+0.75*TEMP_SCREEN_SIZE[0],
+        centery=(i//3+1)*75+0.5*TEMP_SCREEN_SIZE[1]
+    )
+    for i in range(6)
+]
+
 current_sortie = 0
 current_encounter = -1
 def next_encounter():
@@ -108,6 +135,8 @@ return_to_port_button.active = False
 class ShipgirlBattleComponent:
     def __init__(self, shipgirl_data):
         self.active = False
+
+        self.hull_type = shipgirl_data["hull_type"]
 
         self.max_hp = shipgirl_data["max_hp"]
         self.hp = self.max_hp
@@ -221,7 +250,6 @@ class Fleet:
             if shipgirl is not None:
                 shipgirl.draw(screen)
 
-
 laffey = Shipgirl("laffey")
 laffey.pos = pygame.Vector2(
     0.5*TEMP_SCREEN_SIZE[0],
@@ -259,6 +287,18 @@ while running:
     elif current_menu == Menus.EQUIPMENT:
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
+                for i, rect in enumerate(equipped_rects):
+                    if rect.collidepoint(event.pos):
+                        selected_equipment = i
+
+                if selected_equipment == Equipment.WEAPON:
+                    equippable = weapon_data[selected_shipgirl.battle_component.hull_type]
+                else:
+                    equippable = auxiliary_item_data
+                for equipment, rect in zip(equippable, equippable_rects):
+                    if rect.collidepoint(event.pos):
+                        selected_shipgirl.battle_component.equipment[selected_equipment] = equipment["name"]
+
                 exit_equipment_menu_button.click(event.pos)
         
         if selected_shipgirl is not None:
@@ -302,13 +342,20 @@ while running:
     elif current_menu == Menus.EQUIPMENT:
         if selected_shipgirl is not None:
             selected_shipgirl.draw(temp_screen)
-            for i, equipment in enumerate(selected_shipgirl.battle_component.equipment):
-                x = (i-1)*75 + 0.75*TEMP_SCREEN_SIZE[0]
-                rect = get_rect(50, 50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE[1])
-                pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
+            for i, (equipment, rect) in enumerate(zip(selected_shipgirl.battle_component.equipment, equipped_rects)):
+                if selected_equipment == i:
+                    pygame.draw.rect(temp_screen, (255,255,255), rect, width=4)
+                else:
+                    pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
                 if equipment is not None:
                     font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
-            # TODO clicking on an equipment slot brings up a menu with equipable weapons
+            if selected_equipment == Equipment.WEAPON:
+                equippable = weapon_data[selected_shipgirl.battle_component.hull_type]
+            else:
+                equippable = auxiliary_item_data
+            for equipment, rect in zip(equippable, equippable_rects):
+                pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
+                font.render(temp_screen, equipment["name"], rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
 
         exit_equipment_menu_button.draw(temp_screen, font)
     elif current_menu == Menus.ENCOUNTER:
