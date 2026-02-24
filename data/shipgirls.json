@@ -1,15 +1,14 @@
 {
-    "laffey": {
-        "hull_type": "destroyer",
-        "max_hp": 10,
-        "weapon_cooldown": 1,
-        "firepower": 1,
-        "equipment": ["twin_120", null, null]
-    },
-    "siren": {
-        "max_hp": 5,
-        "weapon_cooldown": 5,
-        "firepower": 1,
-        "equipment": ["twin_120", null, null]
-    }
+	"laffey": {
+		"max_hp": 10,
+		"reload": 0.3,
+		"firepower": 1,
+		"equipment": ["twin_120", null, null]
+	},
+	"siren": {
+		"max_hp": 5,
+		"reload": 0.2,
+		"firepower": 1,
+		"equipment": ["twin_120", null, null]
+	}
 }

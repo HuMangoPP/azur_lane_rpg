@@ -1,9 +1,7 @@
 {
-    "destroyer": [
-        {"name": "twin_120"},
-        {"name": "twin_127"},
-        {"name": "twin_128"},
-        {"name": "twin_100"},
-        {"name": "twin_138_6"}
-    ]
+	"twin_120": { "firepower": 1, "reload": 0.1 },
+	"twin_127": { "firepower": 1, "reload": 0.1 },
+	"twin_128": { "firepower": 1, "reload": 0.1 },
+	"twin_100": { "firepower": 1, "reload": 0.2 },
+	"twin_138_6": { "firepower": 2, "reload": 0.1 }
 }

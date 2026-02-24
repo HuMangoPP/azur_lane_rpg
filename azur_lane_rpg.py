@@ -136,21 +136,27 @@ class ShipgirlBattleComponent:
     def __init__(self, shipgirl_data):
         self.active = False
 
-        self.hull_type = shipgirl_data["hull_type"]
-
         self.max_hp = shipgirl_data["max_hp"]
         self.hp = self.max_hp
 
-        self.weapon_cooldown = shipgirl_data["weapon_cooldown"]
-        self.cooldown_timer = self.weapon_cooldown
-        self.firepower = shipgirl_data["firepower"]
+        self.base_reload = shipgirl_data["reload"]
+        self.cooldown_timer = 1
+        self.base_firepower = shipgirl_data["firepower"]
         self.target = None
 
         self.equipment = shipgirl_data["equipment"]
     
+    @property
+    def reload(self):
+        return self.base_reload + weapon_data[self.equipment[Equipment.WEAPON]]["reload"]
+
+    @property
+    def firepower(self):
+        return self.base_firepower + weapon_data[self.equipment[Equipment.WEAPON]]["firepower"]
+
     def reset(self):
         self.hp = self.max_hp
-        self.cooldown_timer = self.weapon_cooldown
+        self.cooldown_timer = 1
 
     def update(self, dt):
         if not self.active:
@@ -159,10 +165,10 @@ class ShipgirlBattleComponent:
         if self.target is not None and self.target.battle_component.hp <= 0:
             self.target = None
         
-        self.cooldown_timer = max(0, self.cooldown_timer - dt)
+        self.cooldown_timer = max(0, self.cooldown_timer - self.reload*dt)
         if self.target is not None and self.cooldown_timer <= 0:
             self.target.battle_component.hp -= self.firepower
-            self.cooldown_timer = self.weapon_cooldown
+            self.cooldown_timer = 1
 
     def draw(self, screen, rect):
         if not self.active:
@@ -176,7 +182,7 @@ class ShipgirlBattleComponent:
         center = pygame.Vector2(rect.centerx, rect.top-50)
         radius = 30
         start_angle = -90
-        end_angle = start_angle + 360 * (1 - self.cooldown_timer/self.weapon_cooldown)
+        end_angle = start_angle + 360 * (1 - self.cooldown_timer)
         color = (50,200,50) if self.target is not None else (200,50,50)
         draw_slice(screen, color, center, radius, start_angle, end_angle)
         pygame.draw.circle(screen, (255,255,255), center, radius, width=2)
@@ -292,12 +298,12 @@ while running:
                         selected_equipment = i
 
                 if selected_equipment == Equipment.WEAPON:
-                    equippable = weapon_data[selected_shipgirl.battle_component.hull_type]
+                    equippable = weapon_data
                 else:
                     equippable = auxiliary_item_data
                 for equipment, rect in zip(equippable, equippable_rects):
                     if rect.collidepoint(event.pos):
-                        selected_shipgirl.battle_component.equipment[selected_equipment] = equipment["name"]
+                        selected_shipgirl.battle_component.equipment[selected_equipment] = equipment
 
                 exit_equipment_menu_button.click(event.pos)
         
@@ -350,12 +356,12 @@ while running:
                 if equipment is not None:
                     font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
             if selected_equipment == Equipment.WEAPON:
-                equippable = weapon_data[selected_shipgirl.battle_component.hull_type]
+                equippable = weapon_data
             else:
                 equippable = auxiliary_item_data
             for equipment, rect in zip(equippable, equippable_rects):
                 pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
-                font.render(temp_screen, equipment["name"], rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+                font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
 
         exit_equipment_menu_button.draw(temp_screen, font)
     elif current_menu == Menus.ENCOUNTER:
