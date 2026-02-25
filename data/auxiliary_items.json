@@ -1,4 +1,4 @@
-[
-    {"name": "steering_gear"},
-    {"name": "repair_toolkit"}
-]
+{
+    "steering_gear": {},
+    "repair_toolkit": {}
+}

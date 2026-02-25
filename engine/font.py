@@ -6,6 +6,7 @@ class Font:
         self.chars = list('abcdefghijklmnopqrstuvwxyz1234567890.,;-?!_:+[]')
         self.font_width = self.font.get_width() // len(self.chars)
         self.font_height = self.font.get_height()
+        self.padding = 4
         self._load_font()
 
     def _load_font(self):
@@ -44,22 +45,21 @@ class Font:
         surface.blit(outline_text_surf, pygame.Vector2(xy) + pygame.Vector2(0, -1))
 
     def render(self, surface, text, xy, color, scale, style="topleft", outline_color=None, box_width=0):
-        padding = 4
         char_width = scale * self.font_width
         char_height = scale * self.font_height
         lines = self._get_lines(text, char_width, box_width)
         if box_width == 0:
-            text_surf = pygame.Surface((char_width * len(lines[0]) + padding, char_height + padding))
+            text_surf = pygame.Surface((char_width * len(lines[0]) + self.padding, char_height + self.padding))
         else:
-            text_surf = pygame.Surface((box_width + padding, len(lines) * char_height + padding))
+            text_surf = pygame.Surface((box_width + self.padding, len(lines) * char_height + self.padding))
 
-        y = padding / 2
+        y = self.padding / 2
         for line in lines:
             if style == "center":
                 line_width = char_width * len(line)
                 x = text_surf.get_width() / 2 - line_width / 2
             else:
-                x = padding / 2
+                x = self.padding / 2
             for char in line:
                 if char != " ":
                     letter = pygame.transform.scale_by(
@@ -84,6 +84,9 @@ class Font:
                 self._outline(surface, text_surf, rect.topleft, outline_color)
             surface.blit(colored_text_surf, rect)
         else:
+            rect = colored_text_surf.get_rect()
+            rect.topleft = xy
             if outline_color is not None:
-                self._outline(surface, text_surf, xy, outline_color)
-            surface.blit(colored_text_surf, xy)
+                self._outline(surface, text_surf, rect.topleft, outline_color)
+            surface.blit(colored_text_surf, rect)
+        return rect
