@@ -1,7 +1,7 @@
 {
-	"twin_120": { "firepower": 1, "reload": 0.1 },
-	"twin_127": { "firepower": 1, "reload": 0.1 },
-	"twin_128": { "firepower": 1, "reload": 0.1 },
-	"twin_100": { "firepower": 1, "reload": 0.2 },
-	"twin_138_6": { "firepower": 2, "reload": 0.1 }
+	"twin_120": { "firepower": 1, "reload": 100, "shell_type": "normal" },
+	"twin_127": { "firepower": 1, "reload": 150, "shell_type": "AP" },
+	"twin_128": { "firepower": 1, "reload": 150, "shell_type": "AP" },
+	"twin_100": { "firepower": 1, "reload": 200, "shell_type": "HE" },
+	"twin_138_6": { "firepower": 2, "reload": 100, "shell_type": "HE" }
 }
