@@ -42,6 +42,9 @@ def start_sortie():
     global current_encounter
     current_encounter = -1
 
+    next_encounter_button.active = False
+    return_to_port_button.active = False
+
     player_fleet.begin_sortie()
     next_encounter()
 
@@ -361,6 +364,8 @@ while running:
                 for equipment, rect in zip(equippable, equippable_rects):
                     if rect.collidepoint(event.pos):
                         selected_shipgirl.battle_component.equipment[selected_equipment] = equipment
+            
+                exit_equipment_menu_button.click(event.pos)
             if event.type == pygame.MOUSEMOTION:
                 for equipment, rect in zip(equippable, equippable_rects):
                     if rect.collidepoint(event.pos):
@@ -368,8 +373,6 @@ while running:
                         break
                 else:
                     hovered_equipment = None
-
-                exit_equipment_menu_button.click(event.pos)
         
         if selected_shipgirl is not None:
             selected_shipgirl.update(dt)
