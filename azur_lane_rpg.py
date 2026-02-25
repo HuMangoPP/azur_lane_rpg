@@ -76,40 +76,6 @@ class Stats:
     FIREPOWER = 1
     RELOAD = 2
 
-stat_rects = [
-    get_rect(
-        10, 10,
-        centerx=0.25*TEMP_SCREEN_SIZE[0]-25, centery=30+15*i+0.5*TEMP_SCREEN_SIZE[1]
-    )
-    for i in range(3)
-]
-
-def get_stat(shipgirl, stat, preview_weapon):
-    if stat == Stats.MAX_HP:
-        return shipgirl.battle_component.max_hp
-    elif stat == Stats.FIREPOWER:
-        if preview_weapon is None:
-            return shipgirl.battle_component.firepower
-        else:
-            return shipgirl.battle_component.base_firepower + weapon_data[preview_weapon]["firepower"]
-    elif stat == Stats.RELOAD:
-        if preview_weapon is None:
-            return shipgirl.battle_component.reload
-        else:
-            return shipgirl.battle_component.base_reload + weapon_data[preview_weapon]["reload"]
-
-def get_stat_delta(shipgirl, stat, preview_weapon):
-    if preview_weapon is None:
-        return 0
-    if stat == Stats.MAX_HP:
-        return 0
-    elif stat == Stats.FIREPOWER:
-        preview_firepower = shipgirl.battle_component.base_firepower + weapon_data[preview_weapon]["firepower"]
-        return preview_firepower - shipgirl.battle_component.firepower
-    elif stat == Stats.RELOAD:
-        preview_reload = shipgirl.battle_component.base_reload + weapon_data[preview_weapon]["reload"]
-        return preview_reload - shipgirl.battle_component.reload
-
 class Equipment:
     WEAPON = 0
     AUX1 = 1
@@ -130,6 +96,44 @@ equippable_rects = [
     for i in range(6)
 ]
 hovered_equipment = None
+
+stat_rects = [
+    get_rect(
+        10, 10,
+        centerx=0.25*TEMP_SCREEN_SIZE[0]-25, centery=30+15*i+0.5*TEMP_SCREEN_SIZE[1]
+    )
+    for i in range(3)
+]
+
+def get_stat(shipgirl, stat):
+    if stat == Stats.MAX_HP:
+        return shipgirl.battle_component.max_hp
+    elif stat == Stats.FIREPOWER:
+        if hovered_equipment is None:
+            return shipgirl.battle_component.firepower()
+        else:
+            return shipgirl.battle_component.firepower((selected_equipment, hovered_equipment))
+    elif stat == Stats.RELOAD:
+        if hovered_equipment is None:
+            return shipgirl.battle_component.reload()
+        else:
+            return shipgirl.battle_component.reload((selected_equipment, hovered_equipment))
+
+def get_stat_delta(shipgirl, stat):
+    if hovered_equipment is None:
+        return 0
+    if stat == Stats.MAX_HP:
+        return 0
+    elif stat == Stats.FIREPOWER:
+        return (
+            shipgirl.battle_component.firepower((selected_equipment, hovered_equipment))
+            - shipgirl.battle_component.firepower()
+        )
+    elif stat == Stats.RELOAD:
+        return (
+            shipgirl.battle_component.reload((selected_equipment, hovered_equipment))
+            - shipgirl.battle_component.reload()
+        )
 
 current_sortie = 0
 current_encounter = -1
@@ -185,13 +189,27 @@ class ShipgirlBattleComponent:
 
         self.equipment = shipgirl_data["equipment"]
     
-    @property
-    def reload(self):
-        return self.base_reload + weapon_data[self.equipment[Equipment.WEAPON]]["reload"]
+    def firepower(self, equipment_override=None):
+        equipment = self.equipment.copy()
+        if equipment_override is not None:
+            equipment[equipment_override[0]] = equipment_override[1]
+        return (
+            self.base_firepower
+            + weapon_data.get(equipment[Equipment.WEAPON], {}).get("firepower", 0)
+            + auxiliary_item_data.get(equipment[Equipment.AUX1], {}).get("firepower", 0)
+            + auxiliary_item_data.get(equipment[Equipment.AUX2], {}).get("firepower", 0)
+        )
 
-    @property
-    def firepower(self):
-        return self.base_firepower + weapon_data[self.equipment[Equipment.WEAPON]]["firepower"]
+    def reload(self, equipment_override=None):
+        equipment = self.equipment.copy()
+        if equipment_override is not None:
+            equipment[equipment_override[0]] = equipment_override[1]
+        return (
+            self.base_reload
+            + weapon_data.get(equipment[Equipment.WEAPON], {}).get("reload", 0)
+            + auxiliary_item_data.get(equipment[Equipment.AUX1], {}).get("reload", 0)
+            + auxiliary_item_data.get(equipment[Equipment.AUX2], {}).get("reload", 0)
+        )
 
     def reset(self):
         self.hp = self.max_hp
@@ -204,9 +222,9 @@ class ShipgirlBattleComponent:
         if self.target is not None and self.target.battle_component.hp <= 0:
             self.target = None
         
-        self.cooldown_timer = max(0, self.cooldown_timer - self.reload*dt)
+        self.cooldown_timer = max(0, self.cooldown_timer - self.reload()*dt)
         if self.target is not None and self.cooldown_timer <= 0:
-            self.target.battle_component.hp -= self.firepower
+            self.target.battle_component.hp -= self.firepower()
             self.cooldown_timer = 1
 
     def draw(self, screen, rect):
@@ -403,14 +421,14 @@ while running:
                     preview_weapon = None
                 font_rect = font.render(
                     temp_screen,
-                    str(get_stat(selected_shipgirl, stat, preview_weapon)),
+                    str(get_stat(selected_shipgirl, stat)),
                     rect.center,
                     (255,255,255),
                     1,
                     style="topleft",
                     outline_color=(10,10,10)
                 )
-                stat_delta = get_stat_delta(selected_shipgirl, stat, preview_weapon)
+                stat_delta = get_stat_delta(selected_shipgirl, stat)
                 if stat_delta > 0:
                     center = pygame.Vector2(font_rect.left-10,font_rect.centery)
                     pygame.draw.polygon(temp_screen, (0,255,0),[

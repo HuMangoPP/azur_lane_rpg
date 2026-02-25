@@ -1,4 +1,6 @@
 {
     "steering_gear": {},
-    "repair_toolkit": {}
+    "repair_toolkit": {},
+    "autoloader": {"reload": 0.1},
+    "ap_shell": {"firepower": 1}
 }
