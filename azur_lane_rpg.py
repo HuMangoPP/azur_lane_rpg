@@ -1,4 +1,5 @@
 import math
+import random
 import json
 import pygame
 from engine.font import Font
@@ -36,6 +37,17 @@ class Menus:
 current_menu = Menus.PORT
 
 EDGE_PADDING = 20
+
+def open_build_menu():
+    ...
+
+open_build_menu_button = Button(
+    get_rect(100, 50, centerx=0.25*TEMP_SCREEN_SIZE[0], bottom=TEMP_SCREEN_SIZE[1]-EDGE_PADDING),
+    (100,100,150),
+    "build",
+    (255,255,255),
+    open_build_menu
+)
 
 def start_sortie():
     global current_menu
@@ -76,19 +88,15 @@ exit_equipment_menu_button = Button(
     exit_equipment_menu
 )
 
-class Stats:
-    MAX_HP = 0
-    FIREPOWER = 1
-    RELOAD = 2
-
 class Equipment:
+    NUM_EQUIPS = 3
     WEAPON = 0
     AUX1 = 1
     AUX2 = 2
 
 equipped_rects = [
     get_rect(50, 50, centerx=(i-1)*75+0.75*TEMP_SCREEN_SIZE[0], centery=0.5*TEMP_SCREEN_SIZE[1])
-    for i in range(3)
+    for i in range(Equipment.NUM_EQUIPS)
 ]
 selected_equipment = Equipment.WEAPON
 
@@ -102,12 +110,19 @@ equippable_rects = [
 ]
 hovered_equipment = None
 
+class Stats:
+    NUM_STATS = 4
+    MAX_HP = 0
+    EVASION = 1
+    FIREPOWER = 2
+    RELOAD = 3
+
 stat_rects = [
     get_rect(
         10, 10,
         centerx=0.25*TEMP_SCREEN_SIZE[0]-25, centery=30+15*i+0.5*TEMP_SCREEN_SIZE[1]
     )
-    for i in range(3)
+    for i in range(Stats.NUM_STATS)
 ]
 
 def get_stat(shipgirl, stat):
@@ -116,6 +131,11 @@ def get_stat(shipgirl, stat):
             return shipgirl.battle_component.max_hp()
         else:
             return shipgirl.battle_component.max_hp((selected_equipment, hovered_equipment))
+    elif stat == Stats.EVASION:
+        if hovered_equipment is None:
+            return shipgirl.battle_component.evasion()
+        else:
+            return shipgirl.battle_component.evasion((selected_equipment, hovered_equipment))
     elif stat == Stats.FIREPOWER:
         if hovered_equipment is None:
             return shipgirl.battle_component.firepower()
@@ -134,6 +154,11 @@ def get_stat_delta(shipgirl, stat):
         return (
             shipgirl.battle_component.max_hp((selected_equipment, hovered_equipment))
             - shipgirl.battle_component.max_hp()
+        )
+    elif stat == Stats.EVASION:
+        return (
+            shipgirl.battle_component.evasion((selected_equipment, hovered_equipment))
+            - shipgirl.battle_component.evasion()
         )
     elif stat == Stats.FIREPOWER:
         return (
@@ -211,6 +236,17 @@ class ShipgirlBattleComponent:
             + auxiliary_item_data.get(equipment[Equipment.AUX2], {}).get("max_hp", 0)
         )
 
+    def evasion(self, equipment_override=None):
+        equipment = self.equipment.copy()
+        if equipment_override is not None:
+            equipment[equipment_override[0]] = equipment_override[1]
+        return (
+            self.base_evasion
+            + weapon_data.get(equipment[Equipment.WEAPON], {}).get("evasion", 0)
+            + auxiliary_item_data.get(equipment[Equipment.AUX1], {}).get("evasion", 0)
+            + auxiliary_item_data.get(equipment[Equipment.AUX2], {}).get("evasion", 0)
+        )
+
     def firepower(self, equipment_override=None):
         equipment = self.equipment.copy()
         if equipment_override is not None:
@@ -246,7 +282,9 @@ class ShipgirlBattleComponent:
         
         self.cooldown_timer = max(0, self.cooldown_timer - self.reload()/1000*dt)
         if self.target is not None and self.cooldown_timer <= 0:
-            self.target.battle_component.hp -= self.firepower()
+            evasion_roll = random.random() * 100
+            if evasion_roll > self.target.battle_component.evasion():
+                self.target.battle_component.hp -= self.firepower()
             self.cooldown_timer = 1
 
     def draw(self, screen, rect):
@@ -392,8 +430,8 @@ while running:
                         break
                 else:
                     hovered_equipment = None
-
-        selected_shipgirl.update(dt)
+        if selected_shipgirl is not None:
+            selected_shipgirl.update(dt)
     elif current_menu == Menus.ENCOUNTER:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -431,54 +469,55 @@ while running:
         laffey.draw(temp_screen)
         sortie_button.draw(temp_screen, font)
     elif current_menu == Menus.EQUIPMENT:
-        # shipgirl chibi
-        selected_shipgirl.draw(temp_screen)
-        # shipgirl stats
-        for stat, rect in enumerate(stat_rects):
+        if selected_shipgirl is not None:
+            # shipgirl chibi
+            selected_shipgirl.draw(temp_screen)
+            # shipgirl stats
+            for stat, rect in enumerate(stat_rects):
+                if selected_equipment == Equipment.WEAPON:
+                    preview_weapon = hovered_equipment
+                else:
+                    preview_weapon = None
+                font_rect = font.render(
+                    temp_screen,
+                    str(get_stat(selected_shipgirl, stat)),
+                    rect.center,
+                    (255,255,255),
+                    1,
+                    style="topleft",
+                    outline_color=(10,10,10)
+                )
+                stat_delta = get_stat_delta(selected_shipgirl, stat)
+                if stat_delta > 0:
+                    center = pygame.Vector2(font_rect.left-10,font_rect.centery)
+                    pygame.draw.polygon(temp_screen, (0,255,0),[
+                        center+get_vec(5, math.radians(30)),
+                        center+get_vec(5, math.radians(150)),
+                        center+get_vec(5, math.radians(270))
+                    ])
+                elif stat_delta < 0:
+                    center = pygame.Vector2(font_rect.left-10,font_rect.centery)
+                    pygame.draw.polygon(temp_screen, (255,0,0),[
+                        center+get_vec(5, math.radians(90)),
+                        center+get_vec(5, math.radians(210)),
+                        center+get_vec(5, math.radians(330))
+                    ])
+            # shipgirl equipment
+            for i, (equipment, rect) in enumerate(zip(selected_shipgirl.battle_component.equipment, equipped_rects)):
+                if selected_equipment == i:
+                    pygame.draw.rect(temp_screen, (255,255,255), rect, width=4)
+                else:
+                    pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
+                if equipment is not None:
+                    _ = font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+            # equippable equipment
             if selected_equipment == Equipment.WEAPON:
-                preview_weapon = hovered_equipment
+                equippable = weapon_data
             else:
-                preview_weapon = None
-            font_rect = font.render(
-                temp_screen,
-                str(get_stat(selected_shipgirl, stat)),
-                rect.center,
-                (255,255,255),
-                1,
-                style="topleft",
-                outline_color=(10,10,10)
-            )
-            stat_delta = get_stat_delta(selected_shipgirl, stat)
-            if stat_delta > 0:
-                center = pygame.Vector2(font_rect.left-10,font_rect.centery)
-                pygame.draw.polygon(temp_screen, (0,255,0),[
-                    center+get_vec(5, math.radians(30)),
-                    center+get_vec(5, math.radians(150)),
-                    center+get_vec(5, math.radians(270))
-                ])
-            elif stat_delta < 0:
-                center = pygame.Vector2(font_rect.left-10,font_rect.centery)
-                pygame.draw.polygon(temp_screen, (255,0,0),[
-                    center+get_vec(5, math.radians(90)),
-                    center+get_vec(5, math.radians(210)),
-                    center+get_vec(5, math.radians(330))
-                ])
-        # shipgirl equipment
-        for i, (equipment, rect) in enumerate(zip(selected_shipgirl.battle_component.equipment, equipped_rects)):
-            if selected_equipment == i:
-                pygame.draw.rect(temp_screen, (255,255,255), rect, width=4)
-            else:
+                equippable = auxiliary_item_data
+            for equipment, rect in zip(equippable, equippable_rects):
                 pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
-            if equipment is not None:
                 _ = font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
-        # equippable equipment
-        if selected_equipment == Equipment.WEAPON:
-            equippable = weapon_data
-        else:
-            equippable = auxiliary_item_data
-        for equipment, rect in zip(equippable, equippable_rects):
-            pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
-            _ = font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
         # exit button
         exit_equipment_menu_button.draw(temp_screen, font)
     elif current_menu == Menus.ENCOUNTER:
