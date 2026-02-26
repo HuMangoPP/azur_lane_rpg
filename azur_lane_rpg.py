@@ -181,6 +181,10 @@ def next_encounter():
         Shipgirl(siren_name) if siren_name else None
         for siren_name in siren_fleet_data
     ]
+    front_shipgirl = [shipgirl for shipgirl in player_fleet.shipgirls if shipgirl is not None][0]
+    for siren in siren_fleet.shipgirls:
+        if siren is not None:
+            siren.battle_component.target = front_shipgirl
     player_fleet.begin_encounter()
     siren_fleet.begin_encounter()
 
@@ -437,15 +441,13 @@ while running:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if laffey.rect.collidepoint(event.pos):
                     mouse_start_drag = event.pos
+                    laffey.battle_component.target = None
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
                 if mouse_start_drag is not None and laffey.rect.collidepoint(mouse_start_drag):
                     for siren in siren_fleet.shipgirls:
                         if siren is not None and  siren.rect.collidepoint(mouse_end_drag):
                             laffey.battle_component.target = siren
-                            break
-                    else:
-                        laffey.battle_component.target = None
                 mouse_start_drag = None
 
                 next_encounter_button.click(event.pos)

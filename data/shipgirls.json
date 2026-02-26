@@ -1,16 +1,16 @@
 {
 	"laffey": {
 		"max_hp": 10,
-        "evasion": 10,
+        "evasion": 0,
 		"reload": 300,
 		"firepower": 1,
 		"equipment": ["twin_120", null, null]
 	},
 	"siren": {
 		"max_hp": 5,
-        "evasion": 10,
-		"reload": 200,
+        "evasion": 0,
+		"reload": 300,
 		"firepower": 1,
-		"equipment": ["twin_120", null, null]
+		"equipment": [null, null, null]
 	}
 }
