@@ -168,6 +168,8 @@ class EncounterMenu:
         active=False
     )
 
+    end_encounter_rect = get_rect(10, 10, centerx=0.5*TEMP_SCREEN_SIZE[0], centery=0.25*TEMP_SCREEN_SIZE[1])
+
 class EquipmentMenu:
     selected_shipgirl = None
 
@@ -561,12 +563,16 @@ while running:
         
         player_fleet.update(dt)
         siren_fleet.update(dt)
-        if not EncounterMenu.start_encounter_button.active and not siren_fleet.afloat:
-            player_fleet.end_encounter()
-            if EncounterMenu.current_encounter+1 < len(sorties[SortieSelectionMenu.selected_sortie]):
-                EncounterMenu.next_encounter_button.active = True
-            else:
-                EncounterMenu.return_to_port_button.active = True
+        if not EncounterMenu.start_encounter_button.active:
+            if not player_fleet.afloat or not siren_fleet.afloat:
+                player_fleet.end_encounter()
+                siren_fleet.end_encounter()
+                if not player_fleet.afloat:
+                    EncounterMenu.return_to_port_button.active = True
+                elif EncounterMenu.current_encounter+1 < len(sorties[SortieSelectionMenu.selected_sortie]):
+                    EncounterMenu.next_encounter_button.active = True
+                else:
+                    EncounterMenu.return_to_port_button.active = True
 
     temp_screen.fill((20,20,50))
     if Menus.current_menu == Menus.PORT:
@@ -648,7 +654,27 @@ while running:
                     x = 75*(i-(len(player_fleet.shipgirls)/2)) + 0.25*TEMP_SCREEN_SIZE[0]
                     rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE[1])
                     pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
-
+        else:
+            if not player_fleet.afloat:
+                font.render(
+                    temp_screen,
+                    "you lose",
+                    EncounterMenu.end_encounter_rect.center,
+                    (255,255,255),
+                    1,
+                    style="center",
+                    outline_color=(10,10,10)
+                )
+            elif not siren_fleet.afloat:
+                font.render(
+                    temp_screen,
+                    "you win",
+                    EncounterMenu.end_encounter_rect.center,
+                    (255,255,255),
+                    1,
+                    style="center",
+                    outline_color=(10,10,10)
+                )
         mpos = pygame.mouse.get_pos()
         if mouse_start_drag is not None:
             pygame.draw.line(temp_screen, (255,255,255), mouse_start_drag, mpos, width=2)
