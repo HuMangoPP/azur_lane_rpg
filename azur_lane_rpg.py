@@ -79,7 +79,8 @@ class SortieSelectionMenu:
             EncounterMenu.next_encounter_button.active = False
             EncounterMenu.return_to_port_button.active = False
 
-            player_fleet.begin_sortie()
+            player_fleet.clear_fleet()
+            siren_fleet.clear_fleet()
         return start_sortie
 
     sortie_buttons = [
@@ -122,7 +123,9 @@ class EncounterMenu:
         for siren in siren_fleet.shipgirls:
             if siren is not None:
                 siren.battle_component.target = front_shipgirl
+        player_fleet.begin_sortie()
         player_fleet.begin_encounter()
+        siren_fleet.begin_sortie()
         siren_fleet.begin_encounter()
 
     start_encounter_button = Button(
@@ -397,8 +400,13 @@ class Fleet:
     def shipgirl_names(self):
         return [shipgirl.name for shipgirl in self.shipgirls if shipgirl is not None]
 
-    def begin_sortie(self):
+    def clear_fleet(self):
         self.shipgirls = [None, None, None]
+
+    def begin_sortie(self):
+        for shipgirl in self.shipgirls:
+            if shipgirl is not None:
+                shipgirl.battle_component.reset()
 
     def begin_encounter(self):
         for i, shipgirl in enumerate(self.shipgirls):
