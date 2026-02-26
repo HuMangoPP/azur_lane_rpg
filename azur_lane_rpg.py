@@ -32,14 +32,17 @@ mouse_start_drag = None
 class Menus:
     PORT = 0
     EQUIPMENT = 1
-    ENCOUNTER = 2
+
+    SORTIE_SELECTION = 10
+    FLEET_SELECTION = 11
+    ENCOUNTER = 12
 
 current_menu = Menus.PORT
 
 EDGE_PADDING = 20
 
 def open_build_menu():
-    ...
+    pass
 
 open_build_menu_button = Button(
     get_rect(100, 50, centerx=0.25*TEMP_SCREEN_SIZE[0], bottom=TEMP_SCREEN_SIZE[1]-EDGE_PADDING),
@@ -49,25 +52,57 @@ open_build_menu_button = Button(
     open_build_menu
 )
 
-def start_sortie():
+def open_select_sortie_menu():
     global current_menu
-    current_menu = Menus.ENCOUNTER
+    current_menu = Menus.SORTIE_SELECTION
 
-    global current_encounter
-    current_encounter = -1
-
-    next_encounter_button.active = False
-    return_to_port_button.active = False
-
-    player_fleet.begin_sortie()
-    next_encounter()
-
-sortie_button = Button(
+open_select_sortie_menu_button = Button(
     get_rect(100, 50, centerx=0.5*TEMP_SCREEN_SIZE[0], bottom=TEMP_SCREEN_SIZE[1]-EDGE_PADDING),
     (100,100,150),
     "sortie",
     (255,255,255),
-    start_sortie
+    open_select_sortie_menu
+)
+
+current_sortie = 0
+def start_sortie_factory(sortie_index):
+    global current_sortie
+    current_sortie = sortie_index
+
+    def start_sortie():
+        global current_menu
+        current_menu = Menus.ENCOUNTER
+
+        global current_encounter
+        current_encounter = -1
+
+        next_encounter_button.active = False
+        return_to_port_button.active = False
+
+        player_fleet.begin_sortie()
+        next_encounter()
+    return start_sortie
+
+sortie_buttons = [
+    Button(
+        get_rect(50, 50, left=100, top=100),
+        (100,100,150),
+        "0",
+        (255,255,255),
+        start_sortie_factory(0)
+    )
+]
+
+def exit_sortie_selection_menu():
+    global current_menu
+    current_menu = Menus.PORT
+
+exit_sortie_selection_menu_button = Button(
+    get_rect(100, 50, right=TEMP_SCREEN_SIZE[0]-EDGE_PADDING, top=EDGE_PADDING),
+    (100,100,150),
+    "go back",
+    (255,255,255),
+    exit_sortie_selection_menu
 )
 
 selected_shipgirl = None
@@ -195,9 +230,9 @@ next_encounter_button = Button(
     (100,100,150),
     "next",
     (255,255,255),
-    next_encounter
+    next_encounter,
+    active=False
 )
-next_encounter_button.active = False
 
 def return_to_port():
     player_fleet.end_sortie()
@@ -211,9 +246,9 @@ return_to_port_button = Button(
     (100,100,150),
     "back to port",
     (255,255,255),
-    return_to_port
+    return_to_port,
+    active=False
 )
-return_to_port_button.active = False
 
 class ShipgirlBattleComponent:
     def __init__(self, shipgirl_data):
@@ -408,7 +443,7 @@ while running:
                     selected_shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
                     current_menu = Menus.EQUIPMENT
 
-                sortie_button.click(event.pos)
+                open_select_sortie_menu_button.click(event.pos)
         
         laffey.update(dt)
     elif current_menu == Menus.EQUIPMENT:
@@ -436,6 +471,13 @@ while running:
                     hovered_equipment = None
         if selected_shipgirl is not None:
             selected_shipgirl.update(dt)
+    elif current_menu == Menus.SORTIE_SELECTION:
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                exit_sortie_selection_menu_button.click(event.pos)
+
+                for sortie_button in sortie_buttons:
+                    sortie_button.click(event.pos)
     elif current_menu == Menus.ENCOUNTER:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -469,7 +511,7 @@ while running:
     temp_screen.fill((20,20,50))
     if current_menu == Menus.PORT:
         laffey.draw(temp_screen)
-        sortie_button.draw(temp_screen, font)
+        open_select_sortie_menu_button.draw(temp_screen, font)
     elif current_menu == Menus.EQUIPMENT:
         if selected_shipgirl is not None:
             # shipgirl chibi
@@ -522,6 +564,11 @@ while running:
                 _ = font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
         # exit button
         exit_equipment_menu_button.draw(temp_screen, font)
+    elif current_menu == Menus.SORTIE_SELECTION:
+        exit_sortie_selection_menu_button.draw(temp_screen, font)
+
+        for sortie_button in sortie_buttons:
+            sortie_button.draw(temp_screen, font)
     elif current_menu == Menus.ENCOUNTER:
         player_fleet.draw(temp_screen)
         siren_fleet.draw(temp_screen)

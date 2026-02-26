@@ -1,8 +1,8 @@
 import pygame
 
 class Button:
-    def __init__(self, rect, color, text, text_color, callback):
-        self.active = True
+    def __init__(self, rect, color, text, text_color, callback, active=True):
+        self.active = active
         self.rect = rect
         self.color = color
         self.text = text
