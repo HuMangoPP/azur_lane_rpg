@@ -1,5 +1,6 @@
 {
 	"laffey": {
+        "armor_type": "light",
 		"max_hp": 10,
         "evasion": 0,
 		"reload": 300,
@@ -7,6 +8,7 @@
 		"equipment": ["twin_120", null, null]
 	},
 	"siren": {
+        "armor_type": "light",
 		"max_hp": 5,
         "evasion": 0,
 		"reload": 300,

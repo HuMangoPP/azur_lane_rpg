@@ -107,13 +107,8 @@ class SortieSelectionMenu:
 
 class EncounterMenu:
     selected_shipgirl = None
-
     @staticmethod
-    def start_encounter():
-        if all(shipgirl is None for shipgirl in player_fleet.shipgirls):
-            return
-        EncounterMenu.start_encounter_button.active = False
-
+    def begin_encounter():
         siren_fleet_data = sorties[SortieSelectionMenu.selected_sortie][EncounterMenu.current_encounter]
         siren_fleet.shipgirls = [
             Shipgirl(siren_name) if siren_name else None
@@ -123,10 +118,18 @@ class EncounterMenu:
         for siren in siren_fleet.shipgirls:
             if siren is not None:
                 siren.battle_component.target = front_shipgirl
-        player_fleet.begin_sortie()
         player_fleet.begin_encounter()
-        siren_fleet.begin_sortie()
         siren_fleet.begin_encounter()
+
+    @staticmethod
+    def start_encounter():
+        if all(shipgirl is None for shipgirl in player_fleet.shipgirls):
+            return
+        EncounterMenu.start_encounter_button.active = False
+        
+        player_fleet.begin_sortie()
+
+        EncounterMenu.begin_encounter()
 
     start_encounter_button = Button(
         get_rect(100, 50, centerx=0.75*TEMP_SCREEN_SIZE[0], bottom=TEMP_SCREEN_SIZE[1]-EDGE_PADDING),
@@ -140,7 +143,7 @@ class EncounterMenu:
     @staticmethod
     def next_encounter():
         EncounterMenu.current_encounter += 1
-        EncounterMenu.start_encounter()
+        EncounterMenu.begin_encounter()
 
         EncounterMenu.next_encounter_button.active = False
 
@@ -272,6 +275,23 @@ def get_stat_delta(shipgirl, stat):
             - shipgirl.battle_component.reload()
         )
 
+class Armor:
+    SHELL_TYPE_ENUM = {
+        "normal": 0,
+        "HE": 1,
+        "AP": 2
+    }
+    ARMOR_TYPE_ENUM = {
+        "light": 0,
+        "medium": 1,
+        "heavy": 2
+    }
+    DAMAGE_MULTIPLIER = [
+        [1.0, 1.5, 1.0],
+        [1.5, 1.0, 1.0],
+        [1.0, 1.0, 1.5],
+    ]
+
 class ShipgirlBattleComponent:
     def __init__(self, shipgirl_data):
         self.active = False
@@ -280,6 +300,7 @@ class ShipgirlBattleComponent:
         self.base_evasion = shipgirl_data["evasion"]
         self.base_firepower = shipgirl_data["firepower"]
         self.base_reload = shipgirl_data["reload"]
+        self.armor_type = shipgirl_data["armor_type"]
         self.equipment = shipgirl_data["equipment"]
 
         self.hp = self.max_hp()
@@ -345,7 +366,10 @@ class ShipgirlBattleComponent:
         if self.target is not None and self.cooldown_timer <= 0:
             evasion_roll = random.random() * 100
             if evasion_roll > self.target.battle_component.evasion():
-                self.target.battle_component.hp -= self.firepower()
+                armor_enum = Armor.ARMOR_TYPE_ENUM[self.target.battle_component.armor_type]
+                weapon = weapon_data.get(self.equipment[0], {}) if self.equipment[0] is not None else {}
+                shell_enum = Armor.SHELL_TYPE_ENUM[weapon.get("shell_type", "normal")]
+                self.target.battle_component.hp -= self.firepower() * Armor.DAMAGE_MULTIPLIER[shell_enum][armor_enum]
             self.cooldown_timer = 1
 
     def draw(self, screen, rect):
@@ -654,7 +678,7 @@ while running:
                     x = 75*(i-(len(player_fleet.shipgirls)/2)) + 0.25*TEMP_SCREEN_SIZE[0]
                     rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE[1])
                     pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
-        else:
+        elif EncounterMenu.return_to_port_button.active:
             if not player_fleet.afloat:
                 font.render(
                     temp_screen,
