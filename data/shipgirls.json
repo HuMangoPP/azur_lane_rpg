@@ -7,6 +7,30 @@
 		"firepower": 1,
 		"equipment": ["twin_120", null, null]
 	},
+    "san_diego": {
+        "hull_type": "CL",
+        "max_hp": 15,
+        "evasion": 0,
+        "reload": 250,
+        "firepower": 1,
+        "equipment": [null, null, null]
+    },
+    "guam": {
+        "hull_type": "CA",
+        "max_hp": 20,
+        "evasion": 0,
+        "reload": 200,
+        "firepower": 1,
+        "equipment": [null, null, null]
+    },
+    "new_jersey": {
+        "hull_type": "BB",
+        "max_hp": 30,
+        "evasion": 0,
+        "reload": 100,
+        "firepower": 2,
+        "equipment": [null, null, null]
+    },
 	"siren": {
         "hull_type": "DD",
 		"max_hp": 5,

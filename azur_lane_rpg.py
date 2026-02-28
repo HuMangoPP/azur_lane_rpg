@@ -157,7 +157,6 @@ class EncounterMenu:
     )
 
     def return_to_port():
-        player_fleet.end_sortie()
         Menus.current_menu = Menus.PORT
 
         EncounterMenu.return_to_port_button.active = False
@@ -180,8 +179,6 @@ class EquipmentMenu:
     def exit_equipment_menu():
         Menus.current_menu = Menus.PORT
 
-        EquipmentMenu.selected_shipgirl.pos.x = 0.5*TEMP_SCREEN_SIZE[0]
-        EquipmentMenu.selected_shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
         EquipmentMenu.selected_shipgirl = None
 
     exit_equipment_menu_button = Button(
@@ -403,14 +400,12 @@ class Shipgirl:
     def update(self, dt):
         self.rect.center = self.pos
 
-        self.battle_component.update(dt)
-
     def draw(self, screen):
         if self.sprite:
             pass
         else:
             pygame.draw.rect(screen, (255,255,255), self.rect, width=2)
-            _ = font.render(screen, self.name, self.pos, (255,255,255), 1, style="center", outline_color=(10,10,10))
+            _ = font.render(screen, self.name, self.rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
 
         self.battle_component.draw(screen, self.rect)
 
@@ -436,33 +431,28 @@ class Fleet:
                 shipgirl.battle_component.reset()
 
     def begin_encounter(self):
-        for i, shipgirl in enumerate(self.shipgirls):
+        for shipgirl in self.shipgirls:
             if shipgirl is not None:
                 shipgirl.battle_component.active = True
-                if self.is_player:
-                    shipgirl.pos.x = 0.25*TEMP_SCREEN_SIZE[0] + (i-1)*75
-                    shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
-                else:
-                    shipgirl.pos.x = 0.75*TEMP_SCREEN_SIZE[0] + (1-i)*75
-                    shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
 
     def end_encounter(self):
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
                 shipgirl.battle_component.active = False
 
-    def end_sortie(self):
-        for shipgirl in self.shipgirls:
-            if shipgirl is not None:
-                shipgirl.pos.x = 0.5*TEMP_SCREEN_SIZE[0]
-                shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
-
     def update(self, dt):
-        for shipgirl in self.shipgirls:
+        for i, shipgirl in enumerate(self.shipgirls):
             if shipgirl is not None:
+                if self.is_player:
+                    shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE[0] + (1-i)*75
+                    shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE[1]
+                else:
+                    shipgirl.rect.centerx = 0.75*TEMP_SCREEN_SIZE[0] + (i-1)*75
+                    shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE[1]
+
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
-                shipgirl.update(dt)
+                shipgirl.battle_component.update(dt)
 
     def draw(self, screen):
         for shipgirl in self.shipgirls:
@@ -471,10 +461,25 @@ class Fleet:
 
 laffey = Shipgirl("laffey")
 laffey.pos = pygame.Vector2(
-    0.5*TEMP_SCREEN_SIZE[0],
-    0.5*TEMP_SCREEN_SIZE[1]
+    0.25*TEMP_SCREEN_SIZE[0],
+    0.25*TEMP_SCREEN_SIZE[1]
 )
-available_shipgirls = [laffey]
+san_diego = Shipgirl("san_diego")
+san_diego.pos = pygame.Vector2(
+    0.75*TEMP_SCREEN_SIZE[0],
+    0.25*TEMP_SCREEN_SIZE[1]
+)
+guam = Shipgirl("guam")
+guam.pos = pygame.Vector2(
+    0.25*TEMP_SCREEN_SIZE[0],
+    0.75*TEMP_SCREEN_SIZE[1]
+)
+new_jersey = Shipgirl("new_jersey")
+new_jersey.pos = pygame.Vector2(
+    0.75*TEMP_SCREEN_SIZE[0],
+    0.75*TEMP_SCREEN_SIZE[1]
+)
+available_shipgirls = [laffey, san_diego, guam, new_jersey]
 player_fleet = Fleet(True)
 
 siren_fleet = Fleet(False)
@@ -494,15 +499,15 @@ while running:
     if Menus.current_menu == Menus.PORT:
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                if laffey.rect.collidepoint(event.pos):
-                    EquipmentMenu.selected_shipgirl = laffey
-                    EquipmentMenu.selected_shipgirl.pos.x = 0.25*TEMP_SCREEN_SIZE[0]
-                    EquipmentMenu.selected_shipgirl.pos.y = 0.5*TEMP_SCREEN_SIZE[1]
-                    Menus.current_menu = Menus.EQUIPMENT
+                for shipgirl in available_shipgirls:
+                    if shipgirl.rect.collidepoint(event.pos):
+                        EquipmentMenu.selected_shipgirl = shipgirl
+                        Menus.current_menu = Menus.EQUIPMENT
 
                 PortMenu.open_select_sortie_menu_button.click(event.pos)
         
-        laffey.update(dt)
+        for shipgirl in available_shipgirls:
+            shipgirl.update(dt)
     elif Menus.current_menu == Menus.EQUIPMENT:
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
@@ -526,8 +531,10 @@ while running:
                         break
                 else:
                     hovered_equipment = None
+        
         if EquipmentMenu.selected_shipgirl is not None:
-            EquipmentMenu.selected_shipgirl.update(dt)
+            EquipmentMenu.selected_shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE[0]
+            EquipmentMenu.selected_shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE[1]
     elif Menus.current_menu == Menus.SORTIE_SELECTION:
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
@@ -565,14 +572,14 @@ while running:
                 if EncounterMenu.start_encounter_button.active:
                     if mouse_start_drag is not None and EncounterMenu.selected_shipgirl is not None:
                         for i, _ in enumerate(player_fleet.shipgirls):
-                            x = 75*(i-(len(player_fleet.shipgirls)/2)) + 0.25*TEMP_SCREEN_SIZE[0]
+                            x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE[0]
                             rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE[1])
                             if rect.collidepoint(mouse_end_drag):
                                 for j, shipgirl in enumerate(player_fleet.shipgirls):
                                     if EncounterMenu.selected_shipgirl == shipgirl:
-                                        player_fleet.shipgirls[j] = None
+                                        player_fleet.shipgirls[j] = player_fleet.shipgirls[i]
                                 player_fleet.shipgirls[i] = EncounterMenu.selected_shipgirl
-                                EncounterMenu.selected_shipgirl.pos = pygame.Vector2(rect.center)
+                                EncounterMenu.selected_shipgirl.rect.center = pygame.Vector2(rect.center)
                                 EncounterMenu.selected_shipgirl = None
                 else:
                     if mouse_start_drag is not None and EncounterMenu.selected_shipgirl is not None:
@@ -601,7 +608,8 @@ while running:
 
     temp_screen.fill((20,20,50))
     if Menus.current_menu == Menus.PORT:
-        laffey.draw(temp_screen)
+        for shipgirl in available_shipgirls:
+            shipgirl.draw(temp_screen)
         PortMenu.open_select_sortie_menu_button.draw(temp_screen, font)
     elif Menus.current_menu == Menus.EQUIPMENT:
         if EquipmentMenu.selected_shipgirl is not None:
@@ -676,7 +684,7 @@ while running:
 
             for i, shipgirl in enumerate(player_fleet.shipgirls):
                 if shipgirl is None:
-                    x = 75*(i-(len(player_fleet.shipgirls)/2)) + 0.25*TEMP_SCREEN_SIZE[0]
+                    x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE[0]
                     rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE[1])
                     pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
         elif EncounterMenu.return_to_port_button.active:
