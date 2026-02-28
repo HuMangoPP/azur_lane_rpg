@@ -11,25 +11,25 @@
         "hull_type": "CL",
         "max_hp": 15,
         "evasion": 0,
-        "reload": 250,
+        "reload": 200,
         "firepower": 1,
-        "equipment": [null, null, null]
+        "equipment": ["twin_150", null, null]
     },
     "guam": {
         "hull_type": "CA",
         "max_hp": 20,
         "evasion": 0,
-        "reload": 200,
+        "reload": 100,
         "firepower": 1,
-        "equipment": [null, null, null]
+        "equipment": ["twin_203", null, null]
     },
     "new_jersey": {
         "hull_type": "BB",
         "max_hp": 30,
         "evasion": 0,
-        "reload": 100,
+        "reload": 50,
         "firepower": 2,
-        "equipment": [null, null, null]
+        "equipment": ["tri_406", null, null]
     },
 	"siren": {
         "hull_type": "DD",

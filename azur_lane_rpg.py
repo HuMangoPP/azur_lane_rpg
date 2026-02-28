@@ -509,16 +509,19 @@ while running:
         for shipgirl in available_shipgirls:
             shipgirl.update(dt)
     elif Menus.current_menu == Menus.EQUIPMENT:
+        if selected_equipment == Equipment.WEAPON:
+            equippable = [
+                weapon_name for weapon_name, weapon_info in weapon_data.items()
+                if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
+            ]
+        else:
+            equippable = auxiliary_item_data
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
                 for i, rect in enumerate(equipped_rects):
                     if rect.collidepoint(event.pos):
                         selected_equipment = i
 
-                if selected_equipment == Equipment.WEAPON:
-                    equippable = weapon_data
-                else:
-                    equippable = auxiliary_item_data
                 for equipment, rect in zip(equippable, equippable_rects):
                     if rect.collidepoint(event.pos):
                         EquipmentMenu.selected_shipgirl.battle_component.equipment[selected_equipment] = equipment
@@ -655,7 +658,10 @@ while running:
                     _ = font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
             # equippable equipment
             if selected_equipment == Equipment.WEAPON:
-                equippable = weapon_data
+                equippable = [
+                    weapon_name for weapon_name, weapon_info in weapon_data.items()
+                    if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
+                ]
             else:
                 equippable = auxiliary_item_data
             for equipment, rect in zip(equippable, equippable_rects):

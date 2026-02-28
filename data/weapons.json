@@ -1,7 +1,76 @@
 {
-	"twin_120": { "firepower": 1, "reload": 100, "shell_type": "normal" },
-	"twin_127": { "firepower": 1, "reload": 150, "shell_type": "AP" },
-	"twin_128": { "firepower": 1, "reload": 150, "shell_type": "AP" },
-	"twin_100": { "firepower": 1, "reload": 200, "shell_type": "HE" },
-	"twin_138_6": { "firepower": 2, "reload": 100, "shell_type": "HE" }
+	"twin_120": {
+		"equippable_by": "DD",
+		"firepower": 1,
+		"reload": 300,
+		"shell_type": "normal"
+	},
+	"twin_128": {
+		"equippable_by": "DD",
+		"firepower": 1,
+		"reload": 300,
+		"shell_type": "AP"
+	},
+	"twin_100": {
+		"equippable_by": "DD",
+		"firepower": 1,
+		"reload": 500,
+		"shell_type": "HE"
+	},
+
+	"twin_150": {
+		"equippable_by": "CL",
+		"firepower": 1,
+		"reload": 100,
+		"shell_type": "normal"
+	},
+	"twin_155": {
+		"equippable_by": "CL",
+		"firepower": 2,
+		"reload": 50,
+		"shell_type": "HE"
+	},
+	"quad_152": {
+		"equippable_by": "CL",
+		"firepower": 3,
+		"reload": 100,
+		"shell_type": "AP"
+	},
+
+	"twin_203": {
+		"equippable_by": "CA",
+		"firepower": 2,
+		"reload": 50,
+		"shell_type": "AP"
+	},
+	"tri_234": {
+		"equippable_by": "CA",
+		"firepower": 3,
+		"reload": 25,
+		"shell_type": "normal"
+	},
+	"tri_203": {
+		"equippable_by": "CA",
+		"firepower": 3,
+		"reload": 50,
+		"shell_type": "AP"
+	},
+    "tri_406": {
+		"equippable_by": "BB",
+		"firepower": 5,
+		"reload": 25,
+		"shell_type": "HE"
+	},
+	"quad_305": {
+		"equippable_by": "BB",
+		"firepower": 5,
+		"reload": 25,
+		"shell_type": "AP"
+	},
+	"twin_457": {
+		"equippable_by": "BB",
+		"firepower": 5,
+		"reload": 50,
+		"shell_type": "AP"
+	}
 }
