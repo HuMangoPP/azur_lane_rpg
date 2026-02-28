@@ -276,21 +276,22 @@ def get_stat_delta(shipgirl, stat):
         )
 
 class Armor:
-    SHELL_TYPE_ENUM = {
-        "normal": 0,
-        "HE": 1,
-        "AP": 2
+    LIGHT = 0
+    MEDIUM = 1
+    HEAVY = 2
+
+    HULL_TO_ARMOR_MAP = {
+        "DD": LIGHT,
+        "CL": MEDIUM,
+        "CA": MEDIUM,
+        "BB": HEAVY
     }
-    ARMOR_TYPE_ENUM = {
-        "light": 0,
-        "medium": 1,
-        "heavy": 2
+
+    DAMAGE_MULTIPLIER = {
+        "normal": {LIGHT: 1.0, MEDIUM: 1.0, HEAVY: 1.0},
+        "HE": {LIGHT: 1.5, MEDIUM: 1.25, HEAVY: 1.0},
+        "AP": {LIGHT: 1.0, MEDIUM: 1.25, HEAVY: 1.5},
     }
-    DAMAGE_MULTIPLIER = [
-        [1.0, 1.5, 1.0],
-        [1.5, 1.0, 1.0],
-        [1.0, 1.0, 1.5],
-    ]
 
 class ShipgirlBattleComponent:
     def __init__(self, shipgirl_data):
@@ -300,7 +301,7 @@ class ShipgirlBattleComponent:
         self.base_evasion = shipgirl_data["evasion"]
         self.base_firepower = shipgirl_data["firepower"]
         self.base_reload = shipgirl_data["reload"]
-        self.armor_type = shipgirl_data["armor_type"]
+        self.hull_type = shipgirl_data["hull_type"]
         self.equipment = shipgirl_data["equipment"]
 
         self.hp = self.max_hp()
@@ -366,10 +367,10 @@ class ShipgirlBattleComponent:
         if self.target is not None and self.cooldown_timer <= 0:
             evasion_roll = random.random() * 100
             if evasion_roll > self.target.battle_component.evasion():
-                armor_enum = Armor.ARMOR_TYPE_ENUM[self.target.battle_component.armor_type]
                 weapon = weapon_data.get(self.equipment[0], {}) if self.equipment[0] is not None else {}
-                shell_enum = Armor.SHELL_TYPE_ENUM[weapon.get("shell_type", "normal")]
-                self.target.battle_component.hp -= self.firepower() * Armor.DAMAGE_MULTIPLIER[shell_enum][armor_enum]
+                shell_type = weapon.get("shell_type", "normal")
+                armor_type = Armor.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
+                self.target.battle_component.hp -= self.firepower() * Armor.DAMAGE_MULTIPLIER[shell_type][armor_type]
             self.cooldown_timer = 1
 
     def draw(self, screen, rect):
@@ -702,6 +703,9 @@ while running:
         mpos = pygame.mouse.get_pos()
         if mouse_start_drag is not None:
             pygame.draw.line(temp_screen, (255,255,255), mouse_start_drag, mpos, width=2)
+            for siren in siren_fleet.shipgirls:
+                if siren is not None and siren.rect.collidepoint(mpos):
+                    pygame.draw.circle(temp_screen, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
     screen.blit(pygame.transform.scale(temp_screen, screen.get_size()), (0,0))
     pygame.display.flip()
 
