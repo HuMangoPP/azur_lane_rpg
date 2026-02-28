@@ -114,10 +114,9 @@ class EncounterMenu:
             Shipgirl(siren_name) if siren_name else None
             for siren_name in siren_fleet_data
         ]
-        front_shipgirl = [shipgirl for shipgirl in player_fleet.shipgirls if shipgirl is not None][0]
         for siren in siren_fleet.shipgirls:
             if siren is not None:
-                siren.battle_component.target = front_shipgirl
+                siren.battle_component.target = player_fleet.front
         player_fleet.begin_encounter()
         siren_fleet.begin_encounter()
 
@@ -422,6 +421,13 @@ class Fleet:
     def shipgirl_names(self):
         return [shipgirl.name for shipgirl in self.shipgirls if shipgirl is not None]
 
+    @property
+    def front(self):
+        for shipgirl in self.shipgirls:
+            if shipgirl is not None:
+                return shipgirl
+        return None
+
     def clear_fleet(self):
         self.shipgirls = [None, None, None]
 
@@ -588,7 +594,11 @@ while running:
                     if mouse_start_drag is not None and EncounterMenu.selected_shipgirl is not None:
                         for siren in siren_fleet.shipgirls:
                             if siren is not None and siren.rect.collidepoint(mouse_end_drag):
-                                EncounterMenu.selected_shipgirl.battle_component.target = siren
+                                if EncounterMenu.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
+                                    if siren == siren_fleet.front:
+                                        EncounterMenu.selected_shipgirl.battle_component.target = siren
+                                else:
+                                    EncounterMenu.selected_shipgirl.battle_component.target = siren
                                 EncounterMenu.selected_shipgirl = None
                 mouse_start_drag = None
 
@@ -719,7 +729,13 @@ while running:
             pygame.draw.line(temp_screen, (255,255,255), mouse_start_drag, mpos, width=2)
             for siren in siren_fleet.shipgirls:
                 if siren is not None and siren.rect.collidepoint(mpos):
-                    pygame.draw.circle(temp_screen, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+                    if EncounterMenu.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
+                        if siren == siren_fleet.front:
+                            pygame.draw.circle(temp_screen, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+                        else:
+                            pygame.draw.circle(temp_screen, (200,50,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+                    else:
+                        pygame.draw.circle(temp_screen, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
     screen.blit(pygame.transform.scale(temp_screen, screen.get_size()), (0,0))
     pygame.display.flip()
 
