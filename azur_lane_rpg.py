@@ -29,16 +29,6 @@ font = Font("engine/big_font.png")
 
 mouse_start_drag = None
 
-class Menus:
-    PORT = 0
-    EQUIPMENT = 1
-
-    SORTIE_SELECTION = 10
-    FLEET_SELECTION = 11
-    ENCOUNTER = 12
-
-    current_menu = PORT
-
 EDGE_PADDING = 20
 LEFT_OF_SCREEN = EDGE_PADDING
 RIGHT_OF_SCREEN = TEMP_SCREEN_SIZE.x - EDGE_PADDING
@@ -70,6 +60,26 @@ class PortMenu:
         callback=open_select_sortie_menu
     )
 
+    @staticmethod
+    def update(dt, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                for shipgirl in available_shipgirls:
+                    if shipgirl.rect.collidepoint(event.pos):
+                        EquipmentMenu.selected_shipgirl = shipgirl
+                        Menus.current_menu = Menus.EQUIPMENT
+
+                PortMenu.open_select_sortie_menu_button.click(event.pos)
+        
+        for shipgirl in available_shipgirls:
+            shipgirl.update(dt)
+    
+    @staticmethod
+    def draw(surface):
+        for shipgirl in available_shipgirls:
+            shipgirl.draw(surface)
+        PortMenu.open_select_sortie_menu_button.draw(surface, font)
+
 class SortieSelectionMenu:
     @staticmethod
     def start_sortie_factory(sortie_index):
@@ -85,13 +95,12 @@ class SortieSelectionMenu:
 
     sortie_buttons = [
         Button(
-            rect=get_rect(width=50, height=50, left=100+75*i, top=100),
+            rect=get_rect(width=50, height=50, left=100, top=100),
             color=(100,100,150),
-            text=f"{sortie_index}",
+            text="0",
             text_color=(255,255,255),
-            callback=SortieSelectionMenu.start_sortie_factory(sortie_index)
+            callback=start_sortie_factory(0)
         )
-        for sortie_index in range(1)
     ]
 
     @staticmethod
@@ -105,6 +114,22 @@ class SortieSelectionMenu:
         text_color=(255,255,255),
         callback=exit_sortie_selection_menu
     )
+
+    @staticmethod
+    def update(dt, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                SortieSelectionMenu.exit_sortie_selection_menu_button.click(event.pos)
+
+                for sortie_button in SortieSelectionMenu.sortie_buttons:
+                    sortie_button.click(event.pos)
+
+    @staticmethod
+    def draw(surface):
+        SortieSelectionMenu.exit_sortie_selection_menu_button.draw(surface, font)
+
+        for sortie_button in SortieSelectionMenu.sortie_buttons:
+            sortie_button.draw(surface, font)
 
 class FleetSelectionMenu:
     selected_shipgirl = None
@@ -137,6 +162,62 @@ class FleetSelectionMenu:
         text_color=(255,255,255),
         callback=exit_fleet_selection_menu
     )
+
+    @staticmethod
+    def update(dt, events):
+        global mouse_start_drag
+
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for shipgirl, rect in zip(available_shipgirls, available_shipgirl_rects):
+                    if rect.collidepoint(event.pos) and shipgirl.name not in player_fleet.shipgirl_names:
+                        mouse_start_drag = event.pos
+                        FleetSelectionMenu.selected_shipgirl = shipgirl
+                        break
+                else:
+                    for shipgirl in player_fleet.shipgirls:
+                        if shipgirl is not None and shipgirl.rect.collidepoint(event.pos):
+                            mouse_start_drag = event.pos
+                            FleetSelectionMenu.selected_shipgirl = shipgirl
+                            break
+                    else:
+                        FleetSelectionMenu.selected_shipgirl = None
+            if event.type == pygame.MOUSEBUTTONUP:
+                mouse_end_drag = event.pos
+                if mouse_start_drag is not None and FleetSelectionMenu.selected_shipgirl is not None:
+                    for i, _ in enumerate(player_fleet.shipgirls):
+                        x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE.x
+                        rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE.y)
+                        if rect.collidepoint(mouse_end_drag):
+                            for j, shipgirl in enumerate(player_fleet.shipgirls):
+                                if FleetSelectionMenu.selected_shipgirl == shipgirl:
+                                    player_fleet.shipgirls[j] = player_fleet.shipgirls[i]
+                            player_fleet.shipgirls[i] = FleetSelectionMenu.selected_shipgirl
+                            FleetSelectionMenu.selected_shipgirl.rect.center = pygame.Vector2(rect.center)
+                            FleetSelectionMenu.selected_shipgirl = None
+                mouse_start_drag = None
+                FleetSelectionMenu.start_encounter_button.click(event.pos)
+                FleetSelectionMenu.exit_fleet_selection_menu_button.click(event.pos)
+
+    @staticmethod
+    def draw(surface):
+        player_fleet.draw(surface)
+        FleetSelectionMenu.start_encounter_button.draw(surface, font)
+        FleetSelectionMenu.exit_fleet_selection_menu_button.draw(surface, font)
+
+        for shipgirl, rect in zip(available_shipgirls, available_shipgirl_rects):
+            pygame.draw.rect(surface, (255,255,255), rect, width=2)
+            font.render(surface, shipgirl.name, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+
+        for i, shipgirl in enumerate(player_fleet.shipgirls):
+            if shipgirl is None:
+                x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE.x
+                rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE.y)
+                pygame.draw.rect(surface, (255,255,255), rect, width=2)
+        
+        mpos = pygame.mouse.get_pos()
+        if mouse_start_drag is not None:
+            pygame.draw.line(surface, (255,255,255), mouse_start_drag, mpos, width=2)
 
 class EncounterMenu:
     current_sortie = 0
@@ -205,8 +286,117 @@ class EncounterMenu:
 
     end_encounter_rect = get_rect(width=10, height=10, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.25*TEMP_SCREEN_SIZE.y)
 
+    @staticmethod
+    def update(dt, events):
+        global mouse_start_drag
+
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for shipgirl in player_fleet.shipgirls:
+                    if shipgirl is not None and shipgirl.battle_component.active and shipgirl.rect.collidepoint(event.pos):
+                        mouse_start_drag = event.pos
+                        EncounterMenu.selected_shipgirl = shipgirl
+                        EncounterMenu.selected_shipgirl.battle_component.target = None
+            if event.type == pygame.MOUSEBUTTONUP:
+                mouse_end_drag = event.pos
+                if mouse_start_drag is not None and EncounterMenu.selected_shipgirl is not None:
+                    for siren in siren_fleet.shipgirls:
+                        if siren is not None and siren.rect.collidepoint(mouse_end_drag):
+                            if EncounterMenu.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
+                                if siren == siren_fleet.front:
+                                    EncounterMenu.selected_shipgirl.battle_component.target = siren
+                            else:
+                                EncounterMenu.selected_shipgirl.battle_component.target = siren
+                            EncounterMenu.selected_shipgirl = None
+                mouse_start_drag = None
+                EncounterMenu.next_encounter_button.click(event.pos)
+                EncounterMenu.return_to_port_button.click(event.pos)
+                EncounterMenu.retreat_button.click(event.pos)
+        
+        player_fleet.update(dt)
+        siren_fleet.update(dt)
+        if not player_fleet.afloat or not siren_fleet.afloat:
+            player_fleet.end_encounter()
+            siren_fleet.end_encounter()
+            if not player_fleet.afloat:
+                EncounterMenu.return_to_port_button.active = True
+            elif EncounterMenu.current_encounter+1 < len(sorties[EncounterMenu.current_sortie]):
+                EncounterMenu.next_encounter_button.active = True
+            else:
+                EncounterMenu.return_to_port_button.active = True
+            EncounterMenu.retreat_button.active = False
+
+    @staticmethod
+    def draw(surface):
+        player_fleet.draw(surface)
+        siren_fleet.draw(surface)
+        EncounterMenu.next_encounter_button.draw(surface, font)
+        EncounterMenu.return_to_port_button.draw(surface, font)
+        EncounterMenu.retreat_button.draw(surface, font)
+        
+        if EncounterMenu.return_to_port_button.active:
+            if not player_fleet.afloat:
+                font.render(
+                    surface,
+                    "you lose",
+                    EncounterMenu.end_encounter_rect.center,
+                    (255,255,255),
+                    1,
+                    style="center",
+                    outline_color=(10,10,10)
+                )
+            elif not siren_fleet.afloat:
+                font.render(
+                    surface,
+                    "you win",
+                    EncounterMenu.end_encounter_rect.center,
+                    (255,255,255),
+                    1,
+                    style="center",
+                    outline_color=(10,10,10)
+                )
+
+        mpos = pygame.mouse.get_pos()
+        if mouse_start_drag is not None:
+            pygame.draw.line(temp_screen, (255,255,255), mouse_start_drag, mpos, width=2)
+            for siren in siren_fleet.shipgirls:
+                if siren is not None and siren.rect.collidepoint(mpos):
+                    if EncounterMenu.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
+                        # TODO magic numbers
+                        if siren == siren_fleet.front:
+                            pygame.draw.circle(temp_screen, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+                        else:
+                            pygame.draw.circle(temp_screen, (200,50,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+                    else:
+                        pygame.draw.circle(temp_screen, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+
+class Equipment:
+    NUM_EQUIPS = 3
+    WEAPON = 0
+    AUX1 = 1
+    AUX2 = 2
+
+class Stats:
+    NUM_STATS = 4
+
+    MAX_HP = 0
+    EVASION = 1
+    FIREPOWER = 2
+    RELOAD = 3
+
 class EquipmentMenu:
     selected_shipgirl = None
+    equipped_rects = [
+        get_rect(width=50, height=50, centerx=(i-1)*75+0.75*TEMP_SCREEN_SIZE.x, centery=0.5*TEMP_SCREEN_SIZE.y)
+        for i in range(Equipment.NUM_EQUIPS)
+    ]
+    selected_equipment = Equipment.WEAPON
+
+    equippable_rects = [
+        get_rect(width=50, height=50, centerx=(i%3-1)*75+0.75*TEMP_SCREEN_SIZE.x, centery=(i//3+1)*75+0.5*TEMP_SCREEN_SIZE.y)
+        for i in range(6)
+    ]
+    hovered_equipment = None
 
     @staticmethod
     def exit_equipment_menu():
@@ -222,82 +412,153 @@ class EquipmentMenu:
         callback=exit_equipment_menu
     )
 
-class Equipment:
-    NUM_EQUIPS = 3
-    WEAPON = 0
-    AUX1 = 1
-    AUX2 = 2
+    stat_rects = [
+        get_rect(width=10, height=10, centerx=0.25*TEMP_SCREEN_SIZE.x-25, centery=30+15*i+0.5*TEMP_SCREEN_SIZE.y)
+        for i in range(Stats.NUM_STATS)
+    ]
 
-equipped_rects = [
-    get_rect(width=50, height=50, centerx=(i-1)*75+0.75*TEMP_SCREEN_SIZE.x, centery=0.5*TEMP_SCREEN_SIZE.y)
-    for i in range(Equipment.NUM_EQUIPS)
-]
-selected_equipment = Equipment.WEAPON
+    @staticmethod
+    def get_stat(shipgirl, stat):
+        if stat == Stats.MAX_HP:
+            if EquipmentMenu.hovered_equipment is None:
+                return shipgirl.battle_component.max_hp()
+            else:
+                return shipgirl.battle_component.max_hp((EquipmentMenu.selected_equipment, EquipmentMenu.hovered_equipment))
+        elif stat == Stats.EVASION:
+            if EquipmentMenu.hovered_equipment is None:
+                return shipgirl.battle_component.evasion()
+            else:
+                return shipgirl.battle_component.evasion((EquipmentMenu.selected_equipment, EquipmentMenu.hovered_equipment))
+        elif stat == Stats.FIREPOWER:
+            if EquipmentMenu.hovered_equipment is None:
+                return shipgirl.battle_component.firepower()
+            else:
+                return shipgirl.battle_component.firepower((EquipmentMenu.selected_equipment, EquipmentMenu.hovered_equipment))
+        elif stat == Stats.RELOAD:
+            if EquipmentMenu.hovered_equipment is None:
+                return shipgirl.battle_component.reload()
+            else:
+                return shipgirl.battle_component.reload((EquipmentMenu.selected_equipment, EquipmentMenu.hovered_equipment))
 
-equippable_rects = [
-    get_rect(width=50, height=50, centerx=(i%3-1)*75+0.75*TEMP_SCREEN_SIZE.x, centery=(i//3+1)*75+0.5*TEMP_SCREEN_SIZE.y)
-    for i in range(6)
-]
-hovered_equipment = None
+    @staticmethod
+    def get_stat_delta(shipgirl, stat):
+        if EquipmentMenu.hovered_equipment is None:
+            return 0
+        if stat == Stats.MAX_HP:
+            return (
+                shipgirl.battle_component.max_hp((EquipmentMenu.selected_equipment, EquipmentMenu.hovered_equipment))
+                - shipgirl.battle_component.max_hp()
+            )
+        elif stat == Stats.EVASION:
+            return (
+                shipgirl.battle_component.evasion((EquipmentMenu.selected_equipment, EquipmentMenu.hovered_equipment))
+                - shipgirl.battle_component.evasion()
+            )
+        elif stat == Stats.FIREPOWER:
+            return (
+                shipgirl.battle_component.firepower((EquipmentMenu.selected_equipment, EquipmentMenu.hovered_equipment))
+                - shipgirl.battle_component.firepower()
+            )
+        elif stat == Stats.RELOAD:
+            return (
+                shipgirl.battle_component.reload((EquipmentMenu.selected_equipment, EquipmentMenu.hovered_equipment))
+                - shipgirl.battle_component.reload()
+            )
 
-class Stats:
-    NUM_STATS = 4
-
-    MAX_HP = 0
-    EVASION = 1
-    FIREPOWER = 2
-    RELOAD = 3
-
-stat_rects = [
-    get_rect(width=10, height=10, centerx=0.25*TEMP_SCREEN_SIZE.x-25, centery=30+15*i+0.5*TEMP_SCREEN_SIZE.y)
-    for i in range(Stats.NUM_STATS)
-]
-
-def get_stat(shipgirl, stat):
-    if stat == Stats.MAX_HP:
-        if hovered_equipment is None:
-            return shipgirl.battle_component.max_hp()
+    @staticmethod
+    def update(dt, events):
+        if EquipmentMenu.selected_equipment == Equipment.WEAPON:
+            equippable = [
+                weapon_name for weapon_name, weapon_info in weapon_data.items()
+                if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
+            ]
         else:
-            return shipgirl.battle_component.max_hp((selected_equipment, hovered_equipment))
-    elif stat == Stats.EVASION:
-        if hovered_equipment is None:
-            return shipgirl.battle_component.evasion()
-        else:
-            return shipgirl.battle_component.evasion((selected_equipment, hovered_equipment))
-    elif stat == Stats.FIREPOWER:
-        if hovered_equipment is None:
-            return shipgirl.battle_component.firepower()
-        else:
-            return shipgirl.battle_component.firepower((selected_equipment, hovered_equipment))
-    elif stat == Stats.RELOAD:
-        if hovered_equipment is None:
-            return shipgirl.battle_component.reload()
-        else:
-            return shipgirl.battle_component.reload((selected_equipment, hovered_equipment))
+            equippable = auxiliary_item_data
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                for i, rect in enumerate(EquipmentMenu.equipped_rects):
+                    if rect.collidepoint(event.pos):
+                        EquipmentMenu.selected_equipment = i
 
-def get_stat_delta(shipgirl, stat):
-    if hovered_equipment is None:
-        return 0
-    if stat == Stats.MAX_HP:
-        return (
-            shipgirl.battle_component.max_hp((selected_equipment, hovered_equipment))
-            - shipgirl.battle_component.max_hp()
-        )
-    elif stat == Stats.EVASION:
-        return (
-            shipgirl.battle_component.evasion((selected_equipment, hovered_equipment))
-            - shipgirl.battle_component.evasion()
-        )
-    elif stat == Stats.FIREPOWER:
-        return (
-            shipgirl.battle_component.firepower((selected_equipment, hovered_equipment))
-            - shipgirl.battle_component.firepower()
-        )
-    elif stat == Stats.RELOAD:
-        return (
-            shipgirl.battle_component.reload((selected_equipment, hovered_equipment))
-            - shipgirl.battle_component.reload()
-        )
+                for equipment, rect in zip(equippable, EquipmentMenu.equippable_rects):
+                    if rect.collidepoint(event.pos):
+                        EquipmentMenu.selected_shipgirl.battle_component.equipment[EquipmentMenu.selected_equipment] = equipment
+            
+                EquipmentMenu.exit_equipment_menu_button.click(event.pos)
+            if event.type == pygame.MOUSEMOTION:
+                for equipment, rect in zip(equippable, EquipmentMenu.equippable_rects):
+                    if rect.collidepoint(event.pos):
+                        EquipmentMenu.hovered_equipment = equipment
+                        break
+                else:
+                    EquipmentMenu.hovered_equipment = None
+        
+        if EquipmentMenu.selected_shipgirl is not None:
+            EquipmentMenu.selected_shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE.x
+            EquipmentMenu.selected_shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
+
+    @staticmethod
+    def draw(surface):
+        if EquipmentMenu.selected_shipgirl is not None:
+            # shipgirl chibi
+            EquipmentMenu.selected_shipgirl.draw(surface)
+            # shipgirl stats
+            for stat, rect in enumerate(EquipmentMenu.stat_rects):
+                font_rect = font.render(
+                    surface,
+                    str(EquipmentMenu.get_stat(EquipmentMenu.selected_shipgirl, stat)),
+                    rect.center,
+                    (255,255,255),
+                    1,
+                    style="topleft",
+                    outline_color=(10,10,10)
+                )
+                stat_delta = EquipmentMenu.get_stat_delta(EquipmentMenu.selected_shipgirl, stat)
+                if stat_delta > 0:
+                    center = pygame.Vector2(font_rect.left-10,font_rect.centery)
+                    pygame.draw.polygon(surface, (0,255,0),[
+                        center+get_vec(length=5, angle=math.radians(30)),
+                        center+get_vec(length=5, angle=math.radians(150)),
+                        center+get_vec(length=5, angle=math.radians(270))
+                    ])
+                elif stat_delta < 0:
+                    center = pygame.Vector2(font_rect.left-10,font_rect.centery)
+                    pygame.draw.polygon(surface, (255,0,0),[
+                        center+get_vec(length=5, angle=math.radians(90)),
+                        center+get_vec(length=5, angle=math.radians(210)),
+                        center+get_vec(length=5, angle=math.radians(330))
+                    ])
+            # shipgirl equipment
+            for i, (equipment, rect) in enumerate(zip(EquipmentMenu.selected_shipgirl.battle_component.equipment, EquipmentMenu.equipped_rects)):
+                if EquipmentMenu.selected_equipment == i:
+                    pygame.draw.rect(surface, (255,255,255), rect, width=4)
+                else:
+                    pygame.draw.rect(surface, (255,255,255), rect, width=2)
+                if equipment is not None:
+                    _ = font.render(surface, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+            # equippable equipment
+            if EquipmentMenu.selected_equipment == Equipment.WEAPON:
+                equippable = [
+                    weapon_name for weapon_name, weapon_info in weapon_data.items()
+                    if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
+                ]
+            else:
+                equippable = auxiliary_item_data
+            for equipment, rect in zip(equippable, EquipmentMenu.equippable_rects):
+                pygame.draw.rect(surface, (255,255,255), rect, width=2)
+                _ = font.render(surface, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+        # exit button
+        EquipmentMenu.exit_equipment_menu_button.draw(surface, font)
+
+class Menus:
+    PORT = PortMenu
+    EQUIPMENT = EquipmentMenu
+
+    SORTIE_SELECTION = SortieSelectionMenu
+    FLEET_SELECTION = FleetSelectionMenu
+    ENCOUNTER = EncounterMenu
+
+    current_menu = PORT
 
 class Armor:
     LIGHT = 0
@@ -541,247 +802,10 @@ while running:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
 
-    if Menus.current_menu == Menus.PORT:
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONUP:
-                for shipgirl in available_shipgirls:
-                    if shipgirl.rect.collidepoint(event.pos):
-                        EquipmentMenu.selected_shipgirl = shipgirl
-                        Menus.current_menu = Menus.EQUIPMENT
-
-                PortMenu.open_select_sortie_menu_button.click(event.pos)
-        
-        for shipgirl in available_shipgirls:
-            shipgirl.update(dt)
-    elif Menus.current_menu == Menus.EQUIPMENT:
-        if selected_equipment == Equipment.WEAPON:
-            equippable = [
-                weapon_name for weapon_name, weapon_info in weapon_data.items()
-                if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
-            ]
-        else:
-            equippable = auxiliary_item_data
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONUP:
-                for i, rect in enumerate(equipped_rects):
-                    if rect.collidepoint(event.pos):
-                        selected_equipment = i
-
-                for equipment, rect in zip(equippable, equippable_rects):
-                    if rect.collidepoint(event.pos):
-                        EquipmentMenu.selected_shipgirl.battle_component.equipment[selected_equipment] = equipment
-            
-                EquipmentMenu.exit_equipment_menu_button.click(event.pos)
-            if event.type == pygame.MOUSEMOTION:
-                for equipment, rect in zip(equippable, equippable_rects):
-                    if rect.collidepoint(event.pos):
-                        hovered_equipment = equipment
-                        break
-                else:
-                    hovered_equipment = None
-        
-        if EquipmentMenu.selected_shipgirl is not None:
-            EquipmentMenu.selected_shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE.x
-            EquipmentMenu.selected_shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
-    elif Menus.current_menu == Menus.SORTIE_SELECTION:
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONUP:
-                SortieSelectionMenu.exit_sortie_selection_menu_button.click(event.pos)
-
-                for sortie_button in SortieSelectionMenu.sortie_buttons:
-                    sortie_button.click(event.pos)
-    elif Menus.current_menu == Menus.FLEET_SELECTION:
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                for shipgirl, rect in zip(available_shipgirls, available_shipgirl_rects):
-                    if rect.collidepoint(event.pos) and shipgirl.name not in player_fleet.shipgirl_names:
-                        mouse_start_drag = event.pos
-                        FleetSelectionMenu.selected_shipgirl = shipgirl
-                        break
-                else:
-                    for shipgirl in player_fleet.shipgirls:
-                        if shipgirl is not None and shipgirl.rect.collidepoint(event.pos):
-                            mouse_start_drag = event.pos
-                            FleetSelectionMenu.selected_shipgirl = shipgirl
-                            break
-                    else:
-                        FleetSelectionMenu.selected_shipgirl = None
-            if event.type == pygame.MOUSEBUTTONUP:
-                mouse_end_drag = event.pos
-                if mouse_start_drag is not None and FleetSelectionMenu.selected_shipgirl is not None:
-                    for i, _ in enumerate(player_fleet.shipgirls):
-                        x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE.x
-                        rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE.y)
-                        if rect.collidepoint(mouse_end_drag):
-                            for j, shipgirl in enumerate(player_fleet.shipgirls):
-                                if FleetSelectionMenu.selected_shipgirl == shipgirl:
-                                    player_fleet.shipgirls[j] = player_fleet.shipgirls[i]
-                            player_fleet.shipgirls[i] = FleetSelectionMenu.selected_shipgirl
-                            FleetSelectionMenu.selected_shipgirl.rect.center = pygame.Vector2(rect.center)
-                            FleetSelectionMenu.selected_shipgirl = None
-                mouse_start_drag = None
-                FleetSelectionMenu.start_encounter_button.click(event.pos)
-                FleetSelectionMenu.exit_fleet_selection_menu_button.click(event.pos)
-    elif Menus.current_menu == Menus.ENCOUNTER:
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                for shipgirl in player_fleet.shipgirls:
-                    if shipgirl is not None and shipgirl.battle_component.active and shipgirl.rect.collidepoint(event.pos):
-                        mouse_start_drag = event.pos
-                        EncounterMenu.selected_shipgirl = shipgirl
-                        EncounterMenu.selected_shipgirl.battle_component.target = None
-            if event.type == pygame.MOUSEBUTTONUP:
-                mouse_end_drag = event.pos
-                if mouse_start_drag is not None and EncounterMenu.selected_shipgirl is not None:
-                    for siren in siren_fleet.shipgirls:
-                        if siren is not None and siren.rect.collidepoint(mouse_end_drag):
-                            if EncounterMenu.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
-                                if siren == siren_fleet.front:
-                                    EncounterMenu.selected_shipgirl.battle_component.target = siren
-                            else:
-                                EncounterMenu.selected_shipgirl.battle_component.target = siren
-                            EncounterMenu.selected_shipgirl = None
-                mouse_start_drag = None
-                EncounterMenu.next_encounter_button.click(event.pos)
-                EncounterMenu.return_to_port_button.click(event.pos)
-                EncounterMenu.retreat_button.click(event.pos)
-        
-        player_fleet.update(dt)
-        siren_fleet.update(dt)
-        if not player_fleet.afloat or not siren_fleet.afloat:
-            player_fleet.end_encounter()
-            siren_fleet.end_encounter()
-            if not player_fleet.afloat:
-                EncounterMenu.return_to_port_button.active = True
-            elif EncounterMenu.current_encounter+1 < len(sorties[EncounterMenu.current_sortie]):
-                EncounterMenu.next_encounter_button.active = True
-            else:
-                EncounterMenu.return_to_port_button.active = True
-            EncounterMenu.retreat_button.active = False
+    Menus.current_menu.update(dt, events)
 
     temp_screen.fill((20,20,50))
-    if Menus.current_menu == Menus.PORT:
-        for shipgirl in available_shipgirls:
-            shipgirl.draw(temp_screen)
-        PortMenu.open_select_sortie_menu_button.draw(temp_screen, font)
-    elif Menus.current_menu == Menus.EQUIPMENT:
-        if EquipmentMenu.selected_shipgirl is not None:
-            # shipgirl chibi
-            EquipmentMenu.selected_shipgirl.draw(temp_screen)
-            # shipgirl stats
-            for stat, rect in enumerate(stat_rects):
-                if selected_equipment == Equipment.WEAPON:
-                    preview_weapon = hovered_equipment
-                else:
-                    preview_weapon = None
-                font_rect = font.render(
-                    temp_screen,
-                    str(get_stat(EquipmentMenu.selected_shipgirl, stat)),
-                    rect.center,
-                    (255,255,255),
-                    1,
-                    style="topleft",
-                    outline_color=(10,10,10)
-                )
-                stat_delta = get_stat_delta(EquipmentMenu.selected_shipgirl, stat)
-                if stat_delta > 0:
-                    center = pygame.Vector2(font_rect.left-10,font_rect.centery)
-                    pygame.draw.polygon(temp_screen, (0,255,0),[
-                        center+get_vec(length=5, angle=math.radians(30)),
-                        center+get_vec(length=5, angle=math.radians(150)),
-                        center+get_vec(length=5, angle=math.radians(270))
-                    ])
-                elif stat_delta < 0:
-                    center = pygame.Vector2(font_rect.left-10,font_rect.centery)
-                    pygame.draw.polygon(temp_screen, (255,0,0),[
-                        center+get_vec(length=5, angle=math.radians(90)),
-                        center+get_vec(length=5, angle=math.radians(210)),
-                        center+get_vec(length=5, angle=math.radians(330))
-                    ])
-            # shipgirl equipment
-            for i, (equipment, rect) in enumerate(zip(EquipmentMenu.selected_shipgirl.battle_component.equipment, equipped_rects)):
-                if selected_equipment == i:
-                    pygame.draw.rect(temp_screen, (255,255,255), rect, width=4)
-                else:
-                    pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
-                if equipment is not None:
-                    _ = font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
-            # equippable equipment
-            if selected_equipment == Equipment.WEAPON:
-                equippable = [
-                    weapon_name for weapon_name, weapon_info in weapon_data.items()
-                    if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
-                ]
-            else:
-                equippable = auxiliary_item_data
-            for equipment, rect in zip(equippable, equippable_rects):
-                pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
-                _ = font.render(temp_screen, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
-        # exit button
-        EquipmentMenu.exit_equipment_menu_button.draw(temp_screen, font)
-    elif Menus.current_menu == Menus.SORTIE_SELECTION:
-        SortieSelectionMenu.exit_sortie_selection_menu_button.draw(temp_screen, font)
-
-        for sortie_button in SortieSelectionMenu.sortie_buttons:
-            sortie_button.draw(temp_screen, font)
-    elif Menus.current_menu == Menus.FLEET_SELECTION:
-        player_fleet.draw(temp_screen)
-        FleetSelectionMenu.start_encounter_button.draw(temp_screen, font)
-        FleetSelectionMenu.exit_fleet_selection_menu_button.draw(temp_screen, font)
-
-        for shipgirl, rect in zip(available_shipgirls, available_shipgirl_rects):
-            pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
-            font.render(temp_screen, shipgirl.name, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
-
-        for i, shipgirl in enumerate(player_fleet.shipgirls):
-            if shipgirl is None:
-                x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE.x
-                rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE.y)
-                pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
-        
-        mpos = pygame.mouse.get_pos()
-        if mouse_start_drag is not None:
-            pygame.draw.line(temp_screen, (255,255,255), mouse_start_drag, mpos, width=2)
-    elif Menus.current_menu == Menus.ENCOUNTER:
-        player_fleet.draw(temp_screen)
-        siren_fleet.draw(temp_screen)
-        EncounterMenu.next_encounter_button.draw(temp_screen, font)
-        EncounterMenu.return_to_port_button.draw(temp_screen, font)
-        EncounterMenu.retreat_button.draw(temp_screen, font)
-        
-        if EncounterMenu.return_to_port_button.active:
-            if not player_fleet.afloat:
-                font.render(
-                    temp_screen,
-                    "you lose",
-                    EncounterMenu.end_encounter_rect.center,
-                    (255,255,255),
-                    1,
-                    style="center",
-                    outline_color=(10,10,10)
-                )
-            elif not siren_fleet.afloat:
-                font.render(
-                    temp_screen,
-                    "you win",
-                    EncounterMenu.end_encounter_rect.center,
-                    (255,255,255),
-                    1,
-                    style="center",
-                    outline_color=(10,10,10)
-                )
-        mpos = pygame.mouse.get_pos()
-        if mouse_start_drag is not None:
-            pygame.draw.line(temp_screen, (255,255,255), mouse_start_drag, mpos, width=2)
-            for siren in siren_fleet.shipgirls:
-                if siren is not None and siren.rect.collidepoint(mpos):
-                    if EncounterMenu.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
-                        if siren == siren_fleet.front:
-                            pygame.draw.circle(temp_screen, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
-                        else:
-                            pygame.draw.circle(temp_screen, (200,50,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
-                    else:
-                        pygame.draw.circle(temp_screen, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+    Menus.current_menu.draw(temp_screen)
     screen.blit(pygame.transform.scale(temp_screen, screen.get_size()), (0,0))
     pygame.display.flip()
 
