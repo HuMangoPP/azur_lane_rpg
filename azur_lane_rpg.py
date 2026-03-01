@@ -75,9 +75,6 @@ class SortieSelectionMenu:
             EncounterMenu.current_sortie = sortie_index
             EncounterMenu.current_encounter = 0
 
-            EncounterMenu.next_encounter_button.active = False
-            EncounterMenu.return_to_port_button.active = False
-
             player_fleet.clear_fleet()
             siren_fleet.clear_fleet()
         return start_sortie
@@ -124,6 +121,18 @@ class FleetSelectionMenu:
         start_encounter
     )
 
+    @staticmethod
+    def exit_fleet_selection_menu():
+        Menus.current_menu = Menus.SORTIE_SELECTION
+    
+    exit_fleet_selection_menu_button = Button(
+        get_rect(100, 50, right=TEMP_SCREEN_SIZE[0]-EDGE_PADDING, top=EDGE_PADDING),
+        (100,100,150),
+        "go back",
+        (255,255,255),
+        exit_fleet_selection_menu
+    )
+
 class EncounterMenu:
     current_sortie = 0
     current_encounter = 0
@@ -140,6 +149,10 @@ class EncounterMenu:
                 siren.battle_component.target = player_fleet.front
         player_fleet.begin_encounter()
         siren_fleet.begin_encounter()
+
+        EncounterMenu.next_encounter_button.active = False
+        EncounterMenu.return_to_port_button.active = False
+        EncounterMenu.retreat_button.active = True
 
     @staticmethod
     def next_encounter():
@@ -169,6 +182,20 @@ class EncounterMenu:
         (255,255,255),
         return_to_port,
         active=False
+    )
+
+    @staticmethod
+    def retreat():
+        Menus.current_menu = Menus.PORT
+
+        player_fleet.end_encounter()        
+    
+    retreat_button = Button(
+        get_rect(100, 50, right=TEMP_SCREEN_SIZE[0]-EDGE_PADDING, top=EDGE_PADDING),
+        (100,100,150),
+        "retreat",
+        (255,255,255),
+        retreat
     )
 
     end_encounter_rect = get_rect(10, 10, centerx=0.5*TEMP_SCREEN_SIZE[0], centery=0.25*TEMP_SCREEN_SIZE[1])
@@ -393,12 +420,30 @@ class Shipgirl:
         self.name = name
         self.sprite = None
     
-        self.pos = pygame.Vector2(0,0)
+        self.pos = pygame.Vector2(
+            random.random() * TEMP_SCREEN_SIZE[0],
+            random.random() * TEMP_SCREEN_SIZE[1]
+        )
+        self.wander_target = self.pos.copy()
+        self.pause_time = 0
         self.rect = get_rect(50, 50, centerx=self.pos.x, centery=self.pos.y)
 
         self.battle_component = ShipgirlBattleComponent(shipgirl_data[self.name])
 
     def update(self, dt):
+        if self.pause_time > 0:
+            self.pause_time -= dt
+        else:
+            to_target = self.wander_target - self.pos
+            if to_target.length() < 10:
+                self.wander_target = pygame.Vector2(
+                    random.random() * TEMP_SCREEN_SIZE[0],
+                    random.random() * TEMP_SCREEN_SIZE[1]
+                )
+                self.pause_time = random.uniform(1, 3)
+            else:
+                direction = to_target.normalize()
+                self.pos += direction * 50 * dt
         self.rect.center = self.pos
 
     def draw(self, screen):
@@ -446,6 +491,7 @@ class Fleet:
     def end_encounter(self):
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
+                shipgirl.battle_component.target = None
                 shipgirl.battle_component.active = False
 
     def update(self, dt):
@@ -468,25 +514,9 @@ class Fleet:
                 shipgirl.draw(screen)
 
 laffey = Shipgirl("laffey")
-laffey.pos = pygame.Vector2(
-    0.25*TEMP_SCREEN_SIZE[0],
-    0.25*TEMP_SCREEN_SIZE[1]
-)
 san_diego = Shipgirl("san_diego")
-san_diego.pos = pygame.Vector2(
-    0.75*TEMP_SCREEN_SIZE[0],
-    0.25*TEMP_SCREEN_SIZE[1]
-)
 guam = Shipgirl("guam")
-guam.pos = pygame.Vector2(
-    0.25*TEMP_SCREEN_SIZE[0],
-    0.75*TEMP_SCREEN_SIZE[1]
-)
 new_jersey = Shipgirl("new_jersey")
-new_jersey.pos = pygame.Vector2(
-    0.75*TEMP_SCREEN_SIZE[0],
-    0.75*TEMP_SCREEN_SIZE[1]
-)
 available_shipgirls = [laffey, san_diego, guam, new_jersey]
 available_shipgirl_rects = [
     get_rect(
@@ -592,6 +622,7 @@ while running:
                             FleetSelectionMenu.selected_shipgirl = None
                 mouse_start_drag = None
                 FleetSelectionMenu.start_encounter_button.click(event.pos)
+                FleetSelectionMenu.exit_fleet_selection_menu_button.click(event.pos)
     elif Menus.current_menu == Menus.ENCOUNTER:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -614,6 +645,7 @@ while running:
                 mouse_start_drag = None
                 EncounterMenu.next_encounter_button.click(event.pos)
                 EncounterMenu.return_to_port_button.click(event.pos)
+                EncounterMenu.retreat_button.click(event.pos)
         
         player_fleet.update(dt)
         siren_fleet.update(dt)
@@ -626,6 +658,7 @@ while running:
                 EncounterMenu.next_encounter_button.active = True
             else:
                 EncounterMenu.return_to_port_button.active = True
+            EncounterMenu.retreat_button.active = False
 
     temp_screen.fill((20,20,50))
     if Menus.current_menu == Menus.PORT:
@@ -695,6 +728,7 @@ while running:
     elif Menus.current_menu == Menus.FLEET_SELECTION:
         player_fleet.draw(temp_screen)
         FleetSelectionMenu.start_encounter_button.draw(temp_screen, font)
+        FleetSelectionMenu.exit_fleet_selection_menu_button.draw(temp_screen, font)
 
         for shipgirl, rect in zip(available_shipgirls, available_shipgirl_rects):
             pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
@@ -714,6 +748,7 @@ while running:
         siren_fleet.draw(temp_screen)
         EncounterMenu.next_encounter_button.draw(temp_screen, font)
         EncounterMenu.return_to_port_button.draw(temp_screen, font)
+        EncounterMenu.retreat_button.draw(temp_screen, font)
         
         if EncounterMenu.return_to_port_button.active:
             if not player_fleet.afloat:
