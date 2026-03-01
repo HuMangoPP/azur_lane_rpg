@@ -20,8 +20,8 @@ with open("data/auxiliary_items.json") as f:
 
 pygame.init()
 
-SCREEN_SIZE = (600,600)
-TEMP_SCREEN_SIZE = (600,600)
+SCREEN_SIZE = pygame.Vector2(600, 600)
+TEMP_SCREEN_SIZE = pygame.Vector2(600, 600)
 screen = pygame.display.set_mode(SCREEN_SIZE)
 temp_screen = pygame.Surface(TEMP_SCREEN_SIZE)
 clock = pygame.Clock()
@@ -40,6 +40,10 @@ class Menus:
     current_menu = PORT
 
 EDGE_PADDING = 20
+LEFT_OF_SCREEN = EDGE_PADDING
+RIGHT_OF_SCREEN = TEMP_SCREEN_SIZE.x - EDGE_PADDING
+TOP_OF_SCREEN = EDGE_PADDING
+BOTTOM_OF_SCREEN = TEMP_SCREEN_SIZE.y - EDGE_PADDING
 
 class PortMenu:
     @staticmethod
@@ -47,11 +51,11 @@ class PortMenu:
         pass
 
     open_build_menu_button = Button(
-        get_rect(100, 50, centerx=0.25*TEMP_SCREEN_SIZE[0], bottom=TEMP_SCREEN_SIZE[1]-EDGE_PADDING),
-        (100,100,150),
-        "build",
-        (255,255,255),
-        open_build_menu
+        rect=get_rect(width=100, height=50, centerx=0.25*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN),
+        color=(100,100,150),
+        text="build",
+        text_color=(255,255,255),
+        callback=open_build_menu
     )
 
     @staticmethod
@@ -59,11 +63,11 @@ class PortMenu:
         Menus.current_menu = Menus.SORTIE_SELECTION
 
     open_select_sortie_menu_button = Button(
-        get_rect(100, 50, centerx=0.5*TEMP_SCREEN_SIZE[0], bottom=TEMP_SCREEN_SIZE[1]-EDGE_PADDING),
-        (100,100,150),
-        "sortie",
-        (255,255,255),
-        open_select_sortie_menu
+        rect=get_rect(width=100, height=50, centerx=0.5*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN   ),
+        color=(100,100,150),
+        text="sortie",
+        text_color=(255,255,255),
+        callback=open_select_sortie_menu
     )
 
 class SortieSelectionMenu:
@@ -81,12 +85,13 @@ class SortieSelectionMenu:
 
     sortie_buttons = [
         Button(
-            get_rect(50, 50, left=100, top=100),
-            (100,100,150),
-            "0",
-            (255,255,255),
-            start_sortie_factory(0)
+            rect=get_rect(width=50, height=50, left=100+75*i, top=100),
+            color=(100,100,150),
+            text=f"{sortie_index}",
+            text_color=(255,255,255),
+            callback=SortieSelectionMenu.start_sortie_factory(sortie_index)
         )
+        for sortie_index in range(1)
     ]
 
     @staticmethod
@@ -94,11 +99,11 @@ class SortieSelectionMenu:
         Menus.current_menu = Menus.PORT
 
     exit_sortie_selection_menu_button = Button(
-        get_rect(100, 50, right=TEMP_SCREEN_SIZE[0]-EDGE_PADDING, top=EDGE_PADDING),
-        (100,100,150),
-        "go back",
-        (255,255,255),
-        exit_sortie_selection_menu
+        rect=get_rect(width=100, height=50, right=TEMP_SCREEN_SIZE.x-EDGE_PADDING, top=EDGE_PADDING),
+        color=(100,100,150),
+        text="go back",
+        text_color=(255,255,255),
+        callback=exit_sortie_selection_menu
     )
 
 class FleetSelectionMenu:
@@ -114,11 +119,11 @@ class FleetSelectionMenu:
         EncounterMenu.begin_encounter()
 
     start_encounter_button = Button(
-        get_rect(100, 50, centerx=0.75*TEMP_SCREEN_SIZE[0], bottom=TEMP_SCREEN_SIZE[1]-EDGE_PADDING),
-        (100,100,150),
-        "start",
-        (255,255,255),
-        start_encounter
+        rect=get_rect(width=100, height=50, centerx=0.75*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN),
+        color=(100,100,150),
+        text="start",
+        text_color=(255,255,255),
+        callback=start_encounter
     )
 
     @staticmethod
@@ -126,11 +131,11 @@ class FleetSelectionMenu:
         Menus.current_menu = Menus.SORTIE_SELECTION
     
     exit_fleet_selection_menu_button = Button(
-        get_rect(100, 50, right=TEMP_SCREEN_SIZE[0]-EDGE_PADDING, top=EDGE_PADDING),
-        (100,100,150),
-        "go back",
-        (255,255,255),
-        exit_fleet_selection_menu
+        rect=get_rect(width=100, height=50, right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
+        color=(100,100,150),
+        text="go back",
+        text_color=(255,255,255),
+        callback=exit_fleet_selection_menu
     )
 
 class EncounterMenu:
@@ -162,11 +167,11 @@ class EncounterMenu:
         EncounterMenu.next_encounter_button.active = False
 
     next_encounter_button = Button(
-        get_rect(50, 50, right=TEMP_SCREEN_SIZE[0]-EDGE_PADDING, centery=0.5*TEMP_SCREEN_SIZE[1]),
-        (100,100,150),
-        "next",
-        (255,255,255),
-        next_encounter,
+        rect=get_rect(width=50, height=50, right=RIGHT_OF_SCREEN, centery=0.5*TEMP_SCREEN_SIZE.y),
+        color=(100,100,150),
+        text="next",
+        text_color=(255,255,255),
+        callback=next_encounter,
         active=False
     )
 
@@ -176,11 +181,11 @@ class EncounterMenu:
         EncounterMenu.return_to_port_button.active = False
 
     return_to_port_button = Button(
-        get_rect(50, 50, right=TEMP_SCREEN_SIZE[0]-EDGE_PADDING, centery=0.5*TEMP_SCREEN_SIZE[1]),
-        (100,100,150),
-        "back to port",
-        (255,255,255),
-        return_to_port,
+        rect=get_rect(50, 50, right=RIGHT_OF_SCREEN, centery=0.5*TEMP_SCREEN_SIZE.y),
+        color=(100,100,150),
+        text="back to port",
+        text_color=(255,255,255),
+        callback=return_to_port,
         active=False
     )
 
@@ -191,14 +196,14 @@ class EncounterMenu:
         player_fleet.end_encounter()        
     
     retreat_button = Button(
-        get_rect(100, 50, right=TEMP_SCREEN_SIZE[0]-EDGE_PADDING, top=EDGE_PADDING),
-        (100,100,150),
-        "retreat",
-        (255,255,255),
-        retreat
+        rect=get_rect(width=100, height=50, right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
+        color=(100,100,150),
+        text="retreat",
+        text_color=(255,255,255),
+        callback=retreat
     )
 
-    end_encounter_rect = get_rect(10, 10, centerx=0.5*TEMP_SCREEN_SIZE[0], centery=0.25*TEMP_SCREEN_SIZE[1])
+    end_encounter_rect = get_rect(width=10, height=10, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.25*TEMP_SCREEN_SIZE.y)
 
 class EquipmentMenu:
     selected_shipgirl = None
@@ -210,11 +215,11 @@ class EquipmentMenu:
         EquipmentMenu.selected_shipgirl = None
 
     exit_equipment_menu_button = Button(
-        get_rect(100, 50, right=TEMP_SCREEN_SIZE[0]-EDGE_PADDING, top=EDGE_PADDING),
-        (100,100,150),
-        "go back",
-        (255,255,255),
-        exit_equipment_menu
+        rect=get_rect(width=100, height=50, right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
+        color=(100,100,150),
+        text="go back",
+        text_color=(255,255,255),
+        callback=exit_equipment_menu
     )
 
 class Equipment:
@@ -224,33 +229,27 @@ class Equipment:
     AUX2 = 2
 
 equipped_rects = [
-    get_rect(50, 50, centerx=(i-1)*75+0.75*TEMP_SCREEN_SIZE[0], centery=0.5*TEMP_SCREEN_SIZE[1])
+    get_rect(width=50, height=50, centerx=(i-1)*75+0.75*TEMP_SCREEN_SIZE.x, centery=0.5*TEMP_SCREEN_SIZE.y)
     for i in range(Equipment.NUM_EQUIPS)
 ]
 selected_equipment = Equipment.WEAPON
 
 equippable_rects = [
-    get_rect(
-        50, 50,
-        centerx=(i%3-1)*75+0.75*TEMP_SCREEN_SIZE[0],
-        centery=(i//3+1)*75+0.5*TEMP_SCREEN_SIZE[1]
-    )
+    get_rect(width=50, height=50, centerx=(i%3-1)*75+0.75*TEMP_SCREEN_SIZE.x, centery=(i//3+1)*75+0.5*TEMP_SCREEN_SIZE.y)
     for i in range(6)
 ]
 hovered_equipment = None
 
 class Stats:
     NUM_STATS = 4
+
     MAX_HP = 0
     EVASION = 1
     FIREPOWER = 2
     RELOAD = 3
 
 stat_rects = [
-    get_rect(
-        10, 10,
-        centerx=0.25*TEMP_SCREEN_SIZE[0]-25, centery=30+15*i+0.5*TEMP_SCREEN_SIZE[1]
-    )
+    get_rect(width=10, height=10, centerx=0.25*TEMP_SCREEN_SIZE.x-25, centery=30+15*i+0.5*TEMP_SCREEN_SIZE.y)
     for i in range(Stats.NUM_STATS)
 ]
 
@@ -402,8 +401,8 @@ class ShipgirlBattleComponent:
         if not self.active:
             return
         
-        bar_background = get_rect(100, 10, centerx=rect.centerx, top=rect.bottom+20)
-        bar_fill = get_rect(100*self.hp/self.max_hp(), 10, left=bar_background.left, top=bar_background.top)
+        bar_background = get_rect(width=100, height=10, centerx=rect.centerx, top=rect.bottom+20)
+        bar_fill = get_rect(width=100*self.hp/self.max_hp(), height=10, left=bar_background.left, top=bar_background.top)
         pygame.draw.rect(screen, (50,50,50), bar_background)
         pygame.draw.rect(screen, (255,255,255), bar_fill)
 
@@ -421,12 +420,12 @@ class Shipgirl:
         self.sprite = None
     
         self.pos = pygame.Vector2(
-            random.random() * TEMP_SCREEN_SIZE[0],
-            random.random() * TEMP_SCREEN_SIZE[1]
+            random.random() * TEMP_SCREEN_SIZE.x,
+            random.random() * TEMP_SCREEN_SIZE.y
         )
         self.wander_target = self.pos.copy()
         self.pause_time = 0
-        self.rect = get_rect(50, 50, centerx=self.pos.x, centery=self.pos.y)
+        self.rect = get_rect(width=50, height=50, centerx=self.pos.x, centery=self.pos.y)
 
         self.battle_component = ShipgirlBattleComponent(shipgirl_data[self.name])
 
@@ -437,8 +436,8 @@ class Shipgirl:
             to_target = self.wander_target - self.pos
             if to_target.length() < 10:
                 self.wander_target = pygame.Vector2(
-                    random.random() * TEMP_SCREEN_SIZE[0],
-                    random.random() * TEMP_SCREEN_SIZE[1]
+                    random.random() * TEMP_SCREEN_SIZE.x,
+                    random.random() * TEMP_SCREEN_SIZE.y
                 )
                 self.pause_time = random.uniform(1, 3)
             else:
@@ -498,11 +497,11 @@ class Fleet:
         for i, shipgirl in enumerate(self.shipgirls):
             if shipgirl is not None:
                 if self.is_player:
-                    shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE[0] + (1-i)*75
-                    shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE[1]
+                    shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE.x + (1-i)*75
+                    shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
                 else:
-                    shipgirl.rect.centerx = 0.75*TEMP_SCREEN_SIZE[0] + (i-1)*75
-                    shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE[1]
+                    shipgirl.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x + (i-1)*75
+                    shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
 
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
@@ -522,8 +521,8 @@ available_shipgirl_rects = [
     get_rect(
         width=50,
         height=50,
-        centerx=75*(i%4-1.5) + 0.75*TEMP_SCREEN_SIZE[0],
-        centery=75*(i//4-1.5) + 0.5*TEMP_SCREEN_SIZE[1]
+        centerx=75*(i%4-1.5) + 0.75*TEMP_SCREEN_SIZE.x,
+        centery=75*(i//4-1.5) + 0.5*TEMP_SCREEN_SIZE.y
     ) for i in range(4)
 ]
 player_fleet = Fleet(True)
@@ -582,8 +581,8 @@ while running:
                     hovered_equipment = None
         
         if EquipmentMenu.selected_shipgirl is not None:
-            EquipmentMenu.selected_shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE[0]
-            EquipmentMenu.selected_shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE[1]
+            EquipmentMenu.selected_shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE.x
+            EquipmentMenu.selected_shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
     elif Menus.current_menu == Menus.SORTIE_SELECTION:
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
@@ -611,8 +610,8 @@ while running:
                 mouse_end_drag = event.pos
                 if mouse_start_drag is not None and FleetSelectionMenu.selected_shipgirl is not None:
                     for i, _ in enumerate(player_fleet.shipgirls):
-                        x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE[0]
-                        rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE[1])
+                        x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE.x
+                        rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE.y)
                         if rect.collidepoint(mouse_end_drag):
                             for j, shipgirl in enumerate(player_fleet.shipgirls):
                                 if FleetSelectionMenu.selected_shipgirl == shipgirl:
@@ -688,16 +687,16 @@ while running:
                 if stat_delta > 0:
                     center = pygame.Vector2(font_rect.left-10,font_rect.centery)
                     pygame.draw.polygon(temp_screen, (0,255,0),[
-                        center+get_vec(5, math.radians(30)),
-                        center+get_vec(5, math.radians(150)),
-                        center+get_vec(5, math.radians(270))
+                        center+get_vec(length=5, angle=math.radians(30)),
+                        center+get_vec(length=5, angle=math.radians(150)),
+                        center+get_vec(length=5, angle=math.radians(270))
                     ])
                 elif stat_delta < 0:
                     center = pygame.Vector2(font_rect.left-10,font_rect.centery)
                     pygame.draw.polygon(temp_screen, (255,0,0),[
-                        center+get_vec(5, math.radians(90)),
-                        center+get_vec(5, math.radians(210)),
-                        center+get_vec(5, math.radians(330))
+                        center+get_vec(length=5, angle=math.radians(90)),
+                        center+get_vec(length=5, angle=math.radians(210)),
+                        center+get_vec(length=5, angle=math.radians(330))
                     ])
             # shipgirl equipment
             for i, (equipment, rect) in enumerate(zip(EquipmentMenu.selected_shipgirl.battle_component.equipment, equipped_rects)):
@@ -736,8 +735,8 @@ while running:
 
         for i, shipgirl in enumerate(player_fleet.shipgirls):
             if shipgirl is None:
-                x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE[0]
-                rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE[1])
+                x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE.x
+                rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE.y)
                 pygame.draw.rect(temp_screen, (255,255,255), rect, width=2)
         
         mpos = pygame.mouse.get_pos()
