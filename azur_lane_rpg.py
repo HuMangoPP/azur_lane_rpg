@@ -35,6 +35,22 @@ RIGHT_OF_SCREEN = TEMP_SCREEN_SIZE.x - EDGE_PADDING
 TOP_OF_SCREEN = EDGE_PADDING
 BOTTOM_OF_SCREEN = TEMP_SCREEN_SIZE.y - EDGE_PADDING
 
+class Buildings:
+    DORM = 0 # provides housing for shipgirls // increases dock space (number of shipgirls a player can have)
+    DOCK = 1 # instead of a sortie button, players will sortie from the dock
+    INTEL_CENTER = 2 # players get intel on sirens that they've defeated
+
+    TRADING_POST = 10 # where players get coins which is used for many things
+    CHIP_FACTORY = 11 # where players get cube materials to research new ships
+    CUBE_FACTORY = 12 # where players get chip materials to research new gear
+    OIL_DRILL = 13 # where players get oil, which is used to craft consumables
+
+
+    SHIPYARD = 20 # where players can research new ships // could potentially have one for each warship type
+    GEAR_LAB = 21 # where players can craft new gear // could potentially have one for each warship type
+    MUNITIONS = 22 # where players can produce single-use items to use in battle
+
+
 class PortMenu:
     @staticmethod
     def open_build_menu():
