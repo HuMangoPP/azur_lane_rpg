@@ -36,15 +36,21 @@ TOP_OF_SCREEN = EDGE_PADDING
 BOTTOM_OF_SCREEN = TEMP_SCREEN_SIZE.y - EDGE_PADDING
 
 class Buildings:
-    MISC = 0 # miscellaneous buildings (0-9)
-    PRODUCTION = 1 # buildings that consume resources to produce ships/gear/items (10-19)
+    INTEL_CENTER = 0 # players get intel on shipgirls they have constructed // sirens that they've defeated
 
-    DORM = 0 # provides housing for shipgirls // increases dock space (number of shipgirls a player can have)
-    INTEL_CENTER = 1 # players get intel on sirens that they've defeated
+    DD_SHIPYARD = 10 # players research new DD ships
+    CL_SHIPYARD = 11 # players research new CL ships
+    CA_SHIPYARD = 12 # players research new CA ships
+    BB_SHIPYARD = 13 # players research new BB ships
+    CV_SHIPYARD = 14 # players research new CV ships
 
-    SHIPYARD = 10 # where players can research new ships // could potentially have one for each warship type
-    GEAR_LAB = 11 # where players can craft new gear // could potentially have one for each warship type
-    MUNITIONS = 12 # where players can produce single-use items to use in battle
+    DD_GEAR_LAB = 20 # players craft new DD gear
+    CL_GEAR_LAB = 21 # players craft new CL gear
+    CA_GEAR_LAB = 22 # players craft new CA gear
+    BB_GEAR_LAB = 23 # players craft new BB gear
+    CV_GEAR_LAB = 24 # players craft new CV gear
+
+    MUNITIONS = 30 # players produce misc items
 
 class Building:
     def __init__(self, building_type, pos):
@@ -60,99 +66,6 @@ class Building:
             font.render(screen, str(self.building_type), self.rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
 
 class PortMenu:
-    current_building_category = Buildings.MISC
-    
-    @staticmethod
-    def set_building_category_factory(building_category):
-        def set_building_category():
-            PortMenu.current_building_category = building_category
-        return set_building_category
-    
-    @classmethod
-    def create_set_building_category_buttons(cls):
-        categories = [Buildings.MISC, Buildings.PRODUCTION]
-        xalign = lambda i : 75*(i-0.5*(len(categories)-1))
-        cls.set_building_category_buttons = [
-            Button(
-                rect=get_rect(width=50, height=50, centerx=xalign(i)+0.5*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN-75),
-                color=(100,100,150),
-                text=str(category),
-                text_color=(255,255,255),
-                callback=cls.set_building_category_factory(category),
-                active=False
-            ) for i, category in enumerate(categories)
-        ]
-
-    selected_building = None
-    @staticmethod
-    def select_building_factory(building):
-        def select_building():
-            PortMenu.selected_building = building
-        return select_building
-
-    @classmethod
-    def create_select_building_buttons(cls):
-        building_categories = {
-            Buildings.MISC: [Buildings.DORM, Buildings.INTEL_CENTER],
-            Buildings.PRODUCTION: [Buildings.SHIPYARD, Buildings.GEAR_LAB, Buildings.MUNITIONS]
-        }
-        cls.select_building_buttons = {}
-        for category, buildings in building_categories.items():
-            xalign = lambda index : 75*(index-0.5*(len(buildings)-1))
-            cls.select_building_buttons[category] = [
-                Button(
-                    rect=get_rect(width=50, height=50, centerx=xalign(i)+0.5*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN),
-                    color=(100,100,150),
-                    text=str(building),
-                    text_color=(255,255,255),
-                    callback=cls.select_building_factory(building),
-                    active=False
-                ) for i, building in enumerate(buildings)
-            ]
-
-    show_build_menu = False
-    @staticmethod
-    def open_build_menu():
-        PortMenu.show_build_menu = True
-        PortMenu.open_build_menu_button.active = False
-        PortMenu.close_build_menu_button.active = True
-        for set_building_category_button in PortMenu.set_building_category_buttons:
-            set_building_category_button.active = True
-        for _, select_building_buttons in PortMenu.select_building_buttons.items():
-            for select_building_button in select_building_buttons:
-                select_building_button.active = True
-        PortMenu.open_select_sortie_menu_button.active = False
-
-    open_build_menu_button = Button(
-        rect=get_rect(width=100, height=50, centerx=0.75*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN),
-        color=(100,100,150),
-        text="build",
-        text_color=(255,255,255),
-        callback=open_build_menu
-    )
-
-    @staticmethod
-    def close_build_menu():
-        PortMenu.show_build_menu = False
-        PortMenu.open_build_menu_button.active = True
-        PortMenu.close_build_menu_button.active = False
-        for set_building_category_button in PortMenu.set_building_category_buttons:
-            set_building_category_button.active = False
-        for _, select_building_buttons in PortMenu.select_building_buttons.items():
-            for select_building_button in select_building_buttons:
-                select_building_button.active = False
-        PortMenu.open_select_sortie_menu_button.active = True
-        PortMenu.selected_building = None
-
-    close_build_menu_button = Button(
-        rect=get_rect(width=100, height=50, centerx=0.75*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN-75),
-        color=(100,100,150),
-        text="close",
-        text_color=(255,255,255),
-        callback=close_build_menu,
-        active=False
-    )
-
     show_shipyard_overlay = False
     show_gear_lab_overlay = False
     show_munitions_overlay = False
@@ -173,11 +86,7 @@ class PortMenu:
     def update(dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                if PortMenu.show_build_menu:
-                    if PortMenu.selected_building is not None and event.button == 1:
-                        PortMenu.buildings.append(Building(PortMenu.selected_building, pygame.Vector2(event.pos)))
-                    PortMenu.selected_building = None
-                elif PortMenu.show_shipyard_overlay:
+                if PortMenu.show_shipyard_overlay:
                     PortMenu.show_shipyard_overlay = False
                 elif PortMenu.show_gear_lab_overlay:
                     PortMenu.show_gear_lab_overlay = False
@@ -199,12 +108,6 @@ class PortMenu:
                                 PortMenu.show_munitions_overlay = True
 
                 PortMenu.open_select_sortie_menu_button.click(event.pos)
-                PortMenu.open_build_menu_button.click(event.pos)
-                PortMenu.close_build_menu_button.click(event.pos)
-                for set_building_category_button in PortMenu.set_building_category_buttons:
-                    set_building_category_button.click(event.pos)
-                for select_building_button in PortMenu.select_building_buttons[PortMenu.current_building_category]:
-                    select_building_button.click(event.pos)
         
         for shipgirl in available_shipgirls:
             shipgirl.update(dt)
@@ -215,25 +118,9 @@ class PortMenu:
         for shipgirl in available_shipgirls:
             shipgirl.draw(surface)
         PortMenu.open_select_sortie_menu_button.draw(surface, font)
-        PortMenu.open_build_menu_button.draw(surface, font)
-        PortMenu.close_build_menu_button.draw(surface, font)
-
-        if PortMenu.show_build_menu:
-            for set_building_category_button in PortMenu.set_building_category_buttons:
-                set_building_category_button.draw(surface, font)
-            for new_building_button in PortMenu.select_building_buttons[PortMenu.current_building_category]:
-                new_building_button.draw(surface, font)
-
-            if PortMenu.selected_building is not None:
-                mpos = pygame.Vector2(pygame.mouse.get_pos())//10*10
-                rect = get_rect(width=50, height=50, centerx=mpos.x, centery=mpos.y)
-                pygame.draw.rect(surface, (255,255,255), rect, width=2)
 
         for building in PortMenu.buildings:
             building.draw(surface)
-
-PortMenu.create_set_building_category_buttons()
-PortMenu.create_select_building_buttons()
 
 class SortieSelectionMenu:
     @staticmethod
