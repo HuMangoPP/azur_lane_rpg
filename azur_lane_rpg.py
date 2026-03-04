@@ -37,21 +37,14 @@ BOTTOM_OF_SCREEN = TEMP_SCREEN_SIZE.y - EDGE_PADDING
 
 class Buildings:
     MISC = 0 # miscellaneous buildings (0-9)
-    RESOURCE = 1 # buildings that provide resources (10-19)
-    PRODUCTION = 2 # buildings that consume resources to produce ships/gear/items (20-29)
+    PRODUCTION = 1 # buildings that consume resources to produce ships/gear/items (10-19)
 
     DORM = 0 # provides housing for shipgirls // increases dock space (number of shipgirls a player can have)
-    DOCK = 1 # instead of a sortie button, players will sortie from the dock
-    INTEL_CENTER = 2 # players get intel on sirens that they've defeated
+    INTEL_CENTER = 1 # players get intel on sirens that they've defeated
 
-    TRADING_POST = 10 # where players get coins which is used for many things
-    CHIP_FACTORY = 11 # where players get cube materials to research new ships
-    CUBE_FACTORY = 12 # where players get chip materials to research new gear
-    OIL_DRILL = 13 # where players get oil, which is used to craft consumables
-
-    SHIPYARD = 20 # where players can research new ships // could potentially have one for each warship type
-    GEAR_LAB = 21 # where players can craft new gear // could potentially have one for each warship type
-    MUNITIONS = 22 # where players can produce single-use items to use in battle
+    SHIPYARD = 10 # where players can research new ships // could potentially have one for each warship type
+    GEAR_LAB = 11 # where players can craft new gear // could potentially have one for each warship type
+    MUNITIONS = 12 # where players can produce single-use items to use in battle
 
 class Building:
     def __init__(self, building_type, pos):
@@ -77,7 +70,7 @@ class PortMenu:
     
     @classmethod
     def create_set_building_category_buttons(cls):
-        categories = [Buildings.MISC, Buildings.RESOURCE, Buildings.PRODUCTION]
+        categories = [Buildings.MISC, Buildings.PRODUCTION]
         xalign = lambda i : 75*(i-0.5*(len(categories)-1))
         cls.set_building_category_buttons = [
             Button(
@@ -100,8 +93,7 @@ class PortMenu:
     @classmethod
     def create_select_building_buttons(cls):
         building_categories = {
-            Buildings.MISC: [Buildings.DORM, Buildings.DOCK, Buildings.INTEL_CENTER],
-            Buildings.RESOURCE: [Buildings.TRADING_POST, Buildings.CHIP_FACTORY, Buildings.CUBE_FACTORY, Buildings.OIL_DRILL],
+            Buildings.MISC: [Buildings.DORM, Buildings.INTEL_CENTER],
             Buildings.PRODUCTION: [Buildings.SHIPYARD, Buildings.GEAR_LAB, Buildings.MUNITIONS]
         }
         cls.select_building_buttons = {}
@@ -132,7 +124,7 @@ class PortMenu:
         PortMenu.open_select_sortie_menu_button.active = False
 
     open_build_menu_button = Button(
-        rect=get_rect(width=100, height=50, centerx=0.25*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN),
+        rect=get_rect(width=100, height=50, centerx=0.75*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN),
         color=(100,100,150),
         text="build",
         text_color=(255,255,255),
@@ -161,6 +153,10 @@ class PortMenu:
         active=False
     )
 
+    show_shipyard_overlay = False
+    show_gear_lab_overlay = False
+    show_munitions_overlay = False
+
     @staticmethod
     def open_select_sortie_menu():
         Menus.current_menu = Menus.SORTIE_SELECTION
@@ -181,11 +177,26 @@ class PortMenu:
                     if PortMenu.selected_building is not None and event.button == 1:
                         PortMenu.buildings.append(Building(PortMenu.selected_building, pygame.Vector2(event.pos)))
                     PortMenu.selected_building = None
+                elif PortMenu.show_shipyard_overlay:
+                    PortMenu.show_shipyard_overlay = False
+                elif PortMenu.show_gear_lab_overlay:
+                    PortMenu.show_gear_lab_overlay = False
+                elif PortMenu.show_munitions_overlay:
+                    PortMenu.show_munitions_overlay = False
                 else:
                     for shipgirl in available_shipgirls:
                         if shipgirl.rect.collidepoint(event.pos):
                             EquipmentMenu.selected_shipgirl = shipgirl
                             Menus.current_menu = Menus.EQUIPMENT
+                    
+                    for building in PortMenu.buildings:
+                        if building.rect.collidepoint(event.pos):
+                            if building.building_type == Buildings.SHIPYARD:
+                                PortMenu.show_shipyard_overlay = True
+                            if building.building_type == Buildings.GEAR_LAB:
+                                PortMenu.show_gear_lab_overlay = True
+                            if building.building_type == Buildings.MUNITIONS:
+                                PortMenu.show_munitions_overlay = True
 
                 PortMenu.open_select_sortie_menu_button.click(event.pos)
                 PortMenu.open_build_menu_button.click(event.pos)
@@ -214,8 +225,8 @@ class PortMenu:
                 new_building_button.draw(surface, font)
 
             if PortMenu.selected_building is not None:
-                mpos = pygame.mouse.get_pos()
-                rect = get_rect(width=50, height=50, centerx=mpos[0], centery=mpos[1])
+                mpos = pygame.Vector2(pygame.mouse.get_pos())//10*10
+                rect = get_rect(width=50, height=50, centerx=mpos.x, centery=mpos.y)
                 pygame.draw.rect(surface, (255,255,255), rect, width=2)
 
         for building in PortMenu.buildings:
