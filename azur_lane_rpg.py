@@ -120,6 +120,19 @@ class PortMenu:
         ) for i in range(3)
     ]
 
+    @staticmethod
+    def overlay_confirm():
+        pass
+
+    overlay_confirm_button = Button( # TODO
+        rect=get_rect(width=100, height=50, centerx=397.5, bottom=480),
+        color=(100,100,150),
+        text="confirm",
+        text_color=(255,255,255),
+        callback=overlay_confirm,
+        active=False
+    )
+
     overlay_selected_entity = None
 
     @staticmethod
@@ -156,6 +169,7 @@ class PortMenu:
                     if not PortMenu.overlay_bg.collidepoint(event.pos):
                         PortMenu.current_overlay = PortMenu.NO_OVERLAY
                         PortMenu.overlay_selected_entity = None
+                        PortMenu.overlay_confirm_button.active = False
 
                     if PortMenu.current_overlay == PortMenu.SHIPYARD:
                         entities = [shipgirl for shipgirl, shipgirl_info in shipgirl_data.items() if shipgirl_info["research_reqs"]]
@@ -167,6 +181,9 @@ class PortMenu:
                     for entity, rect in zip(entities, PortMenu.overlay_left_icons):
                         if rect.collidepoint(event.pos):
                             PortMenu.overlay_selected_entity = entity
+                            PortMenu.overlay_confirm_button.active = True
+                    
+                    PortMenu.overlay_confirm_button.click(event.pos)
 
                     # TODO write update logic for each overlay in a method
                     # update the overlay enum to point to these methods for each overlay type
@@ -212,6 +229,8 @@ class PortMenu:
                     font.render(surface, ingredient, xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
                     xy = (rect.centerx, rect.top+0.67*rect.height)
                     font.render(surface, f"0-{req}", xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
+            
+            PortMenu.overlay_confirm_button.draw(surface, font)
             # TODO write update logic for each overlay in a method
             # update the overlay enum to point to these methods for each overlay type
 
