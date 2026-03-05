@@ -45,6 +45,7 @@ class Font:
         surface.blit(outline_text_surf, pygame.Vector2(xy) + pygame.Vector2(0, -1))
 
     def render(self, surface, text, xy, color, scale, style="topleft", outline_color=None, box_width=0):
+        text = text.lower()
         char_width = scale * self.font_width
         char_height = scale * self.font_height
         lines = self._get_lines(text, char_width, box_width)

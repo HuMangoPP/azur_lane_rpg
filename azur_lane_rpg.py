@@ -116,7 +116,7 @@ class PortMenu:
         get_rect(
             width=50, height=50,
             left=315+i*(50+7.5),
-            top=180
+            bottom=420
         ) for i in range(3)
     ]
 
@@ -210,12 +210,28 @@ class PortMenu:
             if PortMenu.current_overlay == PortMenu.SHIPYARD:
                 entities = [shipgirl for shipgirl, shipgirl_info in shipgirl_data.items() if shipgirl_info["research_reqs"]]
                 selected_entity_reqs = shipgirl_data.get(PortMenu.overlay_selected_entity, {}).get("research_reqs", {})
+                selected_entity_info = shipgirl_data.get(PortMenu.overlay_selected_entity, {})
+                selected_entity_info = {
+                    "HULL": selected_entity_info.get("hull_type", 0),
+                    "HP": selected_entity_info.get("max_hp", 0),
+                    "EVA": selected_entity_info.get("evasion", 0),
+                    "FP": selected_entity_info.get("firepower", 0),
+                    "RLD": selected_entity_info.get("reload", 0),
+                }
             elif PortMenu.current_overlay == PortMenu.GEAR_LAB:
                 entities = [weapon for weapon in weapon_data]
                 selected_entity_reqs = weapon_data.get(PortMenu.overlay_selected_entity, {}).get("craft_reqs", {})
+                selected_entity_info = weapon_data.get(PortMenu.overlay_selected_entity, {})
+                selected_entity_info = {
+                    "HULL": selected_entity_info.get("equippable_by", 0),
+                    "FP": selected_entity_info.get("firepower", 0),
+                    "RLD": selected_entity_info.get("reload", 0),
+                    "SHELL": selected_entity_info.get("shell_type", 0),
+                }
             else:
-                selected_entity_reqs = {}
                 entities = []
+                selected_entity_reqs = {}
+                selected_entity_info = {}
             
             for entity, rect in zip(entities, PortMenu.overlay_left_icons):
                 pygame.draw.rect(surface, (255,255,255), rect, width=2)
@@ -229,7 +245,14 @@ class PortMenu:
                     font.render(surface, ingredient, xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
                     xy = (rect.centerx, rect.top+0.67*rect.height)
                     font.render(surface, f"0-{req}", xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
-            
+                
+                x = PortMenu.overlay_right_panel.left + 10
+                y = PortMenu.overlay_right_icon.bottom + 10
+                for i, (info_key, info_value) in enumerate(selected_entity_info.items()):
+                    xy = (x, y + i*15)
+                    info_name = Stats.STAT_NAMES.get(info_key, info_key)
+                    font.render(surface, f"{info_name}: {info_value}", xy, (255,255,255), 1, style="topleft", outline_color=(10,10,10))
+
             PortMenu.overlay_confirm_button.draw(surface, font)
             # TODO write update logic for each overlay in a method
             # update the overlay enum to point to these methods for each overlay type
@@ -545,6 +568,13 @@ class Stats:
     FIREPOWER = 2
     RELOAD = 3
 
+    STAT_NAMES = {
+        MAX_HP: "HP",
+        EVASION: "EVA",
+        FIREPOWER: "FP",
+        RELOAD: "RLD",
+    }
+
 class EquipmentMenu:
     selected_shipgirl = None
     equipped_rects = [
@@ -667,7 +697,7 @@ class EquipmentMenu:
             for stat, rect in enumerate(EquipmentMenu.stat_rects):
                 font_rect = font.render(
                     surface,
-                    str(EquipmentMenu.get_stat(EquipmentMenu.selected_shipgirl, stat)),
+                    f"{Stats.STAT_NAMES[stat]}: {EquipmentMenu.get_stat(EquipmentMenu.selected_shipgirl, stat)}",
                     rect.center,
                     (255,255,255),
                     1,
