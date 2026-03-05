@@ -1,17 +1,20 @@
 {
 	"twin_120": {
+		"craft_reqs": {},
 		"equippable_by": "DD",
 		"firepower": 1,
 		"reload": 300,
 		"shell_type": "normal"
 	},
 	"twin_128": {
+		"craft_reqs": {},
 		"equippable_by": "DD",
 		"firepower": 1,
 		"reload": 300,
 		"shell_type": "AP"
 	},
 	"twin_100": {
+		"craft_reqs": {},
 		"equippable_by": "DD",
 		"firepower": 1,
 		"reload": 500,
@@ -19,18 +22,21 @@
 	},
 
 	"twin_150": {
+		"craft_reqs": {},
 		"equippable_by": "CL",
 		"firepower": 1,
 		"reload": 100,
 		"shell_type": "normal"
 	},
 	"twin_155": {
+		"craft_reqs": {},
 		"equippable_by": "CL",
 		"firepower": 2,
 		"reload": 50,
 		"shell_type": "HE"
 	},
 	"quad_152": {
+		"craft_reqs": {},
 		"equippable_by": "CL",
 		"firepower": 3,
 		"reload": 100,
@@ -38,36 +44,42 @@
 	},
 
 	"twin_203": {
+		"craft_reqs": {},
 		"equippable_by": "CA",
 		"firepower": 2,
 		"reload": 50,
 		"shell_type": "AP"
 	},
 	"tri_234": {
+		"craft_reqs": {},
 		"equippable_by": "CA",
 		"firepower": 3,
 		"reload": 25,
 		"shell_type": "normal"
 	},
 	"tri_203": {
+		"craft_reqs": {},
 		"equippable_by": "CA",
 		"firepower": 3,
 		"reload": 50,
 		"shell_type": "AP"
 	},
     "tri_406": {
+		"craft_reqs": {},
 		"equippable_by": "BB",
 		"firepower": 5,
 		"reload": 25,
 		"shell_type": "HE"
 	},
 	"quad_305": {
+		"craft_reqs": {},
 		"equippable_by": "BB",
 		"firepower": 5,
 		"reload": 25,
 		"shell_type": "AP"
 	},
 	"twin_457": {
+		"craft_reqs": {},
 		"equippable_by": "BB",
 		"firepower": 5,
 		"reload": 50,

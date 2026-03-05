@@ -85,9 +85,39 @@ class PortMenu:
         Building(Buildings.MUNITIONS, pygame.Vector2(175, 25))
     ]
 
+    overlay_bg = get_rect(width=400, height=400, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.5*TEMP_SCREEN_SIZE.y)
+    overlay_left_panel = get_rect( # TODO
+        width=0.5*(overlay_bg.width-30),
+        height=overlay_bg.height-20,
+        left=overlay_bg.left+10,
+        top=overlay_bg.top+10
+    )
+    overlay_right_panel = get_rect( # TODO
+        width=0.5*(overlay_bg.width-30),
+        height=overlay_bg.height-20,
+        right=overlay_bg.right-10,
+        top=overlay_bg.top+10
+    )
+
     overlay_left_icons = [ # TODO
-        get_rect(width=50, height=50, left=125+(i%3)*(50+5), top=125+(i//3)*(50+5))
-        for i in range(12)
+        get_rect(
+            width=50, height=50,
+            left=120+(i%3)*(50+7.5),
+            top=120+(i//3)*(50+7.5)
+        ) for i in range(12)
+    ]
+
+    overlay_right_icon = get_rect( # TODO
+        width=50, height=50,
+        centerx=overlay_right_panel.centerx,
+        top=overlay_right_panel.top+10
+    )
+    overlay_ingredient_icons = [ # TODO
+        get_rect(
+            width=50, height=50,
+            left=315+i*(50+7.5),
+            top=180
+        ) for i in range(3)
     ]
 
     overlay_selected_entity = None
@@ -123,23 +153,20 @@ class PortMenu:
                             if building.building_type == Buildings.MUNITIONS:
                                 PortMenu.current_overlay = PortMenu.MUNITIONS
                 else:
-                    overlay_width = 400 # TODO 
-                    overlay_height = 400
-                    overlay_bg = get_rect(width=overlay_width, height=overlay_height, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.5*TEMP_SCREEN_SIZE.y)
-                    if not overlay_bg.collidepoint(event.pos):
+                    if not PortMenu.overlay_bg.collidepoint(event.pos):
                         PortMenu.current_overlay = PortMenu.NO_OVERLAY
                         PortMenu.overlay_selected_entity = None
-                    
+
                     if PortMenu.current_overlay == PortMenu.SHIPYARD:
-                        constructable_shipgirls = [shipgirl for shipgirl, shipgirl_info in shipgirl_data.items() if shipgirl_info["constructable"]]
-                        for shipgirl, rect in zip(constructable_shipgirls, PortMenu.overlay_left_icons):
-                            if rect.collidepoint(event.pos):
-                                PortMenu.overlay_selected_entity = shipgirl
+                        entities = [shipgirl for shipgirl, shipgirl_info in shipgirl_data.items() if shipgirl_info["research_reqs"]]
                     elif PortMenu.current_overlay == PortMenu.GEAR_LAB:
-                        constructable_weapons = [weapon for weapon in weapon_data]
-                        for weapon, rect in zip(constructable_weapons, PortMenu.overlay_left_icons):
-                            if rect.collidepoint(event.pos):
-                                PortMenu.overlay_selected_entity = weapon
+                        entities = [weapon for weapon in weapon_data]
+                    else:
+                        entities = []
+
+                    for entity, rect in zip(entities, PortMenu.overlay_left_icons):
+                        if rect.collidepoint(event.pos):
+                            PortMenu.overlay_selected_entity = entity
 
                     # TODO write update logic for each overlay in a method
                     # update the overlay enum to point to these methods for each overlay type
@@ -159,34 +186,32 @@ class PortMenu:
             building.draw(surface)
 
         if PortMenu.current_overlay != PortMenu.NO_OVERLAY:
-            overlay_width = 400
-            overlay_height = 400
-            overlay_bg = get_rect(width=overlay_width, height=overlay_height, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.5*TEMP_SCREEN_SIZE.y)
-            padding = 20
-            panel_width = 0.5*(overlay_width-3*padding)
-            panel_height = overlay_height-2*padding
-            left_panel = get_rect(width=panel_width, height=panel_height, left=overlay_bg.left+padding, top=overlay_bg.top+padding)
-            right_panel = get_rect(width=panel_width, height=panel_height, right=overlay_bg.right-padding, top=overlay_bg.top+padding)
-            pygame.draw.rect(surface, (100,100,150), overlay_bg)
-            pygame.draw.rect(surface, (50,50,100), left_panel)
-            pygame.draw.rect(surface, (50,50,100), right_panel)
+            pygame.draw.rect(surface, (100,100,150), PortMenu.overlay_bg)
+            pygame.draw.rect(surface, (50,50,100), PortMenu.overlay_left_panel)
+            pygame.draw.rect(surface, (50,50,100), PortMenu.overlay_right_panel)
 
             if PortMenu.current_overlay == PortMenu.SHIPYARD:
-                constructable_shipgirls = [shipgirl for shipgirl, shipgirl_info in shipgirl_data.items() if shipgirl_info["constructable"]]
-                for shipgirl, rect in zip(constructable_shipgirls, PortMenu.overlay_left_icons):
-                    pygame.draw.rect(surface, (255,255,255), rect, width=2)
-                    font.render(surface, shipgirl, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+                entities = [shipgirl for shipgirl, shipgirl_info in shipgirl_data.items() if shipgirl_info["research_reqs"]]
+                selected_entity_reqs = shipgirl_data.get(PortMenu.overlay_selected_entity, {}).get("research_reqs", {})
             elif PortMenu.current_overlay == PortMenu.GEAR_LAB:
-                constructable_weapons = [weapon for weapon in weapon_data]
-                for weapon, rect in zip(constructable_weapons, PortMenu.overlay_left_icons):
-                    pygame.draw.rect(surface, (255,255,255), rect, width=2)
-                    font.render(surface, weapon, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+                entities = [weapon for weapon in weapon_data]
+                selected_entity_reqs = weapon_data.get(PortMenu.overlay_selected_entity, {}).get("craft_reqs", {})
+            else:
+                selected_entity_reqs = {}
+                entities = []
             
-            if PortMenu.overlay_selected_entity is not None:
-                rect = get_rect(width=50, height=50, centerx=right_panel.centerx, top=right_panel.top+padding)
+            for entity, rect in zip(entities, PortMenu.overlay_left_icons):
                 pygame.draw.rect(surface, (255,255,255), rect, width=2)
-                font.render(surface, PortMenu.overlay_selected_entity, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
-
+                font.render(surface, entity, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+            if PortMenu.overlay_selected_entity:
+                pygame.draw.rect(surface, (255,255,255), PortMenu.overlay_right_icon, width=2)
+                font.render(surface, PortMenu.overlay_selected_entity, PortMenu.overlay_right_icon.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+                for (ingredient, req), rect in zip(selected_entity_reqs.items(), PortMenu.overlay_ingredient_icons):
+                    pygame.draw.rect(surface, (255,255,255), rect, width=2)
+                    xy = (rect.centerx, rect.top+0.33*rect.height)
+                    font.render(surface, ingredient, xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
+                    xy = (rect.centerx, rect.top+0.67*rect.height)
+                    font.render(surface, f"0-{req}", xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
             # TODO write update logic for each overlay in a method
             # update the overlay enum to point to these methods for each overlay type
 
