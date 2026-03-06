@@ -6,11 +6,17 @@ from engine.font import Font
 from engine.button import Button
 from engine.util import get_rect, get_vec, draw_slice
 
+with open("data/save_file.json") as f:
+    save_file = json.load(f)
+
 with open("data/sorties.json") as f:
     sorties = json.load(f)
 
 with open("data/shipgirls.json") as f:
     shipgirl_data = json.load(f)
+
+with open("data/sirens.json") as f:
+    siren_data = json.load(f)
 
 with open("data/weapons.json") as f:
     weapon_data = json.load(f)
@@ -58,6 +64,10 @@ class Buildings:
 
     # MUNITIONS = 30 # players produce misc items
 
+    # RESEARCH_CENTER - players select which shipgirl they would like to research
+    # as they collect exp over time from sortie-ing, they progress towards a unique item
+    # that is eventualyl used to construct the shipgirl
+
 class Building:
     def __init__(self, building_type, pos):
         self.building_type = building_type
@@ -77,6 +87,25 @@ class PortMenu:
     GEAR_LAB = 2
     MUNITIONS = 3
     current_overlay = NO_OVERLAY
+
+    inventory = {
+        "DD_blueprint": 3,
+        "CL_blueprint": 0,
+        "CA_blueprint": 0,
+        "BB_blueprint": 0,
+
+        "cube": 0,
+
+        "huggy_pillow": 0,
+        "star_blaster": 0,
+        "battle_mech": 0,
+        "dragon_cannon": 0,
+
+        "metals": 3,
+        "plastics": 3,
+        "gunpowder": 3,
+        "electronics": 3
+    }
 
     buildings = [ # TODO
         Building(Buildings.INTEL_CENTER, pygame.Vector2(25, 25)),
@@ -122,7 +151,27 @@ class PortMenu:
 
     @staticmethod
     def overlay_confirm():
-        pass
+        if PortMenu.current_overlay == PortMenu.SHIPYARD:
+            selected_entity_reqs = shipgirl_data[PortMenu.overlay_selected_entity]["research_reqs"]
+            if (
+                PortMenu.overlay_selected_entity not in save_file["shipgirls"]
+                and all(PortMenu.inventory[ingredient] >= req for ingredient, req in selected_entity_reqs.items())
+            ):
+                save_file["shipgirls"][PortMenu.overlay_selected_entity] = [None, None, None]
+                shipgirl = Shipgirl(PortMenu.overlay_selected_entity)
+                available_shipgirls.append(shipgirl)
+                for ingredient, req in selected_entity_reqs.items():
+                    PortMenu.inventory[ingredient] -= req
+        elif PortMenu.current_overlay == PortMenu.GEAR_LAB:
+            selected_entity_reqs = weapon_data[PortMenu.overlay_selected_entity]["craft_reqs"]
+            if all(PortMenu.inventory[ingredient] >= req for ingredient, req in selected_entity_reqs.items()):
+                if PortMenu.overlay_selected_entity in save_file["weapons"]:
+                    save_file["weapons"][PortMenu.overlay_selected_entity] += 1
+                else:
+                    save_file["weapons"][PortMenu.overlay_selected_entity] = 1
+                for ingredient, req in selected_entity_reqs.items():
+                    PortMenu.inventory[ingredient] -= req
+
 
     overlay_confirm_button = Button( # TODO
         rect=get_rect(width=100, height=50, centerx=397.5, bottom=480),
@@ -244,7 +293,8 @@ class PortMenu:
                     xy = (rect.centerx, rect.top+0.33*rect.height)
                     font.render(surface, ingredient, xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
                     xy = (rect.centerx, rect.top+0.67*rect.height)
-                    font.render(surface, f"0-{req}", xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
+                    amt = PortMenu.inventory.get(ingredient, 0)
+                    font.render(surface, f"{amt}-{req}", xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
                 
                 x = PortMenu.overlay_right_panel.left + 10
                 y = PortMenu.overlay_right_icon.bottom + 10
@@ -662,9 +712,13 @@ class EquipmentMenu:
             equippable = [
                 weapon_name for weapon_name, weapon_info in weapon_data.items()
                 if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
+                and save_file["weapons"].get(weapon_name, 0) > 0
             ]
         else:
-            equippable = auxiliary_item_data
+            equippable = [
+                aux_item_name for aux_item_name in auxiliary_item_data
+                if save_file["aux_items"].get(aux_item_name, 0) > 0
+            ]
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
                 for i, rect in enumerate(EquipmentMenu.equipped_rects):
@@ -732,9 +786,13 @@ class EquipmentMenu:
                 equippable = [
                     weapon_name for weapon_name, weapon_info in weapon_data.items()
                     if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
+                    and save_file["weapons"].get(weapon_name, 0) > 0
                 ]
             else:
-                equippable = auxiliary_item_data
+                equippable = [
+                    aux_item_name for aux_item_name in auxiliary_item_data
+                    if save_file["aux_items"].get(aux_item_name, 0) > 0
+                ]
             for equipment, rect in zip(equippable, EquipmentMenu.equippable_rects):
                 pygame.draw.rect(surface, (255,255,255), rect, width=2)
                 _ = font.render(surface, equipment, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
@@ -770,15 +828,21 @@ class Armor:
     }
 
 class ShipgirlBattleComponent:
-    def __init__(self, shipgirl_data):
+    def __init__(self, name):
         self.active = False
 
-        self.base_max_hp = shipgirl_data["max_hp"]
-        self.base_evasion = shipgirl_data["evasion"]
-        self.base_firepower = shipgirl_data["firepower"]
-        self.base_reload = shipgirl_data["reload"]
-        self.hull_type = shipgirl_data["hull_type"]
-        self.equipment = shipgirl_data["equipment"]
+        if name in shipgirl_data:
+            info = shipgirl_data[name]
+            info["equipment"] = save_file["shipgirls"][name]
+        else:
+            info = siren_data[name]
+
+        self.base_max_hp = info["max_hp"]
+        self.base_evasion = info["evasion"]
+        self.base_firepower = info["firepower"]
+        self.base_reload = info["reload"]
+        self.hull_type = info["hull_type"]
+        self.equipment = info["equipment"]
 
         self.hp = self.max_hp()
         self.cooldown_timer = 1
@@ -879,7 +943,7 @@ class Shipgirl:
         self.pause_time = 0
         self.rect = get_rect(width=50, height=50, centerx=self.pos.x, centery=self.pos.y)
 
-        self.battle_component = ShipgirlBattleComponent(shipgirl_data[self.name])
+        self.battle_component = ShipgirlBattleComponent(self.name)
 
     def update(self, dt):
         if self.pause_time > 0:
@@ -964,11 +1028,7 @@ class Fleet:
             if shipgirl is not None:
                 shipgirl.draw(screen)
 
-laffey = Shipgirl("laffey")
-san_diego = Shipgirl("san_diego")
-guam = Shipgirl("guam")
-new_jersey = Shipgirl("new_jersey")
-available_shipgirls = [laffey, san_diego, guam, new_jersey]
+available_shipgirls = [Shipgirl(shipgirl_name) for shipgirl_name in save_file["shipgirls"]]
 available_shipgirl_rects = [
     get_rect(
         width=50,
@@ -1002,3 +1062,6 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
+
+with open("data/save_file.json", "w") as f:
+    json.dump(save_file, f)
