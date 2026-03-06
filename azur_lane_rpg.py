@@ -88,25 +88,6 @@ class PortMenu:
     MUNITIONS = 3
     current_overlay = NO_OVERLAY
 
-    inventory = {
-        "DD_blueprint": 3,
-        "CL_blueprint": 0,
-        "CA_blueprint": 0,
-        "BB_blueprint": 0,
-
-        "cube": 0,
-
-        "huggy_pillow": 0,
-        "star_blaster": 0,
-        "battle_mech": 0,
-        "dragon_cannon": 0,
-
-        "metals": 3,
-        "plastics": 3,
-        "gunpowder": 3,
-        "electronics": 3
-    }
-
     buildings = [ # TODO
         Building(Buildings.INTEL_CENTER, pygame.Vector2(25, 25)),
         Building(Buildings.SHIPYARD, pygame.Vector2(75, 25)),
@@ -155,22 +136,22 @@ class PortMenu:
             selected_entity_reqs = shipgirl_data[PortMenu.overlay_selected_entity]["research_reqs"]
             if (
                 PortMenu.overlay_selected_entity not in save_file["shipgirls"]
-                and all(PortMenu.inventory[ingredient] >= req for ingredient, req in selected_entity_reqs.items())
+                and all(save_file["inventory"][ingredient] >= req for ingredient, req in selected_entity_reqs.items())
             ):
                 save_file["shipgirls"][PortMenu.overlay_selected_entity] = [None, None, None]
                 shipgirl = Shipgirl(PortMenu.overlay_selected_entity)
                 available_shipgirls.append(shipgirl)
                 for ingredient, req in selected_entity_reqs.items():
-                    PortMenu.inventory[ingredient] -= req
+                    save_file["inventory"][ingredient] -= req
         elif PortMenu.current_overlay == PortMenu.GEAR_LAB:
             selected_entity_reqs = weapon_data[PortMenu.overlay_selected_entity]["craft_reqs"]
-            if all(PortMenu.inventory[ingredient] >= req for ingredient, req in selected_entity_reqs.items()):
+            if all(save_file["inventory"][ingredient] >= req for ingredient, req in selected_entity_reqs.items()):
                 if PortMenu.overlay_selected_entity in save_file["weapons"]:
                     save_file["weapons"][PortMenu.overlay_selected_entity] += 1
                 else:
                     save_file["weapons"][PortMenu.overlay_selected_entity] = 1
                 for ingredient, req in selected_entity_reqs.items():
-                    PortMenu.inventory[ingredient] -= req
+                    save_file["inventory"][ingredient] -= req
 
 
     overlay_confirm_button = Button( # TODO
@@ -293,7 +274,7 @@ class PortMenu:
                     xy = (rect.centerx, rect.top+0.33*rect.height)
                     font.render(surface, ingredient, xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
                     xy = (rect.centerx, rect.top+0.67*rect.height)
-                    amt = PortMenu.inventory.get(ingredient, 0)
+                    amt = save_file["inventory"].get(ingredient, 0)
                     font.render(surface, f"{amt}-{req}", xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
                 
                 x = PortMenu.overlay_right_panel.left + 10

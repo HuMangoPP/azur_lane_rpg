@@ -1,5 +1,20 @@
 {
 	"shipgirls": { "laffey": [null, null, null] },
-	"weapons": { "twin_120": 2, "twin_128": 1, "twin_100": 1 },
-	"aux_items": {}
+	"weapons": {  },
+	"aux_items": {},
+	"inventory": {
+		"DD_blueprint": 3,
+		"CL_blueprint": 0,
+		"CA_blueprint": 0,
+		"BB_blueprint": 0,
+		"cube": 0,
+		"huggy_pillow": 0,
+		"star_blaster": 0,
+		"battle_mech": 0,
+		"dragon_cannon": 0,
+		"metals": 2,
+		"plastics": 2,
+		"gunpowder": 2,
+		"electronics": 1
+	}
 }
