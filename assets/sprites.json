@@ -1,18 +1,32 @@
 {
-    "twin_100": "assets/twin_100.png",
-    "twin_137": "assets/twin_137.png",
-    "twin_120": "assets/twin_120.png",
-    "twin_150": "assets/twin_150.png",
-    "tri_155": "assets/tri_155.png",
-    "quad_152": "assets/quad_152.png",
-    "twin_203": "assets/twin_203.png",
-    "tri_234": "assets/tri_234.png",
-    "tri_203": "assets/tri_203.png",
-    "tri_406": "assets/tri_406.png",
-    "quad_305": "assets/quad_305.png",
-    "twin_457": "assets/twin_457.png",
-    "ap_shell": "assets/ap_shell.png",
-    "autoloader": "assets/autoloader.png",
-    "repair_toolkit": "assets/repair_toolkit.png",
-    "steering_gear": "assets/steering_gear.png"
+	"twin_100": "assets/twin_100.png",
+	"twin_137": "assets/twin_137.png",
+	"twin_120": "assets/twin_120.png",
+
+	"twin_150": "assets/twin_150.png",
+	"tri_155": "assets/tri_155.png",
+	"quad_152": "assets/quad_152.png",
+
+	"twin_203": "assets/twin_203.png",
+	"tri_234": "assets/tri_234.png",
+	"tri_203": "assets/tri_203.png",
+
+	"tri_406": "assets/tri_406.png",
+	"quad_305": "assets/quad_305.png",
+	"twin_457": "assets/twin_457.png",
+
+	"ap_shell": "assets/ap_shell.png",
+	"autoloader": "assets/autoloader.png",
+	"repair_toolkit": "assets/repair_toolkit.png",
+	"steering_gear": "assets/steering_gear.png",
+
+	"BB_blueprint": "assets/BB_blueprint.png",
+	"CA_blueprint": "assets/CA_blueprint.png",
+	"CL_blueprint": "assets/CL_blueprint.png",
+	"DD_blueprint": "assets/DD_blueprint.png",
+	"electronics": "assets/electronics.png",
+	"gunpowder": "assets/gunpowder.png",
+	"metals": "assets/metals.png",
+	"plastics": "assets/plastics.png",
+	"wisdom_cube": "assets/wisdom_cube.png"
 }

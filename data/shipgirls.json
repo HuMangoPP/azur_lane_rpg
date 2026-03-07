@@ -1,6 +1,6 @@
 {
 	"laffey": {
-		"research_reqs": { "DD_blueprint": 1, "cube": 1, "huggy_pillow": 1 },
+		"research_reqs": { "DD_blueprint": 1, "wisdom_cube": 1, "huggy_pillow": 1 },
 		"hull_type": "DD",
 		"max_hp": 10,
 		"evasion": 0,
@@ -8,7 +8,7 @@
 		"reload": 300
 	},
 	"san_diego": {
-		"research_reqs": { "CL_blueprint": 1, "cube": 1, "star_blaster": 1 },
+		"research_reqs": { "CL_blueprint": 1, "wisdom_cube": 1, "star_blaster": 1 },
 		"hull_type": "CL",
 		"max_hp": 15,
 		"evasion": 0,
@@ -16,7 +16,7 @@
 		"reload": 200
 	},
 	"guam": {
-		"research_reqs": { "CA_blueprint": 1, "cube": 1, "battle_mech": 1 },
+		"research_reqs": { "CA_blueprint": 1, "wisdom_cube": 1, "battle_mech": 1 },
 		"hull_type": "CA",
 		"max_hp": 20,
 		"evasion": 0,
@@ -24,7 +24,7 @@
 		"reload": 100
 	},
 	"new_jersey": {
-		"research_reqs": { "BB_blueprint": 1, "cube": 1, "dragon_cannon": 1 },
+		"research_reqs": { "BB_blueprint": 1, "wisdom_cube": 1, "dragon_cannon": 1 },
 		"hull_type": "BB",
 		"max_hp": 30,
 		"evasion": 0,

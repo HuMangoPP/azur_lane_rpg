@@ -270,9 +270,12 @@ class PortMenu:
                 else:
                     pygame.draw.rect(surface, (255,255,255), PortMenu.overlay_right_icon, width=2)
                 for (ingredient, req), rect in zip(selected_entity_reqs.items(), PortMenu.overlay_ingredient_icons):
-                    pygame.draw.rect(surface, (255,255,255), rect, width=2)
-                    xy = (rect.centerx, rect.top+0.33*rect.height)
-                    font.render(surface, ingredient, xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
+                    if ingredient in sprites:
+                        surface.blit(sprites[ingredient], rect)
+                    else:
+                        pygame.draw.rect(surface, (255,255,255), rect, width=2)
+                        xy = (rect.centerx, rect.top+0.33*rect.height)
+                        font.render(surface, ingredient, xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
                     xy = (rect.centerx, rect.top+0.67*rect.height)
                     amt = save_file["inventory"].get(ingredient, 0)
                     font.render(surface, f"{amt}-{req}", xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
