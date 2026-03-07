@@ -18,11 +18,8 @@ with open("data/shipgirls.json") as f:
 with open("data/sirens.json") as f:
     siren_data = json.load(f)
 
-with open("data/weapons.json") as f:
-    weapon_data = json.load(f)
-
-with open("data/auxiliary_items.json") as f:
-    auxiliary_item_data = json.load(f)
+with open("data/equipment.json") as f:
+    equipment_data = json.load(f)
 
 pygame.init()
 
@@ -42,31 +39,11 @@ TOP_OF_SCREEN = EDGE_PADDING
 BOTTOM_OF_SCREEN = TEMP_SCREEN_SIZE.y - EDGE_PADDING
 
 class Buildings:
-    INTEL_CENTER = 0 # players get intel on shipgirls they have constructed // sirens that they've defeated
-
+    INTEL_CENTER = 0
     SHIPYARD = 1
-
     GEAR_LAB = 2
-
     MUNITIONS = 3
-
-    # DD_SHIPYARD = 10 # players research new DD ships
-    # CL_SHIPYARD = 11 # players research new CL ships
-    # CA_SHIPYARD = 12 # players research new CA ships
-    # BB_SHIPYARD = 13 # players research new BB ships
-    # CV_SHIPYARD = 14 # players research new CV ships
-
-    # DD_GEAR_LAB = 20 # players craft new DD gear
-    # CL_GEAR_LAB = 21 # players craft new CL gear
-    # CA_GEAR_LAB = 22 # players craft new CA gear
-    # BB_GEAR_LAB = 23 # players craft new BB gear
-    # CV_GEAR_LAB = 24 # players craft new CV gear
-
-    # MUNITIONS = 30 # players produce misc items
-
-    # RESEARCH_CENTER - players select which shipgirl they would like to research
-    # as they collect exp over time from sortie-ing, they progress towards a unique item
-    # that is eventualyl used to construct the shipgirl
+    RESEARCH_CENTER = 4
 
 class Building:
     def __init__(self, building_type, pos):
@@ -82,18 +59,21 @@ class Building:
             font.render(screen, str(self.building_type), self.rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
 
 class PortMenu:
-    NO_OVERLAY = 0
+    NO_OVERLAY = -1
+    INTEL_CENTER = 0
     SHIPYARD = 1
     GEAR_LAB = 2
     MUNITIONS = 3
+    RESEARCH_CENTER = 4
     current_overlay = NO_OVERLAY
 
-    buildings = [ # TODO
-        Building(Buildings.INTEL_CENTER, pygame.Vector2(25, 25)),
-        Building(Buildings.SHIPYARD, pygame.Vector2(75, 25)),
-        Building(Buildings.GEAR_LAB, pygame.Vector2(125, 25)),
-        Building(Buildings.MUNITIONS, pygame.Vector2(175, 25))
-    ]
+    buildings = { # TODO
+        INTEL_CENTER: Building(Buildings.INTEL_CENTER, pygame.Vector2(25, 25)),
+        SHIPYARD: Building(Buildings.SHIPYARD, pygame.Vector2(75, 25)),
+        GEAR_LAB: Building(Buildings.GEAR_LAB, pygame.Vector2(125, 25)),
+        MUNITIONS: Building(Buildings.MUNITIONS, pygame.Vector2(175, 25)),
+        RESEARCH_CENTER: Building(Buildings.RESEARCH_CENTER, pygame.Vector2(225, 25))
+    }
 
     overlay_bg = get_rect(width=400, height=400, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.5*TEMP_SCREEN_SIZE.y)
     overlay_left_panel = get_rect( # TODO
@@ -114,7 +94,7 @@ class PortMenu:
             width=50, height=50,
             left=120+(i%3)*(50+7.5),
             top=120+(i//3)*(50+7.5)
-        ) for i in range(12)
+        ) for i in range(18)
     ]
 
     overlay_right_icon = get_rect( # TODO
@@ -144,12 +124,12 @@ class PortMenu:
                 for ingredient, req in selected_entity_reqs.items():
                     save_file["inventory"][ingredient] -= req
         elif PortMenu.current_overlay == PortMenu.GEAR_LAB:
-            selected_entity_reqs = weapon_data[PortMenu.overlay_selected_entity]["craft_reqs"]
+            selected_entity_reqs = equipment_data[PortMenu.overlay_selected_entity]["craft_reqs"]
             if all(save_file["inventory"][ingredient] >= req for ingredient, req in selected_entity_reqs.items()):
-                if PortMenu.overlay_selected_entity in save_file["weapons"]:
-                    save_file["weapons"][PortMenu.overlay_selected_entity] += 1
+                if PortMenu.overlay_selected_entity in save_file["equipment"]:
+                    save_file["equipment"][PortMenu.overlay_selected_entity] += 1
                 else:
-                    save_file["weapons"][PortMenu.overlay_selected_entity] = 1
+                    save_file["equipment"][PortMenu.overlay_selected_entity] = 1
                 for ingredient, req in selected_entity_reqs.items():
                     save_file["inventory"][ingredient] -= req
 
@@ -187,14 +167,9 @@ class PortMenu:
                             EquipmentMenu.selected_shipgirl = shipgirl
                             Menus.current_menu = Menus.EQUIPMENT
                     
-                    for building in PortMenu.buildings:
+                    for overlay_enum, building in PortMenu.buildings.items():
                         if building.rect.collidepoint(event.pos):
-                            if building.building_type == Buildings.SHIPYARD:
-                                PortMenu.current_overlay = PortMenu.SHIPYARD
-                            if building.building_type == Buildings.GEAR_LAB:
-                                PortMenu.current_overlay = PortMenu.GEAR_LAB
-                            if building.building_type == Buildings.MUNITIONS:
-                                PortMenu.current_overlay = PortMenu.MUNITIONS
+                            PortMenu.current_overlay = overlay_enum
                 else:
                     if not PortMenu.overlay_bg.collidepoint(event.pos):
                         PortMenu.current_overlay = PortMenu.NO_OVERLAY
@@ -204,7 +179,7 @@ class PortMenu:
                     if PortMenu.current_overlay == PortMenu.SHIPYARD:
                         entities = [shipgirl for shipgirl, shipgirl_info in shipgirl_data.items() if shipgirl_info["research_reqs"]]
                     elif PortMenu.current_overlay == PortMenu.GEAR_LAB:
-                        entities = [weapon for weapon in weapon_data]
+                        entities = [weapon for weapon in equipment_data]
                     else:
                         entities = []
 
@@ -229,7 +204,7 @@ class PortMenu:
             shipgirl.draw(surface)
         PortMenu.open_select_sortie_menu_button.draw(surface, font)
 
-        for building in PortMenu.buildings:
+        for _, building in PortMenu.buildings.items():
             building.draw(surface)
 
         if PortMenu.current_overlay != PortMenu.NO_OVERLAY:
@@ -239,24 +214,26 @@ class PortMenu:
 
             if PortMenu.current_overlay == PortMenu.SHIPYARD:
                 entities = [shipgirl for shipgirl, shipgirl_info in shipgirl_data.items() if shipgirl_info["research_reqs"]]
-                selected_entity_reqs = shipgirl_data.get(PortMenu.overlay_selected_entity, {}).get("research_reqs", {})
                 selected_entity_info = shipgirl_data.get(PortMenu.overlay_selected_entity, {})
+                selected_entity_reqs = selected_entity_info.get("research_reqs", {})
                 selected_entity_info = {
-                    "HULL": selected_entity_info.get("hull_type", 0),
+                    "HULL": selected_entity_info.get("hull_type", None),
                     "HP": selected_entity_info.get("max_hp", 0),
                     "EVA": selected_entity_info.get("evasion", 0),
                     "FP": selected_entity_info.get("firepower", 0),
                     "RLD": selected_entity_info.get("reload", 0),
                 }
             elif PortMenu.current_overlay == PortMenu.GEAR_LAB:
-                entities = [weapon for weapon in weapon_data]
-                selected_entity_reqs = weapon_data.get(PortMenu.overlay_selected_entity, {}).get("craft_reqs", {})
-                selected_entity_info = weapon_data.get(PortMenu.overlay_selected_entity, {})
+                entities = [weapon for weapon in equipment_data]
+                selected_entity_info = equipment_data.get(PortMenu.overlay_selected_entity, {})
+                selected_entity_reqs = selected_entity_info.get("craft_reqs", {})
                 selected_entity_info = {
-                    "HULL": selected_entity_info.get("equippable_by", 0),
-                    "FP": selected_entity_info.get("firepower", 0),
-                    "RLD": selected_entity_info.get("reload", 0),
-                    "SHELL": selected_entity_info.get("shell_type", 0),
+                    "HULL": selected_entity_info.get("equippable_by"),
+                    "HP": selected_entity_info.get("max_hp"),
+                    "EVA": selected_entity_info.get("evasion"),
+                    "FP": selected_entity_info.get("firepower"),
+                    "RLD": selected_entity_info.get("reload"),
+                    "SHELL": selected_entity_info.get("shell_type"),
                 }
             else:
                 entities = []
@@ -280,9 +257,12 @@ class PortMenu:
                 x = PortMenu.overlay_right_panel.left + 10
                 y = PortMenu.overlay_right_icon.bottom + 10
                 for i, (info_key, info_value) in enumerate(selected_entity_info.items()):
-                    xy = (x, y + i*15)
+                    if info_value is None:
+                        continue
+                    xy = (x, y)
                     info_name = Stats.STAT_NAMES.get(info_key, info_key)
                     font.render(surface, f"{info_name}: {info_value}", xy, (255,255,255), 1, style="topleft", outline_color=(10,10,10))
+                    y += 15
 
             PortMenu.overlay_confirm_button.draw(surface, font)
             # TODO write update logic for each overlay in a method
@@ -691,14 +671,16 @@ class EquipmentMenu:
     def update(dt, events):
         if EquipmentMenu.selected_equipment == Equipment.WEAPON:
             equippable = [
-                weapon_name for weapon_name, weapon_info in weapon_data.items()
+                weapon_name for weapon_name, weapon_info in equipment_data.items()
                 if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
-                and save_file["weapons"].get(weapon_name, 0) > 0
+                and weapon_info["type"] == "weapon"
+                and save_file["equipment"].get(weapon_name, 0) > 0
             ]
         else:
             equippable = [
-                aux_item_name for aux_item_name in auxiliary_item_data
-                if save_file["aux_items"].get(aux_item_name, 0) > 0
+                aux_name for aux_name, aux_info in equipment_data.items()
+                if save_file["equipment"].get(aux_name, 0) > 0
+                and aux_info["type"] == "aux"
             ]
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
@@ -706,9 +688,16 @@ class EquipmentMenu:
                     if rect.collidepoint(event.pos):
                         EquipmentMenu.selected_equipment = i
 
-                for equipment, rect in zip(equippable, EquipmentMenu.equippable_rects):
+                for new_equipment, rect in zip(equippable, EquipmentMenu.equippable_rects):
                     if rect.collidepoint(event.pos):
-                        EquipmentMenu.selected_shipgirl.battle_component.equipment[EquipmentMenu.selected_equipment] = equipment
+                        current_equipment = EquipmentMenu.selected_shipgirl.battle_component.equipment[EquipmentMenu.selected_equipment]
+                        if current_equipment is not None:
+                            if current_equipment in save_file["equipment"]:
+                                save_file["equipment"][current_equipment] += 1
+                            else:
+                                save_file["equipment"][current_equipment] = 1
+                        EquipmentMenu.selected_shipgirl.battle_component.equipment[EquipmentMenu.selected_equipment] = new_equipment
+                        save_file["equipment"][new_equipment] -= 1
             
                 EquipmentMenu.exit_equipment_menu_button.click(event.pos)
             if event.type == pygame.MOUSEMOTION:
@@ -765,14 +754,16 @@ class EquipmentMenu:
             # equippable equipment
             if EquipmentMenu.selected_equipment == Equipment.WEAPON:
                 equippable = [
-                    weapon_name for weapon_name, weapon_info in weapon_data.items()
+                    weapon_name for weapon_name, weapon_info in equipment_data.items()
                     if weapon_info["equippable_by"] == EquipmentMenu.selected_shipgirl.battle_component.hull_type
-                    and save_file["weapons"].get(weapon_name, 0) > 0
+                    and weapon_info["type"] == "weapon"
+                    and save_file["equipment"].get(weapon_name, 0) > 0
                 ]
             else:
                 equippable = [
-                    aux_item_name for aux_item_name in auxiliary_item_data
-                    if save_file["aux_items"].get(aux_item_name, 0) > 0
+                    aux_name for aux_name, aux_info in equipment_data.items()
+                    if save_file["equipment"].get(aux_name, 0) > 0
+                    and aux_info["type"] == "aux"
                 ]
             for equipment, rect in zip(equippable, EquipmentMenu.equippable_rects):
                 pygame.draw.rect(surface, (255,255,255), rect, width=2)
@@ -835,9 +826,9 @@ class ShipgirlBattleComponent:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
             self.base_max_hp
-            + weapon_data.get(equipment[Equipment.WEAPON], {}).get("max_hp", 0)
-            + auxiliary_item_data.get(equipment[Equipment.AUX1], {}).get("max_hp", 0)
-            + auxiliary_item_data.get(equipment[Equipment.AUX2], {}).get("max_hp", 0)
+            + equipment_data.get(equipment[Equipment.WEAPON], {}).get("max_hp", 0)
+            + equipment_data.get(equipment[Equipment.AUX1], {}).get("max_hp", 0)
+            + equipment_data.get(equipment[Equipment.AUX2], {}).get("max_hp", 0)
         )
 
     def evasion(self, equipment_override=None):
@@ -846,9 +837,9 @@ class ShipgirlBattleComponent:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
             self.base_evasion
-            + weapon_data.get(equipment[Equipment.WEAPON], {}).get("evasion", 0)
-            + auxiliary_item_data.get(equipment[Equipment.AUX1], {}).get("evasion", 0)
-            + auxiliary_item_data.get(equipment[Equipment.AUX2], {}).get("evasion", 0)
+            + equipment_data.get(equipment[Equipment.WEAPON], {}).get("evasion", 0)
+            + equipment_data.get(equipment[Equipment.AUX1], {}).get("evasion", 0)
+            + equipment_data.get(equipment[Equipment.AUX2], {}).get("evasion", 0)
         )
 
     def firepower(self, equipment_override=None):
@@ -857,9 +848,9 @@ class ShipgirlBattleComponent:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
             self.base_firepower
-            + weapon_data.get(equipment[Equipment.WEAPON], {}).get("firepower", 0)
-            + auxiliary_item_data.get(equipment[Equipment.AUX1], {}).get("firepower", 0)
-            + auxiliary_item_data.get(equipment[Equipment.AUX2], {}).get("firepower", 0)
+            + equipment_data.get(equipment[Equipment.WEAPON], {}).get("firepower", 0)
+            + equipment_data.get(equipment[Equipment.AUX1], {}).get("firepower", 0)
+            + equipment_data.get(equipment[Equipment.AUX2], {}).get("firepower", 0)
         )
 
     def reload(self, equipment_override=None):
@@ -868,9 +859,9 @@ class ShipgirlBattleComponent:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
             self.base_reload
-            + weapon_data.get(equipment[Equipment.WEAPON], {}).get("reload", 0)
-            + auxiliary_item_data.get(equipment[Equipment.AUX1], {}).get("reload", 0)
-            + auxiliary_item_data.get(equipment[Equipment.AUX2], {}).get("reload", 0)
+            + equipment_data.get(equipment[Equipment.WEAPON], {}).get("reload", 0)
+            + equipment_data.get(equipment[Equipment.AUX1], {}).get("reload", 0)
+            + equipment_data.get(equipment[Equipment.AUX2], {}).get("reload", 0)
         )
 
     def reset(self):
@@ -888,8 +879,8 @@ class ShipgirlBattleComponent:
         if self.target is not None and self.cooldown_timer <= 0:
             evasion_roll = random.random() * 100
             if evasion_roll > self.target.battle_component.evasion():
-                weapon = weapon_data.get(self.equipment[0], {}) if self.equipment[0] is not None else {}
-                shell_type = weapon.get("shell_type", "normal")
+                weapon_info = equipment_data.get(self.equipment[0], {}) if self.equipment[0] is not None else {}
+                shell_type = weapon_info.get("shell_type", "normal")
                 armor_type = Armor.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
                 self.target.battle_component.hp -= self.firepower() * Armor.DAMAGE_MULTIPLIER[shell_type][armor_type]
             self.cooldown_timer = 1
@@ -1045,4 +1036,4 @@ while running:
 pygame.quit()
 
 with open("data/save_file.json", "w") as f:
-    json.dump(save_file, f)
+    json.dump(save_file, f, indent=4)

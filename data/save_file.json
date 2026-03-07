@@ -1,20 +1,29 @@
 {
-	"shipgirls": { "laffey": [null, null, null] },
-	"weapons": {  },
-	"aux_items": {},
-	"inventory": {
-		"DD_blueprint": 3,
-		"CL_blueprint": 0,
-		"CA_blueprint": 0,
-		"BB_blueprint": 0,
-		"cube": 0,
-		"huggy_pillow": 0,
-		"star_blaster": 0,
-		"battle_mech": 0,
-		"dragon_cannon": 0,
-		"metals": 2,
-		"plastics": 2,
-		"gunpowder": 2,
-		"electronics": 1
-	}
+    "shipgirls": {
+        "laffey": [
+            "twin_100",
+            null,
+            null
+        ]
+    },
+    "equipment": {
+        "twin_120": 1,
+        "twin_128": 1,
+        "twin_100": 0
+    },
+    "inventory": {
+        "DD_blueprint": 0,
+        "CL_blueprint": 0,
+        "CA_blueprint": 0,
+        "BB_blueprint": 0,
+        "cube": 0,
+        "huggy_pillow": 0,
+        "star_blaster": 0,
+        "battle_mech": 0,
+        "dragon_cannon": 0,
+        "metals": 0,
+        "plastics": 0,
+        "gunpowder": 0,
+        "electronics": 1
+    }
 }

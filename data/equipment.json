@@ -1,5 +1,6 @@
 {
 	"twin_120": {
+		"type": "weapon",
 		"craft_reqs": { "DD_blueprint": 1, "gunpowder": 1, "metals": 1 },
 		"equippable_by": "DD",
 		"firepower": 1,
@@ -7,6 +8,7 @@
 		"shell_type": "normal"
 	},
 	"twin_128": {
+		"type": "weapon",
 		"craft_reqs": { "DD_blueprint": 1, "metals": 1, "plastics": 1 },
 		"equippable_by": "DD",
 		"firepower": 1,
@@ -14,6 +16,7 @@
 		"shell_type": "AP"
 	},
 	"twin_100": {
+		"type": "weapon",
 		"craft_reqs": { "DD_blueprint": 1, "gunpowder": 1, "plastics": 1 },
 		"equippable_by": "DD",
 		"firepower": 1,
@@ -22,6 +25,7 @@
 	},
 
 	"twin_150": {
+		"type": "weapon",
 		"craft_reqs": { "CL_blueprint": 1, "gunpowder": 1, "metals": 1 },
 		"equippable_by": "CL",
 		"firepower": 1,
@@ -29,6 +33,7 @@
 		"shell_type": "normal"
 	},
 	"twin_155": {
+		"type": "weapon",
 		"craft_reqs": { "CL_blueprint": 1, "plastics": 1, "metals": 1 },
 		"equippable_by": "CL",
 		"firepower": 2,
@@ -36,6 +41,7 @@
 		"shell_type": "HE"
 	},
 	"quad_152": {
+		"type": "weapon",
 		"craft_reqs": { "CL_blueprint": 1, "plastics": 1, "gunpowder": 1 },
 		"equippable_by": "CL",
 		"firepower": 3,
@@ -44,6 +50,7 @@
 	},
 
 	"twin_203": {
+		"type": "weapon",
 		"craft_reqs": { "CA_blueprint": 1, "gunpowder": 1, "metals": 1 },
 		"equippable_by": "CA",
 		"firepower": 2,
@@ -51,6 +58,7 @@
 		"shell_type": "AP"
 	},
 	"tri_234": {
+		"type": "weapon",
 		"craft_reqs": { "CA_blueprint": 1, "electronics": 1, "plastics": 1 },
 		"equippable_by": "CA",
 		"firepower": 3,
@@ -58,6 +66,7 @@
 		"shell_type": "normal"
 	},
 	"tri_203": {
+		"type": "weapon",
 		"craft_reqs": { "CA_blueprint": 1, "plastics": 1, "metals": 1 },
 		"equippable_by": "CA",
 		"firepower": 3,
@@ -65,6 +74,7 @@
 		"shell_type": "AP"
 	},
 	"tri_406": {
+		"type": "weapon",
 		"craft_reqs": { "BB_blueprint": 1, "electronics": 1, "metals": 1 },
 		"equippable_by": "BB",
 		"firepower": 5,
@@ -72,6 +82,7 @@
 		"shell_type": "HE"
 	},
 	"quad_305": {
+		"type": "weapon",
 		"craft_reqs": { "BB_blueprint": 1, "electronics": 1, "plastics": 1 },
 		"equippable_by": "BB",
 		"firepower": 5,
@@ -79,10 +90,15 @@
 		"shell_type": "AP"
 	},
 	"twin_457": {
+		"type": "weapon",
 		"craft_reqs": { "BB_blueprint": 1, "electronics": 1, "gunpowder": 1 },
 		"equippable_by": "BB",
 		"firepower": 5,
 		"reload": 50,
 		"shell_type": "AP"
-	}
+	},
+	"steering_gear": { "type": "aux", "craft_reqs": {}, "evasion": 5 },
+	"repair_toolkit": { "type": "aux", "craft_reqs": {}, "max_hp": 5 },
+	"autoloader": { "type": "aux", "craft_reqs": {}, "reload": 100 },
+	"ap_shell": { "type": "aux", "craft_reqs": {}, "firepower": 1 }
 }

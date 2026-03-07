@@ -1,6 +1,0 @@
-{
-	"steering_gear": { "evasion": 5 },
-	"repair_toolkit": { "max_hp": 5 },
-	"autoloader": { "reload": 100 },
-	"ap_shell": { "firepower": 1 }
-}
