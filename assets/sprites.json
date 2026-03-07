@@ -10,5 +10,9 @@
     "tri_203": "assets/tri_203.png",
     "tri_406": "assets/tri_406.png",
     "quad_305": "assets/quad_305.png",
-    "twin_457": "assets/twin_457.png"
+    "twin_457": "assets/twin_457.png",
+    "ap_shell": "assets/ap_shell.png",
+    "autoloader": "assets/autoloader.png",
+    "repair_toolkit": "assets/repair_toolkit.png",
+    "steering_gear": "assets/steering_gear.png"
 }

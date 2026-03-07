@@ -97,8 +97,24 @@
 		"reload": 50,
 		"shell_type": "AP"
 	},
-	"steering_gear": { "type": "aux", "craft_reqs": {}, "evasion": 5 },
-	"repair_toolkit": { "type": "aux", "craft_reqs": {}, "max_hp": 5 },
-	"autoloader": { "type": "aux", "craft_reqs": {}, "reload": 100 },
-	"ap_shell": { "type": "aux", "craft_reqs": {}, "firepower": 1 }
+	"steering_gear": {
+		"type": "aux",
+		"craft_reqs": { "electronics": 1, "plastics": 1 },
+		"evasion": 5
+	},
+	"repair_toolkit": {
+		"type": "aux",
+		"craft_reqs": { "metals": 1, "plastics": 1 },
+		"max_hp": 5
+	},
+	"autoloader": {
+		"type": "aux",
+		"craft_reqs": { "metals": 1, "electronics": 1 },
+		"reload": 100
+	},
+	"ap_shell": {
+		"type": "aux",
+		"craft_reqs": { "metals": 1, "gunpowder": 1 },
+		"firepower": 1
+	}
 }
