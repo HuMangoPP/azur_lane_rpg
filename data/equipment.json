@@ -7,7 +7,7 @@
 		"reload": 300,
 		"shell_type": "normal"
 	},
-	"twin_128": {
+	"twin_137": {
 		"type": "weapon",
 		"craft_reqs": { "DD_blueprint": 1, "metals": 1, "plastics": 1 },
 		"equippable_by": "DD",
@@ -32,7 +32,7 @@
 		"reload": 100,
 		"shell_type": "normal"
 	},
-	"twin_155": {
+	"tri_155": {
 		"type": "weapon",
 		"craft_reqs": { "CL_blueprint": 1, "plastics": 1, "metals": 1 },
 		"equippable_by": "CL",
