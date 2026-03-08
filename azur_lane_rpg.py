@@ -6,6 +6,7 @@ from engine.font import Font
 from engine.button import Button
 from engine.util import get_rect, get_vec, draw_slice
 from engine.load_sprites import load_sprites
+from live2d.live2d import Live2D
 
 with open("data/save_file.json") as f:
     save_file = json.load(f)
@@ -956,18 +957,18 @@ class Shipgirl:
         self.wander_target = self.pos.copy()
         self.pause_time = 0
         if self.name in sprites:
-            self.sprite = sprites[self.name]
-            self.rect = self.sprite.get_rect()
-            self.rect.centerx = self.pos.x
-            self.rect.centery = self.pos.y
-        else:
-            self.rect = get_rect(width=50, height=50, centerx=self.pos.x, centery=self.pos.y)
+            self.sprite = Live2D(f"live2d/{self.name}/model.json")
+        self.facing_left = False
+            
+        self.rect = get_rect(width=50, height=50, centerx=self.pos.x, centery=self.pos.y)
 
         self.battle_component = ShipgirlBattleComponent(self.name)
 
     def update(self, dt):
         if self.pause_time > 0:
             self.pause_time -= dt
+            if self.sprite is not None:
+                self.sprite.set_animation(Live2D.IDLE_ANIMATION)
         else:
             to_target = self.wander_target - self.pos
             if to_target.length() < 10:
@@ -979,11 +980,19 @@ class Shipgirl:
             else:
                 direction = to_target.normalize()
                 self.pos += direction * 50 * dt
+                if direction.x >= 0:
+                    self.facing_left = False
+                else:
+                    self.facing_left = True
+            self.sprite.set_animation(Live2D.WALK_ANIMATION)
         self.rect.center = self.pos
 
+        if self.sprite is not None:
+            self.sprite.update(dt)
+
     def draw(self, screen):
-        if self.sprite:
-            screen.blit(self.sprite, self.rect)
+        if self.sprite is not None:
+            self.sprite.draw(screen, self.pos.x, self.pos.y, self.facing_left)
         else:
             pygame.draw.rect(screen, (255,255,255), self.rect, width=2)
             _ = font.render(screen, self.name, self.rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))

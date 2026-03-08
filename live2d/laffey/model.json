@@ -1,0 +1,17 @@
+{
+	"torso_back": { "path": "live2d/laffey/torso_back.png", "pivot": [34, 42] },
+	"left_leg": { "path": "live2d/laffey/left_leg.png", "pivot": [39, 50] },
+	"right_leg": { "path": "live2d/laffey/right_leg.png", "pivot": [30, 50] },
+	"torso": { "path": "live2d/laffey/torso.png", "pivot": [34, 34] },
+	"left_arm": { "path": "live2d/laffey/left_arm.png", "pivot": [38, 36] },
+	"right_arm": { "path": "live2d/laffey/right_arm.png", "pivot": [29, 35] },
+	"back_hair": { "path": "live2d/laffey/back_hair.png", "pivot": [32, 20] },
+	"head": { "path": "live2d/laffey/head.png", "pivot": [34, 34] },
+	"face": { "path": "live2d/laffey/face.png", "pivot": [36, 26] },
+	"top_of_head": { "path": "live2d/laffey/top_of_head.png", "pivot": [34, 9] },
+	"left_hair": { "path": "live2d/laffey/left_hair.png", "pivot": [46, 8] },
+	"left_bangs": { "path": "live2d/laffey/left_bangs.png", "pivot": [45, 14] },
+	"right_hair": { "path": "live2d/laffey/right_hair.png", "pivot": [15, 10] },
+	"right_bangs": { "path": "live2d/laffey/right_bangs.png", "pivot": [21, 12] },
+	"bangs": { "path": "live2d/laffey/bangs.png", "pivot": [35, 10] }
+}
