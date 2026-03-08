@@ -25,11 +25,11 @@ class Font:
             line = ""
             words = text.split()
             for word in words:
-                if len(line) > 0 and len(line) + len(word) + 1 > max_chars_per_line:
+                if len(line) > 0 and len(line) + len(word) > max_chars_per_line:
                     lines.append(line)
-                    line = word
+                    line = word + " "
                 else:
-                    line = f"{line} {word}"
+                    line = line + word + " "
             lines.append(line)
             return lines
 
@@ -52,7 +52,7 @@ class Font:
         if box_width == 0:
             text_surf = pygame.Surface((char_width * len(lines[0]) + self.padding, char_height + self.padding))
         else:
-            text_surf = pygame.Surface((box_width + self.padding, len(lines) * char_height + self.padding))
+            text_surf = pygame.Surface((box_width + self.padding, len(lines) * (char_height + self.padding) + self.padding))
 
         y = self.padding / 2
         for line in lines:
@@ -69,7 +69,7 @@ class Font:
                     )
                     text_surf.blit(letter, (x, y))
                 x += char_width
-            y += char_height
+            y += (char_height + self.padding)
     
         text_surf.set_colorkey((255, 255, 255))
 

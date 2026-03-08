@@ -25,5 +25,6 @@
         "plastics": 0,
         "gunpowder": 0,
         "electronics": 1
-    }
+    },
+    "research_target": "new_jersey"
 }

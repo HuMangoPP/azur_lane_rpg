@@ -1,6 +1,7 @@
 {
 	"laffey": {
 		"research_reqs": { "DD_blueprint": 1, "wisdom_cube": 1, "huggy_pillow": 1 },
+		"unique_item_desc": "the huggy pillow of bravery",
 		"hull_type": "DD",
 		"max_hp": 10,
 		"evasion": 0,
@@ -9,6 +10,7 @@
 	},
 	"san_diego": {
 		"research_reqs": { "CL_blueprint": 1, "wisdom_cube": 1, "star_blaster": 1 },
+		"unique_item_desc": "the star blaster",
 		"hull_type": "CL",
 		"max_hp": 15,
 		"evasion": 0,
@@ -17,6 +19,7 @@
 	},
 	"guam": {
 		"research_reqs": { "CA_blueprint": 1, "wisdom_cube": 1, "battle_mech": 1 },
+		"unique_item_desc": "the battle mech",
 		"hull_type": "CA",
 		"max_hp": 20,
 		"evasion": 0,
@@ -25,6 +28,7 @@
 	},
 	"new_jersey": {
 		"research_reqs": { "BB_blueprint": 1, "wisdom_cube": 1, "dragon_cannon": 1 },
+		"unique_item_desc": "the dragon cannon",
 		"hull_type": "BB",
 		"max_hp": 30,
 		"evasion": 0,

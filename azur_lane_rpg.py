@@ -44,8 +44,7 @@ class Buildings:
     INTEL_CENTER = 0
     SHIPYARD = 1
     GEAR_LAB = 2
-    MUNITIONS = 3
-    RESEARCH_CENTER = 4
+    RESEARCH_CENTER = 3
 
 class Building:
     def __init__(self, building_type, pos):
@@ -65,16 +64,30 @@ class PortMenu:
     INTEL_CENTER = 0
     SHIPYARD = 1
     GEAR_LAB = 2
-    MUNITIONS = 3
-    RESEARCH_CENTER = 4
+    RESEARCH_CENTER = 3
     current_overlay = NO_OVERLAY
+
+    @staticmethod
+    def update_shipyard_overlay():
+        pass
+
+    @staticmethod
+    def draw_shipyard_overlay():
+        pass
+
+    @staticmethod
+    def update_gear_lab_overlay():
+        pass
+
+    @staticmethod
+    def draw_gear_lab_overlay():
+        pass
 
     buildings = { # TODO
         INTEL_CENTER: Building(Buildings.INTEL_CENTER, pygame.Vector2(25, 25)),
         SHIPYARD: Building(Buildings.SHIPYARD, pygame.Vector2(75, 25)),
         GEAR_LAB: Building(Buildings.GEAR_LAB, pygame.Vector2(125, 25)),
-        MUNITIONS: Building(Buildings.MUNITIONS, pygame.Vector2(175, 25)),
-        RESEARCH_CENTER: Building(Buildings.RESEARCH_CENTER, pygame.Vector2(225, 25))
+        RESEARCH_CENTER: Building(Buildings.RESEARCH_CENTER, pygame.Vector2(175, 25)),
     }
 
     overlay_bg = get_rect(width=400, height=400, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.5*TEMP_SCREEN_SIZE.y)
@@ -199,6 +212,16 @@ class PortMenu:
                             PortMenu.overlay_selected_entity = entity
                             PortMenu.overlay_confirm_button.active = True
                     
+                    if PortMenu.current_overlay == PortMenu.RESEARCH_CENTER:
+                        entities = [
+                            shipgirl for shipgirl, shipgirl_info in shipgirl_data.items()
+                            if shipgirl_info["research_reqs"]
+                            and shipgirl not in save_file["shipgirls"]
+                        ]
+                        for entity, rect in zip(entities, PortMenu.overlay_left_icons):
+                            if rect.collidepoint(event.pos):
+                                save_file["research_target"] = entity
+
                     PortMenu.overlay_confirm_button.click(event.pos)
 
                     # TODO write update logic for each overlay in a method
@@ -250,6 +273,33 @@ class PortMenu:
                     "RLD": selected_entity_info.get("reload"),
                     "SHELL": selected_entity_info.get("shell_type"),
                 }
+            elif PortMenu.current_overlay == PortMenu.RESEARCH_CENTER:
+                entities = [
+                    shipgirl for shipgirl, shipgirl_info in shipgirl_data.items()
+                    if shipgirl_info["research_reqs"]
+                    and shipgirl not in save_file["shipgirls"]
+                ]
+                if save_file["research_target"] is not None:
+                    research_target = save_file["research_target"]
+                    font.render(surface, research_target, PortMenu.overlay_right_name.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+                    if research_target in sprites:
+                        surface.blit(sprites[research_target], PortMenu.overlay_right_icon)
+                        pygame.draw.rect(surface, (255,255,255), PortMenu.overlay_right_icon, width=2)
+                    else:
+                        pygame.draw.rect(surface, (255,255,255), PortMenu.overlay_right_icon, width=2)
+
+                    x = PortMenu.overlay_right_panel.left + 10
+                    y = PortMenu.overlay_right_icon.bottom + 10
+                    font.render(
+                        surface,
+                        shipgirl_data[research_target]["unique_item_desc"],
+                        (x,y),
+                        (255,255,255),
+                        1,
+                        style="topleft",
+                        outline_color=(10,10,10),
+                        box_width=PortMenu.overlay_right_panel.width - 20 # TODO
+                    )
             else:
                 entities = []
                 selected_entity_reqs = {}
@@ -262,6 +312,7 @@ class PortMenu:
                 else:
                     pygame.draw.rect(surface, (255,255,255), rect, width=2)
                     font.render(surface, entity, rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
+            
             if PortMenu.overlay_selected_entity:
                 font.render(surface, PortMenu.overlay_selected_entity, PortMenu.overlay_right_name.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
                 if PortMenu.overlay_selected_entity in sprites:
@@ -269,9 +320,21 @@ class PortMenu:
                     pygame.draw.rect(surface, (255,255,255), PortMenu.overlay_right_icon, width=2)
                 else:
                     pygame.draw.rect(surface, (255,255,255), PortMenu.overlay_right_icon, width=2)
+
+                x = PortMenu.overlay_right_panel.left + 10
+                y = PortMenu.overlay_right_icon.bottom + 10
+                for info_key, info_value in selected_entity_info.items():
+                    if info_value is None:
+                        continue
+                    xy = (x, y)
+                    info_name = Stats.STAT_NAMES.get(info_key, info_key)
+                    font.render(surface, f"{info_name}: {info_value}", xy, (255,255,255), 1, style="topleft", outline_color=(10,10,10))
+                    y += 15
+
                 for (ingredient, req), rect in zip(selected_entity_reqs.items(), PortMenu.overlay_ingredient_icons):
                     if ingredient in sprites:
                         surface.blit(sprites[ingredient], rect)
+                        pygame.draw.rect(surface, (255,255,255), rect, width=2)
                     else:
                         pygame.draw.rect(surface, (255,255,255), rect, width=2)
                         xy = (rect.centerx, rect.top+0.33*rect.height)
@@ -279,16 +342,8 @@ class PortMenu:
                     xy = (rect.centerx, rect.top+0.67*rect.height)
                     amt = save_file["inventory"].get(ingredient, 0)
                     font.render(surface, f"{amt}-{req}", xy, (255,255,255), 1, style="center", outline_color=(10,10,10))
-                
-                x = PortMenu.overlay_right_panel.left + 10
-                y = PortMenu.overlay_right_icon.bottom + 10
-                for i, (info_key, info_value) in enumerate(selected_entity_info.items()):
-                    if info_value is None:
-                        continue
-                    xy = (x, y)
-                    info_name = Stats.STAT_NAMES.get(info_key, info_key)
-                    font.render(surface, f"{info_name}: {info_value}", xy, (255,255,255), 1, style="topleft", outline_color=(10,10,10))
-                    y += 15
+
+
 
             PortMenu.overlay_confirm_button.draw(surface, font)
             # TODO write update logic for each overlay in a method
