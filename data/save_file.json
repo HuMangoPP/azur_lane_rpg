@@ -2,20 +2,20 @@
     "shipgirls": {
         "laffey": {
             "equipment": [
-                "twin_100",
+                null,
                 null,
                 null
             ],
-            "exp": 3
+            "exp": 4
         }
     },
     "equipment": {
         "twin_120": 1,
         "twin_137": 1,
-        "twin_100": 0
+        "twin_100": 1
     },
     "inventory": {
-        "DD_blueprint": 3,
+        "DD_blueprint": 4,
         "CL_blueprint": 0,
         "CA_blueprint": 0,
         "BB_blueprint": 0,

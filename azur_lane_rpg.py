@@ -138,7 +138,7 @@ class PortMenu:
                         "equipment": [None, None, None],
                         "exp": 0
                     }
-                    shipgirl = Shipgirl(PortMenu.overlay_selected_entity)
+                    shipgirl = Shipgirl(PortMenu.overlay_selected_entity, True)
                     available_shipgirls.append(shipgirl)
                     for ingredient, req in selected_entity_reqs.items():
                         save_file["inventory"][ingredient] -= req
@@ -328,16 +328,6 @@ class SortieSelectionMenu:
             siren_fleet.clear_fleet()
         return start_sortie
 
-    sortie_buttons = [
-        Button(
-            rect=get_rect(width=50, height=50, left=100, top=100),
-            color=(100,100,150),
-            text="0",
-            text_color=(255,255,255),
-            callback=start_sortie_factory(0)
-        )
-    ]
-
     @staticmethod
     def exit_sortie_selection_menu():
         Menus.current_menu = Menus.PORT
@@ -372,6 +362,16 @@ class SortieSelectionMenu:
 
         for sortie_button in SortieSelectionMenu.sortie_buttons:
             sortie_button.draw(surface, font)
+
+SortieSelectionMenu.sortie_buttons = [
+    Button(
+        rect=get_rect(width=50, height=50, left=100+sortie_index*75, top=100),
+        color=(100,100,150),
+        text=f"{sortie_index}",
+        text_color=(255,255,255),
+        callback=SortieSelectionMenu.start_sortie_factory(sortie_index)
+    ) for sortie_index in range(4)
+]
 
 class FleetSelectionMenu:
     selected_shipgirl = None
@@ -472,8 +472,8 @@ class EncounterMenu:
     @staticmethod
     def begin_encounter():
         siren_fleet_data = sorties[EncounterMenu.current_sortie][EncounterMenu.current_encounter]
-        siren_fleet._front = [Shipgirl(siren_name) for siren_name in siren_fleet_data["front"]] # TODO
-        siren_fleet._back = [Shipgirl(siren_name) for siren_name in siren_fleet_data["back"]]
+        siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in siren_fleet_data["front"]] # TODO
+        siren_fleet._back = [Shipgirl(siren_name, False) for siren_name in siren_fleet_data["back"]]
         for siren in siren_fleet.fleet:
             if siren_data[siren.name]["target_pref"] == "front":
                 siren.battle_component.target = player_fleet.front
@@ -870,8 +870,9 @@ class Armor:
     }
 
 class ShipgirlBattleComponent:
-    def __init__(self, name):
+    def __init__(self, name, is_player):
         self.active = False
+        self.display_timer = is_player
 
         if name in shipgirl_data:
             info = shipgirl_data[name]
@@ -961,10 +962,14 @@ class ShipgirlBattleComponent:
         if not self.active:
             return
         
-        bar_background = get_rect(width=100, height=10, centerx=rect.centerx, top=rect.bottom+20)
-        bar_fill = get_rect(width=100*self.hp/self.max_hp(), height=10, left=bar_background.left, top=bar_background.top)
+        bar_width = 50
+        bar_background = get_rect(width=bar_width, height=10, centerx=rect.centerx, top=rect.bottom+20)
+        bar_fill = get_rect(width=bar_width*self.hp/self.max_hp(), height=10, left=bar_background.left, top=bar_background.top)
         pygame.draw.rect(screen, (50,50,50), bar_background)
         pygame.draw.rect(screen, (255,255,255), bar_fill)
+
+        if not self.display_timer:
+            return
 
         center = pygame.Vector2(rect.centerx, rect.top-50)
         radius = 30
@@ -975,7 +980,7 @@ class ShipgirlBattleComponent:
         pygame.draw.circle(screen, (255,255,255), center, radius, width=2)
 
 class Shipgirl:
-    def __init__(self, name):
+    def __init__(self, name, is_player):
         self.name = name
     
         self.pos = pygame.Vector2(
@@ -992,7 +997,7 @@ class Shipgirl:
             
         self.rect = get_rect(width=50, height=50, centerx=self.pos.x, centery=self.pos.y)
 
-        self.battle_component = ShipgirlBattleComponent(self.name)
+        self.battle_component = ShipgirlBattleComponent(self.name, is_player)
 
     def update(self, dt):
         if self.pause_time > 0:
@@ -1130,17 +1135,18 @@ class SirenFleet:
 
     def update(self, dt):
         front_offset = 0.5*(len(self._front)-1)
-        for i, siren in enumerate(self._front):
-            siren.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x - 0.5*75
-            siren.rect.centery = 0.5*TEMP_SCREEN_SIZE.y + (i-front_offset)*75
+        for i, siren in enumerate(self._front): # TODO
+            siren.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x - 60 + (i-front_offset)*60
+            siren.rect.centery = 0.5*TEMP_SCREEN_SIZE.y + (i-front_offset)*50
 
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
             siren.battle_component.update(dt)
+        
         back_offset = 0.5*(len(self._back)-1)
-        for i, siren in enumerate(self._back):
-            siren.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x + 0.5*75
-            siren.rect.centery = 0.5*TEMP_SCREEN_SIZE.y + (i-back_offset)*75
+        for i, siren in enumerate(self._back): 
+            siren.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x + 60 + (i-back_offset)*60
+            siren.rect.centery = 0.5*TEMP_SCREEN_SIZE.y + (i-back_offset)*50
 
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
@@ -1150,7 +1156,7 @@ class SirenFleet:
         for siren in self.fleet:
             siren.draw(screen)
 
-available_shipgirls = [Shipgirl(shipgirl_name) for shipgirl_name in save_file["shipgirls"]]
+available_shipgirls = [Shipgirl(shipgirl_name, True) for shipgirl_name in save_file["shipgirls"]]
 available_shipgirl_rects = [
     get_rect(
         width=50,

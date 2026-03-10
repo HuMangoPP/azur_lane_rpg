@@ -9,7 +9,7 @@
 		"hull_type": "DD",
 		"max_hp": 20,
 		"evasion": 0,
-		"firepower": 2,
+		"firepower": 4,
 		"reload": 300
 	},
 	"san_diego": {
