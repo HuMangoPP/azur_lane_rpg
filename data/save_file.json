@@ -6,7 +6,7 @@
                 null,
                 null
             ],
-            "exp": 4
+            "exp": 0
         }
     },
     "equipment": {
@@ -15,7 +15,7 @@
         "twin_100": 1
     },
     "inventory": {
-        "DD_blueprint": 4,
+        "DD_blueprint": 0,
         "CL_blueprint": 0,
         "CA_blueprint": 0,
         "BB_blueprint": 0,
@@ -24,11 +24,11 @@
         "star_blaster": 0,
         "battle_mech": 0,
         "dragon_cannon": 0,
-        "metals": 0,
+        "metals": 1,
         "plastics": 0,
         "gunpowder": 0,
         "electronics": 1
     },
     "research_target": "new_jersey",
-    "research_progress": 0
+    "research_progress": 3
 }
