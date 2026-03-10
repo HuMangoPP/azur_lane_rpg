@@ -1,11 +1,29 @@
 {
-    "siren": {
-		"research_reqs": {},
+	"DD": {
 		"hull_type": "DD",
-		"max_hp": 5,
+		"max_hp": 10,
 		"evasion": 0,
-		"reload": 300,
-		"firepower": 1,
+		"reload": 200,
+		"firepower": 2,
+		"target_pref": "front",
+		"equipment": [null, null, null]
+	},
+	"CA": {
+		"hull_type": "CA",
+		"max_hp": 20,
+		"evasion": 0,
+		"reload": 150,
+		"firepower": 3,
+		"target_pref": "front",
+		"equipment": [null, null, null]
+	},
+	"BB": {
+		"hull_type": "BB",
+		"max_hp": 50,
+		"evasion": 0,
+		"reload": 50,
+		"firepower": 3,
+		"target_pref": "front",
 		"equipment": [null, null, null]
 	}
 }

@@ -437,6 +437,10 @@ class FleetSelectionMenu:
                 mouse_start_drag = None
                 FleetSelectionMenu.start_encounter_button.click(event.pos)
                 FleetSelectionMenu.exit_fleet_selection_menu_button.click(event.pos)
+        
+        for shipgirl in player_fleet.shipgirls:
+            if shipgirl is not None:
+                shipgirl.animate(dt)
 
     @staticmethod
     def draw(surface):
@@ -465,12 +469,10 @@ class EncounterMenu:
     @staticmethod
     def begin_encounter():
         siren_fleet_data = sorties[EncounterMenu.current_sortie][EncounterMenu.current_encounter]
-        siren_fleet.shipgirls = [
-            Shipgirl(siren_name) if siren_name else None
-            for siren_name in siren_fleet_data
-        ]
-        for siren in siren_fleet.shipgirls:
-            if siren is not None:
+        siren_fleet._front = [Shipgirl(siren_name) for siren_name in siren_fleet_data["front"]] # TODO
+        siren_fleet._back = [Shipgirl(siren_name) for siren_name in siren_fleet_data["back"]]
+        for siren in siren_fleet.fleet:
+            if siren_data[siren.name]["target_pref"] == "front":
                 siren.battle_component.target = player_fleet.front
         player_fleet.begin_encounter()
         siren_fleet.begin_encounter()
@@ -539,10 +541,10 @@ class EncounterMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
                 if mouse_start_drag is not None and EncounterMenu.selected_shipgirl is not None:
-                    for siren in siren_fleet.shipgirls:
-                        if siren is not None and siren.rect.collidepoint(mouse_end_drag):
+                    for siren in siren_fleet.fleet:
+                        if siren.rect.collidepoint(mouse_end_drag):
                             if EncounterMenu.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
-                                if siren == siren_fleet.front:
+                                if siren in siren_fleet.front:
                                     EncounterMenu.selected_shipgirl.battle_component.target = siren
                             else:
                                 EncounterMenu.selected_shipgirl.battle_component.target = siren
@@ -598,11 +600,11 @@ class EncounterMenu:
         mpos = pygame.mouse.get_pos()
         if mouse_start_drag is not None:
             pygame.draw.line(temp_screen, (255,255,255), mouse_start_drag, mpos, width=2)
-            for siren in siren_fleet.shipgirls:
-                if siren is not None and siren.rect.collidepoint(mpos):
+            for siren in siren_fleet.fleet:
+                if siren.rect.collidepoint(mpos):
                     if EncounterMenu.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
-                        # TODO magic numbers
-                        if siren == siren_fleet.front:
+                        # TODO 
+                        if siren in siren_fleet.front:
                             pygame.draw.circle(temp_screen, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
                         else:
                             pygame.draw.circle(temp_screen, (200,50,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
@@ -958,6 +960,8 @@ class Shipgirl:
         self.pause_time = 0
         if self.name in sprites:
             self.sprite = Live2D(f"live2d/{self.name}/model.json")
+        else:
+            self.sprite = None
         self.facing_left = False
             
         self.rect = get_rect(width=50, height=50, centerx=self.pos.x, centery=self.pos.y)
@@ -987,21 +991,23 @@ class Shipgirl:
             self.sprite.set_animation(Live2D.WALK_ANIMATION)
         self.rect.center = self.pos
 
+        self.animate(dt)
+
+    def animate(self, dt):
         if self.sprite is not None:
             self.sprite.update(dt)
 
     def draw(self, screen):
         if self.sprite is not None:
-            self.sprite.draw(screen, self.pos.x, self.pos.y, self.facing_left)
+            self.sprite.draw(screen, self.rect.centerx, self.rect.centery, self.facing_left)
         else:
             pygame.draw.rect(screen, (255,255,255), self.rect, width=2)
             _ = font.render(screen, self.name, self.rect.center, (255,255,255), 1, style="center", outline_color=(10,10,10))
 
         self.battle_component.draw(screen, self.rect)
 
-class Fleet:
-    def __init__(self, is_player):
-        self.is_player = is_player
+class PlayerFleet:
+    def __init__(self):
         self.shipgirls = [None, None, None]
     
     @property
@@ -1041,21 +1047,82 @@ class Fleet:
     def update(self, dt):
         for i, shipgirl in enumerate(self.shipgirls):
             if shipgirl is not None:
-                if self.is_player:
-                    shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE.x + (1-i)*75
-                    shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
-                else:
-                    shipgirl.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x + (i-1)*75
-                    shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
+                shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE.x + (1-i)*75
+                shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
 
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
                 shipgirl.battle_component.update(dt)
 
+                shipgirl.animate(dt)
+
     def draw(self, screen):
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
                 shipgirl.draw(screen)
+
+class SirenFleet:
+    def __init__(self):
+        self._front = []
+        self._back = []
+    
+    @property
+    def afloat(self):
+        return any(siren.battle_component.hp > 0 for siren in self.fleet)
+
+    @property
+    def siren_names(self):
+        return [siren.name for siren in self.fleet]
+
+    @property
+    def front(self):
+        return (
+            [siren for siren in self._front if siren.battle_component.hp > 0]
+            or [siren for siren in self._back if siren.battle_component.hp > 0]
+        )
+
+    @property
+    def fleet(self):
+        return self._front + self._back
+
+    def clear_fleet(self):
+        self._front = []
+        self._back = []
+
+    def begin_sortie(self):
+        for siren in self.fleet:
+            siren.battle_component.reset()
+
+    def begin_encounter(self):
+        for siren in self.fleet:
+            siren.battle_component.active = True
+
+    def end_encounter(self):
+        for siren in self.fleet:
+            siren.battle_component.target = None
+            siren.battle_component.active = False
+
+    def update(self, dt):
+        front_offset = 0.5*(len(self._front)-1)
+        for i, siren in enumerate(self._front):
+            siren.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x - 0.5*75
+            siren.rect.centery = 0.5*TEMP_SCREEN_SIZE.y + (i-front_offset)*75
+
+            if siren.battle_component.hp <= 0:
+                siren.battle_component.active = False
+            siren.battle_component.update(dt)
+        back_offset = 0.5*(len(self._back)-1)
+        for i, siren in enumerate(self._back):
+            siren.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x + 0.5*75
+            siren.rect.centery = 0.5*TEMP_SCREEN_SIZE.y + (i-back_offset)*75
+
+            if siren.battle_component.hp <= 0:
+                siren.battle_component.active = False
+            siren.battle_component.update(dt)
+
+    def draw(self, screen):
+        for siren in self.fleet:
+            siren.draw(screen)
 
 available_shipgirls = [Shipgirl(shipgirl_name) for shipgirl_name in save_file["shipgirls"]]
 available_shipgirl_rects = [
@@ -1066,9 +1133,8 @@ available_shipgirl_rects = [
         centery=75*(i//4-1.5) + 0.5*TEMP_SCREEN_SIZE.y
     ) for i in range(4)
 ]
-player_fleet = Fleet(True)
-
-siren_fleet = Fleet(False)
+player_fleet = PlayerFleet()
+siren_fleet = SirenFleet()
 
 running = True
 while running:

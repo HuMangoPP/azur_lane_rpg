@@ -1,6 +1,44 @@
 [
-    [
-        ["siren", null, null],
-        ["siren", "siren", null]
-    ]
+	[
+		{
+			"front": ["DD", "DD"],
+			"back": []
+		},
+		{
+			"front": ["DD", "DD"],
+			"back": ["CA"]
+		}
+	],
+	[
+		{
+			"front": ["DD", "DD", "DD"],
+			"back": []
+		},
+		{
+			"front": ["DD", "DD"],
+			"back": ["CA"]
+		},
+		{
+			"front": ["DD", "DD", "DD"],
+			"back": ["CA"]
+		},
+		{
+			"front": ["DD", "DD"],
+			"back": ["CA", "CA"]
+		}
+	],
+	[
+		{
+			"front": ["DD", "DD", "DD"],
+			"back": ["DD"]
+		},
+		{
+			"front": ["DD", "DD", "DD"],
+			"back": ["CA", "CA"]
+		},
+		{
+			"front": ["DD", "DD"],
+			"back": ["BB"]
+		}
+	]
 ]
