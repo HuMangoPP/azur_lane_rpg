@@ -134,7 +134,10 @@ class PortMenu:
             selected_entity_reqs = shipgirl_data[PortMenu.overlay_selected_entity]["research_reqs"]
             if PortMenu.overlay_selected_entity is not None: 
                 if all(save_file["inventory"][ingredient] >= req for ingredient, req in selected_entity_reqs.items()):
-                    save_file["shipgirls"][PortMenu.overlay_selected_entity] = [None, None, None]
+                    save_file["shipgirls"][PortMenu.overlay_selected_entity] = {
+                        "equipment": [None, None, None],
+                        "exp": 0
+                    }
                     shipgirl = Shipgirl(PortMenu.overlay_selected_entity)
                     available_shipgirls.append(shipgirl)
                     for ingredient, req in selected_entity_reqs.items():
@@ -480,6 +483,7 @@ class EncounterMenu:
         EncounterMenu.next_encounter_button.active = False
         EncounterMenu.return_to_port_button.active = False
         EncounterMenu.retreat_button.active = True
+        EncounterMenu.encounter_end_flag = True
 
     @staticmethod
     def next_encounter():
@@ -527,6 +531,8 @@ class EncounterMenu:
 
     end_encounter_rect = get_rect(width=10, height=10, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.25*TEMP_SCREEN_SIZE.y)
 
+    encounter_end_flag = True
+
     @staticmethod
     def update(dt, events):
         global mouse_start_drag
@@ -556,16 +562,34 @@ class EncounterMenu:
         
         player_fleet.update(dt)
         siren_fleet.update(dt)
-        if not player_fleet.afloat or not siren_fleet.afloat:
-            player_fleet.end_encounter()
-            siren_fleet.end_encounter()
+        if EncounterMenu.encounter_end_flag:
             if not player_fleet.afloat:
+                EncounterMenu.encounter_end_flag = False
+                player_fleet.end_encounter()
+                siren_fleet.end_encounter()
                 EncounterMenu.return_to_port_button.active = True
-            elif EncounterMenu.current_encounter+1 < len(sorties[EncounterMenu.current_sortie]):
-                EncounterMenu.next_encounter_button.active = True
-            else:
-                EncounterMenu.return_to_port_button.active = True
-            EncounterMenu.retreat_button.active = False
+                EncounterMenu.retreat_button.active = False
+            if not siren_fleet.afloat:
+                EncounterMenu.encounter_end_flag = False
+                for siren in siren_fleet.fleet:
+                    for shipgirl in player_fleet.shipgirls:
+                        if shipgirl is not None:
+                            shipgirl.battle_component.exp += siren.battle_component.exp
+                    
+                    drops = siren_data[siren.name]["drops"]
+                    for drop in drops:
+                        if drop in save_file["inventory"]:
+                            save_file["inventory"][drop] += 1
+                        else:
+                            save_file["inventory"][drop] = 1
+
+                player_fleet.end_encounter()
+                siren_fleet.end_encounter()
+                if EncounterMenu.current_encounter+1 < len(sorties[EncounterMenu.current_sortie]):
+                    EncounterMenu.next_encounter_button.active = True
+                else:
+                    EncounterMenu.return_to_port_button.active = True
+                EncounterMenu.retreat_button.active = False
 
     @staticmethod
     def draw(surface):
@@ -851,7 +875,8 @@ class ShipgirlBattleComponent:
 
         if name in shipgirl_data:
             info = shipgirl_data[name]
-            info["equipment"] = save_file["shipgirls"][name]
+            info["equipment"] = save_file["shipgirls"][name]["equipment"]
+            info["exp"] = save_file["shipgirls"][name]["exp"]
         else:
             info = siren_data[name]
 
@@ -861,6 +886,7 @@ class ShipgirlBattleComponent:
         self.base_reload = info["reload"]
         self.hull_type = info["hull_type"]
         self.equipment = info["equipment"]
+        self.exp =  info["exp"]
 
         self.hp = self.max_hp()
         self.cooldown_timer = 1
@@ -1157,6 +1183,9 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
+
+for shipgirl in available_shipgirls:
+    save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
 
 with open("data/save_file.json", "w") as f:
     json.dump(save_file, f, indent=4)

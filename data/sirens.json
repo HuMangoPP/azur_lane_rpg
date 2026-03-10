@@ -6,6 +6,8 @@
 		"reload": 200,
 		"firepower": 2,
 		"target_pref": "front",
+		"exp": 1,
+		"drops": ["DD_blueprint"],
 		"equipment": [null, null, null]
 	},
 	"CA": {
@@ -15,6 +17,8 @@
 		"reload": 150,
 		"firepower": 3,
 		"target_pref": "front",
+		"exp": 1,
+		"drops": ["CA_blueprint"],
 		"equipment": [null, null, null]
 	},
 	"BB": {
@@ -24,6 +28,8 @@
 		"reload": 50,
 		"firepower": 3,
 		"target_pref": "front",
+		"exp": 1,
+		"drops": ["BB_blueprint"],
 		"equipment": [null, null, null]
 	}
 }
