@@ -575,13 +575,23 @@ class EncounterMenu:
                     for shipgirl in player_fleet.shipgirls:
                         if shipgirl is not None:
                             shipgirl.battle_component.exp += siren.battle_component.exp
+                    save_file["research_progress"] += siren.battle_component.exp
                     
                     drops = siren_data[siren.name]["drops"]
-                    for drop in drops:
+                    for drop, drop_probability in drops.items():
+                        roll = random.random()*100
+                        if roll > drop_probability:
+                            continue
                         if drop in save_file["inventory"]:
                             save_file["inventory"][drop] += 1
                         else:
                             save_file["inventory"][drop] = 1
+
+                if save_file["research_progress"] >= 5: # TODO
+                    unique_item = shipgirl_data[save_file["research_target"]]["unique_item"]
+                    save_file["inventory"][unique_item] = 1
+                    save_file["research_target"] = None
+                    save_file["research_progress"] = 0
 
                 player_fleet.end_encounter()
                 siren_fleet.end_encounter()

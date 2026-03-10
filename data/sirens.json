@@ -7,7 +7,13 @@
 		"firepower": 2,
 		"target_pref": "front",
 		"exp": 1,
-		"drops": ["DD_blueprint"],
+		"drops": {
+			"DD_blueprint": 50,
+			"plastics": 10,
+			"metals": 10,
+			"electronics": 10,
+			"gunpowder": 10
+		},
 		"equipment": [null, null, null]
 	},
 	"CA": {
@@ -18,7 +24,13 @@
 		"firepower": 3,
 		"target_pref": "front",
 		"exp": 1,
-		"drops": ["CA_blueprint"],
+		"drops": {
+			"CA_blueprint": 50,
+			"plastics": 10,
+			"metals": 10,
+			"electronics": 10,
+			"gunpowder": 10
+		},
 		"equipment": [null, null, null]
 	},
 	"BB": {
@@ -29,7 +41,13 @@
 		"firepower": 3,
 		"target_pref": "front",
 		"exp": 1,
-		"drops": ["BB_blueprint"],
+		"drops": {
+			"BB_blueprint": 50,
+			"plastics": 10,
+			"metals": 10,
+			"electronics": 10,
+			"gunpowder": 10
+		},
 		"equipment": [null, null, null]
 	}
 }

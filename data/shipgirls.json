@@ -5,6 +5,7 @@
 			"wisdom_cube": 1,
 			"huggy_pillow": 1
 		},
+		"unique_item": "huggy_pillow",
 		"unique_item_desc": "the huggy pillow of bravery",
 		"hull_type": "DD",
 		"max_hp": 20,
@@ -18,6 +19,7 @@
 			"wisdom_cube": 1,
 			"star_blaster": 1
 		},
+		"unique_item": "star_blaster",
 		"unique_item_desc": "the star blaster",
 		"hull_type": "CL",
 		"max_hp": 15,
@@ -31,6 +33,7 @@
 			"wisdom_cube": 1,
 			"battle_mech": 1
 		},
+		"unique_item": "battle_mech",
 		"unique_item_desc": "the battle mech",
 		"hull_type": "CA",
 		"max_hp": 20,
@@ -44,6 +47,7 @@
 			"wisdom_cube": 1,
 			"dragon_cannon": 1
 		},
+		"unique_item": "dragon_cannon",
 		"unique_item_desc": "the dragon cannon",
 		"hull_type": "BB",
 		"max_hp": 30,
