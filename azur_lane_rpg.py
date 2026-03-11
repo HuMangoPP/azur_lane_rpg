@@ -35,11 +35,17 @@ sprites = load_sprites()
 
 mouse_start_drag = None
 
+def screen_x(t):
+    return TEMP_SCREEN_SIZE.x * t
+
+def screen_y(t):
+    return TEMP_SCREEN_SIZE.y * t
+
 EDGE_PADDING = 20
-LEFT_OF_SCREEN = EDGE_PADDING
-RIGHT_OF_SCREEN = TEMP_SCREEN_SIZE.x - EDGE_PADDING
-TOP_OF_SCREEN = EDGE_PADDING
-BOTTOM_OF_SCREEN = TEMP_SCREEN_SIZE.y - EDGE_PADDING
+LEFT_OF_SCREEN = screen_x(0) + EDGE_PADDING
+RIGHT_OF_SCREEN = screen_x(1) - EDGE_PADDING
+TOP_OF_SCREEN = screen_y(0) + EDGE_PADDING
+BOTTOM_OF_SCREEN = screen_y(1) - EDGE_PADDING
 
 class Box:
     WIDTH = 50
@@ -65,12 +71,12 @@ class Building:
         self.rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=pos.x, centery=pos.y)
         self.sprite = None
 
-    def draw(self, screen):
+    def draw(self, surface):
         if self.sprite is not None:
             pass
         else:
-            pygame.draw.rect(screen, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
-            font.render(screen, str(self.building_type), self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK) # TODO scale=1?
+            pygame.draw.rect(surface, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
+            font.render(surface, str(self.building_type), self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
 class PortMenu:
     NO_OVERLAY = -1
@@ -87,9 +93,9 @@ class PortMenu:
             self.GEAR_LAB: Building(Buildings.GEAR_LAB, pygame.Vector2(125, 25)),
         }
 
-        self.overlay_bg = get_rect(width=400, height=400, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.5*TEMP_SCREEN_SIZE.y) # TODO overlay.width / height ?
+        self.overlay_bg = get_rect(width=400, height=400, centerx=screen_x(0.5), centery=screen_y(0.5))
         self.overlay_left_panel = get_rect(
-            width=0.5*(self.overlay_bg.width-3*Box.PADDING),
+            width=(self.overlay_bg.width-3*Box.PADDING)/2,
             height=self.overlay_bg.height-2*Box.PADDING,
             left=self.overlay_bg.left+Box.PADDING,
             top=self.overlay_bg.top+Box.PADDING
@@ -111,15 +117,14 @@ class PortMenu:
             ) for i in range(18)
         ]
 
-        self.overlay_right_name = get_rect(
-            width=1, height=1, # TODO width / height ?
-            centerx=self.overlay_right_panel.centerx,
-            top=self.overlay_right_panel.top+Box.PADDING
+        self.overlay_right_name = pygame.Vector2(
+            self.overlay_right_panel.centerx,
+            self.overlay_right_panel.top+Box.PADDING
         )
         self.overlay_right_icon = get_rect(
             width=Box.WIDTH, height=Box.HEIGHT,
             centerx=self.overlay_right_panel.centerx,
-            top=self.overlay_right_name.centery+Box.PADDING
+            top=self.overlay_right_name.y+Box.PADDING
         )
         num_icons_per_row = 3
         icon_padding = (self.overlay_right_panel.width - 2*Box.PADDING - num_icons_per_row*Box.WIDTH) / (num_icons_per_row-1)
@@ -148,9 +153,7 @@ class PortMenu:
             elif self.current_overlay == self.GEAR_LAB:
                 selected_entity_reqs = equipment_data[self.overlay_selected_entity]["craft_reqs"]
                 if all(save_file["inventory"][ingredient] >= req for ingredient, req in selected_entity_reqs.items()):
-                    save_file["equipment"][self.overlay_selected_entity] = (
-                        save_file["equipment"].get(self.overlay_selected_entity, 0) + 1
-                    )
+                    save_file["equipment"][self.overlay_selected_entity] = save_file["equipment"].get(self.overlay_selected_entity, 0) + 1
                     for ingredient, req in selected_entity_reqs.items():
                         save_file["inventory"][ingredient] -= req
 
@@ -173,7 +176,7 @@ class PortMenu:
             Menus.current_menu = Menus.SORTIE_SELECTION
 
         self.open_select_sortie_menu_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=0.5*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN),
+            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.5), bottom=BOTTOM_OF_SCREEN),
             color=Color.BLUE_GREY,
             text="sortie",
             text_color=Color.WHITE,
@@ -275,8 +278,8 @@ class PortMenu:
                 else:
                     font.render(surface, entity, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             
-            if self.overlay_selected_entity: # TODO
-                font.render(surface, self.overlay_selected_entity, self.overlay_right_name.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            if self.overlay_selected_entity:
+                font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
                 if self.overlay_selected_entity in sprites:
                     surface.blit(sprites[self.overlay_selected_entity], self.overlay_right_icon)
                 pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
@@ -289,7 +292,7 @@ class PortMenu:
                     xy = (x, y)
                     info_name = Stats.STAT_NAMES.get(info_key, info_key)
                     font.render(surface, f"{info_name}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
-                    y += 1.5*Box.PADDING # TODO
+                    y += Box.PADDING # TODO
 
                 for (ingredient, req), rect in zip(selected_entity_reqs.items(), self.overlay_ingredient_icons):
                     if ingredient in sprites:
@@ -373,7 +376,7 @@ class FleetSelectionMenu:
             Menus.ENCOUNTER.begin_encounter()
 
         self.start_encounter_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=0.75*TEMP_SCREEN_SIZE.x, bottom=BOTTOM_OF_SCREEN),
+            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), bottom=BOTTOM_OF_SCREEN),
             color=Color.BLUE_GREY,
             text="start",
             text_color=Color.WHITE,
@@ -390,6 +393,16 @@ class FleetSelectionMenu:
             text_color=Color.WHITE,
             callback=exit_fleet_selection_menu
         )
+
+        num_fleet_slots = len(player_fleet.shipgirls)
+        fleet_slot_offset = (num_fleet_slots-1)/2
+        self.fleet_slots = [
+            get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=(fleet_slot_offset-slot_index)*(Box.WIDTH+Box.PADDING)+screen_x(0.25),
+                centery=screen_y(0.5)
+            ) for slot_index in range(num_fleet_slots)
+        ]
 
     def update(self, dt, events):
         global mouse_start_drag
@@ -412,15 +425,13 @@ class FleetSelectionMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
                 if mouse_start_drag is not None and self.selected_shipgirl is not None:
-                    for i, _ in enumerate(player_fleet.shipgirls):
-                        x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE.x
-                        rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE.y)
-                        if rect.collidepoint(mouse_end_drag):
+                    for i, slot in enumerate(self.fleet_slots):
+                        if slot.collidepoint(mouse_end_drag):
                             for j, shipgirl in enumerate(player_fleet.shipgirls):
                                 if self.selected_shipgirl == shipgirl:
                                     player_fleet.shipgirls[j] = player_fleet.shipgirls[i]
                             player_fleet.shipgirls[i] = self.selected_shipgirl
-                            self.selected_shipgirl.rect.center = pygame.Vector2(rect.center)
+                            self.selected_shipgirl.rect.center = pygame.Vector2(slot.center)
                             self.selected_shipgirl = None
                 mouse_start_drag = None
                 self.start_encounter_button.click(event.pos)
@@ -436,18 +447,17 @@ class FleetSelectionMenu:
         self.exit_fleet_selection_menu_button.draw(surface, font)
 
         for shipgirl, rect in zip(available_shipgirls, available_shipgirl_rects):
-            pygame.draw.rect(surface, Color.WHITE, rect, width=2)
+            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             font.render(surface, shipgirl.name, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        for i, shipgirl in enumerate(player_fleet.shipgirls):
+        for slot, shipgirl in zip(self.fleet_slots, player_fleet.shipgirls):
             if shipgirl is None:
-                x = 75*(1-i) + 0.25*TEMP_SCREEN_SIZE.x
-                rect = get_rect(width=50, height=50, centerx=x, centery=0.5*TEMP_SCREEN_SIZE.y)
-                pygame.draw.rect(surface, Color.WHITE, rect, width=2)
+                rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=slot.centerx, centery=slot.centery)
+                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
         
         mpos = pygame.mouse.get_pos()
         if mouse_start_drag is not None:
-            pygame.draw.line(surface, Color.WHITE, mouse_start_drag, mpos, width=2)
+            pygame.draw.line(surface, Color.WHITE, mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)
 
 class EncounterMenu:
     def __init__(self):
@@ -462,7 +472,7 @@ class EncounterMenu:
             self.next_encounter_button.active = False
 
         self.next_encounter_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, centery=0.5*TEMP_SCREEN_SIZE.y),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, centery=screen_y(0.5)),
             color=Color.BLUE_GREY,
             text="next",
             text_color=Color.WHITE,
@@ -476,7 +486,7 @@ class EncounterMenu:
             Menus.ENCOUNTER.return_to_port_button.active = False
 
         self.return_to_port_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, centery=0.5*TEMP_SCREEN_SIZE.y),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, centery=screen_y(0.5)),
             color=Color.BLUE_GREY,
             text="back to port",
             text_color=Color.WHITE,
@@ -497,7 +507,7 @@ class EncounterMenu:
             callback=retreat
         )
 
-        self.end_sortie_rect = get_rect(width=1, height=1, centerx=0.5*TEMP_SCREEN_SIZE.x, centery=0.25*TEMP_SCREEN_SIZE.y)
+        self.end_sortie_text_pos = pygame.Vector2(screen_x(0.5), screen_y(0.25))
         self.encounter_end_flag = True
 
     def begin_encounter(self):
@@ -563,10 +573,7 @@ class EncounterMenu:
                         roll = random.random()*100
                         if roll > drop_probability:
                             continue
-                        if drop in save_file["inventory"]:
-                            save_file["inventory"][drop] += 1
-                        else:
-                            save_file["inventory"][drop] = 1
+                        save_file["inventory"][drop] = save_file["inventory"].get(drop, 0) + 1
 
                 if save_file["research_progress"] >= 5: # TODO
                     unique_item = shipgirl_data[save_file["research_target"]]["unique_item"]
@@ -591,29 +598,13 @@ class EncounterMenu:
         
         if self.return_to_port_button.active:
             if not player_fleet.afloat:
-                font.render(
-                    surface,
-                    "you lose",
-                    self.end_sortie_rect.center,
-                    Color.WHITE,
-                    1,
-                    style="center",
-                    outline_color=Color.BLACK
-                )
+                font.render(surface, "you lose", self.end_sortie_text_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             elif not siren_fleet.afloat:
-                font.render(
-                    surface,
-                    "you win",
-                    self.end_sortie_rect.center,
-                    Color.WHITE,
-                    1,
-                    style="center",
-                    outline_color=Color.BLACK
-                )
+                font.render(surface, "you win", self.end_sortie_text_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         mpos = pygame.mouse.get_pos()
         if mouse_start_drag is not None:
-            pygame.draw.line(temp_screen, Color.WHITE, mouse_start_drag, mpos, width=2)
+            pygame.draw.line(temp_screen, Color.WHITE, mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)
             for siren in siren_fleet.fleet:
                 if siren.rect.collidepoint(mpos):
                     if self.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
@@ -652,19 +643,19 @@ class EquipmentMenu:
         self.equipped_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=(i-1)*(Box.WIDTH+Box.PADDING)+0.75*TEMP_SCREEN_SIZE.x,
-                centery=0.5*TEMP_SCREEN_SIZE.y
+                centerx=(i-1)*(Box.WIDTH+Box.PADDING)+screen_x(0.75),
+                centery=screen_y(0.5)
             ) for i in range(Equipment.NUM_EQUIPS)
         ]
         self.selected_equipment = Equipment.WEAPON
 
         num_rects_in_row = 3
-        x_rect_offset = 0.5*(num_rects_in_row-1)
+        x_rect_offset = (num_rects_in_row-1)/2
         self.equippable_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=(i%num_rects_in_row-x_rect_offset)*(Box.WIDTH+Box.PADDING)+0.75*TEMP_SCREEN_SIZE.x,
-                centery=(i//num_rects_in_row)*(Box.HEIGHT+Box.PADDING)+0.5*Box.HEIGHT+Box.PADDING+0.5*TEMP_SCREEN_SIZE.y
+                centerx=(i%num_rects_in_row-x_rect_offset)*(Box.WIDTH+Box.PADDING)+screen_x(0.75),
+                top=(i//num_rects_in_row)*(Box.HEIGHT+Box.PADDING)+Box.HEIGHT/2+Box.PADDING+screen_y(0.5)
             )
             for i in range(6)
         ]
@@ -683,12 +674,9 @@ class EquipmentMenu:
             callback=exit_equipment_menu
         )
 
-        self.stat_rects = [
-            get_rect(
-                width=1, height=1,
-                centerx=0.25*TEMP_SCREEN_SIZE.x-0.5*Box.WIDTH,
-                centery=0.5*Box.HEIGHT+Box.PADDING+1.5*Box.PADDING*i+0.5*TEMP_SCREEN_SIZE.y
-            ) for i in range(Stats.NUM_STATS)
+        self.stat_text_xy = [
+            pygame.Vector2(screen_x(0.25)-Box.WIDTH/2, Box.HEIGHT/2+Box.PADDING*(1+1.5*i)+screen_y(0.5))
+            for i in range(Stats.NUM_STATS)
         ]
 
     def get_stat(self, shipgirl, stat):
@@ -741,9 +729,9 @@ class EquipmentMenu:
         if self.selected_equipment == Equipment.WEAPON:
             equippable = [
                 weapon_name for weapon_name, weapon_info in equipment_data.items()
-                if weapon_info["equippable_by"] == self.selected_shipgirl.battle_component.hull_type
+                if save_file["equipment"].get(weapon_name, 0) > 0
                 and weapon_info["type"] == "weapon"
-                and save_file["equipment"].get(weapon_name, 0) > 0
+                and weapon_info["equippable_by"] == self.selected_shipgirl.battle_component.hull_type
             ]
         else:
             equippable = [
@@ -761,10 +749,7 @@ class EquipmentMenu:
                     if rect.collidepoint(event.pos):
                         current_equipment = self.selected_shipgirl.battle_component.equipment[self.selected_equipment]
                         if current_equipment is not None:
-                            if current_equipment in save_file["equipment"]:
-                                save_file["equipment"][current_equipment] += 1
-                            else:
-                                save_file["equipment"][current_equipment] = 1
+                            save_file["equipment"][current_equipment] = save_file["equipment"].get(current_equipment, 0) + 1
                         self.selected_shipgirl.battle_component.equipment[self.selected_equipment] = new_equipment
                         save_file["equipment"][new_equipment] -= 1
             
@@ -778,19 +763,19 @@ class EquipmentMenu:
                     self.hovered_equipment = None
         
         if self.selected_shipgirl is not None:
-            self.selected_shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE.x
-            self.selected_shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
+            self.selected_shipgirl.rect.centerx = screen_x(0.25)
+            self.selected_shipgirl.rect.centery = screen_y(0.5)
 
     def draw(self, surface):
         if self.selected_shipgirl is not None:
             # shipgirl chibi
             self.selected_shipgirl.draw(surface)
             # shipgirl stats
-            for stat, rect in enumerate(self.stat_rects):
+            for stat, xy in enumerate(self.stat_text_xy):
                 font_rect = font.render(
                     surface,
                     f"{Stats.STAT_NAMES[stat]}: {self.get_stat(self.selected_shipgirl, stat)}",
-                    rect.center,
+                    xy,
                     Color.WHITE,
                     1,
                     style="topleft",
@@ -798,7 +783,7 @@ class EquipmentMenu:
                 )
                 stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
                 if stat_delta > 0:
-                    center = pygame.Vector2(font_rect.left-10,font_rect.centery)
+                    center = pygame.Vector2(font_rect.left-10,font_rect.centery) # TODO
                     pygame.draw.polygon(surface, (0,255,0),[
                         center+get_vec(length=5, angle=math.radians(30)),
                         center+get_vec(length=5, angle=math.radians(150)),
@@ -814,18 +799,18 @@ class EquipmentMenu:
             # shipgirl equipment
             for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
                 if self.selected_equipment == i:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=4)
+                    pygame.draw.rect(surface, Color.WHITE, rect, width=2*Box.OUTLINE_WIDTH)
                 else:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=2)
+                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 if equipment is not None:
                     _ = font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             # equippable equipment
             if self.selected_equipment == Equipment.WEAPON:
                 equippable = [
                     weapon_name for weapon_name, weapon_info in equipment_data.items()
-                    if weapon_info["equippable_by"] == self.selected_shipgirl.battle_component.hull_type
+                    if save_file["equipment"].get(weapon_name, 0) > 0
                     and weapon_info["type"] == "weapon"
-                    and save_file["equipment"].get(weapon_name, 0) > 0
+                    and weapon_info["equippable_by"] == self.selected_shipgirl.battle_component.hull_type
                 ]
             else:
                 equippable = [
@@ -834,19 +819,10 @@ class EquipmentMenu:
                     and aux_info["type"] == "aux"
                 ]
             for equipment, rect in zip(equippable, self.equippable_rects):
-                pygame.draw.rect(surface, Color.WHITE, rect, width=2)
+                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 _ = font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
         # exit button
         self.exit_equipment_menu_button.draw(surface, font)
-
-class Menus:
-    PORT = PortMenu()
-    EQUIPMENT = EquipmentMenu()
-    SORTIE_SELECTION = SortieSelectionMenu()
-    FLEET_SELECTION = FleetSelectionMenu()
-    ENCOUNTER = EncounterMenu()
-
-    current_menu = PORT
 
 class Armor:
     LIGHT = 0
@@ -960,29 +936,29 @@ class ShipgirlBattleComponent:
             return
         
         bar_width = 50
-        bar_background = get_rect(width=bar_width, height=10, centerx=rect.centerx, top=rect.bottom+20)
-        bar_fill = get_rect(width=bar_width*self.hp/self.max_hp(), height=10, left=bar_background.left, top=bar_background.top)
+        bar_background = get_rect(width=bar_width, height=10, centerx=rect.centerx, top=rect.bottom+20) # TODO
+        bar_fill = get_rect(width=bar_width*self.hp/self.max_hp(), height=bar_background.height, left=bar_background.left, top=bar_background.top)
         pygame.draw.rect(screen, (50,50,50), bar_background)
         pygame.draw.rect(screen, Color.WHITE, bar_fill)
 
         if not self.display_timer:
             return
 
-        center = pygame.Vector2(rect.centerx, rect.top-50)
+        center = pygame.Vector2(rect.centerx, rect.top-50) # TODO
         radius = 30
         start_angle = -90
         end_angle = start_angle + 360 * (1 - self.cooldown_timer)
         color = (50,200,50) if self.target is not None else (200,50,50)
         draw_slice(screen, color, center, radius, start_angle, end_angle)
-        pygame.draw.circle(screen, Color.WHITE, center, radius, width=2)
+        pygame.draw.circle(screen, Color.WHITE, center, radius, width=Box.OUTLINE_WIDTH)
 
 class Shipgirl:
     def __init__(self, name, is_player):
         self.name = name
     
         self.pos = pygame.Vector2(
-            random.random() * TEMP_SCREEN_SIZE.x,
-            random.random() * TEMP_SCREEN_SIZE.y
+            screen_x(random.random()),
+            screen_y(random.random())
         )
         self.wander_target = self.pos.copy()
         self.pause_time = 0
@@ -992,7 +968,7 @@ class Shipgirl:
             self.sprite = None
         self.facing_left = False
             
-        self.rect = get_rect(width=50, height=50, centerx=self.pos.x, centery=self.pos.y)
+        self.rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=self.pos.x, centery=self.pos.y)
 
         self.battle_component = ShipgirlBattleComponent(self.name, is_player)
 
@@ -1003,15 +979,15 @@ class Shipgirl:
                 self.sprite.set_animation(Live2D.IDLE_ANIMATION)
         else:
             to_target = self.wander_target - self.pos
-            if to_target.length() < 10:
+            if to_target.length() < 10: # TODO
                 self.wander_target = pygame.Vector2(
-                    random.random() * TEMP_SCREEN_SIZE.x,
-                    random.random() * TEMP_SCREEN_SIZE.y
+                    screen_x(random.random()),
+                    screen_y(random.random())
                 )
-                self.pause_time = random.uniform(1, 3)
+                self.pause_time = random.uniform(1, 3) # TODO
             else:
                 direction = to_target.normalize()
-                self.pos += direction * 50 * dt
+                self.pos += direction * 50 * dt # TODO
                 if direction.x >= 0:
                     self.facing_left = False
                 else:
@@ -1029,7 +1005,7 @@ class Shipgirl:
         if self.sprite is not None:
             self.sprite.draw(screen, self.rect.centerx, self.rect.centery, self.facing_left)
         else:
-            pygame.draw.rect(screen, Color.WHITE, self.rect, width=2)
+            pygame.draw.rect(screen, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
             _ = font.render(screen, self.name, self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         self.battle_component.draw(screen, self.rect)
@@ -1073,10 +1049,11 @@ class PlayerFleet:
                 shipgirl.battle_component.active = False
 
     def update(self, dt):
+        fleet_slot_offset = (len(self.shipgirls)-1)/2
         for i, shipgirl in enumerate(self.shipgirls):
             if shipgirl is not None:
-                shipgirl.rect.centerx = 0.25*TEMP_SCREEN_SIZE.x + (1-i)*75
-                shipgirl.rect.centery = 0.5*TEMP_SCREEN_SIZE.y
+                shipgirl.rect.centerx = screen_x(0.25) + (fleet_slot_offset-i)*(Box.WIDTH+Box.PADDING)
+                shipgirl.rect.centery = screen_y(0.5)
 
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
@@ -1131,19 +1108,19 @@ class SirenFleet:
             siren.battle_component.active = False
 
     def update(self, dt):
-        front_offset = 0.5*(len(self._front)-1)
-        for i, siren in enumerate(self._front): # TODO
-            siren.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x - 60 + (i-front_offset)*60
-            siren.rect.centery = 0.5*TEMP_SCREEN_SIZE.y + (i-front_offset)*50
+        front_offset = (len(self._front)-1)/2
+        for i, siren in enumerate(self._front):
+            siren.rect.centerx = screen_x(0.75) - (Box.WIDTH+Box.PADDING) + (i-front_offset)*(Box.WIDTH+Box.PADDING)
+            siren.rect.centery = screen_y(0.5) + (i-front_offset)*Box.WIDTH
 
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
             siren.battle_component.update(dt)
         
-        back_offset = 0.5*(len(self._back)-1)
+        back_offset = (len(self._back)-1)/2
         for i, siren in enumerate(self._back): 
-            siren.rect.centerx = 0.75*TEMP_SCREEN_SIZE.x + 60 + (i-back_offset)*60
-            siren.rect.centery = 0.5*TEMP_SCREEN_SIZE.y + (i-back_offset)*50
+            siren.rect.centerx = screen_x(0.75) + (Box.WIDTH+Box.PADDING) + (i-back_offset)*(Box.WIDTH+Box.PADDING)
+            siren.rect.centery = screen_y(0.5) + (i-back_offset)*Box.WIDTH
 
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
@@ -1155,15 +1132,23 @@ class SirenFleet:
 
 available_shipgirls = [Shipgirl(shipgirl_name, True) for shipgirl_name in save_file["shipgirls"]]
 available_shipgirl_rects = [
-    get_rect(
-        width=50,
-        height=50,
-        centerx=75*(i%4-1.5) + 0.75*TEMP_SCREEN_SIZE.x,
-        centery=75*(i//4-1.5) + 0.5*TEMP_SCREEN_SIZE.y
+    get_rect( # TODO
+        width=Box.WIDTH, height=Box.HEIGHT,
+        centerx=(Box.WIDTH+Box.PADDING)*(i%4-1.5) + screen_x(0.75),
+        centery=(Box.HEIGHT+Box.PADDING)*(i//4-1.5) + screen_y(0.5)
     ) for i in range(4)
 ]
 player_fleet = PlayerFleet()
 siren_fleet = SirenFleet()
+
+class Menus:
+    PORT = PortMenu()
+    EQUIPMENT = EquipmentMenu()
+    SORTIE_SELECTION = SortieSelectionMenu()
+    FLEET_SELECTION = FleetSelectionMenu()
+    ENCOUNTER = EncounterMenu()
+
+    current_menu = PORT
 
 running = True
 while running:
@@ -1180,7 +1165,7 @@ while running:
 
     Menus.current_menu.update(dt, events)
 
-    temp_screen.fill((20,20,50))
+    temp_screen.fill((20,20,50)) # TODO
     Menus.current_menu.draw(temp_screen)
     screen.blit(pygame.transform.scale(temp_screen, screen.get_size()), (0,0))
     pygame.display.flip()
