@@ -43,3 +43,47 @@ def draw_slice(screen, color, center, radius, start_angle, end_angle, width=0, r
             points.append(center + vec)
         
         pygame.draw.polygon(screen, color, points, width=width)
+
+def hex_to_pixel(q, r, size):
+    x = size * (math.sqrt(3) * q + math.sqrt(3)/2 * r)
+    y = size * (3/2 * r)
+    return (x, y)
+
+def hex_round(q, r):
+
+    x = q
+    z = r
+    y = -x - z
+
+    rx = round(x)
+    ry = round(y)
+    rz = round(z)
+
+    dx = abs(rx - x)
+    dy = abs(ry - y)
+    dz = abs(rz - z)
+
+    if dx > dy and dx > dz:
+        rx = -ry - rz
+    elif dy > dz:
+        ry = -rx - rz
+    else:
+        rz = -rx - ry
+
+    return rx, rz
+
+def pixel_to_hex(x, y, size):
+
+    q = (math.sqrt(3)/3 * x - 1/3 * y) / size
+    r = (2/3 * y) / size
+
+    return hex_round(q, r)
+
+def hex_corners(x, y, size):
+    corners = []
+    for i in range(6):
+        angle = math.radians(60 * i - 30)  # pointy top
+        cx = x + size * math.cos(angle)
+        cy = y + size * math.sin(angle)
+        corners.append((cx, cy))
+    return corners

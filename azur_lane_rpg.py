@@ -4,7 +4,7 @@ import json
 import pygame
 from engine.font import Font
 from engine.button import Button
-from engine.util import get_rect, get_vec, draw_slice
+from engine.util import get_rect, get_vec, draw_slice, hex_to_pixel, pixel_to_hex, hex_corners
 from engine.load_sprites import load_sprites
 from live2d.live2d import Live2D
 
@@ -308,27 +308,50 @@ class PortMenu:
 
             self.overlay_confirm_button.draw(surface, font)
 
+class LevelNode:
+    SIZE = 50
+    CENTER = pygame.Vector2(screen_x(0.25), screen_y(0.5))
+
+    def __init__(self, index, hexes):
+        self.index = index
+        self.hexes = hexes
+        self.unlocked = self.index <= save_file["sortie_progress"]
+        self.hovered = False
+    
+    def hover(self, mouse_pos):
+        mouse_x, mouse_y = mouse_pos
+        hx, hy = pixel_to_hex(mouse_x - self.CENTER.x, mouse_y - self.CENTER.y, self.SIZE)
+        self.hovered = (hx, hy) in self.hexes
+
+    def select(self, mouse_pos):
+        mouse_x, mouse_y = mouse_pos
+        hx, hy = pixel_to_hex(mouse_x - self.CENTER.x, mouse_y - self.CENTER.y, self.SIZE)
+        if (hx, hy) not in self.hexes:
+            return
+            
+        Menus.current_menu = Menus.FLEET_SELECTION
+        Menus.ENCOUNTER.current_sortie = self.index
+        Menus.ENCOUNTER.current_encounter = 0
+        player_fleet.clear_fleet()
+        siren_fleet.clear_fleet()
+
+    def draw(self, surface):
+        for hex in self.hexes:
+            x, y = hex_to_pixel(hex[0], hex[1], self.SIZE)
+            polygon = hex_corners(x, y, self.SIZE)
+            polygon = [pygame.Vector2(point) + self.CENTER for point in polygon]
+            outline_width = (2 if self.hovered else 1) * Box.OUTLINE_WIDTH
+            pygame.draw.polygon(surface, Color.WHITE, polygon, width=outline_width)
+            font.render(surface, str(self.index), pygame.Vector2(x, y) + self.CENTER, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+
 class SortieSelectionMenu:
     def __init__(self):
-        def start_sortie_factory(sortie_index):
-            def start_sortie():
-                Menus.current_menu = Menus.FLEET_SELECTION
-
-                Menus.ENCOUNTER.current_sortie = sortie_index
-                Menus.ENCOUNTER.current_encounter = 0
-
-                player_fleet.clear_fleet()
-                siren_fleet.clear_fleet()
-            return start_sortie
-
-        self.sortie_buttons = [
-            Button(
-                rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=100+sortie_index*(Box.WIDTH+Box.PADDING), top=100), # TODO
-                color=Color.BLUE_GREY,
-                text=f"{sortie_index}",
-                text_color=Color.WHITE,
-                callback=start_sortie_factory(sortie_index)
-            ) for sortie_index in range(len(sorties))
+        self.sortie_nodes = [
+            LevelNode(0, [(0,0)]),
+            LevelNode(1, [(1,0)]),
+            LevelNode(2, [(2,0)]),
+            LevelNode(3, [(3,0),(4,0),(3,1),(4,-1)])
         ]
 
         def exit_sortie_selection_menu():
@@ -354,14 +377,17 @@ class SortieSelectionMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 self.exit_sortie_selection_menu_button.click(event.pos)
 
-                for sortie_button in self.sortie_buttons:
-                    sortie_button.click(event.pos)
+                for sortie_node in self.sortie_nodes:
+                    sortie_node.select(event.pos)
+            if event.type == pygame.MOUSEMOTION:
+                for sortie_node in self.sortie_nodes:
+                    sortie_node.hover(event.pos)
 
     def draw(self, surface):
         self.exit_sortie_selection_menu_button.draw(surface, font)
 
-        for sortie_button in self.sortie_buttons:
-            sortie_button.draw(surface, font)
+        for sortie_node in self.sortie_nodes:
+            sortie_node.draw(surface)
 
 class FleetSelectionMenu:
     def __init__(self):
@@ -576,10 +602,11 @@ class EncounterMenu:
                         save_file["inventory"][drop] = save_file["inventory"].get(drop, 0) + 1
 
                 if save_file["research_progress"] >= 5: # TODO
-                    unique_item = shipgirl_data[save_file["research_target"]]["unique_item"]
-                    save_file["inventory"][unique_item] = 1
-                    save_file["research_target"] = None
-                    save_file["research_progress"] = 0
+                    if save_file["research_target"] is not None:
+                        unique_item = shipgirl_data[save_file["research_target"]]["unique_item"]
+                        save_file["inventory"][unique_item] = 1
+                        save_file["research_target"] = None
+                        save_file["research_progress"] = 0
 
                 player_fleet.end_encounter()
                 siren_fleet.end_encounter()
@@ -587,6 +614,13 @@ class EncounterMenu:
                     self.next_encounter_button.active = True
                 else:
                     self.return_to_port_button.active = True
+                    save_file["sortie_progress"] = max(
+                        save_file["sortie_progress"],
+                        self.current_sortie + 1
+                    )
+                    for sortie_node in self.sortie_nodes:
+                        if sortie_node.index <= save_file["sortie_progress"]:
+                            sortie_node.unlocked = True
                 self.retreat_button.active = False
 
     def draw(self, surface):
