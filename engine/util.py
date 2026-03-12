@@ -83,7 +83,37 @@ def hex_corners(x, y, size):
     corners = []
     for i in range(6):
         angle = math.radians(60 * i - 30)  # pointy top
-        cx = x + size * math.cos(angle)
-        cy = y + size * math.sin(angle)
+        cx = round(x + size * math.cos(angle), 2)
+        cy = round(y + size * math.sin(angle), 2)
         corners.append((cx, cy))
     return corners
+
+HEX_DIRECTIONS = [(1,0), (0,1), (-1,1), (-1,0), (0,-1), (1,-1)]
+
+def get_cluster_edges(cluster_hexes, size):
+
+    cluster_set = set(cluster_hexes)
+    edges = {}
+
+    for q, r in cluster_hexes:
+
+        x, y = hex_to_pixel(q, r, size)
+        corners = hex_corners(x, y, size)
+
+        for i, (dq, dr) in enumerate(HEX_DIRECTIONS):
+
+            neighbor = (q + dq, r + dr)
+
+            if neighbor not in cluster_set:
+                c1 = corners[i]
+                c2 = corners[(i + 1) % 6]
+
+                edges[c1] = c2
+
+    c = c1
+    polygon = [c]
+    while edges[c] not in polygon:
+        c = edges[c]
+        polygon.append(c)
+
+    return polygon

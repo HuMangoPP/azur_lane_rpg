@@ -4,7 +4,7 @@ import json
 import pygame
 from engine.font import Font
 from engine.button import Button
-from engine.util import get_rect, get_vec, draw_slice, hex_to_pixel, pixel_to_hex, hex_corners
+from engine.util import get_rect, get_vec, draw_slice, pixel_to_hex, hex_to_pixel, get_cluster_edges
 from engine.load_sprites import load_sprites
 from live2d.live2d import Live2D
 
@@ -308,7 +308,7 @@ class PortMenu:
 
             self.overlay_confirm_button.draw(surface, font)
 
-class LevelNode:
+class SortieNode:
     SIZE = 50
     CENTER = pygame.Vector2(screen_x(0.25), screen_y(0.5))
 
@@ -316,14 +316,18 @@ class LevelNode:
         self.index = index
         self.hexes = hexes
         self.unlocked = self.index <= save_file["sortie_progress"]
+        self.cleared = self.index < save_file["sortie_progress"]
         self.hovered = False
     
     def hover(self, mouse_pos):
         mouse_x, mouse_y = mouse_pos
         hx, hy = pixel_to_hex(mouse_x - self.CENTER.x, mouse_y - self.CENTER.y, self.SIZE)
-        self.hovered = (hx, hy) in self.hexes
+        self.hovered = self.unlocked and (hx, hy) in self.hexes
 
     def select(self, mouse_pos):
+        if not self.unlocked:
+            return
+
         mouse_x, mouse_y = mouse_pos
         hx, hy = pixel_to_hex(mouse_x - self.CENTER.x, mouse_y - self.CENTER.y, self.SIZE)
         if (hx, hy) not in self.hexes:
@@ -336,22 +340,33 @@ class LevelNode:
         siren_fleet.clear_fleet()
 
     def draw(self, surface):
-        for hex in self.hexes:
-            x, y = hex_to_pixel(hex[0], hex[1], self.SIZE)
-            polygon = hex_corners(x, y, self.SIZE)
-            polygon = [pygame.Vector2(point) + self.CENTER for point in polygon]
-            outline_width = (2 if self.hovered else 1) * Box.OUTLINE_WIDTH
-            pygame.draw.polygon(surface, Color.WHITE, polygon, width=outline_width)
+        if self.cleared:
+            color = Color.BLUE_GREY
+        elif self.unlocked:
+            color = Color.DARK_BLUE
+        else:
+            color = Color.BLACK
+        polygon = get_cluster_edges(self.hexes, self.SIZE)
+        polygon = [pygame.Vector2(point) + self.CENTER for point in polygon]
+        pygame.draw.polygon(surface, color, polygon)
+        outline_width = (2 if self.hovered else 1) * Box.OUTLINE_WIDTH
+        pygame.draw.polygon(surface, Color.WHITE, polygon, width=outline_width)
+
+        for q, r in self.hexes:
+            x, y = hex_to_pixel(q, r, self.SIZE)
+            # pygame.draw.polygon(surface, color, polygon)
+            # outline_width = (2 if self.hovered else 1) * Box.OUTLINE_WIDTH
+            # pygame.draw.polygon(surface, Color.WHITE, polygon, width=outline_width)
             font.render(surface, str(self.index), pygame.Vector2(x, y) + self.CENTER, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
 
 class SortieSelectionMenu:
     def __init__(self):
         self.sortie_nodes = [
-            LevelNode(0, [(0,0)]),
-            LevelNode(1, [(1,0)]),
-            LevelNode(2, [(2,0)]),
-            LevelNode(3, [(3,0),(4,0),(3,1),(4,-1)])
+            SortieNode(0, [(0,0)]),
+            SortieNode(1, [(1,-1)]),
+            SortieNode(2, [(0,1)]),
+            SortieNode(3, [(1,0),(2,0),(1,1),(2,-1)])
         ]
 
         def exit_sortie_selection_menu():
@@ -458,6 +473,8 @@ class FleetSelectionMenu:
                                     player_fleet.shipgirls[j] = player_fleet.shipgirls[i]
                             player_fleet.shipgirls[i] = self.selected_shipgirl
                             self.selected_shipgirl.rect.center = pygame.Vector2(slot.center)
+                            if self.selected_shipgirl.sprite is not None:
+                                self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
                             self.selected_shipgirl = None
                 mouse_start_drag = None
                 self.start_encounter_button.click(event.pos)
@@ -600,13 +617,14 @@ class EncounterMenu:
                         if roll > drop_probability:
                             continue
                         save_file["inventory"][drop] = save_file["inventory"].get(drop, 0) + 1
-
-                if save_file["research_progress"] >= 5: # TODO
+                
+                exp_req = 5 # TODO
+                if save_file["research_progress"] >= exp_req:
                     if save_file["research_target"] is not None:
                         unique_item = shipgirl_data[save_file["research_target"]]["unique_item"]
                         save_file["inventory"][unique_item] = 1
                         save_file["research_target"] = None
-                        save_file["research_progress"] = 0
+                        save_file["research_progress"] -= exp_req
 
                 player_fleet.end_encounter()
                 siren_fleet.end_encounter()
@@ -709,7 +727,7 @@ class EquipmentMenu:
         )
 
         self.stat_text_xy = [
-            pygame.Vector2(screen_x(0.25)-Box.WIDTH/2, Box.HEIGHT/2+Box.PADDING*(1+1.5*i)+screen_y(0.5))
+            pygame.Vector2(screen_x(0.25)-Box.WIDTH/2, Box.HEIGHT/2+Box.PADDING*(2+1.5*i)+screen_y(0.5))
             for i in range(Stats.NUM_STATS)
         ]
 
@@ -799,6 +817,9 @@ class EquipmentMenu:
         if self.selected_shipgirl is not None:
             self.selected_shipgirl.rect.centerx = screen_x(0.25)
             self.selected_shipgirl.rect.centery = screen_y(0.5)
+            if self.selected_shipgirl.sprite is not None:
+                self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+            self.selected_shipgirl.animate(dt)
 
     def draw(self, surface):
         if self.selected_shipgirl is not None:
@@ -1026,7 +1047,9 @@ class Shipgirl:
                     self.facing_left = False
                 else:
                     self.facing_left = True
-            self.sprite.set_animation(Live2D.WALK_ANIMATION)
+            
+            if self.sprite is not None:
+                self.sprite.set_animation(Live2D.WALK_ANIMATION)
         self.rect.center = self.pos
 
         self.animate(dt)
