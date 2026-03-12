@@ -1,12 +1,6 @@
 {
 	"laffey": {
-		"research_reqs": {
-			"DD_blueprint": 1,
-			"wisdom_cube": 1,
-			"huggy_pillow": 1
-		},
 		"unique_item": "huggy_pillow",
-		"unique_item_desc": "the huggy pillow of bravery",
 		"hull_type": "DD",
 		"max_hp": 20,
 		"evasion": 0,
@@ -14,13 +8,7 @@
 		"reload": 300
 	},
 	"san_diego": {
-		"research_reqs": {
-			"CL_blueprint": 1,
-			"wisdom_cube": 1,
-			"star_blaster": 1
-		},
 		"unique_item": "star_blaster",
-		"unique_item_desc": "the star blaster",
 		"hull_type": "CL",
 		"max_hp": 15,
 		"evasion": 0,
@@ -28,13 +16,7 @@
 		"reload": 200
 	},
 	"guam": {
-		"research_reqs": {
-			"CA_blueprint": 1,
-			"wisdom_cube": 1,
-			"battle_mech": 1
-		},
 		"unique_item": "battle_mech",
-		"unique_item_desc": "the battle mech",
 		"hull_type": "CA",
 		"max_hp": 20,
 		"evasion": 0,
@@ -42,13 +24,103 @@
 		"reload": 150
 	},
 	"new_jersey": {
-		"research_reqs": {
-			"BB_blueprint": 1,
-			"wisdom_cube": 1,
-			"dragon_cannon": 1
-		},
 		"unique_item": "dragon_cannon",
-		"unique_item_desc": "the dragon cannon",
+		"hull_type": "BB",
+		"max_hp": 30,
+		"evasion": 0,
+		"firepower": 2,
+		"reload": 100
+	},
+	"ayanami": {
+		"unique_item": "demon_blade",
+		"hull_type": "DD",
+		"max_hp": 20,
+		"evasion": 0,
+		"firepower": 4,
+		"reload": 300
+	},
+	"shimanto": {
+		"unique_item": "white_dragon_scale",
+		"hull_type": "CL",
+		"max_hp": 15,
+		"evasion": 0,
+		"firepower": 1,
+		"reload": 200
+	},
+	"unzen": {
+		"unique_item": "butterfly_wings",
+		"hull_type": "CA",
+		"max_hp": 20,
+		"evasion": 0,
+		"firepower": 1,
+		"reload": 150
+	},
+	"musashi": {
+		"unique_item": "shogun",
+		"hull_type": "BB",
+		"max_hp": 30,
+		"evasion": 0,
+		"firepower": 2,
+		"reload": 100
+	},
+	"javelin": {
+		"unique_item": "full_burst_javelin",
+		"hull_type": "DD",
+		"max_hp": 20,
+		"evasion": 0,
+		"firepower": 4,
+		"reload": 300
+	},
+	"plymouth": {
+		"unique_item": "dove_feather",
+		"hull_type": "CL",
+		"max_hp": 15,
+		"evasion": 0,
+		"firepower": 1,
+		"reload": 200
+	},
+	"drake": {
+		"unique_item": "flintlock",
+		"hull_type": "CA",
+		"max_hp": 20,
+		"evasion": 0,
+		"firepower": 1,
+		"reload": 150
+	},
+	"lion": {
+		"unique_item": "lionflame",
+		"hull_type": "BB",
+		"max_hp": 30,
+		"evasion": 0,
+		"firepower": 2,
+		"reload": 100
+	},
+	"z23": {
+		"unique_item": "raubtier",
+		"hull_type": "DD",
+		"max_hp": 20,
+		"evasion": 0,
+		"firepower": 4,
+		"reload": 300
+	},
+	"emden": {
+		"unique_item": "twin_dragons",
+		"hull_type": "CL",
+		"max_hp": 15,
+		"evasion": 0,
+		"firepower": 1,
+		"reload": 200
+	},
+	"hindenburg": {
+		"unique_item": "devil_horns",
+		"hull_type": "CA",
+		"max_hp": 20,
+		"evasion": 0,
+		"firepower": 1,
+		"reload": 150
+	},
+	"bismarck": {
+		"unique_item": "flagship_banner",
 		"hull_type": "BB",
 		"max_hp": 30,
 		"evasion": 0,

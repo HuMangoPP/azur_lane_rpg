@@ -138,7 +138,14 @@ class PortMenu:
 
         def overlay_confirm():
             if self.current_overlay == self.SHIPYARD:
-                selected_entity_reqs = shipgirl_data[self.overlay_selected_entity]["research_reqs"]
+                selected_entity_info = shipgirl_data[self.overlay_selected_entity]
+                hull_type = selected_entity_info["hull_type"]
+                unique_item = selected_entity_info["unique_item"]
+                selected_entity_reqs = {
+                    f"{hull_type}_blueprint": 1,
+                    "wisdom_cube": 1,
+                    unique_item: 1
+                }
                 if all(save_file["inventory"][ingredient] >= req for ingredient, req in selected_entity_reqs.items()):
                     save_file["shipgirls"][self.overlay_selected_entity] = {
                         "equipment": [None, None, None],
@@ -207,8 +214,8 @@ class PortMenu:
 
                     if self.current_overlay == self.SHIPYARD:
                         entities = [
-                            shipgirl for shipgirl, shipgirl_info in shipgirl_data.items()
-                            if shipgirl_info["research_reqs"] and shipgirl not in save_file["shipgirls"]
+                            shipgirl for shipgirl in shipgirl_data
+                            if shipgirl not in save_file["shipgirls"]
                         ]
                     elif self.current_overlay == self.GEAR_LAB:
                         entities = [weapon for weapon in equipment_data]
@@ -242,11 +249,20 @@ class PortMenu:
 
             if self.current_overlay == self.SHIPYARD:
                 entities = [
-                    shipgirl for shipgirl, shipgirl_info in shipgirl_data.items()
-                    if shipgirl_info["research_reqs"] and shipgirl not in save_file["shipgirls"]
+                    shipgirl for shipgirl in shipgirl_data
+                    if shipgirl not in save_file["shipgirls"]
                 ]
                 selected_entity_info = shipgirl_data.get(self.overlay_selected_entity, {})
-                selected_entity_reqs = selected_entity_info.get("research_reqs")
+                if selected_entity_info:
+                    hull_type = selected_entity_info["hull_type"]
+                    unique_item = selected_entity_info["unique_item"]
+                    selected_entity_reqs = {
+                        f"{hull_type}_blueprint": 1,
+                        "wisdom_cube": 1,
+                        unique_item: 1
+                    }
+                else:
+                    selected_entity_reqs = {}
                 selected_entity_info = {
                     "HULL": selected_entity_info.get("hull_type"),
                     "HP": selected_entity_info.get("max_hp"),
@@ -622,7 +638,7 @@ class EncounterMenu:
                 if save_file["research_progress"] >= exp_req:
                     if save_file["research_target"] is not None:
                         unique_item = shipgirl_data[save_file["research_target"]]["unique_item"]
-                        save_file["inventory"][unique_item] = 1
+                        save_file["inventory"][unique_item["name"]] = 1
                         save_file["research_target"] = None
                         save_file["research_progress"] -= exp_req
 
