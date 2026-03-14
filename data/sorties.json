@@ -1,54 +1,86 @@
 [
-	[
-		{
-			"front": ["DD"],
-			"back": []
-		},
-		{
-			"front": ["DD", "DD"],
-			"back": []
+	{
+		"encounters": [
+			{
+				"front": ["DD"],
+				"back": []
+			},
+			{
+				"front": ["DD", "DD"],
+				"back": []
+			}
+		],
+		"rewards": {
+			"DD_blueprint": 1,
+			"metals": 1,
+			"plastics": 1,
+			"gunpowder": 1,
+			"electronics": 1
 		}
-	],
-	[
-		{
-			"front": ["DD", "DD"],
-			"back": []
-		},
-		{
-			"front": ["DD", "DD"],
-			"back": ["CA"]
+	},
+	{
+		"encounters": [
+			{
+				"front": ["DD", "DD"],
+				"back": []
+			},
+			{
+				"front": ["DD", "DD"],
+				"back": ["CA"]
+			}
+		],
+		"rewards": {
+			"DD_blueprint": 1,
+			"metals": 1,
+			"plastics": 1,
+			"gunpowder": 1,
+			"electronics": 1
 		}
-	],
-	[
-		{
-			"front": ["DD", "DD", "DD"],
-			"back": []
-		},
-		{
-			"front": ["DD", "DD"],
-			"back": ["CA"]
-		},
-		{
-			"front": ["DD", "DD", "DD"],
-			"back": ["CA"]
-		},
-		{
-			"front": ["DD", "DD"],
-			"back": ["CA", "CA"]
+	},
+	{
+		"encounters": [
+			{
+				"front": ["DD", "DD", "DD"],
+				"back": []
+			},
+			{
+				"front": ["DD", "DD", "DD"],
+				"back": ["CA"]
+			},
+			{
+				"front": ["DD", "DD"],
+				"back": ["CA", "CA"]
+			}
+		],
+		"rewards": {
+			"DD_blueprint": 1,
+			"metals": 1,
+			"plastics": 1,
+			"gunpowder": 1,
+			"electronics": 1
 		}
-	],
-	[
-		{
-			"front": ["DD", "DD", "DD"],
-			"back": ["DD"]
-		},
-		{
-			"front": ["DD", "DD", "DD"],
-			"back": ["CA", "CA"]
-		},
-		{
-			"front": ["DD", "DD"],
-			"back": ["BB"]
+	},
+	{
+		"encounters": [
+			{
+				"front": ["DD", "DD", "DD"],
+				"back": ["DD"]
+			},
+			{
+				"front": ["DD", "DD", "DD"],
+				"back": ["CA", "CA"]
+			},
+			{
+				"front": ["DD", "DD"],
+				"back": ["BB"]
+			}
+		],
+		"rewards": {
+			"DD_blueprint": 1,
+			"metals": 1,
+			"plastics": 1,
+			"gunpowder": 1,
+			"electronics": 1
 		}
-	]
+	}
 ]

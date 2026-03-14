@@ -570,9 +570,10 @@ class EncounterMenu:
         self.encounter_end_flag = True
 
     def begin_encounter(self):
-        siren_fleet_data = sorties[self.current_sortie][self.current_encounter]
-        siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in siren_fleet_data["front"]] # TODO
-        siren_fleet._back = [Shipgirl(siren_name, False) for siren_name in siren_fleet_data["back"]]
+        sortie_data = sorties[self.current_sortie]
+        encounter_data = sortie_data["encounters"][self.current_encounter]
+        siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in encounter_data["front"]] # TODO
+        siren_fleet._back = [Shipgirl(siren_name, False) for siren_name in encounter_data["back"]]
         for siren in siren_fleet.fleet:
             if siren_data[siren.name]["target_pref"] == "front":
                 siren.battle_component.target = player_fleet.front
@@ -627,12 +628,12 @@ class EncounterMenu:
                             shipgirl.battle_component.exp += siren.battle_component.exp
                     save_file["research_progress"] += siren.battle_component.exp
                     
-                    drops = siren_data[siren.name]["drops"]
-                    for drop, drop_probability in drops.items():
-                        roll = random.random()*100
-                        if roll > drop_probability:
-                            continue
-                        save_file["inventory"][drop] = save_file["inventory"].get(drop, 0) + 1
+                    # drops = siren_data[siren.name]["drops"]
+                    # for drop, drop_probability in drops.items():
+                    #     roll = random.random()*100
+                    #     if roll > drop_probability:
+                    #         continue
+                    #     save_file["inventory"][drop] = save_file["inventory"].get(drop, 0) + 1
                 
                 exp_req = 5 # TODO
                 if save_file["research_progress"] >= exp_req:
@@ -644,15 +645,20 @@ class EncounterMenu:
 
                 player_fleet.end_encounter()
                 siren_fleet.end_encounter()
-                if self.current_encounter+1 < len(sorties[self.current_sortie]):
+                num_encounters = len(sorties[self.current_sortie]["encounters"])
+                if self.current_encounter+1 < num_encounters:
                     self.next_encounter_button.active = True
                 else:
                     self.return_to_port_button.active = True
+                    rewards = sorties[self.current_sortie]["rewards"]
+                    for reward in rewards:
+                        save_file["inventory"][reward] = save_file["inventory"].get(reward, 0) + 1
+
                     save_file["sortie_progress"] = max(
                         save_file["sortie_progress"],
                         self.current_sortie + 1
                     )
-                    for sortie_node in self.sortie_nodes:
+                    for sortie_node in Menus.SORTIE_SELECTION.sortie_nodes:
                         if sortie_node.index <= save_file["sortie_progress"]:
                             sortie_node.unlocked = True
                 self.retreat_button.active = False
