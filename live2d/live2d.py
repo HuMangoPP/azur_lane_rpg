@@ -58,6 +58,7 @@ class Live2D:
         "right_leg",
         "left_arm",
         "torso",
+        "right_arm",
         "head",
         "face",
         "top_of_head",
@@ -66,7 +67,6 @@ class Live2D:
         "right_hair",
         "right_bangs",
         "bangs",
-        "right_arm",
     ]
 
     CONNECTIONS = {
@@ -96,12 +96,11 @@ class Live2D:
 
         self.animation = self.IDLE_ANIMATION
 
-        
         with open(model_file) as f:
-            model_dict = json.load(f)
+            self.model_dict = json.load(f)
         
         scale = 1
-        for part, part_data in model_dict.items():
+        for part, part_data in self.model_dict.items():
             image = pygame.transform.scale_by(pygame.image.load(part_data["path"]).convert_alpha(), scale)
             image.set_colorkey((255,0,0))
             live2d_part = Live2DPart(image, scale*pygame.Vector2(part_data["pivot"]))
@@ -130,27 +129,23 @@ class Live2D:
         if self.animation == self.IDLE_ANIMATION:
             t = math.radians(270 * self.t)
             one_plus_sint = 0.5 * (1 + math.sin(t))
-            self.set_rotation("right_arm", -15 * one_plus_sint)
-            self.set_rotation("left_arm", 15 * one_plus_sint)
-            self.set_rotation("right_leg", -10 * one_plus_sint)
-            self.set_rotation("left_leg", 10 * one_plus_sint)
-            self.set_rotation("right_bangs", -5 * one_plus_sint)
-            self.set_rotation("left_bangs", 5 * one_plus_sint)
-            self.set_rotation("right_hair", -10 * one_plus_sint)
-            self.set_rotation("left_hair", 10 * one_plus_sint)
+            anim_t = {"one_plus_sint": one_plus_sint}
+            for part, part_data in self.model_dict.items():
+                idle_animation = part_data["idle"]
+                if idle_animation[1] is None:
+                    continue
+                self.set_rotation(part, idle_animation[0] * anim_t[idle_animation[1]])
             self.set_offset("torso", pygame.Vector2(0, 5 * one_plus_sint))
         elif self.animation == self.WALK_ANIMATION:
             t = math.radians(270 * self.t)
             sint = math.sin(t)
             sint_sq = sint ** 2
-            self.set_rotation("right_arm", -15 * sint)
-            self.set_rotation("left_arm", 15 * sint)
-            self.set_rotation("right_leg", 30 * sint)
-            self.set_rotation("left_leg", -30 * sint)
-            self.set_rotation("right_bangs", -5 * sint_sq)
-            self.set_rotation("left_bangs", 5 * sint_sq)
-            self.set_rotation("right_hair", -10 * sint_sq)
-            self.set_rotation("left_hair", 10 * sint_sq)
+            anim_t = {"sint": sint, "sint_sq": sint_sq}
+            for part, part_data in self.model_dict.items():
+                walk_animation = part_data["walk"]
+                if walk_animation[1] is None:
+                    continue
+                self.set_rotation(part, walk_animation[0] * anim_t[walk_animation[1]])
             self.set_offset("torso", pygame.Vector2(0, 5 * sint_sq))
 
     def draw(self, surface, x, y, flipx):

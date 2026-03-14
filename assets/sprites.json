@@ -28,7 +28,5 @@
 	"gunpowder": { "path": "assets/gunpowder.png", "scale": 2 },
 	"metals": { "path": "assets/metals.png", "scale": 2 },
 	"plastics": { "path": "assets/plastics.png", "scale": 2 },
-	"wisdom_cube": { "path": "assets/wisdom_cube.png", "scale": 2 },
-
-	"laffey": { "path": "assets/laffey.png", "scale": 1 }
+	"wisdom_cube": { "path": "assets/wisdom_cube.png", "scale": 2 }
 }

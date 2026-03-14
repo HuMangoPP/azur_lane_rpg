@@ -26,9 +26,9 @@
 	"new_jersey": {
 		"unique_item": "dragon_cannon",
 		"hull_type": "BB",
-		"max_hp": 30,
+		"max_hp": 50,
 		"evasion": 0,
-		"firepower": 2,
+		"firepower": 7,
 		"reload": 100
 	},
 	"ayanami": {

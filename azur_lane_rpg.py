@@ -1,3 +1,4 @@
+import os
 import math
 import random
 import json
@@ -1042,7 +1043,7 @@ class Shipgirl:
         )
         self.wander_target = self.pos.copy()
         self.pause_time = 0
-        if self.name in sprites:
+        if os.path.exists(f"live2d/{self.name}/model.json"):
             self.sprite = Live2D(f"live2d/{self.name}/model.json")
         else:
             self.sprite = None

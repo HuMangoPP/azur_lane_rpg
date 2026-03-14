@@ -1,90 +1,90 @@
 {
 	"torso_back": {
-		"path": "live2d/laffey/torso_back.png",
+		"path": "live2d/new_jersey/torso_back.png",
 		"pivot": [34, 42],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
 	"left_leg": {
-		"path": "live2d/laffey/left_leg.png",
+		"path": "live2d/new_jersey/left_leg.png",
 		"pivot": [39, 50],
 		"idle": [10, "one_plus_sint"],
 		"walk": [-30, "sint"]
 	},
 	"right_leg": {
-		"path": "live2d/laffey/right_leg.png",
+		"path": "live2d/new_jersey/right_leg.png",
 		"pivot": [30, 50],
 		"idle": [-10, "one_plus_sint"],
 		"walk": [30, "sint"]
 	},
 	"torso": {
-		"path": "live2d/laffey/torso.png",
+		"path": "live2d/new_jersey/torso.png",
 		"pivot": [34, 34],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
 	"left_arm": {
-		"path": "live2d/laffey/left_arm.png",
+		"path": "live2d/new_jersey/left_arm.png",
 		"pivot": [38, 36],
 		"idle": [15, "one_plus_sint"],
 		"walk": [15, "sint"]
 	},
 	"right_arm": {
-		"path": "live2d/laffey/right_arm.png",
+		"path": "live2d/new_jersey/right_arm.png",
 		"pivot": [29, 35],
 		"idle": [-15, "one_plus_sint"],
 		"walk": [-15, "sint"]
 	},
 	"back_hair": {
-		"path": "live2d/laffey/back_hair.png",
-		"pivot": [32, 20],
+		"path": "live2d/new_jersey/back_hair.png",
+		"pivot": [34, 14],
 		"idle": [0, null],
-		"walk": [0, null]
+		"walk": [5, "sint"]
 	},
 	"head": {
-		"path": "live2d/laffey/head.png",
+		"path": "live2d/new_jersey/head.png",
 		"pivot": [34, 34],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
 	"face": {
-		"path": "live2d/laffey/face.png",
+		"path": "live2d/new_jersey/face.png",
 		"pivot": [36, 26],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
 	"top_of_head": {
-		"path": "live2d/laffey/top_of_head.png",
+		"path": "live2d/new_jersey/top_of_head.png",
 		"pivot": [34, 9],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
 	"left_hair": {
-		"path": "live2d/laffey/left_hair.png",
+		"path": "live2d/new_jersey/left_hair.png",
 		"pivot": [46, 8],
-		"idle": [10, "one_plus_sint"],
-		"walk": [10, "sint_sq"]
+		"idle": [5, "one_plus_sint"],
+		"walk": [5, "sint"]
 	},
 	"left_bangs": {
-		"path": "live2d/laffey/left_bangs.png",
-		"pivot": [45, 14],
+		"path": "live2d/new_jersey/left_bangs.png",
+		"pivot": [38, 8],
 		"idle": [5, "one_plus_sint"],
 		"walk": [5, "sint_sq"]
 	},
 	"right_hair": {
-		"path": "live2d/laffey/right_hair.png",
+		"path": "live2d/new_jersey/right_hair.png",
 		"pivot": [15, 10],
-		"idle": [-10, "one_plus_sint"],
-		"walk": [-10, "sint_sq"]
+		"idle": [-5, "one_plus_sint"],
+		"walk": [5, "sint"]
 	},
 	"right_bangs": {
-		"path": "live2d/laffey/right_bangs.png",
-		"pivot": [21, 12],
+		"path": "live2d/new_jersey/right_bangs.png",
+		"pivot": [30, 8],
 		"idle": [-5, "one_plus_sint"],
 		"walk": [-5, "sint_sq"]
 	},
 	"bangs": {
-		"path": "live2d/laffey/bangs.png",
+		"path": "live2d/new_jersey/bangs.png",
 		"pivot": [35, 10],
 		"idle": [0, null],
 		"walk": [0, null]
