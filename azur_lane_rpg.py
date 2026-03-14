@@ -628,12 +628,13 @@ class EncounterMenu:
                             shipgirl.battle_component.exp += siren.battle_component.exp
                     save_file["research_progress"] += siren.battle_component.exp
                     
-                    # drops = siren_data[siren.name]["drops"]
-                    # for drop, drop_probability in drops.items():
-                    #     roll = random.random()*100
-                    #     if roll > drop_probability:
-                    #         continue
-                    #     save_file["inventory"][drop] = save_file["inventory"].get(drop, 0) + 1
+                    if self.current_sortie < save_file["sortie_progress"]:
+                        drops = siren_data[siren.name]["drops"]
+                        for drop, drop_probability in drops.items():
+                            roll = random.random()*100
+                            if roll > drop_probability:
+                                continue
+                            save_file["inventory"][drop] = save_file["inventory"].get(drop, 0) + 1
                 
                 exp_req = 5 # TODO
                 if save_file["research_progress"] >= exp_req:
@@ -650,9 +651,11 @@ class EncounterMenu:
                     self.next_encounter_button.active = True
                 else:
                     self.return_to_port_button.active = True
-                    rewards = sorties[self.current_sortie]["rewards"]
-                    for reward in rewards:
-                        save_file["inventory"][reward] = save_file["inventory"].get(reward, 0) + 1
+
+                    if self.current_sortie == save_file["sortie_progress"]:
+                        rewards = sorties[self.current_sortie]["rewards"]
+                        for reward in rewards:
+                            save_file["inventory"][reward] = save_file["inventory"].get(reward, 0) + 1
 
                     save_file["sortie_progress"] = max(
                         save_file["sortie_progress"],

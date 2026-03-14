@@ -1,0 +1,17 @@
+{
+	"shipgirls": {
+		"laffey": {
+			"equipment": [null, null, null],
+			"exp": 0
+		},
+		"new_jersey": {
+			"equipment": [null, null, null],
+			"exp": 0
+		}
+	},
+	"equipment": {},
+	"inventory": {},
+	"research_target": null,
+	"research_progress": 0,
+	"sortie_progress": 0
+}
