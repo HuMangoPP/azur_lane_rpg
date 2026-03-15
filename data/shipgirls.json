@@ -2,10 +2,10 @@
 	"laffey": {
 		"unique_item": "huggy_pillow",
 		"hull_type": "DD",
-		"max_hp": 20,
-		"evasion": 200,
-		"firepower": 4,
-		"reload": 300
+		"max_hp": [20, 2],
+		"evasion": [200, 50],
+		"firepower": [4, 1],
+		"reload": [300, 50]
 	},
 	"san_diego": {
 		"unique_item": "star_blaster",
@@ -26,10 +26,10 @@
 	"new_jersey": {
 		"unique_item": "dragon_cannon",
 		"hull_type": "BB",
-		"max_hp": 50,
-		"evasion": 0,
-		"firepower": 7,
-		"reload": 100
+		"max_hp": [50, 5],
+		"evasion": [0, 10],
+		"firepower": [7, 1],
+		"reload": [100, 10]
 	},
 	"ayanami": {
 		"unique_item": "demon_blade",

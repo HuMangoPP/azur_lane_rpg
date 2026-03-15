@@ -492,6 +492,7 @@ class FleetSelectionMenu:
                             self.selected_shipgirl.rect.center = pygame.Vector2(slot.center)
                             if self.selected_shipgirl.sprite is not None:
                                 self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+                                self.selected_shipgirl.facing_left = False
                             self.selected_shipgirl = None
                 mouse_start_drag = None
                 self.start_encounter_button.click(event.pos)
@@ -573,10 +574,11 @@ class EncounterMenu:
     def begin_encounter(self):
         sortie_data = sorties[self.current_sortie]
         encounter_data = sortie_data["encounters"][self.current_encounter]
-        siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in encounter_data["front"]] # TODO
+        siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in encounter_data["front"]] #
         siren_fleet._back = [Shipgirl(siren_name, False) for siren_name in encounter_data["back"]]
         for siren in siren_fleet.fleet:
             if siren_data[siren.name]["target_pref"] == "front":
+                siren.facing_left = True
                 siren.battle_component.target = player_fleet.front
         player_fleet.begin_encounter()
         siren_fleet.begin_encounter()
@@ -924,6 +926,8 @@ class Armor:
     }
 
 class ShipgirlBattleComponent:
+    LEVEL_EXPS = [3, 5, 7, 9, 11]
+
     def __init__(self, name, is_player):
         self.active = False
         self.display_timer = is_player
@@ -948,12 +952,21 @@ class ShipgirlBattleComponent:
         self.target = None
         self.evasion_gauge = 0
 
+    @property
+    def level(self):
+        level_index = 0
+        exp = self.exp
+        while exp >= self.LEVEL_EXPS[level_index]:
+            exp -= self.LEVEL_EXPS[level_index]
+            level_index += 1
+        return level_index
+
     def max_hp(self, equipment_override=None):
         equipment = self.equipment.copy()
         if equipment_override is not None:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
-            self.base_max_hp
+            self.base_max_hp[0] + self.base_max_hp[1] * self.level
             + equipment_data.get(equipment[Equipment.WEAPON], {}).get("max_hp", 0)
             + equipment_data.get(equipment[Equipment.AUX1], {}).get("max_hp", 0)
             + equipment_data.get(equipment[Equipment.AUX2], {}).get("max_hp", 0)
@@ -964,7 +977,7 @@ class ShipgirlBattleComponent:
         if equipment_override is not None:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
-            self.base_evasion
+            self.base_evasion[0] + self.base_evasion[1] * self.level
             + equipment_data.get(equipment[Equipment.WEAPON], {}).get("evasion", 0)
             + equipment_data.get(equipment[Equipment.AUX1], {}).get("evasion", 0)
             + equipment_data.get(equipment[Equipment.AUX2], {}).get("evasion", 0)
@@ -975,7 +988,7 @@ class ShipgirlBattleComponent:
         if equipment_override is not None:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
-            self.base_firepower
+            self.base_firepower[0] + self.base_firepower[1] * self.level
             + equipment_data.get(equipment[Equipment.WEAPON], {}).get("firepower", 0)
             + equipment_data.get(equipment[Equipment.AUX1], {}).get("firepower", 0)
             + equipment_data.get(equipment[Equipment.AUX2], {}).get("firepower", 0)
@@ -986,7 +999,7 @@ class ShipgirlBattleComponent:
         if equipment_override is not None:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
-            self.base_reload
+            self.base_reload[0] + self.base_reload[1] * self.level
             + equipment_data.get(equipment[Equipment.WEAPON], {}).get("reload", 0)
             + equipment_data.get(equipment[Equipment.AUX1], {}).get("reload", 0)
             + equipment_data.get(equipment[Equipment.AUX2], {}).get("reload", 0)
@@ -1204,6 +1217,8 @@ class SirenFleet:
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
             siren.battle_component.update(dt)
+
+            siren.animate(dt)
         
         back_offset = (len(self._back)-1)/2
         for i, siren in enumerate(self._back): 

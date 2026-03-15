@@ -1,10 +1,10 @@
 {
 	"DD": {
 		"hull_type": "DD",
-		"max_hp": 10,
-		"evasion": 0,
-		"reload": 200,
-		"firepower": 2,
+		"max_hp": [10, 0],
+		"evasion": [0, 0],
+		"reload": [200, 0],
+		"firepower": [2, 0],
 		"target_pref": "front",
 		"exp": 1,
 		"drops": {
@@ -18,10 +18,10 @@
 	},
 	"CA": {
 		"hull_type": "CA",
-		"max_hp": 20,
-		"evasion": 0,
-		"reload": 150,
-		"firepower": 3,
+		"max_hp": [20, 0],
+		"evasion": [0, 0],
+		"reload": [150, 0],
+		"firepower": [3, 0],
 		"target_pref": "front",
 		"exp": 1,
 		"drops": {
@@ -35,10 +35,10 @@
 	},
 	"BB": {
 		"hull_type": "BB",
-		"max_hp": 50,
-		"evasion": 0,
-		"reload": 50,
-		"firepower": 3,
+		"max_hp": [50, 0],
+		"evasion": [0, 0],
+		"reload": [50, 0],
+		"firepower": [3, 0],
 		"target_pref": "front",
 		"exp": 1,
 		"drops": {
