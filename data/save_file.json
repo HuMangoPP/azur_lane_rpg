@@ -6,7 +6,7 @@
                 null,
                 null
             ],
-            "exp": 6
+            "exp": 42
         },
         "new_jersey": {
             "equipment": [
@@ -14,18 +14,18 @@
                 null,
                 null
             ],
-            "exp": 6
+            "exp": 42
         }
     },
     "equipment": {},
     "inventory": {
-        "DD_blueprint": 3,
-        "metals": 1,
-        "plastics": 1,
-        "gunpowder": 1,
-        "electronics": 1
+        "DD_blueprint": 6,
+        "metals": 4,
+        "plastics": 4,
+        "gunpowder": 4,
+        "electronics": 4
     },
     "research_target": null,
-    "research_progress": 6,
-    "sortie_progress": 1
+    "research_progress": 42,
+    "sortie_progress": 4
 }

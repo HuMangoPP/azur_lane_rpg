@@ -946,6 +946,7 @@ class ShipgirlBattleComponent:
         self.hp = self.max_hp()
         self.cooldown_timer = 1
         self.target = None
+        self.evasion_gauge = 0
 
     def max_hp(self, equipment_override=None):
         equipment = self.equipment.copy()
@@ -1004,12 +1005,14 @@ class ShipgirlBattleComponent:
         
         self.cooldown_timer = max(0, self.cooldown_timer - self.reload()/1000*dt)
         if self.target is not None and self.cooldown_timer <= 0:
-            evasion_roll = random.random() * 100
-            if evasion_roll > self.target.battle_component.evasion():
+            if self.target.battle_component.evasion_gauge >= 1:
+                self.target.battle_component.evasion_gauge -= 1
+            else:
                 weapon_info = equipment_data.get(self.equipment[0], {}) if self.equipment[0] is not None else {}
                 shell_type = weapon_info.get("shell_type", "normal")
                 armor_type = Armor.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
                 self.target.battle_component.hp -= self.firepower() * Armor.DAMAGE_MULTIPLIER[shell_type][armor_type]
+                self.target.battle_component.evasion_gauge += self.target.battle_component.evasion() / 1000
             self.cooldown_timer = 1
 
     def draw(self, screen, rect):

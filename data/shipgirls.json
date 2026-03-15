@@ -3,7 +3,7 @@
 		"unique_item": "huggy_pillow",
 		"hull_type": "DD",
 		"max_hp": 20,
-		"evasion": 0,
+		"evasion": 200,
 		"firepower": 4,
 		"reload": 300
 	},
