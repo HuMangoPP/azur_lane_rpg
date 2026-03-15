@@ -995,6 +995,8 @@ class ShipgirlBattleComponent:
     def reset(self):
         self.hp = self.max_hp()
         self.cooldown_timer = 1
+        self.target = None
+        self.evasion_gauge = 0
 
     def update(self, dt):
         if not self.active:
