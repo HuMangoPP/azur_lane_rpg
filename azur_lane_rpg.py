@@ -26,8 +26,9 @@ with open("data/equipment.json") as f:
 
 pygame.init()
 
-SCREEN_SIZE = pygame.Vector2(600, 600)
-TEMP_SCREEN_SIZE = pygame.Vector2(600, 600)
+SCREEN_SIZE = pygame.Vector2(1120, 630)
+TEMP_SCREEN_SIZE = pygame.Vector2(1120, 630)
+FPS = 60
 screen = pygame.display.set_mode(SCREEN_SIZE)
 temp_screen = pygame.Surface(TEMP_SCREEN_SIZE)
 clock = pygame.Clock()
@@ -191,6 +192,122 @@ class PortMenu:
             callback=open_select_sortie_menu
         )
 
+    def draw_inventory_overlay(self, surface):
+        items = [item for item in save_file["inventory"]]
+        for item, rect in zip(items, self.overlay_left_icons):
+            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            if item in sprites:
+                surface.blit(sprites[item], rect)
+            else:
+                font.render(surface, item, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+    def draw_shipyard_overlay(self, surface):
+        shipgirls = [
+            shipgirl for shipgirl in shipgirl_data
+            if shipgirl not in save_file["shipgirls"]
+        ]
+
+        for shipgirl, rect in zip(shipgirls, self.overlay_left_icons):
+            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            if shipgirl in sprites:
+                surface.blit(sprites[shipgirl], rect)
+            else:
+                font.render(surface, shipgirl, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+        
+        if self.overlay_selected_entity:
+            selected_entity_info = shipgirl_data.get(self.overlay_selected_entity, {})
+            hull_type = selected_entity_info["hull_type"]
+            unique_item = selected_entity_info["unique_item"]
+            research_reqs = {
+                f"{hull_type}_blueprint": 1,
+                "wisdom_cube": 1,
+                unique_item: 1
+            }
+
+            shipgirl_stats = {
+                "HULL": selected_entity_info.get("hull_type"),
+                "HP": selected_entity_info.get("max_hp"),
+                "EVA": selected_entity_info.get("evasion"),
+                "FP": selected_entity_info.get("firepower"),
+                "RLD": selected_entity_info.get("reload"),
+            }
+
+            font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            if self.overlay_selected_entity in sprites:
+                surface.blit(sprites[self.overlay_selected_entity], self.overlay_right_icon)
+            pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
+
+            x = self.overlay_right_panel.left + Box.PADDING
+            y = self.overlay_right_icon.bottom + Box.PADDING
+            for info_key, info_value in shipgirl_stats.items():
+                if info_value is None:
+                    continue
+                xy = (x, y)
+                info_name = Stats.STAT_NAMES.get(info_key, info_key)
+                font.render(surface, f"{info_name}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
+                y += Box.PADDING # TODO
+
+            for (ingredient, req), rect in zip(research_reqs.items(), self.overlay_ingredient_icons):
+                if ingredient in sprites:
+                    surface.blit(sprites[ingredient], rect)
+                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                else:
+                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                    xy = (rect.centerx, rect.top+0.33*rect.height) # TODO
+                    font.render(surface, ingredient, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                xy = (rect.centerx, rect.top+0.67*rect.height)
+                amt = save_file["inventory"].get(ingredient, 0)
+                font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+    def draw_gear_lab_overlay(self, surface):
+        equipment = [equip for equip in equipment_data]
+    
+        for equip, rect in zip(equipment, self.overlay_left_icons):
+            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            if equip in sprites:
+                surface.blit(sprites[equip], rect)
+            else:
+                font.render(surface, equip, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+        
+        if self.overlay_selected_entity:
+            selected_entity_info = equipment_data.get(self.overlay_selected_entity)
+            crafting_reqs = selected_entity_info.get("craft_reqs")
+            equip_stats = {
+                "HULL": selected_entity_info.get("equippable_by"),
+                "HP": selected_entity_info.get("max_hp"),
+                "EVA": selected_entity_info.get("evasion"),
+                "FP": selected_entity_info.get("firepower"),
+                "RLD": selected_entity_info.get("reload"),
+                "SHELL": selected_entity_info.get("shell_type"),
+            }
+
+            font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            if self.overlay_selected_entity in sprites:
+                surface.blit(sprites[self.overlay_selected_entity], self.overlay_right_icon)
+            pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
+
+            x = self.overlay_right_panel.left + Box.PADDING
+            y = self.overlay_right_icon.bottom + Box.PADDING
+            for info_key, info_value in equip_stats.items():
+                if info_value is None:
+                    continue
+                xy = (x, y)
+                info_name = Stats.STAT_NAMES.get(info_key, info_key)
+                font.render(surface, f"{info_name}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
+                y += Box.PADDING # TODO
+
+            for (ingredient, req), rect in zip(crafting_reqs.items(), self.overlay_ingredient_icons):
+                if ingredient in sprites:
+                    surface.blit(sprites[ingredient], rect)
+                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                else:
+                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                    xy = (rect.centerx, rect.top+0.33*rect.height) # TODO
+                    font.render(surface, ingredient, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                xy = (rect.centerx, rect.top+0.67*rect.height)
+                amt = save_file["inventory"].get(ingredient, 0)
+                font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
@@ -248,80 +365,12 @@ class PortMenu:
             pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
             pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
 
-            if self.current_overlay == self.SHIPYARD:
-                entities = [
-                    shipgirl for shipgirl in shipgirl_data
-                    if shipgirl not in save_file["shipgirls"]
-                ]
-                selected_entity_info = shipgirl_data.get(self.overlay_selected_entity, {})
-                if selected_entity_info:
-                    hull_type = selected_entity_info["hull_type"]
-                    unique_item = selected_entity_info["unique_item"]
-                    selected_entity_reqs = {
-                        f"{hull_type}_blueprint": 1,
-                        "wisdom_cube": 1,
-                        unique_item: 1
-                    }
-                else:
-                    selected_entity_reqs = {}
-                selected_entity_info = {
-                    "HULL": selected_entity_info.get("hull_type"),
-                    "HP": selected_entity_info.get("max_hp"),
-                    "EVA": selected_entity_info.get("evasion"),
-                    "FP": selected_entity_info.get("firepower"),
-                    "RLD": selected_entity_info.get("reload"),
-                }
+            if self.current_overlay == self.INTEL_CENTER:
+                self.draw_inventory_overlay(surface)
+            if self.current_overlay == self.SHIPYARD: 
+                self.draw_shipyard_overlay(surface)
             elif self.current_overlay == self.GEAR_LAB:
-                entities = [weapon for weapon in equipment_data]
-                selected_entity_info = equipment_data.get(self.overlay_selected_entity, {})
-                selected_entity_reqs = selected_entity_info.get("craft_reqs")
-                selected_entity_info = {
-                    "HULL": selected_entity_info.get("equippable_by"),
-                    "HP": selected_entity_info.get("max_hp"),
-                    "EVA": selected_entity_info.get("evasion"),
-                    "FP": selected_entity_info.get("firepower"),
-                    "RLD": selected_entity_info.get("reload"),
-                    "SHELL": selected_entity_info.get("shell_type"),
-                }
-            else:
-                entities = []
-                selected_entity_reqs = {}
-                selected_entity_info = {}
-            
-            for entity, rect in zip(entities, self.overlay_left_icons):
-                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                if entity in sprites:
-                    surface.blit(sprites[entity], rect)
-                else:
-                    font.render(surface, entity, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-            
-            if self.overlay_selected_entity:
-                font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-                if self.overlay_selected_entity in sprites:
-                    surface.blit(sprites[self.overlay_selected_entity], self.overlay_right_icon)
-                pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
-
-                x = self.overlay_right_panel.left + Box.PADDING
-                y = self.overlay_right_icon.bottom + Box.PADDING
-                for info_key, info_value in selected_entity_info.items():
-                    if info_value is None:
-                        continue
-                    xy = (x, y)
-                    info_name = Stats.STAT_NAMES.get(info_key, info_key)
-                    font.render(surface, f"{info_name}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
-                    y += Box.PADDING # TODO
-
-                for (ingredient, req), rect in zip(selected_entity_reqs.items(), self.overlay_ingredient_icons):
-                    if ingredient in sprites:
-                        surface.blit(sprites[ingredient], rect)
-                        pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                    else:
-                        pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                        xy = (rect.centerx, rect.top+0.33*rect.height) # TODO
-                        font.render(surface, ingredient, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-                    xy = (rect.centerx, rect.top+0.67*rect.height)
-                    amt = save_file["inventory"].get(ingredient, 0)
-                    font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                self.draw_gear_lab_overlay(surface)
 
             self.overlay_confirm_button.draw(surface, font)
 
@@ -629,7 +678,8 @@ class EncounterMenu:
                     for shipgirl in player_fleet.shipgirls:
                         if shipgirl is not None:
                             shipgirl.battle_component.exp += siren.battle_component.exp
-                    save_file["research_progress"] += siren.battle_component.exp
+                    if save_file["research_target"] is not None:
+                        save_file["research_progress"] += siren.battle_component.exp
                     
                     if self.current_sortie < save_file["sortie_progress"]:
                         drops = siren_data[siren.name]["drops"]
@@ -1229,6 +1279,8 @@ class SirenFleet:
                 siren.battle_component.active = False
             siren.battle_component.update(dt)
 
+            siren.animate(dt)
+
     def draw(self, screen):
         for siren in self.fleet:
             siren.draw(screen)
@@ -1255,7 +1307,7 @@ class Menus:
 
 running = True
 while running:
-    clock.tick()
+    clock.tick(FPS)
     dt = clock.get_time() / 1000
     pygame.display.set_caption(f"{clock.get_fps()}")
 
@@ -1268,7 +1320,7 @@ while running:
 
     Menus.current_menu.update(dt, events)
 
-    temp_screen.fill((20,20,50)) # TODO
+    temp_screen.fill((50,20,20)) # TODO
     Menus.current_menu.draw(temp_screen)
     screen.blit(pygame.transform.scale(temp_screen, screen.get_size()), (0,0))
     pygame.display.flip()
