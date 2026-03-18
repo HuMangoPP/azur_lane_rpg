@@ -148,7 +148,7 @@ class PortMenu:
                     "wisdom_cube": 1,
                     unique_item: 1
                 }
-                if all(save_file["inventory"][ingredient] >= req for ingredient, req in selected_entity_reqs.items()):
+                if all(save_file["inventory"].get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items()):
                     save_file["shipgirls"][self.overlay_selected_entity] = {
                         "equipment": [None, None, None],
                         "exp": 0
@@ -161,7 +161,7 @@ class PortMenu:
                     save_file["research_target"] = self.overlay_selected_entity
             elif self.current_overlay == self.GEAR_LAB:
                 selected_entity_reqs = equipment_data[self.overlay_selected_entity]["craft_reqs"]
-                if all(save_file["inventory"][ingredient] >= req for ingredient, req in selected_entity_reqs.items()):
+                if all(save_file["inventory"].get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items()):
                     save_file["equipment"][self.overlay_selected_entity] = save_file["equipment"].get(self.overlay_selected_entity, 0) + 1
                     for ingredient, req in selected_entity_reqs.items():
                         save_file["inventory"][ingredient] -= req
@@ -193,6 +193,10 @@ class PortMenu:
         )
 
     def draw_inventory_overlay(self, surface):
+        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
+
         items = [item for item in save_file["inventory"]]
         for item, rect in zip(items, self.overlay_left_icons):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
@@ -201,7 +205,26 @@ class PortMenu:
             else:
                 font.render(surface, item, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
+    def update_shipyard_overlay(self, dt, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                shipgirls = [
+                    shipgirl for shipgirl in shipgirl_data
+                    if shipgirl not in save_file["shipgirls"]
+                ]
+
+                for shipgirl, rect in zip(shipgirls, self.overlay_left_icons):
+                    if rect.collidepoint(event.pos):
+                        self.overlay_selected_entity = shipgirl
+                        self.overlay_confirm_button.active = True
+                
+                self.overlay_confirm_button.click(event.pos)
+
     def draw_shipyard_overlay(self, surface):
+        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
+
         shipgirls = [
             shipgirl for shipgirl in shipgirl_data
             if shipgirl not in save_file["shipgirls"]
@@ -259,7 +282,23 @@ class PortMenu:
                 amt = save_file["inventory"].get(ingredient, 0)
                 font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
+    def update_gear_lab_overlay(self, dt, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                equipment = [equip for equip in equipment_data]
+
+                for equip, rect in zip(equipment, self.overlay_left_icons):
+                    if rect.collidepoint(event.pos):
+                        self.overlay_selected_entity = equip
+                        self.overlay_confirm_button.active = True
+
+                self.overlay_confirm_button.click(event.pos)
+
     def draw_gear_lab_overlay(self, surface):
+        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
+
         equipment = [equip for equip in equipment_data]
     
         for equip, rect in zip(equipment, self.overlay_left_icons):
@@ -324,6 +363,8 @@ class PortMenu:
                             if overlay_enum == self.SHIPYARD and save_file["research_target"] is not None:
                                 self.overlay_confirm_button.active = True
                                 self.overlay_selected_entity = save_file["research_target"]
+                    
+                    self.open_select_sortie_menu_button.click(event.pos)
                 else:
                     if not self.overlay_bg.collidepoint(event.pos):
                         self.current_overlay = self.NO_OVERLAY
@@ -331,23 +372,9 @@ class PortMenu:
                         self.overlay_confirm_button.active = False
 
                     if self.current_overlay == self.SHIPYARD:
-                        entities = [
-                            shipgirl for shipgirl in shipgirl_data
-                            if shipgirl not in save_file["shipgirls"]
-                        ]
+                        self.update_shipyard_overlay(dt, events)
                     elif self.current_overlay == self.GEAR_LAB:
-                        entities = [weapon for weapon in equipment_data]
-                    else:
-                        entities = []
-
-                    for entity, rect in zip(entities, self.overlay_left_icons):
-                        if rect.collidepoint(event.pos):
-                            self.overlay_selected_entity = entity
-                            self.overlay_confirm_button.active = True
-
-                    self.overlay_confirm_button.click(event.pos)
-
-                self.open_select_sortie_menu_button.click(event.pos)
+                        self.update_gear_lab_overlay(dt, events)
         
         for shipgirl in available_shipgirls:
             shipgirl.update(dt)
@@ -361,10 +388,6 @@ class PortMenu:
             building.draw(surface)
 
         if self.current_overlay != self.NO_OVERLAY:
-            pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
-            pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
-            pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
-
             if self.current_overlay == self.INTEL_CENTER:
                 self.draw_inventory_overlay(surface)
             if self.current_overlay == self.SHIPYARD: 
