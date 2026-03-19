@@ -60,6 +60,7 @@ class Color:
     WHITE = (255,255,255)
     BLACK = (10,10,10)
     BLUE_GREY = (100,100,150)
+    BLUE = (75,75,125)
     DARK_BLUE = (50,50,100)
 
 class Buildings:
@@ -95,21 +96,32 @@ class PortMenu:
             self.GEAR_LAB: Building(Buildings.GEAR_LAB, pygame.Vector2(125, 25)),
         }
 
-        self.overlay_bg = get_rect(width=400, height=400, centerx=screen_x(0.5), centery=screen_y(0.5))
-        self.overlay_left_panel = get_rect(
-            width=(self.overlay_bg.width-3*Box.PADDING)/2,
-            height=self.overlay_bg.height-2*Box.PADDING,
-            left=self.overlay_bg.left+Box.PADDING,
-            top=self.overlay_bg.top+Box.PADDING
-        )
+        self.overlay_bg = get_rect(width=600, height=400, centerx=screen_x(0.5), centery=screen_y(0.5))
         self.overlay_right_panel = get_rect(
-            width=0.5*(self.overlay_bg.width-3*Box.PADDING),
+            width=3*Box.WIDTH + 4*Box.PADDING,
             height=self.overlay_bg.height-2*Box.PADDING,
             right=self.overlay_bg.right-Box.PADDING,
             top=self.overlay_bg.top+Box.PADDING
         )
+        self.overlay_left_panel = get_rect(
+            width=self.overlay_bg.width-self.overlay_right_panel.width-3*Box.PADDING,
+            height=self.overlay_bg.height-2*Box.PADDING-Box.HEIGHT,
+            left=self.overlay_bg.left+Box.PADDING,
+            bottom=self.overlay_bg.bottom-Box.PADDING
+        )
 
-        num_icons_per_row = 3
+        self.overlay_filter_rects = [
+            get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                left=self.overlay_left_panel.left+i*(Box.WIDTH+Box.PADDING),
+                bottom=self.overlay_left_panel.top
+            ) for i in range(5)
+        ]
+        self.selected_overlay_filter = None
+        self.shipgirl_filters = ["USS", "HMS", "IJN", "KMS"]
+        self.equipment_filters = ["AUX", "DD", "CL", "CA", "BB"]
+
+        num_icons_per_row = (self.overlay_left_panel.width-Box.PADDING) // (Box.WIDTH+Box.PADDING)
         icon_padding = (self.overlay_left_panel.width - 2*Box.PADDING - num_icons_per_row*Box.WIDTH) / (num_icons_per_row-1)
         self.overlay_left_icons = [
             get_rect(
@@ -129,11 +141,10 @@ class PortMenu:
             top=self.overlay_right_name.y+Box.PADDING
         )
         num_icons_per_row = 3
-        icon_padding = (self.overlay_right_panel.width - 2*Box.PADDING - num_icons_per_row*Box.WIDTH) / (num_icons_per_row-1)
         self.overlay_ingredient_icons = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.overlay_right_panel.left+Box.PADDING+i*(Box.WIDTH+icon_padding),
+                left=self.overlay_right_panel.left+Box.PADDING+i*(Box.WIDTH+Box.PADDING),
                 bottom=self.overlay_right_panel.bottom-2*Box.PADDING-Box.HEIGHT
             ) for i in range(3)
         ]
@@ -178,7 +189,6 @@ class PortMenu:
             callback=overlay_confirm,
             active=False
         )
-
         self.overlay_selected_entity = None
 
         def open_select_sortie_menu():
@@ -214,16 +224,30 @@ class PortMenu:
     def update_shipyard_overlay(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                shipgirls = [
-                    shipgirl for shipgirl in shipgirl_data
-                    if shipgirl not in save_file["shipgirls"]
-                ]
+                if self.selected_overlay_filter is None:
+                    shipgirls = [
+                        shipgirl for shipgirl in shipgirl_data
+                        if shipgirl not in save_file["shipgirls"]
+                    ]
+                else:
+                    shipgirls = [
+                        shipgirl for shipgirl, shipgirl_info in shipgirl_data.items()
+                        if shipgirl not in save_file["shipgirls"]
+                        and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
+                    ]
 
                 for shipgirl, rect in zip(shipgirls, self.overlay_left_icons):
                     if rect.collidepoint(event.pos):
                         self.overlay_selected_entity = shipgirl
                         self.overlay_confirm_button.active = True
                 
+                for i, (cat, rect) in enumerate(zip(self.shipgirl_filters, self.overlay_filter_rects)):
+                    if rect.collidepoint(event.pos):
+                        if self.selected_overlay_filter == i:
+                            self.selected_overlay_filter = None
+                        else:
+                            self.selected_overlay_filter = i
+
                 self.overlay_confirm_button.click(event.pos)
 
     def draw_shipyard_overlay(self, surface):
@@ -231,10 +255,24 @@ class PortMenu:
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
 
-        shipgirls = [
-            shipgirl for shipgirl in shipgirl_data
-            if shipgirl not in save_file["shipgirls"]
-        ]
+        for i, (cat, rect) in enumerate(zip(self.shipgirl_filters, self.overlay_filter_rects)):
+            if self.selected_overlay_filter == i:
+                pygame.draw.rect(surface, Color.DARK_BLUE, rect)
+            else:
+                pygame.draw.rect(surface, Color.BLUE, rect)
+            font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+        if self.selected_overlay_filter is None:
+            shipgirls = [
+                shipgirl for shipgirl in shipgirl_data
+                if shipgirl not in save_file["shipgirls"]
+            ]
+        else:
+            shipgirls = [
+                shipgirl for shipgirl, shipgirl_info in shipgirl_data.items()
+                if shipgirl not in save_file["shipgirls"]
+                and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
+            ]
 
         for shipgirl, rect in zip(shipgirls, self.overlay_left_icons):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
@@ -291,12 +329,31 @@ class PortMenu:
     def update_gear_lab_overlay(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                equipment = [equip for equip in equipment_data]
+                if self.selected_overlay_filter is None:
+                    equipment = [equip for equip in equipment_data]
+                elif self.selected_overlay_filter == 4: # TODO
+                    equipment = [
+                        equip for equip, equip_data in equipment_data.items()
+                        if equip_data["type"] == "aux"
+                    ]
+                else:
+                    equipment = [
+                        equip for equip, equip_data in equipment_data.items()
+                        if equip_data["type"] == "weapon"
+                        and equip_data["equippable_by"] == self.equipment_filters[self.selected_overlay_filter]
+                    ]
 
                 for equip, rect in zip(equipment, self.overlay_left_icons):
                     if rect.collidepoint(event.pos):
                         self.overlay_selected_entity = equip
                         self.overlay_confirm_button.active = True
+
+                for i, (cat, rect) in enumerate(zip(self.equipment_filters, self.overlay_filter_rects)):
+                    if rect.collidepoint(event.pos):
+                        if self.selected_overlay_filter == i:
+                            self.selected_overlay_filter = None
+                        else:
+                            self.selected_overlay_filter = i
 
                 self.overlay_confirm_button.click(event.pos)
 
@@ -305,7 +362,26 @@ class PortMenu:
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
 
-        equipment = [equip for equip in equipment_data]
+        for i, (cat, rect) in enumerate(zip(self.equipment_filters, self.overlay_filter_rects)):
+            if self.selected_overlay_filter == i:
+                pygame.draw.rect(surface, Color.DARK_BLUE, rect)
+            else:
+                pygame.draw.rect(surface, Color.BLUE, rect)
+            font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+        if self.selected_overlay_filter is None:
+            equipment = [equip for equip in equipment_data]
+        elif self.selected_overlay_filter == 0: # TODO
+            equipment = [
+                equip for equip, equip_data in equipment_data.items()
+                if equip_data["type"] == "aux"
+            ]
+        else:
+            equipment = [
+                equip for equip, equip_data in equipment_data.items()
+                if equip_data["type"] == "weapon"
+                and equip_data["equippable_by"] == self.equipment_filters[self.selected_overlay_filter]
+            ]
     
         for equip, rect in zip(equipment, self.overlay_left_icons):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
@@ -376,6 +452,7 @@ class PortMenu:
                         self.current_overlay = self.NO_OVERLAY
                         self.overlay_selected_entity = None
                         self.overlay_confirm_button.active = False
+                        self.selected_overlay_filter = None
 
                     if self.current_overlay == self.SHIPYARD:
                         self.update_shipyard_overlay(dt, events)
@@ -1009,7 +1086,7 @@ class ShipgirlBattleComponent:
 
     def __init__(self, name, is_player):
         self.active = False
-        self.display_timer = is_player
+        self.is_player = is_player
 
         if name in shipgirl_data:
             info = shipgirl_data[name]
@@ -1095,7 +1172,8 @@ class ShipgirlBattleComponent:
             return
 
         if self.target is not None and self.target.battle_component.hp <= 0:
-            self.target = None
+            if not self.is_player:
+                self.target = player_fleet.front
         
         self.cooldown_timer = max(0, self.cooldown_timer - self.reload()/1000*dt)
         if self.target is not None and self.cooldown_timer <= 0:
@@ -1119,7 +1197,7 @@ class ShipgirlBattleComponent:
         pygame.draw.rect(screen, (50,50,50), bar_background)
         pygame.draw.rect(screen, Color.WHITE, bar_fill)
 
-        if not self.display_timer:
+        if not self.is_player:
             return
 
         center = pygame.Vector2(rect.centerx, rect.top-50) # TODO
