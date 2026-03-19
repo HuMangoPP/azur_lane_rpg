@@ -11,11 +11,8 @@
 			}
 		],
 		"rewards": {
-			"DD_blueprint": 1,
-			"metals": 1,
-			"plastics": 1,
-			"gunpowder": 1,
-			"electronics": 1
+			"CL_blueprint": 1,
+			"CA_blueprint": 1
 		}
 	},
 	{
@@ -30,11 +27,7 @@
 			}
 		],
 		"rewards": {
-			"DD_blueprint": 1,
-			"metals": 1,
-			"plastics": 1,
-			"gunpowder": 1,
-			"electronics": 1
+			"wisdom_cube": 1
 		}
 	},
 	{
@@ -76,11 +69,10 @@
 			}
 		],
 		"rewards": {
-			"DD_blueprint": 1,
+			"BB_blueprint": 1,
 			"metals": 1,
 			"plastics": 1,
 			"gunpowder": 1,
-			"electronics": 1
-		}
+			"electronics": 1}
 	}
 ]

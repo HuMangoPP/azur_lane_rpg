@@ -4,7 +4,7 @@
 		"craft_reqs": { "DD_blueprint": 1, "gunpowder": 1, "metals": 1 },
 		"equippable_by": "DD",
 		"firepower": 1,
-		"reload": 300,
+		"reload": 100,
 		"shell_type": "normal"
 	},
 	"twin_137": {

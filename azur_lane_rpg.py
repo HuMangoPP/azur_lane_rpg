@@ -63,7 +63,7 @@ class Color:
     DARK_BLUE = (50,50,100)
 
 class Buildings:
-    INTEL_CENTER = 0
+    DEPOT = 0
     SHIPYARD = 1
     GEAR_LAB = 2
 
@@ -82,7 +82,7 @@ class Building:
 
 class PortMenu:
     NO_OVERLAY = -1
-    INTEL_CENTER = 0
+    DEPOT = 0
     SHIPYARD = 1
     GEAR_LAB = 2
 
@@ -90,7 +90,7 @@ class PortMenu:
         self.current_overlay = self.NO_OVERLAY
 
         self.buildings = { # TODO magic numbers
-            self.INTEL_CENTER: Building(Buildings.INTEL_CENTER, pygame.Vector2(25, 25)),
+            self.DEPOT: Building(Buildings.DEPOT, pygame.Vector2(25, 25)),
             self.SHIPYARD: Building(Buildings.SHIPYARD, pygame.Vector2(75, 25)),
             self.GEAR_LAB: Building(Buildings.GEAR_LAB, pygame.Vector2(125, 25)),
         }
@@ -193,17 +193,23 @@ class PortMenu:
         )
 
     def draw_inventory_overlay(self, surface):
-        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_bg)
 
-        items = [item for item in save_file["inventory"]]
-        for item, rect in zip(items, self.overlay_left_icons):
+        num_items_in_row = (self.overlay_bg.width - 2*Box.PADDING) // Box.WIDTH
+        padding = (self.overlay_bg.width - 2*Box.PADDING - num_items_in_row*Box.WIDTH) / (num_items_in_row-1)
+        item_index = 0
+        for item, count in save_file["inventory"].items():
+            if count <= 0:
+                continue
+            left = self.overlay_bg.left + Box.PADDING + (item_index%num_items_in_row)*(Box.WIDTH + padding)
+            top = self.overlay_bg.top + Box.PADDING
+            rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             if item in sprites:
                 surface.blit(sprites[item], rect)
             else:
                 font.render(surface, item, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            item_index += 1
 
     def update_shipyard_overlay(self, dt, events):
         for event in events:
@@ -388,7 +394,7 @@ class PortMenu:
             building.draw(surface)
 
         if self.current_overlay != self.NO_OVERLAY:
-            if self.current_overlay == self.INTEL_CENTER:
+            if self.current_overlay == self.DEPOT:
                 self.draw_inventory_overlay(surface)
             if self.current_overlay == self.SHIPYARD: 
                 self.draw_shipyard_overlay(surface)
@@ -716,7 +722,7 @@ class EncounterMenu:
                 if save_file["research_progress"] >= exp_req:
                     if save_file["research_target"] is not None:
                         unique_item = shipgirl_data[save_file["research_target"]]["unique_item"]
-                        save_file["inventory"][unique_item["name"]] = 1
+                        save_file["inventory"][unique_item] = 1
                         save_file["research_target"] = None
                         save_file["research_progress"] -= exp_req
 
@@ -1018,7 +1024,7 @@ class ShipgirlBattleComponent:
         self.base_reload = info["reload"]
         self.hull_type = info["hull_type"]
         self.equipment = info["equipment"]
-        self.exp =  info["exp"]
+        self.exp = info["exp"]
 
         self.hp = self.max_hp()
         self.cooldown_timer = 1
@@ -1093,6 +1099,7 @@ class ShipgirlBattleComponent:
         
         self.cooldown_timer = max(0, self.cooldown_timer - self.reload()/1000*dt)
         if self.target is not None and self.cooldown_timer <= 0:
+            self.target.battle_component.evasion_gauge += self.target.battle_component.evasion() / 1000
             if self.target.battle_component.evasion_gauge >= 1:
                 self.target.battle_component.evasion_gauge -= 1
             else:
@@ -1100,7 +1107,6 @@ class ShipgirlBattleComponent:
                 shell_type = weapon_info.get("shell_type", "normal")
                 armor_type = Armor.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
                 self.target.battle_component.hp -= self.firepower() * Armor.DAMAGE_MULTIPLIER[shell_type][armor_type]
-                self.target.battle_component.evasion_gauge += self.target.battle_component.evasion() / 1000
             self.cooldown_timer = 1
 
     def draw(self, screen, rect):
@@ -1353,5 +1359,5 @@ pygame.quit()
 for shipgirl in available_shipgirls:
     save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
 
-with open("data/save_file.json", "w") as f:
-    json.dump(save_file, f, indent=4)
+# with open("data/save_file.json", "w") as f:
+#     json.dump(save_file, f, indent=4)
