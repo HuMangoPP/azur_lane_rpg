@@ -123,6 +123,7 @@ class PortMenu:
         self.selected_overlay_filter = None
         self.shipgirl_filters = ["USS", "HMS", "IJN", "KMS"]
         self.equipment_filters = ["AUX", "DD", "CL", "CA", "BB"]
+        self.siren_filters = ["DD", "CA", "BB"]
 
         num_icons_per_row = (self.overlay_left_panel.width-Box.PADDING) // (Box.WIDTH+Box.PADDING)
         icon_padding = (self.overlay_left_panel.width - 2*Box.PADDING - num_icons_per_row*Box.WIDTH) / (num_icons_per_row-1)
@@ -213,6 +214,7 @@ class PortMenu:
             encounters = sortie_data[i]["encounters"]
             for encounter in encounters:
                 self.encountered_sirens = self.encountered_sirens.union(encounter["front"] + encounter["back"])
+        self.encountered_sirens = list(self.encountered_sirens)
 
     def draw_inventory_overlay(self, surface):
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_bg)
@@ -446,32 +448,46 @@ class PortMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 if self.selected_overlay_filter is None:
                     encountered_sirens = self.encountered_sirens
-                # else:
-                #     equipment = [
-                #         equip for equip, equip_data in equipment_data.items()
-                #         if equip_data["type"] == "weapon"
-                #         and equip_data["equippable_by"] == self.equipment_filters[self.selected_overlay_filter]
-                #     ]
+                else:
+                    encountered_sirens = [
+                        siren for siren in self.encountered_sirens
+                        if self.siren_filters[self.selected_overlay_filter] == siren # TODO
+                    ]
 
                 for siren, rect in zip(encountered_sirens, self.overlay_left_icons):
                     if rect.collidepoint(event.pos):
                         self.overlay_selected_entity = siren
 
-                # for i, (cat, rect) in enumerate(zip(self.equipment_filters, self.overlay_filter_rects)):
-                #     if rect.collidepoint(event.pos):
-                #         if self.selected_overlay_filter == i:
-                #             self.selected_overlay_filter = None
-                #         else:
-                #             self.selected_overlay_filter = i
+                for i, (cat, rect) in enumerate(zip(self.siren_filters, self.overlay_filter_rects)):
+                    if rect.collidepoint(event.pos):
+                        if self.selected_overlay_filter == i:
+                            self.selected_overlay_filter = None
+                        else:
+                            self.selected_overlay_filter = i
 
     def draw_intel_center_overlay(self, surface):
         pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
 
-        for siren, rect in zip(self.encountered_sirens, self.overlay_left_icons):
+        if self.selected_overlay_filter is None:
+            encountered_sirens = self.encountered_sirens
+        else:
+            encountered_sirens = [
+                siren for siren in self.encountered_sirens
+                if self.siren_filters[self.selected_overlay_filter] == siren # TODO
+            ]
+
+        for siren, rect in zip(encountered_sirens, self.overlay_left_icons):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             font.render(surface, siren, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+        for i, (cat, rect) in enumerate(zip(self.siren_filters, self.overlay_filter_rects)):
+            if self.selected_overlay_filter == i:
+                pygame.draw.rect(surface, Color.DARK_BLUE, rect)
+            else:
+                pygame.draw.rect(surface, Color.BLUE, rect)
+            font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         if self.overlay_selected_entity:
             selected_entity_info = siren_data.get(self.overlay_selected_entity)
@@ -484,6 +500,8 @@ class PortMenu:
                 "TARGET": selected_entity_info.get("target_pref"),
                 "EXP": selected_entity_info.get("exp"),
             }
+
+            # TODO drops? equipment?
 
             font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
