@@ -13,7 +13,7 @@ with open("data/save_file.json") as f:
     save_file = json.load(f)
 
 with open("data/sorties.json") as f:
-    sorties = json.load(f)
+    sortie_data = json.load(f)
 
 with open("data/shipgirls.json") as f:
     shipgirl_data = json.load(f)
@@ -67,6 +67,7 @@ class Buildings:
     DEPOT = 0
     SHIPYARD = 1
     GEAR_LAB = 2
+    INTEL_CENTER = 3
 
 class Building:
     def __init__(self, building_type, pos):
@@ -86,6 +87,7 @@ class PortMenu:
     DEPOT = 0
     SHIPYARD = 1
     GEAR_LAB = 2
+    INTEL_CENTER = 3
 
     def __init__(self):
         self.current_overlay = self.NO_OVERLAY
@@ -94,6 +96,7 @@ class PortMenu:
             self.DEPOT: Building(Buildings.DEPOT, pygame.Vector2(25, 25)),
             self.SHIPYARD: Building(Buildings.SHIPYARD, pygame.Vector2(75, 25)),
             self.GEAR_LAB: Building(Buildings.GEAR_LAB, pygame.Vector2(125, 25)),
+            self.INTEL_CENTER: Building(Buildings.INTEL_CENTER, pygame.Vector2(175, 25)),
         }
 
         self.overlay_bg = get_rect(width=600, height=400, centerx=screen_x(0.5), centery=screen_y(0.5))
@@ -202,6 +205,15 @@ class PortMenu:
             callback=open_select_sortie_menu
         )
 
+        self.update_encountered_sirens()
+    
+    def update_encountered_sirens(self):
+        self.encountered_sirens = set()
+        for i in range(save_file["sortie_progress"]):
+            encounters = sortie_data[i]["encounters"]
+            for encounter in encounters:
+                self.encountered_sirens = self.encountered_sirens.union(encounter["front"] + encounter["back"])
+
     def draw_inventory_overlay(self, surface):
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_bg)
 
@@ -212,7 +224,7 @@ class PortMenu:
             if count <= 0:
                 continue
             left = self.overlay_bg.left + Box.PADDING + (item_index%num_items_in_row)*(Box.WIDTH + padding)
-            top = self.overlay_bg.top + Box.PADDING
+            top = self.overlay_bg.top + Box.PADDING + (item_index//num_items_in_row)*(Box.HEIGHT+padding)
             rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             if item in sprites:
@@ -429,6 +441,62 @@ class PortMenu:
                 amt = save_file["inventory"].get(ingredient, 0)
                 font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
+    def update_intel_center_overlay(self, dt, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                if self.selected_overlay_filter is None:
+                    encountered_sirens = self.encountered_sirens
+                # else:
+                #     equipment = [
+                #         equip for equip, equip_data in equipment_data.items()
+                #         if equip_data["type"] == "weapon"
+                #         and equip_data["equippable_by"] == self.equipment_filters[self.selected_overlay_filter]
+                #     ]
+
+                for siren, rect in zip(encountered_sirens, self.overlay_left_icons):
+                    if rect.collidepoint(event.pos):
+                        self.overlay_selected_entity = siren
+
+                # for i, (cat, rect) in enumerate(zip(self.equipment_filters, self.overlay_filter_rects)):
+                #     if rect.collidepoint(event.pos):
+                #         if self.selected_overlay_filter == i:
+                #             self.selected_overlay_filter = None
+                #         else:
+                #             self.selected_overlay_filter = i
+
+    def draw_intel_center_overlay(self, surface):
+        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
+
+        for siren, rect in zip(self.encountered_sirens, self.overlay_left_icons):
+            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            font.render(surface, siren, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+        if self.overlay_selected_entity:
+            selected_entity_info = siren_data.get(self.overlay_selected_entity)
+            siren_stats = {
+                "HULL": selected_entity_info.get("hull_type"),
+                "HP": selected_entity_info.get("max_hp"),
+                "EVA": selected_entity_info.get("evasion"),
+                "FP": selected_entity_info.get("firepower"),
+                "RLD": selected_entity_info.get("reload"),
+                "TARGET": selected_entity_info.get("target_pref"),
+                "EXP": selected_entity_info.get("exp"),
+            }
+
+            font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
+
+            x = self.overlay_right_panel.left + Box.PADDING
+            y = self.overlay_right_icon.bottom + Box.PADDING
+            for info_key, info_value in siren_stats.items():
+                if info_value is None:
+                    continue
+                xy = (x, y)
+                font.render(surface, f"{info_key}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
+                y += Box.PADDING # TODO
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
@@ -458,6 +526,8 @@ class PortMenu:
                         self.update_shipyard_overlay(dt, events)
                     elif self.current_overlay == self.GEAR_LAB:
                         self.update_gear_lab_overlay(dt, events)
+                    elif self.current_overlay == self.INTEL_CENTER:
+                        self.update_intel_center_overlay(dt, events)
         
         for shipgirl in available_shipgirls:
             shipgirl.update(dt)
@@ -477,6 +547,8 @@ class PortMenu:
                 self.draw_shipyard_overlay(surface)
             elif self.current_overlay == self.GEAR_LAB:
                 self.draw_gear_lab_overlay(surface)
+            elif self.current_overlay == self.INTEL_CENTER:
+                self.draw_intel_center_overlay(surface)
 
             self.overlay_confirm_button.draw(surface, font)
 
@@ -727,8 +799,7 @@ class EncounterMenu:
         self.encounter_end_flag = True
 
     def begin_encounter(self):
-        sortie_data = sorties[self.current_sortie]
-        encounter_data = sortie_data["encounters"][self.current_encounter]
+        encounter_data = sortie_data[self.current_sortie]["encounters"][self.current_encounter]
         siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in encounter_data["front"]] #
         siren_fleet._back = [Shipgirl(siren_name, False) for siren_name in encounter_data["back"]]
         for siren in siren_fleet.fleet:
@@ -805,14 +876,14 @@ class EncounterMenu:
 
                 player_fleet.end_encounter()
                 siren_fleet.end_encounter()
-                num_encounters = len(sorties[self.current_sortie]["encounters"])
+                num_encounters = len(sortie_data[self.current_sortie]["encounters"])
                 if self.current_encounter+1 < num_encounters:
                     self.next_encounter_button.active = True
                 else:
                     self.return_to_port_button.active = True
 
                     if self.current_sortie == save_file["sortie_progress"]:
-                        rewards = sorties[self.current_sortie]["rewards"]
+                        rewards = sortie_data[self.current_sortie]["rewards"]
                         for reward in rewards:
                             save_file["inventory"][reward] = save_file["inventory"].get(reward, 0) + 1
 
@@ -823,6 +894,7 @@ class EncounterMenu:
                     for sortie_node in Menus.SORTIE_SELECTION.sortie_nodes:
                         if sortie_node.index <= save_file["sortie_progress"]:
                             sortie_node.unlocked = True
+                    Menus.PORT.update_encountered_sirens()
                 self.retreat_button.active = False
 
     def draw(self, surface):
