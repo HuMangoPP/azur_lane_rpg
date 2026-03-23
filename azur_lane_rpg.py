@@ -576,7 +576,7 @@ class SortieNode:
 
     def __init__(self, index, hexes):
         self.index = index
-        self.hexes = hexes
+        self.hexes = [tuple(h) for h in hexes]
         self.unlocked = self.index <= save_file["sortie_progress"]
         self.cleared = self.index < save_file["sortie_progress"]
         self.hovered = False
@@ -625,10 +625,8 @@ class SortieNode:
 class SortieSelectionMenu:
     def __init__(self):
         self.sortie_nodes = [
-            SortieNode(0, [(0,0)]),
-            SortieNode(1, [(1,-1)]),
-            SortieNode(2, [(0,1)]),
-            SortieNode(3, [(1,0),(2,0),(1,1),(2,-1)])
+            SortieNode(sortie_index, sortie_info["coordinates"])
+            for sortie_index, sortie_info in enumerate(sortie_data)
         ]
 
         def exit_sortie_selection_menu():
@@ -889,7 +887,6 @@ class EncounterMenu:
                     if save_file["research_target"] is not None:
                         unique_item = shipgirl_data[save_file["research_target"]]["unique_item"]
                         save_file["inventory"][unique_item] = 1
-                        save_file["research_target"] = None
                         save_file["research_progress"] -= exp_req
 
                 player_fleet.end_encounter()

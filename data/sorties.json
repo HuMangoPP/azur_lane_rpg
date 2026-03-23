@@ -11,9 +11,9 @@
 			}
 		],
 		"rewards": {
-			"CL_blueprint": 1,
 			"CA_blueprint": 1
-		}
+		},
+		"coordinates": [[0, 0]]
 	},
 	{
 		"encounters": [
@@ -28,7 +28,8 @@
 		],
 		"rewards": {
 			"wisdom_cube": 1
-		}
+		},
+		"coordinates": [[1, -1]]
 	},
 	{
 		"encounters": [
@@ -51,7 +52,8 @@
 			"plastics": 1,
 			"gunpowder": 1,
 			"electronics": 1
-		}
+		},
+		"coordinates": [[0, 1]]
 	},
 	{
 		"encounters": [
@@ -73,6 +75,125 @@
 			"metals": 1,
 			"plastics": 1,
 			"gunpowder": 1,
-			"electronics": 1}
+			"electronics": 1
+		},
+		"coordinates": [
+			[1, 0],
+			[2, 0],
+			[1, 1],
+			[2, -1]
+		]
+	},
+	{
+		"encounters": [
+			{
+				"front": ["DD", "DD2"],
+				"back": []
+			},
+			{
+				"front": ["CA", "CA2"],
+				"back": []
+			},
+			{
+				"front": ["DD2"],
+				"back": ["CA2"]
+			},
+			{
+				"front": ["DD", "DD2"],
+				"back": ["CA2"]
+			}
+		],
+		"rewards": {
+			"CA_blueprint": 1,
+			"metals": 1,
+			"plastics": 1,
+			"gunpowder": 1,
+			"electronics": 1
+		},
+		"coordinates": [[2, 1]]
+	},
+	{
+		"encounters": [
+			{
+				"front": ["DD", "DD2", "DD"],
+				"back": []
+			},
+			{
+				"front": ["DD", "DD2"],
+				"back": ["DD2"]
+			},
+			{
+				"front": ["DD2"],
+				"back": ["CA2", "CA2"]
+			},
+			{
+				"front": ["DD", "DD2"],
+				"back": ["CA2", "CA2"]
+			},
+			{
+				"front": ["CL2"],
+				"back": []
+			}
+		],
+		"rewards": {
+			"CL_blueprint": 1,
+			"wisdom_cube": 1
+		},
+		"coordinates": [[3, 0]]
+	},
+	{
+		"encounters": [
+			{
+				"front": ["DD2", "DD2"],
+				"back": ["CA2"]
+			},
+			{
+				"front": ["CA2"],
+				"back": ["CA2", "CA2"]
+			},
+			{
+				"front": ["DD2"],
+				"back": ["CA2", "CA2"]
+			},
+			{
+				"front": ["CA2", "CA2"],
+				"back": ["CA2"]
+			}
+		],
+		"rewards": {
+			"CL_blueprint": 1,
+			"metals": 1,
+			"plastics": 1,
+			"gunpowder": 1,
+			"electronics": 1
+		},
+		"coordinates": [[3, 1]]
+	},
+	{
+		"encounters": [
+			{
+				"front": ["CL2"],
+				"back": ["CA2"]
+			},
+			{
+				"front": ["DD2", "DD2"],
+				"back": ["CA2"]
+			},
+			{
+				"front": ["CL2"],
+				"back": ["CA2", "CA2"]
+			},
+			{
+				"front": ["BB2"],
+				"back": []
+			}
+		],
+		"rewards": {},
+		"coordinates": [
+			[4, 0],
+			[4, 1],
+			[5, 0],
+			[5, -1]
+		]
 	}
 ]
