@@ -235,6 +235,66 @@ class PortMenu:
                 font.render(surface, item, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             item_index += 1
 
+    def overlay_mouseup_logic(self, mouseup_event, entities, entity_filters, activate_confirm_button):
+        for entity, rect in zip(entities, self.overlay_left_icons):
+            if rect.collidepoint(mouseup_event.pos):
+                self.overlay_selected_entity = entity
+                self.overlay_confirm_button.active = activate_confirm_button
+        
+        for i, (cat, rect) in enumerate(zip(entity_filters, self.overlay_filter_rects)):
+            if rect.collidepoint(mouseup_event.pos):
+                if self.selected_overlay_filter == i:
+                    self.selected_overlay_filter = None
+                else:
+                    self.selected_overlay_filter = i
+
+    def draw_dual_panel_overlay(self, surface, entities, entity_filters, stats, reqs):
+        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
+        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
+
+        for i, (cat, rect) in enumerate(zip(entity_filters, self.overlay_filter_rects)):
+            if self.selected_overlay_filter == i:
+                pygame.draw.rect(surface, Color.DARK_BLUE, rect)
+            else:
+                pygame.draw.rect(surface, Color.BLUE, rect)
+            font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+        for entity, rect in zip(entities, self.overlay_left_icons):
+            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            if entity in sprites:
+                surface.blit(sprites[entity], rect)
+            else:
+                font.render(surface, entity, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+        
+        if self.overlay_selected_entity:
+            font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            if self.overlay_selected_entity in sprites:
+                surface.blit(sprites[self.overlay_selected_entity], self.overlay_right_icon)
+            pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
+
+            x = self.overlay_right_panel.left + Box.PADDING
+            y = self.overlay_right_icon.bottom + Box.PADDING
+            for info_key, info_value in stats.items():
+                if info_value is None:
+                    continue
+                xy = (x, y)
+                info_name = Stats.STAT_NAMES.get(info_key, info_key)
+                font.render(surface, f"{info_name}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
+                y += Box.PADDING # TODO
+
+            for (ingredient, req), rect in zip(reqs.items(), self.overlay_ingredient_icons):
+                if ingredient in sprites:
+                    surface.blit(sprites[ingredient], rect)
+                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                else:
+                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                    xy = (rect.centerx, rect.top+0.33*rect.height) # TODO
+                    font.render(surface, ingredient, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                xy = (rect.centerx, rect.top+0.67*rect.height)
+                amt = save_file["inventory"].get(ingredient, 0)
+                font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
     def update_shipyard_overlay(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
@@ -249,33 +309,10 @@ class PortMenu:
                         if shipgirl not in save_file["shipgirls"]
                         and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
                     ]
-
-                for shipgirl, rect in zip(shipgirls, self.overlay_left_icons):
-                    if rect.collidepoint(event.pos):
-                        self.overlay_selected_entity = shipgirl
-                        self.overlay_confirm_button.active = True
-                
-                for i, (cat, rect) in enumerate(zip(self.shipgirl_filters, self.overlay_filter_rects)):
-                    if rect.collidepoint(event.pos):
-                        if self.selected_overlay_filter == i:
-                            self.selected_overlay_filter = None
-                        else:
-                            self.selected_overlay_filter = i
-
+                self.overlay_mouseup_logic(event, shipgirls, self.shipgirl_filters, True)
                 self.overlay_confirm_button.click(event.pos)
 
     def draw_shipyard_overlay(self, surface):
-        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
-
-        for i, (cat, rect) in enumerate(zip(self.shipgirl_filters, self.overlay_filter_rects)):
-            if self.selected_overlay_filter == i:
-                pygame.draw.rect(surface, Color.DARK_BLUE, rect)
-            else:
-                pygame.draw.rect(surface, Color.BLUE, rect)
-            font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-
         if self.selected_overlay_filter is None:
             shipgirls = [
                 shipgirl for shipgirl in shipgirl_data
@@ -287,14 +324,6 @@ class PortMenu:
                 if shipgirl not in save_file["shipgirls"]
                 and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
             ]
-
-        for shipgirl, rect in zip(shipgirls, self.overlay_left_icons):
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            if shipgirl in sprites:
-                surface.blit(sprites[shipgirl], rect)
-            else:
-                font.render(surface, shipgirl, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-        
         if self.overlay_selected_entity:
             selected_entity_info = shipgirl_data.get(self.overlay_selected_entity, {})
             hull_type = selected_entity_info["hull_type"]
@@ -304,7 +333,6 @@ class PortMenu:
                 "wisdom_cube": 1,
                 unique_item: 1
             }
-
             shipgirl_stats = {
                 "HULL": selected_entity_info.get("hull_type"),
                 "HP": selected_entity_info.get("max_hp"),
@@ -312,33 +340,10 @@ class PortMenu:
                 "FP": selected_entity_info.get("firepower"),
                 "RLD": selected_entity_info.get("reload"),
             }
-
-            font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-            if self.overlay_selected_entity in sprites:
-                surface.blit(sprites[self.overlay_selected_entity], self.overlay_right_icon)
-            pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
-
-            x = self.overlay_right_panel.left + Box.PADDING
-            y = self.overlay_right_icon.bottom + Box.PADDING
-            for info_key, info_value in shipgirl_stats.items():
-                if info_value is None:
-                    continue
-                xy = (x, y)
-                info_name = Stats.STAT_NAMES.get(info_key, info_key)
-                font.render(surface, f"{info_name}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
-                y += Box.PADDING # TODO
-
-            for (ingredient, req), rect in zip(research_reqs.items(), self.overlay_ingredient_icons):
-                if ingredient in sprites:
-                    surface.blit(sprites[ingredient], rect)
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                else:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                    xy = (rect.centerx, rect.top+0.33*rect.height) # TODO
-                    font.render(surface, ingredient, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-                xy = (rect.centerx, rect.top+0.67*rect.height)
-                amt = save_file["inventory"].get(ingredient, 0)
-                font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+        else:
+            research_reqs = {}
+            shipgirl_stats = {}
+        self.draw_dual_panel_overlay(surface, shipgirls, self.shipgirl_filters, shipgirl_stats, research_reqs)
 
     def update_gear_lab_overlay(self, dt, events):
         for event in events:
@@ -356,33 +361,10 @@ class PortMenu:
                         if equip_data["type"] == "weapon"
                         and equip_data["equippable_by"] == self.equipment_filters[self.selected_overlay_filter]
                     ]
-
-                for equip, rect in zip(equipment, self.overlay_left_icons):
-                    if rect.collidepoint(event.pos):
-                        self.overlay_selected_entity = equip
-                        self.overlay_confirm_button.active = True
-
-                for i, (cat, rect) in enumerate(zip(self.equipment_filters, self.overlay_filter_rects)):
-                    if rect.collidepoint(event.pos):
-                        if self.selected_overlay_filter == i:
-                            self.selected_overlay_filter = None
-                        else:
-                            self.selected_overlay_filter = i
-
+                self.overlay_mouseup_logic(event, equipment, self.equipment_filters, True)
                 self.overlay_confirm_button.click(event.pos)
 
     def draw_gear_lab_overlay(self, surface):
-        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
-
-        for i, (cat, rect) in enumerate(zip(self.equipment_filters, self.overlay_filter_rects)):
-            if self.selected_overlay_filter == i:
-                pygame.draw.rect(surface, Color.DARK_BLUE, rect)
-            else:
-                pygame.draw.rect(surface, Color.BLUE, rect)
-            font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-
         if self.selected_overlay_filter is None:
             equipment = [equip for equip in equipment_data]
         elif self.selected_overlay_filter == 0: # TODO
@@ -396,14 +378,6 @@ class PortMenu:
                 if equip_data["type"] == "weapon"
                 and equip_data["equippable_by"] == self.equipment_filters[self.selected_overlay_filter]
             ]
-    
-        for equip, rect in zip(equipment, self.overlay_left_icons):
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            if equip in sprites:
-                surface.blit(sprites[equip], rect)
-            else:
-                font.render(surface, equip, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-        
         if self.overlay_selected_entity:
             selected_entity_info = equipment_data.get(self.overlay_selected_entity)
             crafting_reqs = selected_entity_info.get("craft_reqs")
@@ -415,33 +389,10 @@ class PortMenu:
                 "RLD": selected_entity_info.get("reload"),
                 "SHELL": selected_entity_info.get("shell_type"),
             }
-
-            font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-            if self.overlay_selected_entity in sprites:
-                surface.blit(sprites[self.overlay_selected_entity], self.overlay_right_icon)
-            pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
-
-            x = self.overlay_right_panel.left + Box.PADDING
-            y = self.overlay_right_icon.bottom + Box.PADDING
-            for info_key, info_value in equip_stats.items():
-                if info_value is None:
-                    continue
-                xy = (x, y)
-                info_name = Stats.STAT_NAMES.get(info_key, info_key)
-                font.render(surface, f"{info_name}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
-                y += Box.PADDING # TODO
-
-            for (ingredient, req), rect in zip(crafting_reqs.items(), self.overlay_ingredient_icons):
-                if ingredient in sprites:
-                    surface.blit(sprites[ingredient], rect)
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                else:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                    xy = (rect.centerx, rect.top+0.33*rect.height) # TODO
-                    font.render(surface, ingredient, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-                xy = (rect.centerx, rect.top+0.67*rect.height)
-                amt = save_file["inventory"].get(ingredient, 0)
-                font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+        else:
+            crafting_reqs = {}
+            equip_stats = {}
+        self.draw_dual_panel_overlay(surface, equipment, self.equipment_filters, equip_stats, crafting_reqs)
 
     def update_intel_center_overlay(self, dt, events):
         for event in events:
@@ -453,23 +404,9 @@ class PortMenu:
                         siren for siren in self.encountered_sirens
                         if self.siren_filters[self.selected_overlay_filter] == siren # TODO
                     ]
-
-                for siren, rect in zip(encountered_sirens, self.overlay_left_icons):
-                    if rect.collidepoint(event.pos):
-                        self.overlay_selected_entity = siren
-
-                for i, (cat, rect) in enumerate(zip(self.siren_filters, self.overlay_filter_rects)):
-                    if rect.collidepoint(event.pos):
-                        if self.selected_overlay_filter == i:
-                            self.selected_overlay_filter = None
-                        else:
-                            self.selected_overlay_filter = i
+                self.overlay_mouseup_logic(event, encountered_sirens, self.siren_filters, True)
 
     def draw_intel_center_overlay(self, surface):
-        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
-
         if self.selected_overlay_filter is None:
             encountered_sirens = self.encountered_sirens
         else:
@@ -477,18 +414,6 @@ class PortMenu:
                 siren for siren in self.encountered_sirens
                 if self.siren_filters[self.selected_overlay_filter] == siren # TODO
             ]
-
-        for siren, rect in zip(encountered_sirens, self.overlay_left_icons):
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            font.render(surface, siren, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-
-        for i, (cat, rect) in enumerate(zip(self.siren_filters, self.overlay_filter_rects)):
-            if self.selected_overlay_filter == i:
-                pygame.draw.rect(surface, Color.DARK_BLUE, rect)
-            else:
-                pygame.draw.rect(surface, Color.BLUE, rect)
-            font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-
         if self.overlay_selected_entity:
             selected_entity_info = siren_data.get(self.overlay_selected_entity)
             siren_stats = {
@@ -500,20 +425,9 @@ class PortMenu:
                 "TARGET": selected_entity_info.get("target_pref"),
                 "EXP": selected_entity_info.get("exp"),
             }
-
-            # TODO drops? equipment?
-
-            font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-            pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
-
-            x = self.overlay_right_panel.left + Box.PADDING
-            y = self.overlay_right_icon.bottom + Box.PADDING
-            for info_key, info_value in siren_stats.items():
-                if info_value is None:
-                    continue
-                xy = (x, y)
-                font.render(surface, f"{info_key}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
-                y += Box.PADDING # TODO
+        else:
+            siren_stats = {}
+        self.draw_dual_panel_overlay(surface, encountered_sirens, self.siren_filters, siren_stats, {})
 
     def update(self, dt, events):
         for event in events:
@@ -1155,26 +1069,32 @@ class EquipmentMenu:
         # exit button
         self.exit_equipment_menu_button.draw(surface, font)
 
-class Armor:
-    LIGHT = 0
-    MEDIUM = 1
-    HEAVY = 2
+class ShipgirlBattleComponent:
+    LEVEL_EXPS = [3, 5, 7, 9, 11]
+    
+    LIGHT_ARMOR = 0
+    MEDIUM_ARMOR = 1
+    HEAVY_ARMOR = 2
 
     HULL_TO_ARMOR_MAP = {
-        "DD": LIGHT,
-        "CL": MEDIUM,
-        "CA": MEDIUM,
-        "BB": HEAVY
+        "DD": LIGHT_ARMOR,
+        "CL": MEDIUM_ARMOR,
+        "CA": MEDIUM_ARMOR,
+        "BB": HEAVY_ARMOR
     }
 
     DAMAGE_MULTIPLIER = {
-        "normal": {LIGHT: 1.0, MEDIUM: 1.0, HEAVY: 1.0},
-        "HE": {LIGHT: 1.5, MEDIUM: 1.25, HEAVY: 1.0},
-        "AP": {LIGHT: 1.0, MEDIUM: 1.25, HEAVY: 1.5},
+        "normal": {LIGHT_ARMOR: 1.0, MEDIUM_ARMOR: 1.0, HEAVY_ARMOR: 1.0},
+        "HE": {LIGHT_ARMOR: 1.5, MEDIUM_ARMOR: 1.25, HEAVY_ARMOR: 1.0},
+        "AP": {LIGHT_ARMOR: 1.0, MEDIUM_ARMOR: 1.25, HEAVY_ARMOR: 1.5},
     }
 
-class ShipgirlBattleComponent:
-    LEVEL_EXPS = [3, 5, 7, 9, 11]
+    SHELL_SPEED = {
+        "DD": 1500,
+        "CL": 1500,
+        "CA": 1000,
+        "BB": 1000
+    }
 
     def __init__(self, name, is_player):
         self.active = False
@@ -1255,7 +1175,7 @@ class ShipgirlBattleComponent:
         )
 
     def shell_speed(self):
-        return 1000 + equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
+        return self.SHELL_SPEED[self.hull_type] + equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
 
     def reset(self):
         self.hp = self.max_hp()
@@ -1276,8 +1196,8 @@ class ShipgirlBattleComponent:
                 else:
                     weapon_info = equipment_data.get(self.equipment[0], {}) if self.equipment[0] is not None else {}
                     shell_type = weapon_info.get("shell_type", "normal")
-                    armor_type = Armor.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
-                    self.target.battle_component.hp -= self.firepower() * Armor.DAMAGE_MULTIPLIER[shell_type][armor_type]
+                    armor_type = self.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
+                    self.target.battle_component.hp -= self.firepower() * self.DAMAGE_MULTIPLIER[shell_type][armor_type]
             return
 
         if self.target is not None and self.target.battle_component.hp <= 0:
