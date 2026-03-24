@@ -836,7 +836,12 @@ class EncounterMenu:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for shipgirl in player_fleet.shipgirls:
-                    if shipgirl is not None and shipgirl.battle_component.active and shipgirl.rect.collidepoint(event.pos):
+                    if (
+                        shipgirl is not None
+                        and shipgirl.battle_component.active
+                        and shipgirl.battle_component.attack_timer <= 0
+                        and shipgirl.rect.collidepoint(event.pos)
+                    ):
                         mouse_start_drag = event.pos
                         self.selected_shipgirl = shipgirl
                         self.selected_shipgirl.battle_component.target = None
@@ -1192,6 +1197,7 @@ class ShipgirlBattleComponent:
 
         self.hp = self.max_hp()
         self.cooldown_timer = 1
+        self.attack_timer = 0
         self.target = None
         self.evasion_gauge = 0
 
@@ -1248,6 +1254,9 @@ class ShipgirlBattleComponent:
             + equipment_data.get(equipment[Equipment.AUX2], {}).get("reload", 0)
         )
 
+    def shell_speed(self):
+        return 1000 + equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
+
     def reset(self):
         self.hp = self.max_hp()
         self.cooldown_timer = 1
@@ -1257,26 +1266,60 @@ class ShipgirlBattleComponent:
     def update(self, dt):
         if not self.active:
             return
+        
+        if self.attack_timer > 0:
+            self.attack_timer = max(0, self.attack_timer - self.shell_speed()/1000*dt)
+            if self.attack_timer <= 0:
+                self.target.battle_component.evasion_gauge += self.target.battle_component.evasion() / 1000
+                if self.target.battle_component.evasion_gauge >= 1:
+                    self.target.battle_component.evasion_gauge -= 1
+                else:
+                    weapon_info = equipment_data.get(self.equipment[0], {}) if self.equipment[0] is not None else {}
+                    shell_type = weapon_info.get("shell_type", "normal")
+                    armor_type = Armor.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
+                    self.target.battle_component.hp -= self.firepower() * Armor.DAMAGE_MULTIPLIER[shell_type][armor_type]
+            return
 
         if self.target is not None and self.target.battle_component.hp <= 0:
-            if not self.is_player:
-                self.target = player_fleet.front
+            self.target = None
         
         self.cooldown_timer = max(0, self.cooldown_timer - self.reload()/1000*dt)
         if self.target is not None and self.cooldown_timer <= 0:
-            self.target.battle_component.evasion_gauge += self.target.battle_component.evasion() / 1000
-            if self.target.battle_component.evasion_gauge >= 1:
-                self.target.battle_component.evasion_gauge -= 1
-            else:
-                weapon_info = equipment_data.get(self.equipment[0], {}) if self.equipment[0] is not None else {}
-                shell_type = weapon_info.get("shell_type", "normal")
-                armor_type = Armor.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
-                self.target.battle_component.hp -= self.firepower() * Armor.DAMAGE_MULTIPLIER[shell_type][armor_type]
+            self.attack_timer = 1
             self.cooldown_timer = 1
 
     def draw(self, screen, rect):
         if not self.active:
             return
+        
+        if self.attack_timer > 0:
+            start_pos = pygame.Vector2(rect.center)
+            target_pos = pygame.Vector2(self.target.rect.center)
+            t = 1 - self.attack_timer
+            if self.hull_type in ["DD", "CL"]:
+                apex_pos = 0.5 * (start_pos + target_pos) + pygame.Vector2(0,-50)
+            else:
+                apex_pos = 0.5 * (start_pos + target_pos) + pygame.Vector2(0,-100)
+            shell_x = (target_pos.x - start_pos.x) * t + start_pos.x
+            shell_y = (
+                start_pos.y * (shell_x - apex_pos.x) * (shell_x - target_pos.x) / (start_pos.x - apex_pos.x) / (start_pos.x - target_pos.x)
+                + apex_pos.y * (shell_x - start_pos.x) * (shell_x - target_pos.x) / (apex_pos.x - start_pos.x) / (apex_pos.x - target_pos.x)
+                + target_pos.y * (shell_x - start_pos.x) * (shell_x - apex_pos.x) / (target_pos.x - start_pos.x) / (target_pos.x - apex_pos.x)
+            )
+            shell_pos = pygame.Vector2(shell_x, shell_y)
+            shell_yvel = (
+                start_pos.y * (2*shell_x - apex_pos.x - target_pos.x) / (start_pos.x - apex_pos.x) / (start_pos.x - target_pos.x)
+                + apex_pos.y * (2*shell_x - start_pos.x - target_pos.x) / (apex_pos.x - start_pos.x) / (apex_pos.x - target_pos.x)
+                + target_pos.y * (2*shell_x - start_pos.x - apex_pos.x) / (target_pos.x - start_pos.x) / (target_pos.x - apex_pos.x)
+            )
+            sign = (target_pos.x - start_pos.x) / abs(target_pos.x - start_pos.x)
+            shell_angle = math.atan2(sign* shell_yvel, sign)
+            shell_polygon = [
+                shell_pos + get_vec(20, shell_angle),
+                shell_pos + get_vec(10, shell_angle + math.radians(150)),
+                shell_pos + get_vec(10, shell_angle - math.radians(150))
+            ]
+            pygame.draw.polygon(screen, Color.WHITE, shell_polygon)
         
         bar_width = 50
         bar_background = get_rect(width=bar_width, height=10, centerx=rect.centerx, top=rect.bottom+20) # TODO
@@ -1358,6 +1401,7 @@ class Shipgirl:
 class PlayerFleet:
     def __init__(self):
         self.shipgirls = [None, None, None]
+        self.backups = [None, None, None]
     
     @property
     def afloat(self):
@@ -1460,6 +1504,9 @@ class SirenFleet:
 
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
+            if siren.battle_component.active:
+                if siren.battle_component.target is None:
+                    siren.battle_component.target = player_fleet.front
             siren.battle_component.update(dt)
 
             siren.animate(dt)
