@@ -1,6 +1,7 @@
 import json
 import math
 import pygame
+from engine.util import get_rect
 
 class Live2DPart:
     def __init__(self, image, pivot):
@@ -49,6 +50,29 @@ class Live2DPart:
         rect.center = root_pos + draw_offset
         surface.blit(rotated, rect)
 
+class Cache:
+    def __init__(self):
+        self.model_dicts = {}
+        self.parts = {}
+
+    def get_model_dict(self, model_file):
+        if model_file in self.model_dicts:
+            return self.model_dicts[model_file]
+    
+        with open(model_file) as f:
+            model_dict = json.load(f)
+            self.model_dicts[model_file] = model_dict
+
+        parts = {}
+        for part, part_data in model_dict.items():
+            image = pygame.transform.scale_by(pygame.image.load(part_data["path"]).convert_alpha(), 1)
+            image.set_colorkey((255,0,0))
+            parts[part] = image
+        self.parts[model_file] = parts
+
+        return model_dict
+
+cache = Cache()
 
 class Live2D:
     DRAW_ORDER = [
@@ -96,20 +120,18 @@ class Live2D:
 
         self.animation = self.IDLE_ANIMATION
 
-        with open(model_file) as f:
-            self.model_dict = json.load(f)
-        
-        scale = 1
+        self.model_dict = cache.get_model_dict(model_file)
+
+        self.parts = {}
         for part, part_data in self.model_dict.items():
-            image = pygame.transform.scale_by(pygame.image.load(part_data["path"]).convert_alpha(), scale)
-            image.set_colorkey((255,0,0))
-            live2d_part = Live2DPart(image, scale*pygame.Vector2(part_data["pivot"]))
-            self.parts[part] = live2d_part
+            image = cache.parts[model_file][part]
+            self.parts[part] = Live2DPart(image, part_data["pivot"])
         
         for part, parent_part in self.CONNECTIONS.items():
             if parent_part is not None:
                 live2d_part = self.parts[part]
                 live2d_part.parent_part = self.parts[parent_part]
+        
 
     def set_rotation(self, part, angle):
         if part in self.parts:

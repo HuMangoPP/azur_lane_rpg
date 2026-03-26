@@ -263,7 +263,10 @@ class PortMenu:
         for entity, rect in zip(entities, self.overlay_left_icons):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             if entity in sprites:
-                surface.blit(sprites[entity], rect)
+                image = sprites[entity]
+                image_rect = image.get_rect()
+                image_rect.center = rect.center
+                surface.blit(image, image_rect)
             else:
                 font.render(surface, entity, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
         
@@ -666,7 +669,13 @@ class FleetSelectionMenu:
 
         for shipgirl, rect in zip(available_shipgirls, available_shipgirl_rects):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            font.render(surface, shipgirl.name, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            if shipgirl.name in sprites:
+                portrait = sprites[shipgirl.name]
+                portrait_rect = portrait.get_rect()
+                portrait_rect.center = rect.center
+                surface.blit(portrait, portrait_rect)
+            else:
+                font.render(surface, shipgirl.name, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         for slot, shipgirl in zip(self.fleet_slots, player_fleet.shipgirls):
             if shipgirl is None:
@@ -1468,7 +1477,7 @@ class Menus:
 
 running = True
 while running:
-    clock.tick(FPS)
+    clock.tick()
     dt = clock.get_time() / 1000
     pygame.display.set_caption(f"{clock.get_fps()}")
 

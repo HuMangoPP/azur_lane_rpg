@@ -28,5 +28,11 @@
 	"gunpowder": { "path": "assets/gunpowder.png", "scale": 2 },
 	"metals": { "path": "assets/metals.png", "scale": 2 },
 	"plastics": { "path": "assets/plastics.png", "scale": 2 },
-	"wisdom_cube": { "path": "assets/wisdom_cube.png", "scale": 2 }
+	"wisdom_cube": { "path": "assets/wisdom_cube.png", "scale": 2 },
+
+	"DD": {"path": "assets/DD.png", "scale": 1},
+	"CA": {"path": "assets/CA.png", "scale": 1},
+	"BB": {"path": "assets/BB.png", "scale": 1},
+	"laffey": {"path": "assets/laffey.png", "scale": 1},
+	"new_jersey": {"path": "assets/new_jersey.png", "scale": 1}
 }
