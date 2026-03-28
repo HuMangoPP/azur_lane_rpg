@@ -93,10 +93,10 @@ class PortMenu:
         self.current_overlay = self.NO_OVERLAY
 
         self.buildings = { # TODO magic numbers
-            self.DEPOT: Building(Buildings.DEPOT, pygame.Vector2(25, 25)),
-            self.SHIPYARD: Building(Buildings.SHIPYARD, pygame.Vector2(75, 25)),
-            self.GEAR_LAB: Building(Buildings.GEAR_LAB, pygame.Vector2(125, 25)),
-            self.INTEL_CENTER: Building(Buildings.INTEL_CENTER, pygame.Vector2(175, 25)),
+            self.DEPOT: Building(Buildings.DEPOT, pygame.Vector2(50, 50)),
+            self.SHIPYARD: Building(Buildings.SHIPYARD, pygame.Vector2(150, 50)),
+            self.GEAR_LAB: Building(Buildings.GEAR_LAB, pygame.Vector2(250, 50)),
+            self.INTEL_CENTER: Building(Buildings.INTEL_CENTER, pygame.Vector2(350, 50)),
         }
 
         self.overlay_bg = get_rect(width=600, height=400, centerx=screen_x(0.5), centery=screen_y(0.5))
@@ -584,21 +584,20 @@ class SortieSelectionMenu:
 class FleetSelectionMenu:
     def __init__(self):
         self.selected_shipgirl = None
-        def start_encounter():
+        def start_sortie():
             if all(shipgirl is None for shipgirl in player_fleet.shipgirls):
                 return
             Menus.current_menu = Menus.ENCOUNTER
             
             player_fleet.begin_sortie()
+            Menus.ENCOUNTER.begin_sortie()
 
-            Menus.ENCOUNTER.begin_encounter()
-
-        self.start_encounter_button = Button(
+        self.start_sortie_button = Button(
             rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), bottom=BOTTOM_OF_SCREEN),
             color=Color.BLUE_GREY,
             text="start",
             text_color=Color.WHITE,
-            callback=start_encounter
+            callback=start_sortie
         )
 
         def exit_fleet_selection_menu():
@@ -655,7 +654,7 @@ class FleetSelectionMenu:
                                 self.selected_shipgirl.facing_left = False
                             self.selected_shipgirl = None
                 mouse_start_drag = None
-                self.start_encounter_button.click(event.pos)
+                self.start_sortie_button.click(event.pos)
                 self.exit_fleet_selection_menu_button.click(event.pos)
         
         for shipgirl in player_fleet.shipgirls:
@@ -664,7 +663,7 @@ class FleetSelectionMenu:
 
     def draw(self, surface):
         player_fleet.draw(surface)
-        self.start_encounter_button.draw(surface, font)
+        self.start_sortie_button.draw(surface, font)
         self.exit_fleet_selection_menu_button.draw(surface, font)
 
         for shipgirl, rect in zip(available_shipgirls, available_shipgirl_rects):
@@ -685,6 +684,30 @@ class FleetSelectionMenu:
         mpos = pygame.mouse.get_pos()
         if mouse_start_drag is not None:
             pygame.draw.line(surface, Color.WHITE, mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)
+
+class Drop:
+    def __init__(self, item, pos, vel):
+        self.item = item
+        self.pos = pos
+        self.vel = vel
+
+    def update(self, dt):
+        bottom = screen_y(0.6)
+        if self.pos.y < bottom:
+            self.pos = self.pos + self.vel * dt
+            self.pos.y = min(self.pos.y, bottom)
+            self.vel = self.vel + pygame.Vector2(0, 100) * dt
+    
+    def draw(self, surface):
+        if self.item in sprites:
+            image = sprites[self.item]
+            rect = image.get_rect()
+            rect.center = self.pos
+            surface.blit(image, rect)
+        else:
+            rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=self.pos.x, centery=self.pos.y)
+            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            font.render(surface, self.item, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
 class EncounterMenu:
     def __init__(self):
@@ -708,6 +731,9 @@ class EncounterMenu:
         )
 
         def return_to_port():
+            for drop in self.drops:
+                save_file["inventory"][drop.item] = save_file["inventory"].get(drop.item, 0) + 1
+
             Menus.current_menu = Menus.PORT
 
             Menus.ENCOUNTER.return_to_port_button.active = False
@@ -736,6 +762,12 @@ class EncounterMenu:
 
         self.end_sortie_text_pos = pygame.Vector2(screen_x(0.5), screen_y(0.25))
         self.encounter_end_flag = True
+
+        self.drops = []
+
+    def begin_sortie(self):
+        self.drops = []
+        self.begin_encounter()
 
     def begin_encounter(self):
         encounter_data = sortie_data[self.current_sortie]["encounters"][self.current_encounter]
@@ -786,6 +818,9 @@ class EncounterMenu:
         
         player_fleet.update(dt)
         siren_fleet.update(dt)
+        for drop in self.drops:
+            drop.update(dt)
+
         if self.encounter_end_flag:
             if not player_fleet.afloat:
                 self.encounter_end_flag = False
@@ -801,14 +836,6 @@ class EncounterMenu:
                             shipgirl.battle_component.exp += siren.battle_component.exp
                     if save_file["research_target"] is not None:
                         save_file["research_progress"] += siren.battle_component.exp
-                    
-                    if self.current_sortie < save_file["sortie_progress"]:
-                        drops = siren_data[siren.name]["drops"]
-                        for drop, drop_probability in drops.items():
-                            roll = random.random()*100
-                            if roll > drop_probability:
-                                continue
-                            save_file["inventory"][drop] = save_file["inventory"].get(drop, 0) + 1
                 
                 exp_req = 5 # TODO
                 if save_file["research_progress"] >= exp_req:
@@ -828,7 +855,24 @@ class EncounterMenu:
                     if self.current_sortie == save_file["sortie_progress"]:
                         rewards = sortie_data[self.current_sortie]["rewards"]
                         for reward in rewards:
+                            self.drops.append(Drop(
+                                reward,
+                                pygame.Vector2(screen_x(0.75), screen_y(0.5)),
+                                get_vec(100, math.radians(random.uniform(-15,15)-90))
+                            ))
                             save_file["inventory"][reward] = save_file["inventory"].get(reward, 0) + 1
+                    else:
+                        for siren in siren_fleet.fleet:
+                            drops = siren_data[siren.name]["drops"]
+                            for drop, drop_probability in drops.items():
+                                roll = random.random()*100
+                                if roll > drop_probability:
+                                    continue
+                                self.drops.append(Drop(
+                                    drop,
+                                    pygame.Vector2(screen_x(0.75), screen_y(0.5)),
+                                    get_vec(100, math.radians(random.uniform(-15,15)-90))
+                                ))
 
                     save_file["sortie_progress"] = max(
                         save_file["sortie_progress"],
@@ -846,6 +890,9 @@ class EncounterMenu:
         self.next_encounter_button.draw(surface, font)
         self.return_to_port_button.draw(surface, font)
         self.retreat_button.draw(surface, font)
+
+        for drop in self.drops:
+            drop.draw(surface)
         
         if self.return_to_port_button.active:
             if not player_fleet.afloat:
@@ -1477,7 +1524,7 @@ class Menus:
 
 running = True
 while running:
-    clock.tick()
+    clock.tick(FPS)
     dt = clock.get_time() / 1000
     pygame.display.set_caption(f"{clock.get_fps()}")
 
