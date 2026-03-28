@@ -24,6 +24,9 @@ with open("data/sirens.json") as f:
 with open("data/equipment.json") as f:
     equipment_data = json.load(f)
 
+with open("data/tutorial.json") as f:
+    tutorial_data = json.load(f)
+
 pygame.init()
 
 SCREEN_SIZE = pygame.Vector2(1120, 630)
@@ -215,6 +218,24 @@ class PortMenu:
             for encounter in encounters:
                 self.encountered_sirens = self.encountered_sirens.union(encounter["front"] + encounter["back"])
         self.encountered_sirens = list(self.encountered_sirens)
+
+    def update_no_overlay(self, dt, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                for shipgirl in available_shipgirls:
+                    if shipgirl.rect.collidepoint(event.pos):
+                        Menus.EQUIPMENT.selected_shipgirl = shipgirl
+                        Menus.current_menu = Menus.EQUIPMENT
+                
+                for overlay_enum, building in self.buildings.items():
+                    if building.rect.collidepoint(event.pos):
+                        self.current_overlay = overlay_enum
+
+                        if overlay_enum == self.SHIPYARD and save_file["research_target"] is not None:
+                            self.overlay_confirm_button.active = True
+                            self.overlay_selected_entity = save_file["research_target"]
+                
+                self.open_select_sortie_menu_button.click(event.pos)
 
     def draw_inventory_overlay(self, surface):
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_bg)
@@ -433,36 +454,14 @@ class PortMenu:
         self.draw_dual_panel_overlay(surface, encountered_sirens, self.siren_filters, siren_stats, {})
 
     def update(self, dt, events):
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONUP:
-                if self.current_overlay == self.NO_OVERLAY:
-                    for shipgirl in available_shipgirls:
-                        if shipgirl.rect.collidepoint(event.pos):
-                            Menus.EQUIPMENT.selected_shipgirl = shipgirl
-                            Menus.current_menu = Menus.EQUIPMENT
-                    
-                    for overlay_enum, building in self.buildings.items():
-                        if building.rect.collidepoint(event.pos):
-                            self.current_overlay = overlay_enum
-
-                            if overlay_enum == self.SHIPYARD and save_file["research_target"] is not None:
-                                self.overlay_confirm_button.active = True
-                                self.overlay_selected_entity = save_file["research_target"]
-                    
-                    self.open_select_sortie_menu_button.click(event.pos)
-                else:
-                    if not self.overlay_bg.collidepoint(event.pos):
-                        self.current_overlay = self.NO_OVERLAY
-                        self.overlay_selected_entity = None
-                        self.overlay_confirm_button.active = False
-                        self.selected_overlay_filter = None
-
-                    if self.current_overlay == self.SHIPYARD:
-                        self.update_shipyard_overlay(dt, events)
-                    elif self.current_overlay == self.GEAR_LAB:
-                        self.update_gear_lab_overlay(dt, events)
-                    elif self.current_overlay == self.INTEL_CENTER:
-                        self.update_intel_center_overlay(dt, events)
+        if self.current_overlay == self.NO_OVERLAY:
+            self.update_no_overlay(dt, events)
+        elif self.current_overlay == self.SHIPYARD:
+            self.update_shipyard_overlay(dt, events)
+        elif self.current_overlay == self.GEAR_LAB:
+            self.update_gear_lab_overlay(dt, events)
+        elif self.current_overlay == self.INTEL_CENTER:
+            self.update_intel_center_overlay(dt, events)
         
         for shipgirl in available_shipgirls:
             shipgirl.update(dt)
@@ -874,10 +873,11 @@ class EncounterMenu:
                                     get_vec(100, math.radians(random.uniform(-15,15)-90))
                                 ))
 
-                    save_file["sortie_progress"] = max(
-                        save_file["sortie_progress"],
-                        self.current_sortie + 1
-                    )
+                    new_sortie_progress = self.current_sortie + 1
+                    if save_file["sortie_progress"] < new_sortie_progress:
+                        save_file["sortie_progress"] = new_sortie_progress
+                        save_file["tutorial"] = tutorial_data.get(str(new_sortie_progress), None)
+                    
                     for sortie_node in Menus.SORTIE_SELECTION.sortie_nodes:
                         if sortie_node.index <= save_file["sortie_progress"]:
                             sortie_node.unlocked = True
