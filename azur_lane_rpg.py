@@ -67,10 +67,10 @@ class Color:
     DARK_BLUE = (50,50,100)
 
 class Buildings:
-    DEPOT = 0
-    SHIPYARD = 1
-    GEAR_LAB = 2
-    INTEL_CENTER = 3
+    DEPOT = "depot"
+    SHIPYARD = "shipyard"
+    GEAR_LAB = "gear_lab"
+    INTEL_CENTER = "intel_center"
 
 class Building:
     def __init__(self, building_type, pos):
@@ -84,6 +84,34 @@ class Building:
         else:
             pygame.draw.rect(surface, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
             font.render(surface, str(self.building_type), self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+class TutorialTask:
+    def __init__(self, task_desc, allowed_mouse_clicks):
+        self.task_desc = task_desc
+        self.allowed_mouse_clicks = allowed_mouse_clicks
+
+    def check_completion(self, mpos):
+        for allowed_mouse_click in self.allowed_mouse_clicks:
+            if allowed_mouse_click.collidepoint(mpos):
+                return True
+        return False
+
+class Tutorial:
+    def __init__(self, tasks):
+        self.tasks = tasks
+        self.current_task = 0
+
+    def reset(self):
+        self.current_task = 0
+        print(self.tasks[self.current_task].task_desc)
+
+    def check_task_complete(self, mpos):
+        if self.tasks[self.current_task].check_completion(mpos):
+            self.current_task += 1
+            if self.current_task < len(self.tasks):
+                print(self.tasks[self.current_task].task_desc)
+            return True
+        return False
 
 class PortMenu:
     NO_OVERLAY = -1
@@ -219,7 +247,7 @@ class PortMenu:
                 self.encountered_sirens = self.encountered_sirens.union(encounter["front"] + encounter["back"])
         self.encountered_sirens = list(self.encountered_sirens)
 
-    def update_no_overlay(self, dt, events):
+    def update_no_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
                 for shipgirl in available_shipgirls:
@@ -255,6 +283,12 @@ class PortMenu:
             else:
                 font.render(surface, item, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             item_index += 1
+
+    def exit_overlay(self, mouseup_event):
+        if not self.overlay_bg.collidepoint(mouseup_event.pos):
+            self.current_overlay = self.NO_OVERLAY
+            self.selected_overlay_filter = None
+            self.overlay_selected_entity = None
 
     def overlay_mouseup_logic(self, mouseup_event, entities, entity_filters, activate_confirm_button):
         for entity, rect in zip(entities, self.overlay_left_icons):
@@ -319,9 +353,11 @@ class PortMenu:
                 amt = save_file["inventory"].get(ingredient, 0)
                 font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-    def update_shipyard_overlay(self, dt, events):
+    def update_shipyard_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
+                self.exit_overlay(event)
+
                 if self.selected_overlay_filter is None:
                     shipgirls = [
                         shipgirl for shipgirl in shipgirl_data
@@ -369,9 +405,11 @@ class PortMenu:
             shipgirl_stats = {}
         self.draw_dual_panel_overlay(surface, shipgirls, self.shipgirl_filters, shipgirl_stats, research_reqs)
 
-    def update_gear_lab_overlay(self, dt, events):
+    def update_gear_lab_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
+                self.exit_overlay(event)
+
                 if self.selected_overlay_filter is None:
                     equipment = [equip for equip in equipment_data]
                 elif self.selected_overlay_filter == 4: # TODO
@@ -418,9 +456,11 @@ class PortMenu:
             equip_stats = {}
         self.draw_dual_panel_overlay(surface, equipment, self.equipment_filters, equip_stats, crafting_reqs)
 
-    def update_intel_center_overlay(self, dt, events):
+    def update_intel_center_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
+                self.exit_overlay(event)
+
                 if self.selected_overlay_filter is None:
                     encountered_sirens = self.encountered_sirens
                 else:
@@ -455,13 +495,17 @@ class PortMenu:
 
     def update(self, dt, events):
         if self.current_overlay == self.NO_OVERLAY:
-            self.update_no_overlay(dt, events)
+            self.update_no_overlay(events)
+        elif self.current_overlay == self.DEPOT:
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONUP:
+                    self.exit_overlay(event)
         elif self.current_overlay == self.SHIPYARD:
-            self.update_shipyard_overlay(dt, events)
+            self.update_shipyard_overlay(events)
         elif self.current_overlay == self.GEAR_LAB:
-            self.update_gear_lab_overlay(dt, events)
+            self.update_gear_lab_overlay(events)
         elif self.current_overlay == self.INTEL_CENTER:
-            self.update_intel_center_overlay(dt, events)
+            self.update_intel_center_overlay(events)
         
         for shipgirl in available_shipgirls:
             shipgirl.update(dt)
@@ -876,7 +920,9 @@ class EncounterMenu:
                     new_sortie_progress = self.current_sortie + 1
                     if save_file["sortie_progress"] < new_sortie_progress:
                         save_file["sortie_progress"] = new_sortie_progress
-                        save_file["tutorial"] = tutorial_data.get(str(new_sortie_progress), None)
+                        Menus.tutorial = Tutorials.research_new_ship
+                        Menus.tutorial.reset()
+                        # save_file["tutorial"] = tutorial_data.get(str(new_sortie_progress), None)
                     
                     for sortie_node in Menus.SORTIE_SELECTION.sortie_nodes:
                         if sortie_node.index <= save_file["sortie_progress"]:
@@ -1521,6 +1567,34 @@ class Menus:
     ENCOUNTER = EncounterMenu()
 
     current_menu = PORT
+    tutorial = None
+
+class Tutorials:
+    research_new_ship = Tutorial([
+        TutorialTask("go to the shipyard", [
+            Menus.PORT.buildings[PortMenu.SHIPYARD].rect
+        ]),
+        TutorialTask("filter ships to uss ships", [
+            Menus.PORT.overlay_filter_rects[0]
+        ]),
+        TutorialTask("select guam to start reaching", [
+            Menus.PORT.overlay_left_icons[1]
+        ]),
+        TutorialTask("click the start researching button", [
+            Menus.PORT.overlay_confirm_button.rect
+        ]),
+        TutorialTask("exit the menu by clicking outside of the overlay", [
+            get_rect(width=screen_x(1), height=Menus.PORT.overlay_bg.top, left=0, top=0),
+            get_rect(width=screen_x(1), height=screen_y(1)-Menus.PORT.overlay_bg.bottom, left=0, top=Menus.PORT.overlay_bg.bottom),
+            get_rect(width=Menus.PORT.overlay_bg.left, height=screen_y(1), left=0, top=0),
+            get_rect(width=screen_x(1)-Menus.PORT.overlay_bg.right, height=screen_y(1), left=Menus.PORT.overlay_bg.right, top=0),
+        ]),
+        TutorialTask("earning exp during battles will contribute towards researching a new ship!", [
+            get_rect(width=screen_x(1), height=screen_y(1), left=0, top=0)
+        ]),
+    ])
+
+Menus.tutorial = Tutorials.research_new_ship
 
 running = True
 while running:
@@ -1534,6 +1608,16 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
+    
+    tutorial = Menus.tutorial
+    if tutorial is not None:
+        events = [
+            event for event in events
+            if event.type == pygame.MOUSEBUTTONUP
+            and tutorial.check_task_complete(event.pos)
+        ]
+        if tutorial.current_task == len(tutorial.tasks):
+            Menus.tutorial = None
 
     Menus.current_menu.update(dt, events)
 
