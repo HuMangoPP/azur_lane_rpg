@@ -1,7 +1,7 @@
 import math
 import pygame
 
-def get_rect(width, height, left=None, centerx=None, right=None, top=None, centery=None, bottom=None):
+def get_rect(width, height, left=None, centerx=None, right=None, top=None, centery=None, bottom=None, center=None):
     rect = pygame.Rect(0,0,width,height)
     if left is not None:
         rect.left = left
@@ -15,6 +15,8 @@ def get_rect(width, height, left=None, centerx=None, right=None, top=None, cente
         rect.centery = centery
     if bottom is not None:
         rect.bottom = bottom
+    if center is not None:
+        rect.center = center
     return rect
 
 def get_vec(length, angle):

@@ -85,31 +85,74 @@ class Building:
             pygame.draw.rect(surface, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
             font.render(surface, str(self.building_type), self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-class TutorialTask:
-    def __init__(self, task_desc, allowed_mouse_clicks):
-        self.task_desc = task_desc
-        self.allowed_mouse_clicks = allowed_mouse_clicks
+class TutorialInput:
+    CLICK = 0
+    NOT_CLICK = 1
+    DRAG = 2
+
+    def __init__(self, input_type, input_params):
+        self.input_type = input_type
+        self.input_params = input_params
+
+    def filter_input(self, events):
+        ...
 
     def check_completion(self, mpos):
-        for allowed_mouse_click in self.allowed_mouse_clicks:
-            if allowed_mouse_click.collidepoint(mpos):
+        if self.input_type == self.CLICK:
+            for rect in self.input_params["click"]:
+                if rect.collidepoint(mpos["mouseup"]):
+                    return True
+            return False
+        elif self.input_type == self.NOT_CLICK:
+            for rect in self.input_params["not_click"]:
+                if rect.collidepoint(mpos["mouseup"]):
+                    return True
+            return False
+        elif self.input_type == self.DRAG:
+            mousedown = False
+            for rect in self.input_params["from"]:
+                if rect.collidepoint(mpos["mousedown"]):
+                    mousedown = True
+            mouseup = False
+            for rect in self.input_params["to"]:
+                if rect.collidepoint(mpos["mouseup"]):
+                    mouseup = True
+            if mousedown and mouseup:
                 return True
+            return False
         return False
 
+class TutorialTask:
+    def __init__(self, task_desc, tutorial_input):
+        self.task_desc = task_desc
+        self.tutorial_input = tutorial_input
+
+    def check_completion(self, mpos):
+        return self.tutorial_input.check_completion(mpos)
+
 class Tutorial:
-    def __init__(self, tasks):
+    def __init__(self, tasks, on_complete):
         self.tasks = tasks
-        self.current_task = 0
+        self.task_index = 0
+        self.completed = False
+        self.on_complete = on_complete
 
-    def reset(self):
-        self.current_task = 0
-        print(self.tasks[self.current_task].task_desc)
+    @property
+    def current_task(self):
+        if self.task_index < len(self.tasks):
+            return self.tasks[self.task_index]
+        return None
 
-    def check_task_complete(self, mpos):
-        if self.tasks[self.current_task].check_completion(mpos):
-            self.current_task += 1
-            if self.current_task < len(self.tasks):
-                print(self.tasks[self.current_task].task_desc)
+    def start_tutorial(self):
+        print(self.current_task.task_desc)
+
+    def check_completion(self, mpos):
+        if self.current_task.check_completion(mpos):
+            self.task_index += 1
+            if self.task_index < len(self.tasks):
+                print(self.current_task.task_desc)
+            else:
+                self.completed = True
             return True
         return False
 
@@ -576,9 +619,6 @@ class SortieNode:
 
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
-            # pygame.draw.polygon(surface, color, polygon)
-            # outline_width = (2 if self.hovered else 1) * Box.OUTLINE_WIDTH
-            # pygame.draw.polygon(surface, Color.WHITE, polygon, width=outline_width)
             font.render(surface, str(self.index), pygame.Vector2(x, y) + self.CENTER, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
 
@@ -892,8 +932,16 @@ class EncounterMenu:
                 num_encounters = len(sortie_data[self.current_sortie]["encounters"])
                 if self.current_encounter+1 < num_encounters:
                     self.next_encounter_button.active = True
+                    
+                    if not tutorials.next_encounter.completed:
+                        Menus.tutorial = tutorials.next_encounter
+                        Menus.tutorial.start_tutorial()
                 else:
                     self.return_to_port_button.active = True
+
+                    if not tutorials.return_to_port.completed:
+                        Menus.tutorial = tutorials.return_to_port
+                        Menus.tutorial.start_tutorial()
 
                     if self.current_sortie == save_file["sortie_progress"]:
                         rewards = sortie_data[self.current_sortie]["rewards"]
@@ -920,9 +968,6 @@ class EncounterMenu:
                     new_sortie_progress = self.current_sortie + 1
                     if save_file["sortie_progress"] < new_sortie_progress:
                         save_file["sortie_progress"] = new_sortie_progress
-                        Menus.tutorial = Tutorials.research_new_ship
-                        Menus.tutorial.reset()
-                        # save_file["tutorial"] = tutorial_data.get(str(new_sortie_progress), None)
                     
                     for sortie_node in Menus.SORTIE_SELECTION.sortie_nodes:
                         if sortie_node.index <= save_file["sortie_progress"]:
@@ -1570,31 +1615,110 @@ class Menus:
     tutorial = None
 
 class Tutorials:
-    research_new_ship = Tutorial([
-        TutorialTask("go to the shipyard", [
-            Menus.PORT.buildings[PortMenu.SHIPYARD].rect
-        ]),
-        TutorialTask("filter ships to uss ships", [
-            Menus.PORT.overlay_filter_rects[0]
-        ]),
-        TutorialTask("select guam to start reaching", [
-            Menus.PORT.overlay_left_icons[1]
-        ]),
-        TutorialTask("click the start researching button", [
-            Menus.PORT.overlay_confirm_button.rect
-        ]),
-        TutorialTask("exit the menu by clicking outside of the overlay", [
-            get_rect(width=screen_x(1), height=Menus.PORT.overlay_bg.top, left=0, top=0),
-            get_rect(width=screen_x(1), height=screen_y(1)-Menus.PORT.overlay_bg.bottom, left=0, top=Menus.PORT.overlay_bg.bottom),
-            get_rect(width=Menus.PORT.overlay_bg.left, height=screen_y(1), left=0, top=0),
-            get_rect(width=screen_x(1)-Menus.PORT.overlay_bg.right, height=screen_y(1), left=Menus.PORT.overlay_bg.right, top=0),
-        ]),
-        TutorialTask("earning exp during battles will contribute towards researching a new ship!", [
-            get_rect(width=screen_x(1), height=screen_y(1), left=0, top=0)
-        ]),
-    ])
+    def __init__(self):
+        def start_sortie_on_complete():
+            Menus.tutorial = self.assign_fleet
+            Menus.tutorial.start_tutorial()
 
-Menus.tutorial = Tutorials.research_new_ship
+        self.start_sortie = Tutorial([
+            TutorialTask("let's start a sortie!", TutorialInput(
+                TutorialInput.CLICK,
+                {"click": [Menus.PORT.open_select_sortie_menu_button.rect]}
+            )),
+            TutorialTask("select the area to explore", TutorialInput(
+                TutorialInput.CLICK,
+                {"click": [get_rect(
+                    width=SortieNode.SIZE,
+                    height=SortieNode.SIZE,
+                    center=(
+                        pygame.Vector2(hex_to_pixel(*Menus.SORTIE_SELECTION.sortie_nodes[0].hexes[0], SortieNode.SIZE))
+                        + SortieNode.CENTER
+                    )
+                )]}
+            )),
+        ], start_sortie_on_complete)
+
+        def assign_fleet_on_complete():
+            self.create_combat_mechanics_tutorial()
+            Menus.tutorial = self.combat_mechanics
+            Menus.tutorial.start_tutorial()
+
+        self.assign_fleet = Tutorial([
+            TutorialTask("assign laffey to your fleet", TutorialInput(
+                TutorialInput.DRAG,
+                {"from": [available_shipgirl_rects[0]], "to": Menus.FLEET_SELECTION.fleet_slots}
+            )),
+            TutorialTask("assign new jersey to your fleet", TutorialInput(
+                TutorialInput.DRAG,
+                {"from": [available_shipgirl_rects[1]], "to": Menus.FLEET_SELECTION.fleet_slots}
+            )),
+            TutorialTask("set sail!", TutorialInput(
+                TutorialInput.CLICK,
+                {"click": [Menus.FLEET_SELECTION.start_sortie_button.rect]}
+            )),
+        ], assign_fleet_on_complete)
+
+        def next_encounter_on_complete():
+            Menus.tutorial = None
+
+        self.next_encounter = Tutorial([
+            TutorialTask("continue to the next encounter", TutorialInput(
+                TutorialInput.CLICK,
+                {"click": [Menus.ENCOUNTER.next_encounter_button.rect]}
+            )),
+        ], next_encounter_on_complete)
+
+        def return_to_port_on_complete():
+            Menus.tutorial = None
+
+        self.return_to_port = Tutorial([
+            TutorialTask("sail back home", TutorialInput(
+                TutorialInput.CLICK,
+                {"click": [Menus.ENCOUNTER.return_to_port_button.rect]}
+            )),
+        ], return_to_port_on_complete)
+
+        # research_new_ship = Tutorial([
+        #     TutorialTask("let's research a new shipgirl!", [
+        #         Menus.PORT.buildings[PortMenu.SHIPYARD].rect
+        #     ]),
+        #     TutorialTask("go to the shipyard", [
+        #         Menus.PORT.buildings[PortMenu.SHIPYARD].rect
+        #     ]),
+        #     TutorialTask("filter the shipgirls by faction", [
+        #         Menus.PORT.overlay_filter_rects[0]
+        #     ]),
+        #     TutorialTask("let's research guam", [
+        #         Menus.PORT.overlay_left_icons[1]
+        #     ]),
+        #     TutorialTask("start researching!", [
+        #         Menus.PORT.overlay_confirm_button.rect
+        #     ]),
+        #     TutorialTask("exit the menu by clicking outside of the overlay", [
+        #         get_rect(width=screen_x(1), height=Menus.PORT.overlay_bg.top, left=0, top=0),
+        #         get_rect(width=screen_x(1), height=screen_y(1)-Menus.PORT.overlay_bg.bottom, left=0, top=Menus.PORT.overlay_bg.bottom),
+        #         get_rect(width=Menus.PORT.overlay_bg.left, height=screen_y(1), left=0, top=0),
+        #         get_rect(width=screen_x(1)-Menus.PORT.overlay_bg.right, height=screen_y(1), left=Menus.PORT.overlay_bg.right, top=0),
+        #     ]),
+        #     TutorialTask("earning exp during battles will contribute towards researching a new ship!", [
+        #         get_rect(width=screen_x(1), height=screen_y(1), left=0, top=0)
+        #     ]),
+        # ])
+    
+    def create_combat_mechanics_tutorial(self):
+        def combat_mechanics_on_complete():
+            Menus.tutorial = None
+        
+        self.combat_mechanics = Tutorial([
+            TutorialTask("drag shipgirls to target the enemy sirens", TutorialInput(
+                TutorialInput.DRAG,
+                {"from": [player_fleet.front.rect], "to": [siren.rect for siren in siren_fleet.front]}
+            )),
+        ], combat_mechanics_on_complete)
+
+tutorials = Tutorials()
+Menus.tutorial = tutorials.start_sortie
+Menus.tutorial.start_tutorial()
 
 running = True
 while running:
@@ -1613,13 +1737,15 @@ while running:
     if tutorial is not None:
         events = [
             event for event in events
-            if event.type == pygame.MOUSEBUTTONUP
-            and tutorial.check_task_complete(event.pos)
+            if event.type != pygame.MOUSEBUTTONUP
+            or tutorial.check_completion({"mouseup": event.pos, "mousedown": mouse_start_drag})
         ]
-        if tutorial.current_task == len(tutorial.tasks):
-            Menus.tutorial = None
 
     Menus.current_menu.update(dt, events)
+
+    if tutorial is not None:
+        if tutorial.completed:
+            tutorial.on_complete()
 
     temp_screen.fill((50,20,20)) # TODO
     Menus.current_menu.draw(temp_screen)
