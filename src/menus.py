@@ -1141,9 +1141,6 @@ class Tutorials:
             Menus.tutorial = self.assign_fleet
             Menus.tutorial.start_tutorial()
 
-        def start_sortie_input(event):
-            return Menus.PORT.open_select_sortie_menu_button.rect.collidepoint(event.pos)
-
         sortie_node_rect = get_rect(
             width=SortieNode.SIZE,
             height=SortieNode.SIZE,
@@ -1153,16 +1150,18 @@ class Tutorials:
             )
         )
 
-        def select_node_input(event):
-            return sortie_node_rect.collidepoint(event.pos)
-
         self.start_sortie = Tutorial([
-            TutorialTask("let's start a sortie!", start_sortie_input),
-            TutorialTask("select the area to explore", select_node_input),
+            TutorialTask(
+                "let's start a sortie!",
+                lambda event : Menus.PORT.open_select_sortie_menu_button.rect.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "select the area to explore",
+                lambda event : sortie_node_rect.collidepoint(event.pos)
+            ),
         ], start_sortie_on_complete)
 
         def assign_fleet_on_complete():
-            self.create_combat_mechanics_tutorial()
             Menus.tutorial = self.combat_mechanics
             Menus.tutorial.start_tutorial()
 
@@ -1177,64 +1176,16 @@ class Tutorials:
                 available_shipgirl_rects[1].collidepoint(mouse_start_drag)
                 and any(fleet_slot.collidepoint(event.pos) for fleet_slot in Menus.FLEET_SELECTION.fleet_slots)
             )
-    
-        def start_sortie_button_input(event):
-            return Menus.FLEET_SELECTION.start_sortie_button.rect.collidepoint(event.pos)
 
         self.assign_fleet = Tutorial([
             TutorialTask("assign laffey to your fleet", assign_laffey_input),
             TutorialTask("assign new jersey to your fleet", assign_new_jersey_input),
-            TutorialTask("set sail!", start_sortie_button_input),
+            TutorialTask(
+                "set sail!",
+                lambda event : Menus.FLEET_SELECTION.start_sortie_button.rect.collidepoint(event.pos)
+            ),
         ], assign_fleet_on_complete)
 
-        def next_encounter_on_complete():
-            Menus.tutorial = None
-
-        def next_encounter_button_input(event):
-            return Menus.ENCOUNTER.next_encounter_button.rect.collidepoint(event.pos)
-
-        self.next_encounter = Tutorial([
-            TutorialTask("continue to the next encounter", next_encounter_button_input),
-        ], next_encounter_on_complete)
-
-        def return_to_port_on_complete():
-            Menus.tutorial = None
-
-        def return_to_port_button_input(event):
-            return Menus.ENCOUNTER.return_to_port_button.rect.collidepoint(event.pos)
-
-        self.return_to_port = Tutorial([
-            TutorialTask("sail back home", return_to_port_button_input),
-        ], return_to_port_on_complete)
-
-        # research_new_ship = Tutorial([
-        #     TutorialTask("let's research a new shipgirl!", [
-        #         Menus.PORT.buildings[PortMenu.SHIPYARD].rect
-        #     ]),
-        #     TutorialTask("go to the shipyard", [
-        #         Menus.PORT.buildings[PortMenu.SHIPYARD].rect
-        #     ]),
-        #     TutorialTask("filter the shipgirls by faction", [
-        #         Menus.PORT.overlay_filter_rects[0]
-        #     ]),
-        #     TutorialTask("let's research guam", [
-        #         Menus.PORT.overlay_left_icons[1]
-        #     ]),
-        #     TutorialTask("start researching!", [
-        #         Menus.PORT.overlay_confirm_button.rect
-        #     ]),
-        #     TutorialTask("exit the menu by clicking outside of the overlay", [
-        #         get_rect(width=screen_x(1), height=Menus.PORT.overlay_bg.top, left=0, top=0),
-        #         get_rect(width=screen_x(1), height=screen_y(1)-Menus.PORT.overlay_bg.bottom, left=0, top=Menus.PORT.overlay_bg.bottom),
-        #         get_rect(width=Menus.PORT.overlay_bg.left, height=screen_y(1), left=0, top=0),
-        #         get_rect(width=screen_x(1)-Menus.PORT.overlay_bg.right, height=screen_y(1), left=Menus.PORT.overlay_bg.right, top=0),
-        #     ]),
-        #     TutorialTask("earning exp during battles will contribute towards researching a new ship!", [
-        #         get_rect(width=screen_x(1), height=screen_y(1), left=0, top=0)
-        #     ]),
-        # ])
-    
-    def create_combat_mechanics_tutorial(self):
         def combat_mechanics_on_complete():
             Menus.tutorial = None
         
@@ -1247,6 +1198,57 @@ class Tutorials:
         self.combat_mechanics = Tutorial([
             TutorialTask("drag shipgirls to target the enemy sirens", combat_mechanics_input),
         ], combat_mechanics_on_complete)
+
+        def next_encounter_on_complete():
+            Menus.tutorial = None
+
+        self.next_encounter = Tutorial([
+            TutorialTask(
+                "continue to the next encounter", 
+                lambda event : Menus.ENCOUNTER.next_encounter_button.rect.collidepoint(event.pos)
+            ),
+        ], next_encounter_on_complete)
+
+        def return_to_port_on_complete():
+            Menus.tutorial = self.research_new_ship
+            Menus.tutorial.start_tutorial()
+
+        self.return_to_port = Tutorial([
+            TutorialTask(
+                "sail back home",
+                lambda event : Menus.ENCOUNTER.return_to_port_button.rect.collidepoint(event.pos)
+            ),
+        ], return_to_port_on_complete)
+
+        def research_new_ship_on_complete():
+            Menus.tutorial = None
+
+        self.research_new_ship = Tutorial([
+            TutorialTask(
+                "let's research a new shipgirl! go the shipyard", 
+                lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "filter the shipgirls by faction",
+                lambda event : Menus.PORT.overlay_filter_rects[0].collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "let's research guam", 
+                lambda event : Menus.PORT.overlay_left_icons[1].collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "start researching!",
+                lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "exit the menu by clicking outside of the overlay",
+                lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "earning exp during battles will contribute towards researching a new ship!", 
+                lambda event : True
+            )
+        ], research_new_ship_on_complete)
 
 tutorials = Tutorials()
 Menus.tutorial = tutorials.start_sortie
