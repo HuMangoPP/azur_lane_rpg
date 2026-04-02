@@ -46,7 +46,7 @@ while running:
         events = [
             event for event in events
             if event.type != pygame.MOUSEBUTTONUP
-            or tutorial.check_completion({"mouseup": event.pos})
+            or tutorial.check_completion(event)
         ]
 
     Menus.current_menu.update(dt, events)
