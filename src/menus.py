@@ -161,6 +161,7 @@ class PortMenu:
                     available_shipgirls.append(shipgirl)
                     for ingredient, req in selected_entity_reqs.items():
                         DataFiles.save_file["inventory"][ingredient] -= req
+                    DataFiles.save_file["research_target"] = None
                 else:
                     DataFiles.save_file["research_target"] = self.overlay_selected_entity
             elif self.current_overlay == self.GEAR_LAB:
@@ -238,13 +239,15 @@ class PortMenu:
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             if item in DataFiles.sprites:
                 surface.blit(DataFiles.sprites[item], rect)
+                font.render(surface, str(count), rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             else:
-                font.render(surface, item, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                font.render(surface, f"{item} ({count})", rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             item_index += 1
 
     def exit_overlay(self, mouseup_event):
         if not self.overlay_bg.collidepoint(mouseup_event.pos):
             self.current_overlay = self.NO_OVERLAY
+            self.overlay_confirm_button.active = False
             self.selected_overlay_filter = None
             self.overlay_selected_entity = None
 
@@ -694,7 +697,7 @@ class Drop:
         if self.pos.y < bottom:
             self.pos = self.pos + self.vel * dt
             self.pos.y = min(self.pos.y, bottom)
-            self.vel = self.vel + pygame.Vector2(0, 100) * dt
+            self.vel = self.vel + pygame.Vector2(0, 200) * dt
     
     def draw(self, surface, font):
         if self.item in DataFiles.sprites:
@@ -735,6 +738,12 @@ class EncounterMenu:
             Menus.current_menu = Menus.PORT
 
             Menus.ENCOUNTER.return_to_port_button.active = False
+
+            sortie_progress = DataFiles.save_file["sortie_progress"]
+            tutorial = tutorials.sortie_end_tutorial_triggers.get(sortie_progress)
+            if tutorial is not None and not tutorial.completed:
+                Menus.tutorial = tutorial
+                Menus.tutorial.start_tutorial()
 
         self.return_to_port_button = Button(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, centery=screen_y(0.5)),
@@ -866,7 +875,6 @@ class EncounterMenu:
                                 pygame.Vector2(screen_x(0.75), screen_y(0.5)),
                                 get_vec(100, math.radians(random.uniform(-15,15)-90))
                             ))
-                            DataFiles.save_file["inventory"][reward] = DataFiles.save_file["inventory"].get(reward, 0) + 1
                     else:
                         for siren in siren_fleet.fleet:
                             drops = DataFiles.siren_data[siren.name]["drops"]
@@ -1209,16 +1217,12 @@ class Tutorials:
             ),
         ], next_encounter_on_complete)
 
-        def return_to_port_on_complete():
-            Menus.tutorial = self.research_new_ship
-            Menus.tutorial.start_tutorial()
-
         self.return_to_port = Tutorial([
             TutorialTask(
                 "sail back home",
                 lambda event : Menus.ENCOUNTER.return_to_port_button.rect.collidepoint(event.pos)
             ),
-        ], return_to_port_on_complete)
+        ], lambda : True)
 
         def research_new_ship_on_complete():
             Menus.tutorial = None
@@ -1249,6 +1253,69 @@ class Tutorials:
                 lambda event : True
             )
         ], research_new_ship_on_complete)
+
+        def construct_new_ship_on_complete():
+            Menus.tutorial = None
+
+        self.construct_new_ship = Tutorial([
+            TutorialTask(
+                "we've collected enough combat data to construct the shipgirl! go to the shipyard", 
+                lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "let's construct the shipgirl",
+                lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "congratulations! guam has joined our fleet!",
+                lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
+            )
+        ], construct_new_ship_on_complete)
+
+        def craft_new_gear_on_complete():
+            Menus.tutorial = None
+
+        self.craft_new_gear = Tutorial([
+            TutorialTask(
+                "we've collected enough materials to craft a new weapon! go to the gear lab", 
+                lambda event : Menus.PORT.buildings[PortMenu.GEAR_LAB].rect.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "filter the gear by hull type",
+                lambda event : Menus.PORT.overlay_filter_rects[1].collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "let's craft this new DD gun", 
+                lambda event : Menus.PORT.overlay_left_icons[0].collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "craft!",
+                lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "exit the menu",
+                lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "let's equip this new gun to laffey. click on her to open the equipment screen",
+                lambda event : available_shipgirls[0].rect.collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "equip the gun",
+                lambda event : Menus.EQUIPMENT.equippable_rects[0].collidepoint(event.pos)
+            ),
+            TutorialTask(
+                "congratulations! you've equipped a new gun on laffey! exit this menu",
+                lambda event : Menus.EQUIPMENT.exit_equipment_menu_button.rect.collidepoint(event.pos)
+            ),
+        ], craft_new_gear_on_complete)
+
+        self.sortie_end_tutorial_triggers = {
+            1: self.research_new_ship,
+            2: self.construct_new_ship,
+            3: self.craft_new_gear
+        }
+
 
 tutorials = Tutorials()
 Menus.tutorial = tutorials.start_sortie
