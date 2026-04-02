@@ -1,0 +1,54 @@
+import json
+import pygame
+
+TEMP_SCREEN_SIZE = pygame.Vector2(1120, 630)
+FPS = 60
+
+def screen_x(t):
+    return TEMP_SCREEN_SIZE.x * t
+
+def screen_y(t):
+    return TEMP_SCREEN_SIZE.y * t
+
+class Box:
+    WIDTH = 50
+    HEIGHT = 50
+    OUTLINE_WIDTH = 2
+
+    PADDING = 10
+
+class Color:
+    WHITE = (255,255,255)
+    BLACK = (10,10,10)
+    BLUE_GREY = (100,100,150)
+    BLUE = (75,75,125)
+    DARK_BLUE = (50,50,100)
+
+class Equipment:
+    NUM_EQUIPS = 3
+    WEAPON = 0
+    AUX1 = 1
+    AUX2 = 2
+
+from engine.load_sprites import load_sprites
+
+class DataFiles:
+    with open("data/save_file.json") as f:
+        save_file = json.load(f)
+
+    with open("data/sorties.json") as f:
+        sortie_data = json.load(f)
+
+    with open("data/shipgirls.json") as f:
+        shipgirl_data = json.load(f)
+
+    with open("data/sirens.json") as f:
+        siren_data = json.load(f)
+
+    with open("data/equipment.json") as f:
+        equipment_data = json.load(f)
+
+    with open("data/tutorial.json") as f:
+        tutorial_data = json.load(f)
+    
+    sprites = load_sprites()
