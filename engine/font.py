@@ -33,6 +33,17 @@ class Font:
             lines.append(line)
             return lines
 
+    def get_width(self, text, scale, box_width):
+        char_width = scale * self.font_width
+        lines = self._get_lines(text, char_width, box_width)
+        return max(len(line.strip()) for line in lines) * char_width
+
+    def get_height(self, text, scale, box_width):
+        char_width = scale * self.font_width
+        char_height = scale * self.font_height
+        lines = self._get_lines(text, char_width, box_width)
+        return len(lines) * (char_height + self.padding) + self.padding
+
     def _outline(self, surface, text_surf, xy, outline_color):
         outline_text_surf = pygame.Surface(text_surf.get_size())
         outline_text_surf.fill(outline_color)
@@ -49,10 +60,11 @@ class Font:
         char_width = scale * self.font_width
         char_height = scale * self.font_height
         lines = self._get_lines(text, char_width, box_width)
+        text_width = max(len(line.strip()) for line in lines) * char_width
         if box_width == 0:
-            text_surf = pygame.Surface((char_width * len(lines[0]) + self.padding, char_height + self.padding))
+            text_surf = pygame.Surface((text_width + self.padding, char_height + self.padding))
         else:
-            text_surf = pygame.Surface((box_width + self.padding, len(lines) * (char_height + self.padding) + self.padding))
+            text_surf = pygame.Surface((text_width + self.padding, len(lines) * (char_height + self.padding) + self.padding))
 
         y = self.padding / 2
         for line in lines:

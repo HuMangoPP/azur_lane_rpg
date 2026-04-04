@@ -57,6 +57,9 @@ while running:
 
     temp_screen.fill((50,20,20)) # TODO
     Menus.current_menu.draw(temp_screen, font)
+    tutorial = Menus.tutorial
+    if tutorial is not None:
+        tutorial.draw(temp_screen, font)
     screen.blit(pygame.transform.scale(temp_screen, screen.get_size()), (0,0))
     pygame.display.flip()
 

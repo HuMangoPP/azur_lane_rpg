@@ -30,6 +30,9 @@
 	"plastics": { "path": "assets/plastics.png", "scale": 2 },
 	"wisdom_cube": { "path": "assets/wisdom_cube.png", "scale": 2 },
 
+	"TB_point_up": {"path": "assets/TB_point_up.png", "scale": 2},
+	"TB_point_down": {"path": "assets/TB_point_down.png", "scale": 2},
+
 	"DD": {"path": "assets/DD.png", "scale": 1},
 	"CA": {"path": "assets/CA.png", "scale": 1},
 	"BB": {"path": "assets/BB.png", "scale": 1},

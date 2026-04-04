@@ -23,6 +23,7 @@ class Color:
     BLUE_GREY = (100,100,150)
     BLUE = (75,75,125)
     DARK_BLUE = (50,50,100)
+    RED = (255,10,10)
 
 class Equipment:
     NUM_EQUIPS = 3

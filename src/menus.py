@@ -36,9 +36,9 @@ class Building:
             font.render(surface, str(self.building_type), self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
 class TutorialTask:
-    def __init__(self, task_desc, tutorial_input):
-        self.task_desc = task_desc
+    def __init__(self, tutorial_input, tutorial_draw):
         self.tutorial_input = tutorial_input
+        self.tutorial_draw = tutorial_draw
 
     def check_completion(self, event):
         return self.tutorial_input(event)
@@ -56,18 +56,18 @@ class Tutorial:
             return self.tasks[self.task_index]
         return None
 
-    def start_tutorial(self):
-        print(self.current_task.task_desc)
-
     def check_completion(self, event):
         if self.current_task.check_completion(event):
             self.task_index += 1
-            if self.task_index < len(self.tasks):
-                print(self.current_task.task_desc)
-            else:
+            if self.task_index == len(self.tasks):
                 self.completed = True
             return True
         return False
+
+    def draw(self, surface, font):
+        current_task = self.current_task
+        if current_task is not None:
+            current_task.tutorial_draw(surface, font)
 
 mouse_start_drag = None
 
@@ -743,7 +743,6 @@ class EncounterMenu:
             tutorial = tutorials.sortie_end_tutorial_triggers.get(sortie_progress)
             if tutorial is not None and not tutorial.completed:
                 Menus.tutorial = tutorial
-                Menus.tutorial.start_tutorial()
 
         self.return_to_port_button = Button(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, centery=screen_y(0.5)),
@@ -859,13 +858,11 @@ class EncounterMenu:
                     
                     if not tutorials.next_encounter.completed:
                         Menus.tutorial = tutorials.next_encounter
-                        Menus.tutorial.start_tutorial()
                 else:
                     self.return_to_port_button.active = True
 
                     if not tutorials.return_to_port.completed:
                         Menus.tutorial = tutorials.return_to_port
-                        Menus.tutorial.start_tutorial()
 
                     if self.current_sortie == DataFiles.save_file["sortie_progress"]:
                         rewards = DataFiles.sortie_data[self.current_sortie]["rewards"]
@@ -1145,33 +1142,113 @@ class Menus:
 
 class Tutorials:
     def __init__(self):
+        def draw_tb(surface, font, text, point_pos, point_down, point_right):
+            point_pos = pygame.Vector2(point_pos)
+
+            if point_down:
+                pointer = DataFiles.sprites["TB_point_down"]
+            else:
+                pointer = DataFiles.sprites["TB_point_up"]
+            
+            pointer = pygame.transform.flip(pointer, point_right, False)
+            pointer_rect = pointer.get_rect()
+            if point_down:
+                pointer_rect.bottom = point_pos.y
+            else:
+                pointer_rect.top = point_pos.y
+            if point_right:
+                pointer_rect.right = point_pos.x
+            else:
+                pointer_rect.left = point_pos.x
+            surface.blit(pointer, pointer_rect)
+
+            text_scale = 1
+            text_width = 2*Box.WIDTH-Box.PADDING
+            text_height = font.get_height(text, text_scale, text_width)
+            text_rect = get_rect(
+                width=text_width, height=text_height + Box.PADDING,
+                centerx=pointer_rect.centerx,
+                bottom=pointer_rect.top
+            )
+            if point_right:
+                text_rect.right = pointer_rect.left
+                polygon = [
+                    (text_rect.right, text_rect.bottom-Box.PADDING),
+                    (text_rect.right+Box.PADDING, text_rect.bottom+Box.PADDING),
+                    (text_rect.right-Box.PADDING, text_rect.bottom)
+                ]
+            else:
+                text_rect.left = pointer_rect.right
+                polygon = [
+                    (text_rect.left, text_rect.bottom-Box.PADDING),
+                    (text_rect.left-Box.PADDING, text_rect.bottom+Box.PADDING),
+                    (text_rect.left+Box.PADDING, text_rect.bottom)
+                ]
+            pygame.draw.rect(surface, Color.DARK_BLUE, text_rect)
+            pygame.draw.polygon(surface, Color.DARK_BLUE, polygon)
+            font.render(
+                surface,
+                text,
+                pygame.Vector2(text_rect.topleft) + pygame.Vector2(0.5*Box.PADDING, 0.5*Box.PADDING),
+                Color.WHITE,
+                text_scale,
+                outline_color=Color.BLACK,
+                box_width=text_rect.width
+            )
+            
         def start_sortie_on_complete():
             Menus.tutorial = self.assign_fleet
-            Menus.tutorial.start_tutorial()
 
-        sortie_node_rect = get_rect(
-            width=SortieNode.SIZE,
-            height=SortieNode.SIZE,
-            center=(
-                pygame.Vector2(hex_to_pixel(*Menus.SORTIE_SELECTION.sortie_nodes[0].hexes[0], SortieNode.SIZE))
-                + SortieNode.CENTER
+        def draw_start_a_sortie(surface, font):
+            button_rect = Menus.PORT.open_select_sortie_menu_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
             )
-        )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "let's start a sortie!",
+                rect.topright,
+                True, False
+            )
+
+        def select_sortie_node(event):
+            mouse_x, mouse_y = event.pos
+            hx, hy = pixel_to_hex(mouse_x - SortieNode.CENTER.x, mouse_y - SortieNode.CENTER.y, SortieNode.SIZE)
+            return (hx, hy) in Menus.SORTIE_SELECTION.sortie_nodes[0].hexes
+
+        def draw_select_sortie_node(surface, font):
+            q, r = Menus.SORTIE_SELECTION.sortie_nodes[0].hexes[0]
+            xy = hex_to_pixel(q, r, SortieNode.SIZE)
+            rect = get_rect(
+                width=2*SortieNode.SIZE, height=2*SortieNode.SIZE,
+                center=pygame.Vector2(xy) + SortieNode.CENTER
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "select the area to explore",
+                rect.bottomright,
+                False, False
+            )
 
         self.start_sortie = Tutorial([
             TutorialTask(
-                "let's start a sortie!",
-                lambda event : Menus.PORT.open_select_sortie_menu_button.rect.collidepoint(event.pos)
+                lambda event : Menus.PORT.open_select_sortie_menu_button.rect.collidepoint(event.pos),
+                draw_start_a_sortie
             ),
             TutorialTask(
-                "select the area to explore",
-                lambda event : sortie_node_rect.collidepoint(event.pos)
+                select_sortie_node,
+                draw_select_sortie_node
             ),
         ], start_sortie_on_complete)
 
         def assign_fleet_on_complete():
             Menus.tutorial = self.combat_mechanics
-            Menus.tutorial.start_tutorial()
 
         def assign_laffey_input(event):
             return (
@@ -1179,18 +1256,102 @@ class Tutorials:
                 and any(fleet_slot.collidepoint(event.pos) for fleet_slot in Menus.FLEET_SELECTION.fleet_slots)
             )
 
+        def draw_assign_laffey(surface, font):
+            shipgirl_rect = available_shipgirl_rects[0]
+            rect = get_rect(
+                width=shipgirl_rect.width + 2*Box.PADDING,
+                height=shipgirl_rect.height + 2*Box.PADDING,
+                center=shipgirl_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "drag laffey...",
+                rect.bottomleft,
+                False, True
+            )
+
+            center_fleet_slot = Menus.FLEET_SELECTION.fleet_slots[1]
+            rect = get_rect(
+                width=3*Box.WIDTH + 4*Box.PADDING,
+                height=Box.HEIGHT + 2*Box.PADDING,
+                center=center_fleet_slot.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "...and assign her to your fleet",
+                rect.bottomright,
+                False, False
+            )
+
         def assign_new_jersey_input(event):
             return (
                 available_shipgirl_rects[1].collidepoint(mouse_start_drag)
                 and any(fleet_slot.collidepoint(event.pos) for fleet_slot in Menus.FLEET_SELECTION.fleet_slots)
             )
+    
+        def draw_assign_new_jersey(surface, font):
+            shipgirl_rect = available_shipgirl_rects[1]
+            rect = get_rect(
+                width=shipgirl_rect.width + 2*Box.PADDING,
+                height=shipgirl_rect.height + 2*Box.PADDING,
+                center=shipgirl_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "drag new jersey...",
+                rect.bottomleft,
+                False, True
+            )
+
+            center_fleet_slot = Menus.FLEET_SELECTION.fleet_slots[1]
+            rect = get_rect(
+                width=3*Box.WIDTH + 4*Box.PADDING,
+                height=Box.HEIGHT + 2*Box.PADDING,
+                center=center_fleet_slot.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "...and assign her to your fleet",
+                rect.bottomright,
+                False, False
+            )
+
+        def draw_start_sortie(surface, font):
+            button_rect = Menus.FLEET_SELECTION.start_sortie_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "we're ready to start our sortie!",
+                rect.topleft,
+                True, True
+            )
 
         self.assign_fleet = Tutorial([
-            TutorialTask("assign laffey to your fleet", assign_laffey_input),
-            TutorialTask("assign new jersey to your fleet", assign_new_jersey_input),
             TutorialTask(
-                "set sail!",
-                lambda event : Menus.FLEET_SELECTION.start_sortie_button.rect.collidepoint(event.pos)
+                assign_laffey_input,
+                draw_assign_laffey
+            ),
+            TutorialTask(
+                assign_new_jersey_input,
+                draw_assign_new_jersey
+            ),
+            TutorialTask(
+                lambda event : Menus.FLEET_SELECTION.start_sortie_button.rect.collidepoint(event.pos),
+                draw_start_sortie
             ),
         ], assign_fleet_on_complete)
 
@@ -1203,120 +1364,174 @@ class Tutorials:
                 and any(siren.rect.collidepoint(event.pos) for siren in siren_fleet.front)
             )
 
+        def draw_combat_mechanics(surface, font):
+            pygame.draw.rect(surface, Color.RED, player_fleet.front.rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "drag laffey...",
+                player_fleet.front.rect.bottomright,
+                False, False
+            )
+
+            for siren in siren_fleet.front:
+                pygame.draw.rect(surface, Color.RED, siren.rect, width=Box.OUTLINE_WIDTH)
+            
+            draw_tb(
+                surface, font,
+                "...onto the enemy siren",
+                siren_fleet.front[0].rect.bottomleft,
+                False, True
+            )
+
         self.combat_mechanics = Tutorial([
-            TutorialTask("drag shipgirls to target the enemy sirens", combat_mechanics_input),
+            TutorialTask(
+                combat_mechanics_input,
+                draw_combat_mechanics
+            ),
         ], combat_mechanics_on_complete)
 
         def next_encounter_on_complete():
             Menus.tutorial = None
+        
+        def draw_next_encounter(surface, font):
+            button_rect = Menus.ENCOUNTER.next_encounter_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "go to the next encounter",
+                rect.bottomleft,
+                False, True
+            )
 
         self.next_encounter = Tutorial([
             TutorialTask(
-                "continue to the next encounter", 
-                lambda event : Menus.ENCOUNTER.next_encounter_button.rect.collidepoint(event.pos)
+                lambda event : Menus.ENCOUNTER.next_encounter_button.rect.collidepoint(event.pos),
+                draw_next_encounter
             ),
         ], next_encounter_on_complete)
 
+        def draw_return_to_port(surface, font):
+            button_rect = Menus.ENCOUNTER.return_to_port_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "let's go home",
+                rect.bottomleft,
+                False, True
+            )
+
         self.return_to_port = Tutorial([
             TutorialTask(
-                "sail back home",
-                lambda event : Menus.ENCOUNTER.return_to_port_button.rect.collidepoint(event.pos)
+                lambda event : Menus.ENCOUNTER.return_to_port_button.rect.collidepoint(event.pos),
+                draw_return_to_port
             ),
         ], lambda : True)
 
-        def research_new_ship_on_complete():
-            Menus.tutorial = None
+        # def research_new_ship_on_complete():
+        #     Menus.tutorial = None
 
-        self.research_new_ship = Tutorial([
-            TutorialTask(
-                "let's research a new shipgirl! go the shipyard", 
-                lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "filter the shipgirls by faction",
-                lambda event : Menus.PORT.overlay_filter_rects[0].collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "let's research guam", 
-                lambda event : Menus.PORT.overlay_left_icons[1].collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "start researching!",
-                lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "exit the menu by clicking outside of the overlay",
-                lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "earning exp during battles will contribute towards researching a new ship!", 
-                lambda event : True
-            )
-        ], research_new_ship_on_complete)
+        # self.research_new_ship = Tutorial([
+        #     TutorialTask(
+        #         "let's research a new shipgirl! go the shipyard", 
+        #         lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "filter the shipgirls by faction",
+        #         lambda event : Menus.PORT.overlay_filter_rects[0].collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "let's research guam", 
+        #         lambda event : Menus.PORT.overlay_left_icons[1].collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "start researching!",
+        #         lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "exit the menu by clicking outside of the overlay",
+        #         lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "earning exp during battles will contribute towards researching a new ship!", 
+        #         lambda event : True
+        #     )
+        # ], research_new_ship_on_complete)
 
-        def construct_new_ship_on_complete():
-            Menus.tutorial = None
+        # def construct_new_ship_on_complete():
+        #     Menus.tutorial = None
 
-        self.construct_new_ship = Tutorial([
-            TutorialTask(
-                "we've collected enough combat data to construct the shipgirl! go to the shipyard", 
-                lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "let's construct the shipgirl",
-                lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "congratulations! guam has joined our fleet!",
-                lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
-            )
-        ], construct_new_ship_on_complete)
+        # self.construct_new_ship = Tutorial([
+        #     TutorialTask(
+        #         "we've collected enough combat data to construct the shipgirl! go to the shipyard", 
+        #         lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "let's construct the shipgirl",
+        #         lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "congratulations! guam has joined our fleet!",
+        #         lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
+        #     )
+        # ], construct_new_ship_on_complete)
 
-        def craft_new_gear_on_complete():
-            Menus.tutorial = None
+        # def craft_new_gear_on_complete():
+        #     Menus.tutorial = None
 
-        self.craft_new_gear = Tutorial([
-            TutorialTask(
-                "we've collected enough materials to craft a new weapon! go to the gear lab", 
-                lambda event : Menus.PORT.buildings[PortMenu.GEAR_LAB].rect.collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "filter the gear by hull type",
-                lambda event : Menus.PORT.overlay_filter_rects[1].collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "let's craft this new DD gun", 
-                lambda event : Menus.PORT.overlay_left_icons[0].collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "craft!",
-                lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "exit the menu",
-                lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "let's equip this new gun to laffey. click on her to open the equipment screen",
-                lambda event : available_shipgirls[0].rect.collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "equip the gun",
-                lambda event : Menus.EQUIPMENT.equippable_rects[0].collidepoint(event.pos)
-            ),
-            TutorialTask(
-                "congratulations! you've equipped a new gun on laffey! exit this menu",
-                lambda event : Menus.EQUIPMENT.exit_equipment_menu_button.rect.collidepoint(event.pos)
-            ),
-        ], craft_new_gear_on_complete)
+        # self.craft_new_gear = Tutorial([
+        #     TutorialTask(
+        #         "we've collected enough materials to craft a new weapon! go to the gear lab", 
+        #         lambda event : Menus.PORT.buildings[PortMenu.GEAR_LAB].rect.collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "filter the gear by hull type",
+        #         lambda event : Menus.PORT.overlay_filter_rects[1].collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "let's craft this new DD gun", 
+        #         lambda event : Menus.PORT.overlay_left_icons[0].collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "craft!",
+        #         lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "exit the menu",
+        #         lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "let's equip this new gun to laffey. click on her to open the equipment screen",
+        #         lambda event : available_shipgirls[0].rect.collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "equip the gun",
+        #         lambda event : Menus.EQUIPMENT.equippable_rects[0].collidepoint(event.pos)
+        #     ),
+        #     TutorialTask(
+        #         "congratulations! you've equipped a new gun on laffey! exit this menu",
+        #         lambda event : Menus.EQUIPMENT.exit_equipment_menu_button.rect.collidepoint(event.pos)
+        #     ),
+        # ], craft_new_gear_on_complete)
 
         self.sortie_end_tutorial_triggers = {
-            1: self.research_new_ship,
-            2: self.construct_new_ship,
-            3: self.craft_new_gear
+            # 1: self.research_new_ship,
+            # 2: self.construct_new_ship,
+            # 3: self.craft_new_gear
         }
 
 
 tutorials = Tutorials()
 Menus.tutorial = tutorials.start_sortie
-Menus.tutorial.start_tutorial()
