@@ -37,6 +37,7 @@ class ShipgirlBattleComponent:
     }
 
     def __init__(self, name, is_player):
+        self.name = name
         self.active = False
         self.is_player = is_player
 
@@ -120,6 +121,7 @@ class ShipgirlBattleComponent:
     def reset(self):
         self.hp = self.max_hp()
         self.cooldown_timer = 1
+        self.attack_timer = 0
         self.target = None
         self.evasion_gauge = 0
 
@@ -217,6 +219,9 @@ class Shipgirl:
         self.rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=self.pos.x, centery=self.pos.y)
 
         self.battle_component = ShipgirlBattleComponent(self.name, is_player)
+
+    def __repr__(self):
+        return self.name
 
     def update(self, dt):
         if self.pause_time > 0:
@@ -356,7 +361,7 @@ class SirenFleet:
             siren.battle_component.target = None
             siren.battle_component.active = False
 
-    def update(self, dt):
+    def update(self, dt, menu_manager):
         front_offset = (len(self._front)-1)/2
         for i, siren in enumerate(self._front):
             siren.rect.centerx = screen_x(0.75) - (Box.WIDTH+Box.PADDING) + (i-front_offset)*(Box.WIDTH+Box.PADDING)
@@ -366,7 +371,7 @@ class SirenFleet:
                 siren.battle_component.active = False
             if siren.battle_component.active:
                 if siren.battle_component.target is None:
-                    siren.battle_component.target = player_fleet.front
+                    siren.battle_component.target = menu_manager.player_fleet.front
             siren.battle_component.update(dt)
 
             siren.animate(dt)
@@ -385,15 +390,3 @@ class SirenFleet:
     def draw(self, screen, font):
         for siren in self.fleet:
             siren.draw(screen, font)
-
-
-available_shipgirls = [Shipgirl(shipgirl_name, True) for shipgirl_name in DataFiles.save_file["shipgirls"]]
-available_shipgirl_rects = [
-    get_rect( # TODO
-        width=Box.WIDTH, height=Box.HEIGHT,
-        centerx=(Box.WIDTH+Box.PADDING)*(i%4-1.5) + screen_x(0.75),
-        centery=(Box.HEIGHT+Box.PADDING)*(i//4-1.5) + screen_y(0.5)
-    ) for i in range(4)
-]
-player_fleet = PlayerFleet()
-siren_fleet = SirenFleet()

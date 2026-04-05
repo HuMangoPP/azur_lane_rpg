@@ -17,6 +17,12 @@ class Box:
 
     PADDING = 10
 
+EDGE_PADDING = 20
+LEFT_OF_SCREEN = screen_x(0) + EDGE_PADDING
+RIGHT_OF_SCREEN = screen_x(1) - EDGE_PADDING
+TOP_OF_SCREEN = screen_y(0) + EDGE_PADDING
+BOTTOM_OF_SCREEN = screen_y(1) - EDGE_PADDING
+
 class Color:
     WHITE = (255,255,255)
     BLACK = (10,10,10)
@@ -30,6 +36,21 @@ class Equipment:
     WEAPON = 0
     AUX1 = 1
     AUX2 = 2
+
+class Stats:
+    NUM_STATS = 4
+
+    MAX_HP = 0
+    EVASION = 1
+    FIREPOWER = 2
+    RELOAD = 3
+
+    STAT_NAMES = {
+        MAX_HP: "HP",
+        EVASION: "EVA",
+        FIREPOWER: "FP",
+        RELOAD: "RLD",
+    }
 
 from engine.load_sprites import load_sprites
 
