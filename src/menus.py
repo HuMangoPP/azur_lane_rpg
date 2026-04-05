@@ -1440,96 +1440,336 @@ class Tutorials:
             ),
         ], lambda : True)
 
-        # def research_new_ship_on_complete():
-        #     Menus.tutorial = None
+        def research_new_ship_on_complete():
+            Menus.tutorial = None
+        
+        def draw_go_to_shipyard_new(surface, font):
+            button_rect = Menus.PORT.buildings[PortMenu.SHIPYARD].rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        # self.research_new_ship = Tutorial([
-        #     TutorialTask(
-        #         "let's research a new shipgirl! go the shipyard", 
-        #         lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "filter the shipgirls by faction",
-        #         lambda event : Menus.PORT.overlay_filter_rects[0].collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "let's research guam", 
-        #         lambda event : Menus.PORT.overlay_left_icons[1].collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "start researching!",
-        #         lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "exit the menu by clicking outside of the overlay",
-        #         lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "earning exp during battles will contribute towards researching a new ship!", 
-        #         lambda event : True
-        #     )
-        # ], research_new_ship_on_complete)
+            draw_tb(
+                surface, font,
+                "let's research a new shipgirl! go to the shipyard",
+                rect.bottomright,
+                False, False
+            )
 
-        # def construct_new_ship_on_complete():
-        #     Menus.tutorial = None
+        def draw_filter_by_shipgirl_faction(surface, font):
+            button_rect = Menus.PORT.overlay_filter_rects[0]
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        # self.construct_new_ship = Tutorial([
-        #     TutorialTask(
-        #         "we've collected enough combat data to construct the shipgirl! go to the shipyard", 
-        #         lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "let's construct the shipgirl",
-        #         lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "congratulations! guam has joined our fleet!",
-        #         lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
-        #     )
-        # ], construct_new_ship_on_complete)
+            draw_tb(
+                surface, font,
+                "filter the shipgirls by faction",
+                rect.bottomright,
+                False, False
+            )
 
-        # def craft_new_gear_on_complete():
-        #     Menus.tutorial = None
+        def draw_select_guam_research(surface, font):
+            button_rect = Menus.PORT.overlay_left_icons[1]
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        # self.craft_new_gear = Tutorial([
-        #     TutorialTask(
-        #         "we've collected enough materials to craft a new weapon! go to the gear lab", 
-        #         lambda event : Menus.PORT.buildings[PortMenu.GEAR_LAB].rect.collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "filter the gear by hull type",
-        #         lambda event : Menus.PORT.overlay_filter_rects[1].collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "let's craft this new DD gun", 
-        #         lambda event : Menus.PORT.overlay_left_icons[0].collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "craft!",
-        #         lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "exit the menu",
-        #         lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "let's equip this new gun to laffey. click on her to open the equipment screen",
-        #         lambda event : available_shipgirls[0].rect.collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "equip the gun",
-        #         lambda event : Menus.EQUIPMENT.equippable_rects[0].collidepoint(event.pos)
-        #     ),
-        #     TutorialTask(
-        #         "congratulations! you've equipped a new gun on laffey! exit this menu",
-        #         lambda event : Menus.EQUIPMENT.exit_equipment_menu_button.rect.collidepoint(event.pos)
-        #     ),
-        # ], craft_new_gear_on_complete)
+            draw_tb(
+                surface, font,
+                "let's research guam",
+                rect.bottomright,
+                False, False
+            )
+        
+        def draw_confirm_research(surface, font):
+            button_rect = Menus.PORT.overlay_confirm_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "start researching!",
+                rect.bottomleft,
+                False, True
+            )
+
+        def draw_exit_overlay(surface, font):
+            draw_tb(
+                surface, font,
+                "exit the menu by clicking outside of the overlay",
+                (Menus.PORT.overlay_bg.right + 2*Box.PADDING, screen_y(0.25)),
+                False, True
+            )
+
+        def draw_research_info(surface, font):
+            draw_tb(
+                surface, font,
+                "earning exp will contribute combat data towards researching new shipgirls",
+                (screen_x(0.5) - Box.PADDING, screen_y(0.5) - Box.PADDING),
+                False, False
+            )
+
+        self.research_new_ship = Tutorial([
+            TutorialTask(
+                lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos),
+                draw_go_to_shipyard_new
+            ),
+            TutorialTask(
+                lambda event : Menus.PORT.overlay_filter_rects[0].collidepoint(event.pos),
+                draw_filter_by_shipgirl_faction
+            ),
+            TutorialTask(
+                lambda event : Menus.PORT.overlay_left_icons[1].collidepoint(event.pos),
+                draw_select_guam_research
+            ),
+            TutorialTask(
+                lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos),
+                draw_confirm_research
+            ),
+            TutorialTask(
+                lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos),
+                draw_exit_overlay
+            ),
+            TutorialTask(
+                lambda event : True,
+                draw_research_info
+            )
+        ], research_new_ship_on_complete)
+
+        def construct_new_ship_on_complete():
+            Menus.tutorial = None
+
+        def draw_go_to_shipyard_done(surface, font):
+            button_rect = Menus.PORT.buildings[PortMenu.SHIPYARD].rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "we've collected enough combat data to construct guam! go to the shipyard",
+                rect.bottomright,
+                False, False
+            )
+
+        def draw_construct_guam(surface, font):
+            button_rect = Menus.PORT.overlay_confirm_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "construct the shipgirl!",
+                rect.bottomleft,
+                False, True
+            )
+        
+        def draw_new_shipgirl_in_fleet(surface, font):
+            draw_tb(
+                surface, font,
+                "congratulations! guam has joined our fleet!",
+                (screen_x(0.5) - Box.PADDING, screen_y(0.5) - Box.PADDING),
+                False, False
+            )
+
+        self.construct_new_ship = Tutorial([
+            TutorialTask(
+                lambda event : Menus.PORT.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos),
+                draw_go_to_shipyard_done
+            ),
+            TutorialTask(
+                lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos),
+                draw_construct_guam
+            ),
+            TutorialTask(
+                lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos),
+                draw_new_shipgirl_in_fleet
+            )
+        ], construct_new_ship_on_complete)
+
+        def craft_new_gear_on_complete():
+            Menus.tutorial = None
+
+        def draw_go_to_gear_lab(surface, font):
+            button_rect = Menus.PORT.buildings[PortMenu.GEAR_LAB].rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "we've collected enough materials to craft a new weapon! go to the gear lab", 
+                rect.bottomright,
+                False, False
+            )
+        
+        def draw_filter_by_hull_type(surface, font):
+            button_rect = Menus.PORT.overlay_filter_rects[1]
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "filter the gear we can craft by hull type",
+                rect.bottomright,
+                False, False
+            )
+
+        def draw_select_gun_to_craft(surface, font):
+            button_rect = Menus.PORT.overlay_left_icons[0]
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "let's craft this new DD gun", 
+                rect.bottomright,
+                False, False
+            )
+        
+        def draw_craft_gun(surface, font):
+            button_rect = Menus.PORT.overlay_confirm_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "craft!",
+                rect.bottomleft,
+                False, True
+            )
+
+        def draw_exit_overlay_gear(surface, font):
+            draw_tb(
+                surface, font,
+                "exit the menu",
+                (Menus.PORT.overlay_bg.right + 2*Box.PADDING, screen_y(0.25)),
+                False, True
+            )
+
+        def draw_select_laffey(surface, font):
+            button_rect = available_shipgirls[0].rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "let's equip this new gun to laffey. click on her to open the equipment screen",
+                rect.bottomright,
+                False, False
+            )
+
+        def draw_equip_gun(surface, font):
+            button_rect = Menus.EQUIPMENT.equippable_rects[0]
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "equip the gun",
+                rect.bottomleft,
+                False, True
+            )
+
+        def draw_equipment_info(surface, font):
+            button_rect = Menus.EQUIPMENT.exit_equipment_menu_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(
+                surface, font,
+                "congratulations! you've equipped a new gun on laffey! exit this menu",
+                rect.bottomleft,
+                False, True
+            )
+
+        self.craft_new_gear = Tutorial([
+            TutorialTask(
+                lambda event : Menus.PORT.buildings[PortMenu.GEAR_LAB].rect.collidepoint(event.pos),
+                draw_go_to_gear_lab
+            ),
+            TutorialTask(
+                lambda event : Menus.PORT.overlay_filter_rects[1].collidepoint(event.pos),
+                draw_filter_by_hull_type
+            ),
+            TutorialTask(
+                lambda event : Menus.PORT.overlay_left_icons[0].collidepoint(event.pos),
+                draw_select_gun_to_craft
+            ),
+            TutorialTask(
+                lambda event : Menus.PORT.overlay_confirm_button.rect.collidepoint(event.pos),
+                draw_craft_gun
+            ),
+            TutorialTask(
+                lambda event : not Menus.PORT.overlay_bg.collidepoint(event.pos),
+                draw_exit_overlay_gear
+            ),
+            TutorialTask(
+                lambda event : available_shipgirls[0].rect.collidepoint(event.pos),
+                draw_select_laffey
+            ),
+            TutorialTask(
+                lambda event : Menus.EQUIPMENT.equippable_rects[0].collidepoint(event.pos),
+                draw_equip_gun
+            ),
+            TutorialTask(
+                lambda event : Menus.EQUIPMENT.exit_equipment_menu_button.rect.collidepoint(event.pos),
+                draw_equipment_info
+            ),
+        ], craft_new_gear_on_complete)
 
         self.sortie_end_tutorial_triggers = {
-            # 1: self.research_new_ship,
-            # 2: self.construct_new_ship,
-            # 3: self.craft_new_gear
+            1: self.research_new_ship,
+            2: self.construct_new_ship,
+            3: self.craft_new_gear
         }
 
 
