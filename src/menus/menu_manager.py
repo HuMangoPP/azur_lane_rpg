@@ -40,10 +40,11 @@ class MenuManager:
             self.FLEET_SELECTION: FleetSelectionMenu(self),
             self.ENCOUNTER: EncounterMenu(self),
         }
-        self.current_menu = self.menu_register[self.PORT]
+        self.current_menu = self.port_menu
         
         self.tutorials = Tutorials(self)
         self.tutorial = self.tutorials.start_sortie
+        self.tutorial.on_start()
 
     @property
     def port_menu(self):

@@ -14,6 +14,7 @@ class Buildings:
 
 class Building:
     def __init__(self, building_type, pos):
+        self.unlocked = False
         self.building_type = building_type
         self.rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=pos.x, centery=pos.y)
         self.sprite = None
@@ -154,6 +155,22 @@ class PortMenu:
 
         self.update_encountered_sirens()
     
+    @property
+    def depot_building(self):
+        return self.buildings[self.DEPOT]
+
+    @property
+    def shipyard_building(self):
+        return self.buildings[self.SHIPYARD]
+    
+    @property
+    def gear_lab_building(self):
+        return self.buildings[self.GEAR_LAB]
+    
+    @property
+    def intel_center_building(self):
+        return self.buildings[self.INTEL_CENTER]
+
     def update_encountered_sirens(self):
         self.encountered_sirens = set()
         for i in range(DataFiles.save_file["sortie_progress"]):
@@ -171,7 +188,7 @@ class PortMenu:
                         self.menu_manager.current_menu = self.menu_manager.equipment_menu
                 
                 for overlay_enum, building in self.buildings.items():
-                    if building.rect.collidepoint(event.pos):
+                    if building.unlocked and building.rect.collidepoint(event.pos):
                         self.current_overlay = overlay_enum
 
                         if overlay_enum == self.SHIPYARD and DataFiles.save_file["research_target"] is not None:
@@ -433,7 +450,8 @@ class PortMenu:
         self.open_select_sortie_menu_button.draw(surface, font)
 
         for _, building in self.buildings.items():
-            building.draw(surface, font)
+            if building.unlocked:
+                building.draw(surface, font)
 
         if self.current_overlay != self.NO_OVERLAY:
             if self.current_overlay == self.DEPOT:

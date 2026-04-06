@@ -25,7 +25,8 @@ class FleetSelectionMenu:
             color=Color.BLUE_GREY,
             text="start",
             text_color=Color.WHITE,
-            callback=start_sortie
+            callback=start_sortie,
+            active=False
         )
 
         def exit_fleet_selection_menu():
@@ -85,6 +86,12 @@ class FleetSelectionMenu:
                 self.start_sortie_button.click(event.pos)
                 self.exit_fleet_selection_menu_button.click(event.pos)
         
+        if self.menu_manager.tutorial is not None:
+            if len(self.menu_manager.player_fleet.shipgirl_names) > 1:
+                self.start_sortie_button.active = True
+        elif len(self.menu_manager.player_fleet.shipgirl_names) > 0:
+            self.start_sortie_button.active = True
+
         for shipgirl in self.menu_manager.player_fleet.shipgirls:
             if shipgirl is not None:
                 shipgirl.animate(dt)

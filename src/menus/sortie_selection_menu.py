@@ -74,13 +74,6 @@ class SortieSelectionMenu:
             callback=exit_sortie_selection_menu
         )
 
-        # TODO i want the overall style of the sortie selection menu
-        # to feel like the OpSi menu where there are different zones that
-        # are controlled / not controlled by the player and the player can
-        # sortie into uncontrolled zone and by doing so they beat the level
-        # i think the best way to do this in a structured way would be to use
-        # some sort of grid-like system
-
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:

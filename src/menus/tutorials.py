@@ -1,25 +1,25 @@
 import pygame
 
-from engine.util import get_rect, pixel_to_hex, hex_to_pixel
+from engine.util import get_rect, hex_to_pixel
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 
 from src.menus.sortie_selection_menu import SortieNode
-from src.menus.port_menu import PortMenu
 
 class TutorialTask:
-    def __init__(self, tutorial_input, tutorial_draw):
-        self.tutorial_input = tutorial_input
+    def __init__(self, tutorial_completion, tutorial_draw):
+        self.tutorial_completion = tutorial_completion
         self.tutorial_draw = tutorial_draw
 
-    def check_completion(self, event):
-        return self.tutorial_input(event)
+    def check_completion(self):
+        return self.tutorial_completion()
 
 class Tutorial:
-    def __init__(self, tasks, on_complete):
+    def __init__(self, tasks, on_start, on_complete):
         self.tasks = tasks
         self.task_index = 0
         self.completed = False
+        self.on_start = on_start
         self.on_complete = on_complete
 
     @property
@@ -28,8 +28,8 @@ class Tutorial:
             return self.tasks[self.task_index]
         return None
 
-    def check_completion(self, event):
-        if self.current_task.check_completion(event):
+    def check_completion(self):
+        if self.current_task.check_completion():
             self.task_index += 1
             if self.task_index == len(self.tasks):
                 self.completed = True
@@ -103,6 +103,7 @@ class Tutorials:
             
         def start_sortie_on_complete():
             self.menu_manager.tutorial = self.assign_fleet
+            self.menu_manager.tutorial.on_start()
 
         def draw_start_a_sortie(surface, font):
             button_rect = self.menu_manager.port_menu.open_select_sortie_menu_button.rect
@@ -119,11 +120,6 @@ class Tutorials:
                 rect.topright,
                 True, False
             )
-
-        def select_sortie_node(event):
-            mouse_x, mouse_y = event.pos
-            hx, hy = pixel_to_hex(mouse_x - SortieNode.CENTER.x, mouse_y - SortieNode.CENTER.y, SortieNode.SIZE)
-            return (hx, hy) in self.menu_manager.sortie_selection_menu.sortie_nodes[0].hexes
 
         def draw_select_sortie_node(surface, font):
             q, r = self.menu_manager.sortie_selection_menu.sortie_nodes[0].hexes[0]
@@ -143,40 +139,20 @@ class Tutorials:
 
         self.start_sortie = Tutorial([
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.open_select_sortie_menu_button.rect.collidepoint(event.pos),
+                lambda : self.menu_manager.current_menu == self.menu_manager.sortie_selection_menu,
                 draw_start_a_sortie
             ),
             TutorialTask(
-                select_sortie_node,
+                lambda : self.menu_manager.current_menu == self.menu_manager.fleet_selection_menu,
                 draw_select_sortie_node
             ),
-        ], start_sortie_on_complete)
+        ], lambda : True, start_sortie_on_complete)
 
         def assign_fleet_on_complete():
             self.menu_manager.tutorial = self.combat_mechanics
+            self.menu_manager.tutorial.on_start()
 
-        def assign_laffey_input(event):
-            return (
-                self.menu_manager.available_shipgirl_rects[0].collidepoint(self.menu_manager.mouse_start_drag)
-                and any(fleet_slot.collidepoint(event.pos) for fleet_slot in self.menu_manager.fleet_selection_menu.fleet_slots)
-            )
-
-        def draw_assign_laffey(surface, font):
-            shipgirl_rect = self.menu_manager.available_shipgirl_rects[0]
-            rect = get_rect(
-                width=shipgirl_rect.width + 2*Box.PADDING,
-                height=shipgirl_rect.height + 2*Box.PADDING,
-                center=shipgirl_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(
-                surface, font,
-                "drag laffey...",
-                rect.topleft,
-                True, True
-            )
-
+        def draw_assign_shipgirl(surface, font):
             center_fleet_slot = self.menu_manager.fleet_selection_menu.fleet_slots[1]
             rect = get_rect(
                 width=3*Box.WIDTH + 4*Box.PADDING,
@@ -187,44 +163,7 @@ class Tutorials:
 
             draw_tb(
                 surface, font,
-                "...and assign her to your fleet",
-                rect.bottomright,
-                False, False
-            )
-
-        def assign_new_jersey_input(event):
-            return (
-                self.menu_manager.available_shipgirl_rects[1].collidepoint(self.menu_manager.mouse_start_drag)
-                and any(fleet_slot.collidepoint(event.pos) for fleet_slot in self.menu_manager.fleet_selection_menu.fleet_slots)
-            )
-    
-        def draw_assign_new_jersey(surface, font):
-            shipgirl_rect = self.menu_manager.available_shipgirl_rects[1]
-            rect = get_rect(
-                width=shipgirl_rect.width + 2*Box.PADDING,
-                height=shipgirl_rect.height + 2*Box.PADDING,
-                center=shipgirl_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(
-                surface, font,
-                "drag new jersey...",
-                rect.topleft,
-                True, True
-            )
-
-            center_fleet_slot = self.menu_manager.fleet_selection_menu.fleet_slots[1]
-            rect = get_rect(
-                width=3*Box.WIDTH + 4*Box.PADDING,
-                height=Box.HEIGHT + 2*Box.PADDING,
-                center=center_fleet_slot.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(
-                surface, font,
-                "...and assign her to your fleet",
+                "assign the shipgirls to your fleet",
                 rect.bottomright,
                 False, False
             )
@@ -247,54 +186,38 @@ class Tutorials:
 
         self.assign_fleet = Tutorial([
             TutorialTask(
-                assign_laffey_input,
-                draw_assign_laffey
+                lambda : len(self.menu_manager.player_fleet.shipgirl_names) == 2,
+                draw_assign_shipgirl
             ),
             TutorialTask(
-                assign_new_jersey_input,
-                draw_assign_new_jersey
-            ),
-            TutorialTask(
-                lambda event : self.menu_manager.fleet_selection_menu.start_sortie_button.rect.collidepoint(event.pos),
+                lambda : self.menu_manager.current_menu == self.menu_manager.encounter_menu,
                 draw_start_sortie
             ),
-        ], assign_fleet_on_complete)
+        ], lambda : True, assign_fleet_on_complete)
 
         def combat_mechanics_on_complete():
             self.menu_manager.tutorial = None
-        
-        def combat_mechanics_input(event):
-            return (
-                self.menu_manager.player_fleet.front.rect.collidepoint(self.menu_manager.mouse_start_drag)
-                and any(siren.rect.collidepoint(event.pos) for siren in self.menu_manager.siren_fleet.front)
-            )
 
         def draw_combat_mechanics(surface, font):
-            pygame.draw.rect(surface, Color.RED, self.menu_manager.player_fleet.front.rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(
-                surface, font,
-                "drag laffey...",
-                self.menu_manager.player_fleet.front.rect.bottomright,
-                False, False
-            )
-
             for siren in self.menu_manager.siren_fleet.front:
                 pygame.draw.rect(surface, Color.RED, siren.rect, width=Box.OUTLINE_WIDTH)
             
             draw_tb(
                 surface, font,
-                "...onto the enemy siren",
+                "drag all of your shipgirls onto the enemy siren",
                 self.menu_manager.siren_fleet.front[0].rect.topleft,
                 True, True
             )
 
         self.combat_mechanics = Tutorial([
             TutorialTask(
-                combat_mechanics_input,
+                lambda : all(
+                    shipgirl.battle_component.target is not None
+                    for shipgirl in self.menu_manager.player_fleet.shipgirls if shipgirl is not None
+                ),
                 draw_combat_mechanics
             ),
-        ], combat_mechanics_on_complete)
+        ], lambda : True, combat_mechanics_on_complete)
 
         def next_encounter_on_complete():
             self.menu_manager.tutorial = None
@@ -317,10 +240,10 @@ class Tutorials:
 
         self.next_encounter = Tutorial([
             TutorialTask(
-                lambda event : self.menu_manager.encounter_menu.next_encounter_button.rect.collidepoint(event.pos),
+                lambda : self.menu_manager.encounter_menu.current_encounter == 1,
                 draw_next_encounter
             ),
-        ], next_encounter_on_complete)
+        ], lambda : True, next_encounter_on_complete)
 
         def draw_return_to_port(surface, font):
             button_rect = self.menu_manager.encounter_menu.return_to_port_button.rect
@@ -340,16 +263,19 @@ class Tutorials:
 
         self.return_to_port = Tutorial([
             TutorialTask(
-                lambda event : self.menu_manager.encounter_menu.return_to_port_button.rect.collidepoint(event.pos),
+                lambda : self.menu_manager.current_menu == self.menu_manager.port_menu,
                 draw_return_to_port
             ),
-        ], lambda : True)
+        ], lambda : True, lambda : True)
+
+        def research_new_ship_on_start():
+            self.menu_manager.port_menu.shipyard_building.unlocked = True
 
         def research_new_ship_on_complete():
             self.menu_manager.tutorial = None
         
         def draw_go_to_shipyard_new(surface, font):
-            button_rect = self.menu_manager.port_menu.buildings[PortMenu.SHIPYARD].rect
+            button_rect = self.menu_manager.port_menu.shipyard_building.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,
@@ -415,51 +341,43 @@ class Tutorials:
         def draw_exit_overlay(surface, font):
             draw_tb(
                 surface, font,
-                "exit the menu by clicking outside of the overlay",
+                (
+                    "exit the menu by clicking outside of the overlay. "
+                    + "earning exp will contribute towards researching new shipgirls. "
+                    + "let's sortie again to collect combat data"
+                ),
                 (self.menu_manager.port_menu.overlay_bg.right + 2*Box.PADDING, screen_y(0.25)),
                 False, True
             )
 
-        def draw_research_info(surface, font):
-            draw_tb(
-                surface, font,
-                "earning exp will contribute towards researching new shipgirls. let's sortie again to collect combat data",
-                (screen_x(0.5) - Box.PADDING, screen_y(0.5) - Box.PADDING),
-                False, False
-            )
-
         self.research_new_ship = Tutorial([
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos),
+                lambda : self.menu_manager.port_menu.current_overlay == self.menu_manager.port_menu.SHIPYARD,
                 draw_go_to_shipyard_new
             ),
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.overlay_filter_rects[0].collidepoint(event.pos),
+                lambda : self.menu_manager.port_menu.selected_overlay_filter == 0,
                 draw_filter_by_shipgirl_faction
             ),
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.overlay_left_icons[1].collidepoint(event.pos),
+                lambda : self.menu_manager.port_menu.overlay_selected_entity == "guam",
                 draw_select_guam_research
             ),
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.overlay_confirm_button.rect.collidepoint(event.pos),
+                lambda : DataFiles.save_file["research_target"] == "guam",
                 draw_confirm_research
             ),
             TutorialTask(
-                lambda event : not self.menu_manager.port_menu.overlay_bg.collidepoint(event.pos),
+                lambda : self.menu_manager.port_menu.current_overlay == self.menu_manager.port_menu.NO_OVERLAY,
                 draw_exit_overlay
-            ),
-            TutorialTask(
-                lambda event : True,
-                draw_research_info
             )
-        ], research_new_ship_on_complete)
+        ], research_new_ship_on_start, research_new_ship_on_complete)
 
         def construct_new_ship_on_complete():
             self.menu_manager.tutorial = None
 
         def draw_go_to_shipyard_done(surface, font):
-            button_rect = self.menu_manager.port_menu.buildings[PortMenu.SHIPYARD].rect
+            button_rect = self.menu_manager.port_menu.shipyard_building.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,
@@ -500,24 +418,27 @@ class Tutorials:
 
         self.construct_new_ship = Tutorial([
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.buildings[PortMenu.SHIPYARD].rect.collidepoint(event.pos),
+                lambda : self.menu_manager.port_menu.current_overlay == self.menu_manager.port_menu.SHIPYARD,
                 draw_go_to_shipyard_done
             ),
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.overlay_confirm_button.rect.collidepoint(event.pos),
+                lambda : self.menu_manager.available_shipgirls[-1].name == "guam",
                 draw_construct_guam
             ),
             TutorialTask(
-                lambda event : True,
+                lambda : self.menu_manager.port_menu.current_overlay == self.menu_manager.port_menu.NO_OVERLAY,
                 draw_new_shipgirl_in_fleet
             )
-        ], construct_new_ship_on_complete)
+        ], lambda : True, construct_new_ship_on_complete)
+
+        def craft_new_gear_on_start():
+            self.menu_manager.port_menu.gear_lab_building.unlocked = True
 
         def craft_new_gear_on_complete():
             self.menu_manager.tutorial = None
 
         def draw_go_to_gear_lab(surface, font):
-            button_rect = self.menu_manager.port_menu.buildings[PortMenu.GEAR_LAB].rect
+            button_rect = self.menu_manager.port_menu.gear_lab_building.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,
@@ -638,41 +559,54 @@ class Tutorials:
 
         self.craft_new_gear = Tutorial([
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.buildings[PortMenu.GEAR_LAB].rect.collidepoint(event.pos),
+                lambda : self.menu_manager.port_menu.current_overlay == self.menu_manager.port_menu.GEAR_LAB,
                 draw_go_to_gear_lab
             ),
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.overlay_filter_rects[1].collidepoint(event.pos),
+                lambda : self.menu_manager.port_menu.selected_overlay_filter == 1,
                 draw_filter_by_hull_type
             ),
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.overlay_left_icons[0].collidepoint(event.pos),
+                lambda : self.menu_manager.port_menu.overlay_selected_entity == "twin_120",
                 draw_select_gun_to_craft
             ),
             TutorialTask(
-                lambda event : self.menu_manager.port_menu.overlay_confirm_button.rect.collidepoint(event.pos),
+                lambda : DataFiles.save_file["equipment"].get("twin_120", 0) == 1,
                 draw_craft_gun
             ),
             TutorialTask(
-                lambda event : not self.menu_manager.port_menu.overlay_bg.collidepoint(event.pos),
+                lambda : self.menu_manager.port_menu.current_overlay == self.menu_manager.port_menu.NO_OVERLAY,
                 draw_exit_overlay_gear
             ),
             TutorialTask(
-                lambda event : self.menu_manager.available_shipgirls[0].rect.collidepoint(event.pos),
+                lambda : self.menu_manager.current_menu == self.menu_manager.equipment_menu,
                 draw_select_laffey
             ),
             TutorialTask(
-                lambda event : self.menu_manager.equipment_menu.equippable_rects[0].collidepoint(event.pos),
+                lambda : self.menu_manager.available_shipgirls[0].battle_component.equipment[0] == "twin_120",
                 draw_equip_gun
             ),
             TutorialTask(
-                lambda event : self.menu_manager.equipment_menu.exit_equipment_menu_button.rect.collidepoint(event.pos),
+                lambda : self.menu_manager.current_menu == self.menu_manager.port_menu,
                 draw_equipment_info
             ),
-        ], craft_new_gear_on_complete)
+        ], craft_new_gear_on_start, craft_new_gear_on_complete)
 
         self.sortie_end_tutorial_triggers = {
             1: self.research_new_ship,
             2: self.construct_new_ship,
             3: self.craft_new_gear
         }
+
+# class NewTutorial:
+#     NEW = 0
+#     IN_PROGRESS = 1
+#     COMPLETE = 2
+
+#     def __init__(self, tutorial):
+#         self.status = self.NEW
+#         self.tutorial = tutorial
+    
+#     def draw(self, surface, font, index):
+#         ...
+

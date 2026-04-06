@@ -31,20 +31,15 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
-    
-    tutorial = menu_manager.tutorial
-    if tutorial is not None:
-        events = [
-            event for event in events
-            if event.type != pygame.MOUSEBUTTONUP
-            or tutorial.check_completion(event)
-        ]
 
     menu_manager.current_menu.update(dt, events)
 
+    tutorial = menu_manager.tutorial
     if tutorial is not None:
         if tutorial.completed:
             tutorial.on_complete()
+        else:
+            tutorial.check_completion()
 
     temp_screen.fill((50,20,20)) # TODO
     menu_manager.current_menu.draw(temp_screen, font)

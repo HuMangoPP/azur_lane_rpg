@@ -67,6 +67,7 @@ class EncounterMenu:
             tutorial = self.menu_manager.tutorials.sortie_end_tutorial_triggers.get(sortie_progress)
             if tutorial is not None and not tutorial.completed:
                 self.menu_manager.tutorial = tutorial
+                self.menu_manager.tutorial.on_start()
 
         self.return_to_port_button = Button(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, centery=screen_y(0.5)),
