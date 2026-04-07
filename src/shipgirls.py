@@ -121,7 +121,6 @@ class ShipgirlBattleComponent:
     def reset(self):
         self.hp = self.max_hp()
         self.cooldown_timer = 1
-        self.attack_timer = 0
         self.target = None
         self.evasion_gauge = 0
 
@@ -300,6 +299,7 @@ class PlayerFleet:
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
                 shipgirl.battle_component.target = None
+                shipgirl.battle_component.attack_timer = 0
                 shipgirl.battle_component.active = False
 
     def update(self, dt):

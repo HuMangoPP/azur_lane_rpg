@@ -93,7 +93,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
         )
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        draw_tb(surface, font, None, rect.bottomright, False, False)
+        draw_tb(surface, font, None, rect.bottomleft, False, True)
     elif menu_manager.current_menu == menu_manager.fleet_selection_menu:
         if menu_manager.fleet_selection_menu.start_sortie_button.active:
             button_rect = menu_manager.fleet_selection_menu.start_sortie_button.rect

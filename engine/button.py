@@ -23,4 +23,4 @@ class Button:
             return
         
         pygame.draw.rect(screen, self.color, self.rect)
-        font.render(screen, self.text, self.rect.center, self.text_color, 2, style="center")
+        font.render(screen, self.text, self.rect.center, self.text_color, 1, style="center")
