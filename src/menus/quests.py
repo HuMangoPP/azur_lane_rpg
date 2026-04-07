@@ -55,13 +55,13 @@ class Quest:
         top=DIALOGUE_OVERLAY.top + Box.PADDING,
         left=DIALOGUE_OVERLAY.left + Box.PADDING
     )
-    def __init__(self, dialogue_texts, completion_criteria, tutorial_draw, on_start, on_complete):
+    def __init__(self, dialogue_texts, stop_index, completion_criteria, tutorial_draw, on_start, on_complete):
         self.started = False
         self.completed = False
 
         self.dialogue_index = 0
         self.dialogue_texts = dialogue_texts
-        self.side_effects = [lambda : True] 
+        self.stop_index = stop_index
 
         self.next_button = get_rect(
             width=Box.WIDTH, height=Box.HEIGHT,
@@ -77,11 +77,15 @@ class Quest:
     def go_next(self, menu_manager, mpos):
         if self.next_button.collidepoint(mpos):
             self.dialogue_index += 1
-            if self.dialogue_index == len(self.dialogue_texts):
-                self.dialogue_index = len(self.dialogue_texts) - 1
-                if not self.started:
-                    self.on_start(menu_manager)
-                self.started = True
+            if self.completed:
+                if self.dialogue_index == len(self.dialogue_texts):
+                    self.dialogue_index = len(self.dialogue_texts) - 1
+                    return True
+            else:
+                if self.dialogue_index == self.stop_index:
+                    self.dialogue_index = self.stop_index - 1
+                    return True
+        return False
     
     def draw(self, surface, font):
         pygame.draw.rect(surface, Color.BLUE_GREY, self.DIALOGUE_OVERLAY)

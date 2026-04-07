@@ -6,26 +6,6 @@ from engine.button import Button
 from src.constants import DataFiles, Color, Stats, Box, BOTTOM_OF_SCREEN, screen_x, screen_y
 from src.shipgirls import Shipgirl
 
-class Buildings:
-    DEPOT = "depot"
-    SHIPYARD = "shipyard"
-    GEAR_LAB = "gear_lab"
-    INTEL_CENTER = "intel_center"
-
-class Building:
-    def __init__(self, building_type, pos):
-        self.unlocked = False
-        self.building_type = building_type
-        self.rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=pos.x, centery=pos.y)
-        self.sprite = None
-
-    def draw(self, surface, font):
-        if self.sprite is not None:
-            pass
-        else:
-            pygame.draw.rect(surface, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
-            font.render(surface, str(self.building_type), self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-
 class PortMenu:
     NO_OVERLAY = -1
     DEPOT = 0
@@ -38,12 +18,43 @@ class PortMenu:
 
         self.current_overlay = self.NO_OVERLAY
 
-        self.buildings = { # TODO magic numbers
-            self.DEPOT: Building(Buildings.DEPOT, pygame.Vector2(50, 50)),
-            self.SHIPYARD: Building(Buildings.SHIPYARD, pygame.Vector2(150, 50)),
-            self.GEAR_LAB: Building(Buildings.GEAR_LAB, pygame.Vector2(250, 50)),
-            self.INTEL_CENTER: Building(Buildings.INTEL_CENTER, pygame.Vector2(350, 50)),
-        }
+        def open_overlay_factory(overlay_enum):
+            def open_overlay():
+                self.current_overlay = overlay_enum
+            return open_overlay
+
+        self.open_depot_overlay_button = Button(
+            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(1/6), bottom=BOTTOM_OF_SCREEN),
+            color=Color.BLUE_GREY,
+            text="depot",
+            text_color=Color.WHITE,
+            callback=open_overlay_factory(self.DEPOT),
+            active=False
+        )
+        self.open_shipyard_overlay_button = Button(
+            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(2/6), bottom=BOTTOM_OF_SCREEN),
+            color=Color.BLUE_GREY,
+            text="shipyard",
+            text_color=Color.WHITE,
+            callback=open_overlay_factory(self.SHIPYARD),
+            active=False
+        )
+        self.open_gear_lab_overlay_button = Button(
+            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(3/6), bottom=BOTTOM_OF_SCREEN),
+            color=Color.BLUE_GREY,
+            text="gear lab",
+            text_color=Color.WHITE,
+            callback=open_overlay_factory(self.GEAR_LAB),
+            active=False
+        )
+        self.open_intel_center_overlay_button = Button(
+            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(4/6), bottom=BOTTOM_OF_SCREEN),
+            color=Color.BLUE_GREY,
+            text="intel center",
+            text_color=Color.WHITE,
+            callback=open_overlay_factory(self.INTEL_CENTER),
+            active=False
+        )
 
         self.overlay_bg = get_rect(width=600, height=400, centerx=screen_x(0.5), centery=screen_y(0.5))
         self.overlay_right_panel = get_rect(
@@ -146,7 +157,7 @@ class PortMenu:
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
 
         self.open_select_sortie_menu_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.5), bottom=BOTTOM_OF_SCREEN),
+            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(5/6), bottom=BOTTOM_OF_SCREEN),
             color=Color.BLUE_GREY,
             text="sortie",
             text_color=Color.WHITE,
@@ -155,22 +166,6 @@ class PortMenu:
         )
 
         self.update_encountered_sirens()
-    
-    @property
-    def depot_building(self):
-        return self.buildings[self.DEPOT]
-
-    @property
-    def shipyard_building(self):
-        return self.buildings[self.SHIPYARD]
-    
-    @property
-    def gear_lab_building(self):
-        return self.buildings[self.GEAR_LAB]
-    
-    @property
-    def intel_center_building(self):
-        return self.buildings[self.INTEL_CENTER]
 
     def update_encountered_sirens(self):
         self.encountered_sirens = set()
@@ -185,29 +180,30 @@ class PortMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 if self.menu_manager.quest_manager.selected_quest_id is not None:
                     selected_quest = self.menu_manager.quest_manager.selected_quest
-                    selected_quest.go_next(self.menu_manager, event.pos)
-                    if selected_quest.completed:
-                        selected_quest.on_complete(self.menu_manager)
-                        del self.menu_manager.quest_manager.quests[self.menu_manager.quest_manager.selected_quest_id]
-                    if selected_quest.started:
-                        self.menu_manager.quest_manager.selected_quest_id = None
+                    finished_dialogue = selected_quest.go_next(self.menu_manager, event.pos)
+                    if finished_dialogue:
+                        if not selected_quest.started:
+                            selected_quest.on_start(self.menu_manager)
+                            selected_quest.started = True
+                        
+                        if selected_quest.completed:
+                            selected_quest.on_complete(self.menu_manager)
+                            del self.menu_manager.quest_manager.quests[self.menu_manager.quest_manager.selected_quest_id]
+                        if selected_quest.started:
+                            self.menu_manager.quest_manager.selected_quest_id = None
                     break
 
                 for shipgirl in self.menu_manager.available_shipgirls:
                     if shipgirl.rect.collidepoint(event.pos):
                         self.menu_manager.equipment_menu.selected_shipgirl = shipgirl
                         self.menu_manager.current_menu = self.menu_manager.equipment_menu
-
-                for overlay_enum, building in self.buildings.items():
-                    if building.unlocked and building.rect.collidepoint(event.pos):
-                        self.current_overlay = overlay_enum
-
-                        if overlay_enum == self.SHIPYARD and DataFiles.save_file["research_target"] is not None:
-                            self.overlay_confirm_button.active = True
-                            self.overlay_selected_entity = DataFiles.save_file["research_target"]
                 
                 self.menu_manager.quest_manager.select_quest(event.pos)
                 self.open_select_sortie_menu_button.click(event.pos)
+                self.open_depot_overlay_button.click(event.pos)
+                self.open_shipyard_overlay_button.click(event.pos)
+                self.open_gear_lab_overlay_button.click(event.pos)
+                self.open_intel_center_overlay_button.click(event.pos)
 
     def draw_inventory_overlay(self, surface, font):
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_bg)
@@ -461,9 +457,10 @@ class PortMenu:
             shipgirl.draw(surface, font)
         self.open_select_sortie_menu_button.draw(surface, font)
 
-        for _, building in self.buildings.items():
-            if building.unlocked:
-                building.draw(surface, font)
+        self.open_depot_overlay_button.draw(surface, font)
+        self.open_shipyard_overlay_button.draw(surface, font)
+        self.open_gear_lab_overlay_button.draw(surface, font)
+        self.open_intel_center_overlay_button.draw(surface, font)
 
         if self.current_overlay != self.NO_OVERLAY:
             if self.current_overlay == self.DEPOT:
