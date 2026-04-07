@@ -55,7 +55,7 @@ class Quest:
         top=DIALOGUE_OVERLAY.top + Box.PADDING,
         left=DIALOGUE_OVERLAY.left + Box.PADDING
     )
-    def __init__(self, dialogue_texts, completion_criteria, tutorial_draw):
+    def __init__(self, dialogue_texts, completion_criteria, tutorial_draw, on_start, on_complete):
         self.started = False
         self.completed = False
 
@@ -71,12 +71,16 @@ class Quest:
 
         self.completion_criteria = completion_criteria
         self.tutorial_draw = tutorial_draw
+        self.on_start = on_start
+        self.on_complete = on_complete
     
-    def go_next(self, mpos):
+    def go_next(self, menu_manager, mpos):
         if self.next_button.collidepoint(mpos):
             self.dialogue_index += 1
             if self.dialogue_index == len(self.dialogue_texts):
                 self.dialogue_index = len(self.dialogue_texts) - 1
+                if not self.started:
+                    self.on_start(menu_manager)
                 self.started = True
     
     def draw(self, surface, font):

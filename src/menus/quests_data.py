@@ -149,10 +149,17 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
             draw_tb(surface, font, None, rect.bottomleft, False, True)
-        
+
+def first_sortie_on_start(menu_manager):
+    menu_manager.port_menu.open_select_sortie_menu_button.active = True
+
+def first_sortie_on_complete(menu_manager):
+    menu_manager.port_menu.shipyard_building.unlocked = True
 
 first_sortie_quest = Quest(
     first_sortie_dialogue_texts,
     first_sortie_completion_criteria,
-    first_sortie_tutorial_draw
+    first_sortie_tutorial_draw,
+    first_sortie_on_start,
+    first_sortie_on_complete
 )

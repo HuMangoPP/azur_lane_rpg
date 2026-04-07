@@ -150,7 +150,8 @@ class PortMenu:
             color=Color.BLUE_GREY,
             text="sortie",
             text_color=Color.WHITE,
-            callback=open_select_sortie_menu
+            callback=open_select_sortie_menu,
+            active=False
         )
 
         self.update_encountered_sirens()
@@ -184,8 +185,9 @@ class PortMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 if self.menu_manager.quest_manager.selected_quest_id is not None:
                     selected_quest = self.menu_manager.quest_manager.selected_quest
-                    selected_quest.go_next(event.pos)
+                    selected_quest.go_next(self.menu_manager, event.pos)
                     if selected_quest.completed:
+                        selected_quest.on_complete(self.menu_manager)
                         del self.menu_manager.quest_manager.quests[self.menu_manager.quest_manager.selected_quest_id]
                     if selected_quest.started:
                         self.menu_manager.quest_manager.selected_quest_id = None
