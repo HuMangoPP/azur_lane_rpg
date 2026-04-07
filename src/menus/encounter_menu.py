@@ -7,6 +7,7 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, RIGHT_OF_SCREEN, TOP_OF_SCREEN, screen_x, screen_y
 from src.shipgirls import Shipgirl
+from src.menus.quests_data import construct_shipgirl_quest
 
 class Drop:
     def __init__(self, item, pos, vel):
@@ -185,11 +186,16 @@ class EncounterMenu:
                         DataFiles.save_file["research_progress"] += siren.battle_component.exp
                 
                 exp_req = 5 # TODO
-                if DataFiles.save_file["research_progress"] >= exp_req:
-                    if DataFiles.save_file["research_target"] is not None:
-                        unique_item = DataFiles.shipgirl_data[DataFiles.save_file["research_target"]]["unique_item"]
-                        DataFiles.save_file["inventory"][unique_item] = 1
-                        DataFiles.save_file["research_progress"] -= exp_req
+                if (
+                    DataFiles.save_file["research_target"] is not None
+                    and DataFiles.save_file["research_progress"] >= exp_req
+                ):
+                    unique_item = DataFiles.shipgirl_data[DataFiles.save_file["research_target"]]["unique_item"]
+                    DataFiles.save_file["inventory"][unique_item] = 1
+                    DataFiles.save_file["research_progress"] -= exp_req
+
+                    if DataFiles.save_file["research_target"] == "guam":
+                        self.menu_manager.quest_manager.quests["construct_shipgirl"] = construct_shipgirl_quest
 
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()

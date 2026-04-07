@@ -228,3 +228,65 @@ research_shipgirl_quest = Quest(
     research_shipgirl_on_start,
     research_shipgirl_on_complete
 )
+
+construct_shipgirl_dialogue_texts = [
+    "we've collected enough combat data to construct guam!",
+    "go to the shipyard and construct guam",
+    "guam has joined our port!",
+    "let's add her to our fleet and sortie into zone 3"
+]
+construct_shipgirl_stop_index = 2
+
+def construct_shipgirl_completion_criteria(menu_manager):
+    return menu_manager.available_shipgirls[-1].name == "guam"
+
+def construct_shipgirl_tutorial_draw(menu_manager, surface, font):
+    if menu_manager.current_menu != menu_manager.port_menu:
+        return
+
+    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        button_rect = menu_manager.port_menu.open_shipyard_overlay_button.rect
+        rect = get_rect(
+            width=button_rect.width + 2*Box.PADDING,
+            height=button_rect.height + 2*Box.PADDING,
+            center=button_rect.center
+        )
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        draw_tb(surface, font, None, rect.topright, True, False)
+    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
+        if menu_manager.port_menu.overlay_selected_entity == "guam":
+            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomleft, False, True)
+        else:
+            button_rect = menu_manager.port_menu.overlay_left_icons[1]
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomright, False, False)
+    
+def construct_shipgirl_on_start(menu_manager):
+    pass
+
+def construct_shipgirl_on_complete(menu_manager):
+    pass
+
+construct_shipgirl_quest = Quest(
+    construct_shipgirl_dialogue_texts,
+    construct_shipgirl_stop_index,
+    construct_shipgirl_completion_criteria,
+    construct_shipgirl_tutorial_draw,
+    construct_shipgirl_on_start,
+    construct_shipgirl_on_complete
+)

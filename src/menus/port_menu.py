@@ -21,6 +21,10 @@ class PortMenu:
         def open_overlay_factory(overlay_enum):
             def open_overlay():
                 self.current_overlay = overlay_enum
+
+                if overlay_enum == self.SHIPYARD and DataFiles.save_file["research_target"] is not None:
+                    self.overlay_confirm_button.active = True
+                    self.overlay_selected_entity = DataFiles.save_file["research_target"]
             return open_overlay
 
         self.open_depot_overlay_button = Button(
