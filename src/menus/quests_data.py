@@ -1,7 +1,7 @@
 import pygame
 
 from engine.util import get_rect, hex_to_pixel
-from src.constants import DataFiles, Box, Color, screen_y
+from src.constants import DataFiles, Box, Color, Equipment
 
 from src.menus.quests import Quest
 from src.menus.sortie_selection_menu import SortieNode
@@ -289,4 +289,122 @@ construct_shipgirl_quest = Quest(
     construct_shipgirl_tutorial_draw,
     construct_shipgirl_on_start,
     construct_shipgirl_on_complete
+)
+
+craft_weapon_dialogue_texts = [
+    "we've collected enough materials to craft a new gun!",
+    "go to the gear lab and craft a new DD gun",
+    "we've crafted a new gun!"
+]
+craft_weapon_stop_index = 2
+
+def craft_weapon_completion_criteria(menu_manager):
+    return DataFiles.save_file["equipment"].get("twin_120", 0) == 1
+
+def craft_weapon_tutorial_draw(menu_manager, surface, font):
+    if menu_manager.current_menu != menu_manager.port_menu:
+        return
+
+    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        button_rect = menu_manager.port_menu.open_gear_lab_overlay_button.rect
+        rect = get_rect(
+            width=button_rect.width + 2*Box.PADDING,
+            height=button_rect.height + 2*Box.PADDING,
+            center=button_rect.center
+        )
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        draw_tb(surface, font, None, rect.topright, True, False)
+    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.GEAR_LAB:
+        if menu_manager.port_menu.overlay_selected_entity == "twin_120":
+            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomleft, False, True)
+        else:
+            button_rect = menu_manager.port_menu.overlay_left_icons[0]
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomright, False, False)
+
+def craft_weapon_on_start(menu_manager):
+    menu_manager.port_menu.open_gear_lab_overlay_button.active = True
+
+def craft_weapon_on_complete(menu_manager):
+    menu_manager.quest_manager.quests["equip_weapon"] = equip_weapon_quest
+
+craft_weapon_quest = Quest(
+    craft_weapon_dialogue_texts,
+    craft_weapon_stop_index,
+    craft_weapon_completion_criteria,
+    craft_weapon_tutorial_draw,
+    craft_weapon_on_start,
+    craft_weapon_on_complete
+)
+
+equip_weapon_dialogue_texts = [
+    "since we just crafted a new weapon, we should equip it",
+    "equip laffey with the new gun",
+    "laffey is now stronger!",
+    "let's sortie into the new zone to test it out!"
+]
+equip_weapon_stop_index = 2
+
+def equip_weapon_completion_criteria(menu_manager):
+    return DataFiles.save_file["shipgirls"]["laffey"]["equipment"][Equipment.WEAPON] == "twin_120"
+
+def equip_weapon_tutorial_draw(menu_manager, surface, font):
+    if menu_manager.current_menu == menu_manager.port_menu:
+        rect = menu_manager.available_shipgirls[0].rect
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        draw_tb(surface, font, None, rect.bottomright, False, False)
+    elif (
+        menu_manager.current_menu == menu_manager.equipment_menu
+        and menu_manager.equipment_menu.selected_shipgirl.name == "laffey"
+    ):
+        if menu_manager.equipment_menu.selected_equipment == Equipment.WEAPON:
+            button_rect = menu_manager.equipment_menu.equippable_rects[0]
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomleft, False, True)
+        else:
+            button_rect = menu_manager.equipment_menu.equipped_rects[0]
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomleft, False, True)
+        
+def equip_weapon_on_start(menu_manager):
+    pass
+
+def equip_weapon_on_complete(menu_manager):
+    pass
+
+equip_weapon_quest = Quest(
+    equip_weapon_dialogue_texts,
+    equip_weapon_stop_index,
+    equip_weapon_completion_criteria,
+    equip_weapon_tutorial_draw,
+    equip_weapon_on_start,
+    equip_weapon_on_complete
 )
