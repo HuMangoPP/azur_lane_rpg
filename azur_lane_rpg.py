@@ -34,18 +34,14 @@ while running:
 
     menu_manager.current_menu.update(dt, events)
 
-    tutorial = menu_manager.tutorial
-    if tutorial is not None:
-        if tutorial.completed:
-            tutorial.on_complete()
-        else:
-            tutorial.check_completion()
+    for quest in menu_manager.quest_manager.started_quests.values():
+        quest.completed = quest.completion_criteria(menu_manager)
 
     temp_screen.fill((50,20,20)) # TODO
     menu_manager.current_menu.draw(temp_screen, font)
-    tutorial = menu_manager.tutorial
-    if tutorial is not None:
-        tutorial.draw(temp_screen, font)
+    for quest in menu_manager.quest_manager.started_quests.values():
+        if quest.started and not quest.completed:
+            quest.tutorial_draw(menu_manager, temp_screen, font)
     screen.blit(pygame.transform.scale(temp_screen, screen.get_size()), (0,0))
     pygame.display.flip()
 

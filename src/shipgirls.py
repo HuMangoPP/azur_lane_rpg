@@ -348,13 +348,19 @@ class SirenFleet:
         self._front = []
         self._back = []
 
-    def begin_sortie(self):
-        for siren in self.fleet:
-            siren.battle_component.reset()
-
     def begin_encounter(self):
         for siren in self.fleet:
             siren.battle_component.active = True
+        
+        front_offset = (len(self._front)-1)/2
+        for i, siren in enumerate(self._front):
+            siren.rect.centerx = screen_x(0.75) - (Box.WIDTH+Box.PADDING) + (i-front_offset)*(Box.WIDTH+Box.PADDING)
+            siren.rect.centery = screen_y(0.5) + (i-front_offset)*Box.WIDTH
+        
+        back_offset = (len(self._back)-1)/2
+        for i, siren in enumerate(self._back): 
+            siren.rect.centerx = screen_x(0.75) + (Box.WIDTH+Box.PADDING) + (i-back_offset)*(Box.WIDTH+Box.PADDING)
+            siren.rect.centery = screen_y(0.5) + (i-back_offset)*Box.WIDTH
 
     def end_encounter(self):
         for siren in self.fleet:
@@ -362,11 +368,7 @@ class SirenFleet:
             siren.battle_component.active = False
 
     def update(self, dt, menu_manager):
-        front_offset = (len(self._front)-1)/2
         for i, siren in enumerate(self._front):
-            siren.rect.centerx = screen_x(0.75) - (Box.WIDTH+Box.PADDING) + (i-front_offset)*(Box.WIDTH+Box.PADDING)
-            siren.rect.centery = screen_y(0.5) + (i-front_offset)*Box.WIDTH
-
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
             if siren.battle_component.active:
@@ -377,10 +379,7 @@ class SirenFleet:
             siren.animate(dt)
         
         back_offset = (len(self._back)-1)/2
-        for i, siren in enumerate(self._back): 
-            siren.rect.centerx = screen_x(0.75) + (Box.WIDTH+Box.PADDING) + (i-back_offset)*(Box.WIDTH+Box.PADDING)
-            siren.rect.centery = screen_y(0.5) + (i-back_offset)*Box.WIDTH
-
+        for i, siren in enumerate(self._back):
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
             siren.battle_component.update(dt)

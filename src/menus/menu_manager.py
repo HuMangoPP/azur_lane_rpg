@@ -8,8 +8,8 @@ from src.menus.equipment_menu import EquipmentMenu
 from src.menus.sortie_selection_menu import SortieSelectionMenu
 from src.menus.fleet_selection_menu import FleetSelectionMenu
 from src.menus.encounter_menu import EncounterMenu
-from src.menus.tutorials import Tutorials
-
+from src.menus.quests import QuestManager
+from src.menus.quests_data import first_sortie_quest
 
 class MenuManager:
     PORT = 0
@@ -41,10 +41,9 @@ class MenuManager:
             self.ENCOUNTER: EncounterMenu(self),
         }
         self.current_menu = self.port_menu
-        
-        self.tutorials = Tutorials(self)
-        self.tutorial = self.tutorials.start_sortie
-        self.tutorial.on_start()
+
+        self.quest_manager = QuestManager()
+        self.quest_manager.quests["first_sortie"] = first_sortie_quest
 
     @property
     def port_menu(self):

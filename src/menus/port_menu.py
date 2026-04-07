@@ -182,11 +182,20 @@ class PortMenu:
     def update_no_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
+                if self.menu_manager.quest_manager.selected_quest_id is not None:
+                    selected_quest = self.menu_manager.quest_manager.selected_quest
+                    selected_quest.go_next(event.pos)
+                    if selected_quest.completed:
+                        del self.menu_manager.quest_manager.quests[self.menu_manager.quest_manager.selected_quest_id]
+                    if selected_quest.started:
+                        self.menu_manager.quest_manager.selected_quest_id = None
+                    break
+
                 for shipgirl in self.menu_manager.available_shipgirls:
                     if shipgirl.rect.collidepoint(event.pos):
                         self.menu_manager.equipment_menu.selected_shipgirl = shipgirl
                         self.menu_manager.current_menu = self.menu_manager.equipment_menu
-                
+
                 for overlay_enum, building in self.buildings.items():
                     if building.unlocked and building.rect.collidepoint(event.pos):
                         self.current_overlay = overlay_enum
@@ -195,6 +204,7 @@ class PortMenu:
                             self.overlay_confirm_button.active = True
                             self.overlay_selected_entity = DataFiles.save_file["research_target"]
                 
+                self.menu_manager.quest_manager.select_quest(event.pos)
                 self.open_select_sortie_menu_button.click(event.pos)
 
     def draw_inventory_overlay(self, surface, font):
@@ -464,3 +474,5 @@ class PortMenu:
                 self.draw_intel_center_overlay(surface, font)
 
             self.overlay_confirm_button.draw(surface, font)
+    
+        self.menu_manager.quest_manager.draw(surface, font)
