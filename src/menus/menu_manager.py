@@ -9,7 +9,7 @@ from src.menus.sortie_selection_menu import SortieSelectionMenu
 from src.menus.fleet_selection_menu import FleetSelectionMenu
 from src.menus.encounter_menu import EncounterMenu
 from src.menus.quests import QuestManager
-from src.menus.quests_data import first_sortie_quest
+from src.menus.quests_data import quests
 
 class MenuManager:
     PORT = 0
@@ -43,7 +43,19 @@ class MenuManager:
         self.current_menu = self.port_menu
 
         self.quest_manager = QuestManager()
-        self.quest_manager.quests["first_sortie"] = first_sortie_quest
+        for quest_name, quest_progress in DataFiles.save_file["quests"].items():
+            quest = quests[quest_name]
+            if quest_progress == "new":
+                self.quest_manager.quests[quest_name] = quest
+            elif quest_progress == "in_progress":
+                quest.start(self)
+                quest.dialogue_index = quest.stop_index - 1
+                self.quest_manager.quests[quest_name] = quest
+            elif quest_progress == "completed":
+                quest.start(self)
+                quest.completed = True
+                quest.on_complete(self)
+                self.quest_manager.quests.pop(quest_name, None)
 
     @property
     def port_menu(self):

@@ -166,7 +166,10 @@ def first_sortie_on_start(menu_manager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
 
 def first_sortie_on_complete(menu_manager):
-    menu_manager.quest_manager.quests["research_shipgirl"] = research_shipgirl_quest
+    quest_name = "research_shipgirl"
+    menu_manager.quest_manager.quests[quest_name] = research_shipgirl_quest
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
 
 first_sortie_quest = Quest(
     first_sortie_dialogue_texts,
@@ -351,7 +354,10 @@ def craft_weapon_on_start(menu_manager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
 
 def craft_weapon_on_complete(menu_manager):
-    menu_manager.quest_manager.quests["equip_weapon"] = equip_weapon_quest
+    quest_name = "equip_weapon"
+    menu_manager.quest_manager.quests[quest_name] = equip_weapon_quest
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
 
 craft_weapon_quest = Quest(
     craft_weapon_dialogue_texts,
@@ -418,3 +424,11 @@ equip_weapon_quest = Quest(
     equip_weapon_on_start,
     equip_weapon_on_complete
 )
+
+quests = {
+    "first_sortie": first_sortie_quest,
+    "research_shipgirl": research_shipgirl_quest,
+    "construct_shipgirl": construct_shipgirl_quest,
+    "craft_weapon": craft_weapon_quest,
+    "equip_weapon": equip_weapon_quest
+}

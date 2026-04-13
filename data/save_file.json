@@ -14,5 +14,7 @@
 	"research_target": null,
 	"research_progress": 0,
 	"sortie_progress": 0,
-	"tutorial": null
+	"quests": {
+		"first_sortie": "new"
+	}
 }

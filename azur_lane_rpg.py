@@ -50,8 +50,10 @@ while running:
 
 pygame.quit()
 
-# for shipgirl in available_shipgirls:
-#     DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
+for shipgirl in available_shipgirls:
+    DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
+
+print(DataFiles.save_file)
 
 # with open("data/save_file.json", "w") as f:
 #     json.dump(save_file, f, indent=4)

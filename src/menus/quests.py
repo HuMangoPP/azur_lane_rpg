@@ -2,7 +2,7 @@ import pygame
 
 from engine.util import get_rect
 
-from src.constants import Box, Color, screen_x, screen_y
+from src.constants import DataFiles, Box, Color, screen_x, screen_y
 
 class QuestManager:
     def __init__(self):
@@ -74,6 +74,14 @@ class Quest:
         self.on_start = on_start
         self.on_complete = on_complete
     
+    def start(self, menu_manager):
+        if self.started:
+            return False
+        
+        self.started = True
+        self.on_start(menu_manager)
+        return True
+
     def go_next(self, menu_manager, mpos):
         if self.next_button.collidepoint(mpos):
             self.dialogue_index += 1
