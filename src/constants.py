@@ -69,8 +69,5 @@ class DataFiles:
 
     with open("data/equipment.json") as f:
         equipment_data = json.load(f)
-
-    with open("data/tutorial.json") as f:
-        tutorial_data = json.load(f)
     
     sprites = load_sprites()

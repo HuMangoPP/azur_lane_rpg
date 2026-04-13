@@ -141,6 +141,16 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
             draw_tb(surface, font, None, rect.bottomleft, False, True)
+        elif menu_manager.encounter_menu.open_reward_cache_button.active:
+            button_rect = menu_manager.encounter_menu.open_reward_cache_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomleft, False, True)
         elif menu_manager.encounter_menu.return_to_port_button.active:
             button_rect = menu_manager.encounter_menu.return_to_port_button.rect
             rect = get_rect(
