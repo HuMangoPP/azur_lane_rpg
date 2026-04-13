@@ -13,13 +13,13 @@ class Drop:
     def __init__(self, item, pos, vel):
         self.item = item
         self.pos = pos
+        self.bottom = pos.y + 50
         self.vel = vel
 
     def update(self, dt):
-        bottom = screen_y(0.6)
-        if self.pos.y < bottom:
+        if self.pos.y < self.bottom:
             self.pos = self.pos + self.vel * dt
-            self.pos.y = min(self.pos.y, bottom)
+            self.pos.y = min(self.pos.y, self.bottom)
             self.vel = self.vel + pygame.Vector2(0, 200) * dt
     
     def draw(self, surface, font):
@@ -43,6 +43,9 @@ class EncounterMenu:
         self.encounter_started = False
 
         def next_encounter():
+            for drop in self.drops:
+                DataFiles.save_file["inventory"][drop.item] = DataFiles.save_file["inventory"].get(drop.item, 0) + 1
+
             self.current_encounter += 1
             self.begin_encounter()
 
@@ -97,7 +100,7 @@ class EncounterMenu:
             self.menu_manager.encounter_menu.return_to_port_button.active = False
 
         self.return_to_port_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, centery=screen_y(0.5)),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.5), centery=screen_y(0.5)),
             color=Color.BLUE_GREY,
             text="back to port",
             text_color=Color.WHITE,
@@ -126,32 +129,23 @@ class EncounterMenu:
     def begin_sortie(self):
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
-        self.drops = []
 
         self.begin_encounter()
 
     def begin_encounter(self):
+        self.drops = []
         self.next_encounter_button.active = False
 
         sortie_data = DataFiles.sortie_data[self.current_sortie]
         num_encounters = len(sortie_data["encounters"])
         if self.current_encounter == num_encounters:
-            self.open_reward_cache_button.active = True
+            if self.current_sortie < DataFiles.save_file["sortie_progress"]:
+                self.return_to_port_button.active = True
+            else:
+                self.open_reward_cache_button.active = True
 
             self.menu_manager.siren_fleet._front = []
             self.menu_manager.siren_fleet._back = []
-            # else:
-            #     for siren in self.menu_manager.siren_fleet.fleet:
-            #         drops = DataFiles.siren_data[siren.name]["drops"]
-            #         for drop, drop_probability in drops.items():
-            #             roll = random.random()*100
-            #             if roll > drop_probability:
-            #                 continue
-            #             self.drops.append(Drop(
-            #                 drop,
-            #                 pygame.Vector2(screen_x(0.75), screen_y(0.5)),
-            #                 get_vec(100, math.radians(random.uniform(-15,15)-90))
-            #             ))
             return
         
         self.encounter_end_flag = True
@@ -207,8 +201,23 @@ class EncounterMenu:
                 self.retreat_button.click(event.pos)
         
         if self.encounter_started:
+            afloat_sirens_before = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
             self.menu_manager.player_fleet.update(dt)
+            afloat_sirens_after = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
+            if self.current_sortie < DataFiles.save_file["sortie_progress"]:
+                defeated_sirens = [siren for siren in afloat_sirens_before if siren not in afloat_sirens_after]
+                for siren in defeated_sirens:
+                    siren_data = DataFiles.siren_data[siren.name]
+                    for drop, drop_rate in siren_data["drops"].items():
+                        drop_roll = random.random() * 100
+                        if drop_roll < drop_rate:
+                            self.drops.append(Drop(
+                                drop,
+                                pygame.Vector2(siren.rect.center),
+                                get_vec(100, math.radians(random.uniform(-15,15)-90))
+                            ))
             self.menu_manager.siren_fleet.update(dt, self.menu_manager)
+
             for drop in self.drops:
                 drop.update(dt)
         else:

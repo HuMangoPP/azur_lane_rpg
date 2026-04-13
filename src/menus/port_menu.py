@@ -33,7 +33,6 @@ class PortMenu:
             text="depot",
             text_color=Color.WHITE,
             callback=open_overlay_factory(self.DEPOT),
-            active=False
         )
         self.open_shipyard_overlay_button = Button(
             rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(2/6), bottom=BOTTOM_OF_SCREEN),
