@@ -104,12 +104,12 @@ class PortMenu:
             top=self.overlay_right_name.y+Box.PADDING
         )
         num_icons_per_row = 3
-        self.overlay_ingredient_icons = [
+        self.overlay_right_icons = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.overlay_right_panel.left+Box.PADDING+i*(Box.WIDTH+Box.PADDING),
-                bottom=self.overlay_right_panel.bottom-2*Box.PADDING-Box.HEIGHT
-            ) for i in range(3)
+                left=self.overlay_right_panel.left+Box.PADDING+(i%num_icons_per_row)*(Box.WIDTH+Box.PADDING),
+                bottom=self.overlay_right_panel.bottom-2*Box.PADDING-Box.HEIGHT-(i//num_icons_per_row)*(Box.HEIGHT+Box.PADDING)
+            ) for i in range(6)
         ]
 
         def overlay_confirm():
@@ -248,7 +248,7 @@ class PortMenu:
                 else:
                     self.selected_overlay_filter = i
 
-    def draw_dual_panel_overlay(self, surface, font, entities, entity_filters, stats, reqs):
+    def draw_dual_panel_overlay(self, surface, font, entities, entity_filters, info, icons):
         pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
@@ -278,7 +278,7 @@ class PortMenu:
 
             x = self.overlay_right_panel.left + Box.PADDING
             y = self.overlay_right_icon.bottom + Box.PADDING
-            for info_key, info_value in stats.items():
+            for info_key, info_value in info.items():
                 if info_value is None:
                     continue
                 xy = (x, y)
@@ -286,17 +286,16 @@ class PortMenu:
                 font.render(surface, f"{info_name}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
                 y += Box.PADDING # TODO
 
-            for (ingredient, req), rect in zip(reqs.items(), self.overlay_ingredient_icons):
-                if ingredient in DataFiles.sprites:
-                    surface.blit(DataFiles.sprites[ingredient], rect)
+            for (icon_name, icon_text), rect in zip(icons, self.overlay_right_icons):
+                if icon_name in DataFiles.sprites:
+                    surface.blit(DataFiles.sprites[icon_name], rect)
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 else:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                     xy = (rect.centerx, rect.top+0.33*rect.height) # TODO
-                    font.render(surface, ingredient, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                    font.render(surface, icon_name, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
                 xy = (rect.centerx, rect.top+0.67*rect.height)
-                amt = DataFiles.save_file["inventory"].get(ingredient, 0)
-                font.render(surface, f"{amt}-{req}", xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                font.render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
     def update_shipyard_overlay(self, events):
         for event in events:
@@ -333,11 +332,12 @@ class PortMenu:
             selected_entity_info = DataFiles.shipgirl_data.get(self.overlay_selected_entity, {})
             hull_type = selected_entity_info["hull_type"]
             unique_item = selected_entity_info["unique_item"]
-            research_reqs = {
-                f"{hull_type}_blueprint": 1,
-                "wisdom_cube": 1,
-                unique_item: 1
-            }
+            inventory = DataFiles.save_file["inventory"]
+            research_reqs = [f"{hull_type}_blueprint", "wisdom_cube", unique_item]
+            research_icons = [
+                (research_req, f"{inventory.get(research_req,0)}/1")
+                for research_req in research_reqs
+            ]
             shipgirl_stats = {
                 "HULL": selected_entity_info.get("hull_type"),
                 "HP": selected_entity_info.get("max_hp"),
@@ -346,9 +346,15 @@ class PortMenu:
                 "RLD": selected_entity_info.get("reload"),
             }
         else:
-            research_reqs = {}
+            research_icons = []
             shipgirl_stats = {}
-        self.draw_dual_panel_overlay(surface, font, shipgirls, self.shipgirl_filters, shipgirl_stats, research_reqs)
+        self.draw_dual_panel_overlay(
+            surface, font,
+            shipgirls,
+            self.shipgirl_filters,
+            shipgirl_stats,
+            research_icons
+        )
 
     def update_gear_lab_overlay(self, events):
         for event in events:
@@ -388,6 +394,11 @@ class PortMenu:
         if self.overlay_selected_entity:
             selected_entity_info = DataFiles.equipment_data.get(self.overlay_selected_entity)
             crafting_reqs = selected_entity_info.get("craft_reqs")
+            inventory = DataFiles.save_file["inventory"]
+            crafting_icons = [
+                (material, f"{inventory.get(material,0)}/{req}")
+                for material, req in crafting_reqs.items()
+            ]
             equip_stats = {
                 "HULL": selected_entity_info.get("equippable_by"),
                 "HP": selected_entity_info.get("max_hp"),
@@ -397,9 +408,15 @@ class PortMenu:
                 "SHELL": selected_entity_info.get("shell_type"),
             }
         else:
-            crafting_reqs = {}
+            crafting_icons = []
             equip_stats = {}
-        self.draw_dual_panel_overlay(surface, font, equipment, self.equipment_filters, equip_stats, crafting_reqs)
+        self.draw_dual_panel_overlay(
+            surface, font,
+            equipment,
+            self.equipment_filters,
+            equip_stats,
+            crafting_icons
+        )
 
     def update_intel_center_overlay(self, events):
         for event in events:
@@ -425,6 +442,11 @@ class PortMenu:
             ]
         if self.overlay_selected_entity:
             selected_entity_info = DataFiles.siren_data.get(self.overlay_selected_entity)
+            drop_rates = selected_entity_info["drops"]
+            drop_icons = [
+                (drop, str(drop_rate))
+                for drop, drop_rate in drop_rates.items()
+            ]
             siren_stats = {
                 "HULL": selected_entity_info.get("hull_type"),
                 "HP": selected_entity_info.get("max_hp"),
@@ -435,8 +457,15 @@ class PortMenu:
                 "EXP": selected_entity_info.get("exp"),
             }
         else:
+            drop_icons = []
             siren_stats = {}
-        self.draw_dual_panel_overlay(surface, font, encountered_sirens, self.siren_filters, siren_stats, {})
+        self.draw_dual_panel_overlay(
+            surface, font,
+            encountered_sirens,
+            self.siren_filters,
+            siren_stats,
+            drop_icons
+        )
 
     def update(self, dt, events):
         if self.current_overlay == self.NO_OVERLAY:
