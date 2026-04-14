@@ -2,7 +2,7 @@ import pygame
 
 from engine.util import get_rect
 
-from src.constants import DataFiles, Box, Color, screen_x, screen_y
+from src.constants import Box, Color, screen_x, screen_y
 
 class QuestManager:
     def __init__(self):

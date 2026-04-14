@@ -295,6 +295,7 @@ class PlayerFleet:
 
     def clear_fleet(self):
         self.shipgirls = [None, None, None]
+        self.backups = [None, None, None]
 
     def begin_sortie(self):
         for shipgirl in self.shipgirls:
@@ -314,12 +315,8 @@ class PlayerFleet:
                 shipgirl.battle_component.active = False
 
     def update(self, dt):
-        fleet_slot_offset = (len(self.shipgirls)-1)/2
-        for i, shipgirl in enumerate(self.shipgirls):
+        for shipgirl in self.fleet:
             if shipgirl is not None:
-                shipgirl.rect.centerx = screen_x(0.25) + (fleet_slot_offset-i)*(Box.WIDTH+Box.PADDING)
-                shipgirl.rect.centery = screen_y(0.5)
-
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
                 shipgirl.battle_component.update(dt)

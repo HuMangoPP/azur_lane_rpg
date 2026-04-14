@@ -90,6 +90,9 @@ class SortieSelectionMenu:
             self.menu_manager.encounter_menu.current_encounter = 0
             self.menu_manager.player_fleet.clear_fleet()
             self.menu_manager.siren_fleet.clear_fleet()
+
+            self.selected_sortie_node = None
+            self.start_sortie_button.active = False
         
         self.start_sortie_button = Button(
             rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, top=0, left=0),
@@ -116,7 +119,7 @@ class SortieSelectionMenu:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.mousedown = True
             if event.type == pygame.MOUSEMOTION:
-                if self.mousedown:
+                if self.mousedown and self.selected_sortie_node is None:
                     movement = pygame.Vector2(event.rel)
                     SortieNode.center += movement
             if event.type == pygame.MOUSEBUTTONUP:
@@ -124,8 +127,10 @@ class SortieSelectionMenu:
                 self.exit_sortie_selection_menu_button.click(event.pos)
                 self.start_sortie_button.click(event.pos)
 
-                for sortie_node in self.sortie_nodes:
-                    if sortie_node.select(event.pos):
+                if self.selected_sortie_node is None:
+                    for sortie_node in self.sortie_nodes:
+                        if not sortie_node.select(event.pos):
+                            continue
                         self.selected_sortie_node = sortie_node
 
                         rx = -100 # get x value of rightmost hex
@@ -143,10 +148,10 @@ class SortieSelectionMenu:
                         self.start_sortie_button.active = True
                         self.start_sortie_button.rect.centerx = self.selected_sortie_info_panel.centerx
                         self.start_sortie_button.rect.bottom = self.selected_sortie_info_panel.bottom - Box.PADDING
-                        break
                 else:
-                    self.selected_sortie_node = None
-                    self.start_sortie_button.active = False
+                    if not self.selected_sortie_info_panel.collidepoint(event.pos):
+                        self.selected_sortie_node = None
+                        self.start_sortie_button.active = False
 
             if event.type == pygame.MOUSEMOTION:
                 for sortie_node in self.sortie_nodes:

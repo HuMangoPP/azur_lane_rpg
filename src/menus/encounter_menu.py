@@ -42,6 +42,7 @@ class EncounterMenu:
         self.current_sortie = 0
         self.current_encounter = 0
         self.selected_shipgirl = None
+        self.selected_shipgirl_index = None
         self.encounter_started = False
 
         def next_encounter():
@@ -174,7 +175,7 @@ class EncounterMenu:
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                for shipgirl in self.menu_manager.player_fleet.shipgirls:
+                for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
                     if (
                         shipgirl is not None
                         and shipgirl.battle_component.active
@@ -183,18 +184,49 @@ class EncounterMenu:
                     ):
                         self.mouse_start_drag = event.pos
                         self.selected_shipgirl = shipgirl
+                        self.selected_shipgirl_index = i
                         self.selected_shipgirl.battle_component.target = None
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
-                if self.mouse_start_drag is not None and self.selected_shipgirl is not None:
+                if self.selected_shipgirl is not None:
                     for siren in self.menu_manager.siren_fleet.fleet:
-                        if siren.rect.collidepoint(mouse_end_drag):
-                            if self.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
-                                if siren in self.menu_manager.siren_fleet.front:
-                                    self.selected_shipgirl.battle_component.target = siren
-                            else:
+                        if not siren.rect.collidepoint(mouse_end_drag):
+                            continue
+                        if self.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
+                            if siren in self.menu_manager.siren_fleet.front:
                                 self.selected_shipgirl.battle_component.target = siren
-                            self.selected_shipgirl = None
+                        else:
+                            self.selected_shipgirl.battle_component.target = siren
+                        self.selected_shipgirl = None
+                        self.selected_shipgirl_index = None
+                if self.selected_shipgirl is not None:
+                    for i, backup_shipgirl in enumerate(self.menu_manager.player_fleet.backups):
+                        if backup_shipgirl is None:
+                            continue
+                        if not backup_shipgirl.rect.collidepoint(mouse_end_drag):
+                            continue
+
+                        (
+                            self.selected_shipgirl.rect.center,
+                            backup_shipgirl.rect.center
+                        ) = (
+                            backup_shipgirl.rect.center,
+                            self.selected_shipgirl.rect.center,
+                        )
+                        self.selected_shipgirl.battle_component.active = False
+                        self.menu_manager.player_fleet.backups[i] = self.selected_shipgirl
+                        backup_shipgirl.battle_component.active = True
+                        self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index] = backup_shipgirl
+
+                        for siren in self.menu_manager.siren_fleet.fleet:
+                            if (
+                                siren.battle_component.attack_timer <= 0
+                                and siren.battle_component.target == self.selected_shipgirl
+                            ):
+                                siren.battle_component.target = backup_shipgirl
+
+                        self.selected_shipgirl = None
+                        self.selected_shipgirl_index = None
                 self.mouse_start_drag = None
 
                 self.next_encounter_button.click(event.pos)
