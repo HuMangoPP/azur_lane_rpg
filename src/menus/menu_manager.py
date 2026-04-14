@@ -19,8 +19,6 @@ class MenuManager:
     ENCOUNTER = 4
 
     def __init__(self):
-        self.mouse_start_drag = None
-
         self.player_fleet = PlayerFleet()
         self.siren_fleet = SirenFleet()
 

@@ -7,7 +7,7 @@ from src.constants import DataFiles, Color, Box, TOP_OF_SCREEN, RIGHT_OF_SCREEN,
 
 class SortieNode:
     SIZE = 50
-    CENTER = pygame.Vector2(screen_x(0.25), screen_y(0.5))
+    center = pygame.Vector2(screen_x(0.25), screen_y(0.5))
 
     def __init__(self, index, hexes):
         self.index = index
@@ -18,7 +18,7 @@ class SortieNode:
     
     def hover(self, mouse_pos):
         mouse_x, mouse_y = mouse_pos
-        hx, hy = pixel_to_hex(mouse_x - self.CENTER.x, mouse_y - self.CENTER.y, self.SIZE)
+        hx, hy = pixel_to_hex(mouse_x - self.center.x, mouse_y - self.center.y, self.SIZE)
         self.hovered = self.unlocked and (hx, hy) in self.hexes
 
     def select(self, mouse_pos):
@@ -26,7 +26,7 @@ class SortieNode:
             return False
 
         mouse_x, mouse_y = mouse_pos
-        hx, hy = pixel_to_hex(mouse_x - self.CENTER.x, mouse_y - self.CENTER.y, self.SIZE)
+        hx, hy = pixel_to_hex(mouse_x - self.center.x, mouse_y - self.center.y, self.SIZE)
         if (hx, hy) not in self.hexes:
             return False
         
@@ -40,19 +40,29 @@ class SortieNode:
         else:
             color = Color.BLACK
         polygon = get_cluster_edges(self.hexes, self.SIZE)
-        polygon = [pygame.Vector2(point) + self.CENTER for point in polygon]
+        polygon = [pygame.Vector2(point) + self.center for point in polygon]
         pygame.draw.polygon(surface, color, polygon)
         outline_width = (2 if self.hovered else 1) * Box.OUTLINE_WIDTH
         pygame.draw.polygon(surface, Color.WHITE, polygon, width=outline_width)
 
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
-            font.render(surface, str(self.index + 1), pygame.Vector2(x, y) + self.CENTER, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            font.render(
+                surface,
+                str(self.index + 1),
+                pygame.Vector2(x, y) + self.center,
+                Color.WHITE,
+                1,
+                style="center",
+                outline_color=Color.BLACK
+            )
 
 
 class SortieSelectionMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
+
+        self.mousedown = False
 
         self.selected_sortie_node = None
         self.sortie_nodes = [
@@ -103,7 +113,14 @@ class SortieSelectionMenu:
 
     def update(self, dt, events):
         for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.mousedown = True
+            if event.type == pygame.MOUSEMOTION:
+                if self.mousedown:
+                    movement = pygame.Vector2(event.rel)
+                    SortieNode.center += movement
             if event.type == pygame.MOUSEBUTTONUP:
+                self.mousedown = False
                 self.exit_sortie_selection_menu_button.click(event.pos)
                 self.start_sortie_button.click(event.pos)
 
@@ -120,8 +137,8 @@ class SortieSelectionMenu:
                                 rx = x
                             cy += y / n_hexes
                             
-                        self.selected_sortie_info_panel.left = rx + SortieNode.CENTER.x + SortieNode.SIZE + Box.PADDING
-                        self.selected_sortie_info_panel.centery = cy + SortieNode.CENTER.y
+                        self.selected_sortie_info_panel.left = rx + SortieNode.center.x + SortieNode.SIZE + Box.PADDING
+                        self.selected_sortie_info_panel.centery = cy + SortieNode.center.y
 
                         self.start_sortie_button.active = True
                         self.start_sortie_button.rect.centerx = self.selected_sortie_info_panel.centerx

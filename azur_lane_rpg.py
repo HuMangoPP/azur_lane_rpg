@@ -5,19 +5,15 @@ SCREEN_SIZE = pygame.Vector2(1120, 630)
 screen = pygame.display.set_mode(SCREEN_SIZE)
 
 from engine.font import Font
-from engine.util import get_rect
 
 from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles
 from src.menus.menu_manager import MenuManager
-from src.shipgirls import Shipgirl
 
 temp_screen = pygame.Surface(TEMP_SCREEN_SIZE)
 clock = pygame.Clock()
 font = Font(font_path="engine/big_font.png")
 
 menu_manager = MenuManager()
-
-available_shipgirls = [Shipgirl(shipgirl_name, True) for shipgirl_name in DataFiles.save_file["shipgirls"]]
 
 running = True
 while running:
@@ -50,7 +46,7 @@ while running:
 
 pygame.quit()
 
-for shipgirl in available_shipgirls:
+for shipgirl in menu_manager.available_shipgirls:
     DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
 
 print(DataFiles.save_file)

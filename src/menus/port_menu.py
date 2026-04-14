@@ -56,7 +56,6 @@ class PortMenu:
             text="intel center",
             text_color=Color.WHITE,
             callback=open_overlay_factory(self.INTEL_CENTER),
-            active=False
         )
 
         self.overlay_bg = get_rect(width=600, height=400, centerx=screen_x(0.5), centery=screen_y(0.5))

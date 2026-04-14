@@ -11,6 +11,8 @@ class FleetSelectionMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
+        self.mouse_start_drag = None
+
         self.selected_shipgirl = None
         def start_sortie():
             if all(shipgirl is None for shipgirl in self.menu_manager.player_fleet.shipgirls):
@@ -54,19 +56,19 @@ class FleetSelectionMenu:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.selected_shipgirl = None
-                self.menu_manager.mouse_start_drag = None
+                self.mouse_start_drag = None
                 shipgirl_names = self.menu_manager.player_fleet.shipgirl_names
                 for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.menu_manager.available_shipgirl_rects):
                     if rect.collidepoint(event.pos) and shipgirl.name not in shipgirl_names:
-                        self.menu_manager.mouse_start_drag = event.pos
+                        self.mouse_start_drag = event.pos
                         self.selected_shipgirl = shipgirl
                 for shipgirl in self.menu_manager.player_fleet.shipgirls:
                     if shipgirl is not None and shipgirl.rect.collidepoint(event.pos):
-                        self.menu_manager.mouse_start_drag = event.pos
+                        self.mouse_start_drag = event.pos
                         self.selected_shipgirl = shipgirl
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
-                if self.menu_manager.mouse_start_drag is not None and self.selected_shipgirl is not None:
+                if self.mouse_start_drag is not None and self.selected_shipgirl is not None:
                     for i, slot in enumerate(self.fleet_slots):
                         if slot.collidepoint(mouse_end_drag):
                             for j, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
@@ -82,7 +84,7 @@ class FleetSelectionMenu:
                                 self.selected_shipgirl.facing_left = False
                             self.selected_shipgirl = None
                             break
-                self.menu_manager.mouse_start_drag = None
+                self.mouse_start_drag = None
                 self.start_sortie_button.click(event.pos)
                 self.exit_fleet_selection_menu_button.click(event.pos)
         
@@ -116,5 +118,5 @@ class FleetSelectionMenu:
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
         
         mpos = pygame.mouse.get_pos()
-        if self.menu_manager.mouse_start_drag is not None:
-            pygame.draw.line(surface, Color.WHITE, self.menu_manager.mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)
+        if self.mouse_start_drag is not None:
+            pygame.draw.line(surface, Color.WHITE, self.mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)

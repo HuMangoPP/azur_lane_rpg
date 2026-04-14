@@ -89,7 +89,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
         xy = hex_to_pixel(q, r, SortieNode.SIZE)
         rect = get_rect(
             width=2*SortieNode.SIZE, height=2*SortieNode.SIZE,
-            center=pygame.Vector2(xy) + SortieNode.CENTER
+            center=pygame.Vector2(xy) + SortieNode.center
         )
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
