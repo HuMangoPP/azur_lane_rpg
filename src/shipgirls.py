@@ -272,8 +272,16 @@ class PlayerFleet:
         return any(shipgirl is not None and shipgirl.battle_component.hp > 0 for shipgirl in self.shipgirls)
 
     @property
-    def shipgirl_names(self):
-        return [shipgirl.name for shipgirl in self.shipgirls if shipgirl is not None]
+    def primary_fleet_size(self):
+        return len([shipgirl for shipgirl in self.shipgirls if shipgirl is not None])
+
+    @property
+    def backup_fleet_size(self):
+        return len([shipgirl for shipgirl in self.backups if shipgirl is not None])
+
+    @property
+    def fleet(self):
+        return self.shipgirls + self.backups
 
     @property
     def front(self):
@@ -281,6 +289,9 @@ class PlayerFleet:
             if shipgirl is not None and shipgirl.battle_component.hp > 0:
                 return shipgirl
         return None
+
+    def in_fleet(self, shipgirl):
+        return shipgirl in self.shipgirls or shipgirl in self.backups
 
     def clear_fleet(self):
         self.shipgirls = [None, None, None]
@@ -317,6 +328,9 @@ class PlayerFleet:
 
     def draw(self, screen, font):
         for shipgirl in self.shipgirls:
+            if shipgirl is not None:
+                shipgirl.draw(screen, font)
+        for shipgirl in self.backups:
             if shipgirl is not None:
                 shipgirl.draw(screen, font)
 

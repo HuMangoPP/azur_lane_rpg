@@ -12,6 +12,8 @@ class FleetSelectionMenu:
         self.menu_manager = menu_manager
 
         self.mouse_start_drag = None
+        self.selected_shipgirl_index_from_fleet = None
+        self.selected_shipgirl_index_from_backup = None
 
         self.selected_shipgirl = None
         def start_sortie():
@@ -52,48 +54,84 @@ class FleetSelectionMenu:
             ) for slot_index in range(num_fleet_slots)
         ]
 
+        num_fleet_slots = len(self.menu_manager.player_fleet.backups)
+        self.backup_fleet_slots = [
+            get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=-slot_index*(Box.WIDTH+Box.PADDING)+self.fleet_slots[-1].centerx,
+                bottom=self.fleet_slots[0].top-2*Box.PADDING
+            ) for slot_index in range(num_fleet_slots)
+        ]
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.selected_shipgirl = None
                 self.mouse_start_drag = None
-                shipgirl_names = self.menu_manager.player_fleet.shipgirl_names
+                self.selected_shipgirl_index_from_fleet = None
+                self.selected_shipgirl_index_from_backup = None
                 for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.menu_manager.available_shipgirl_rects):
-                    if rect.collidepoint(event.pos) and shipgirl.name not in shipgirl_names:
+                    if rect.collidepoint(event.pos) and not self.menu_manager.player_fleet.in_fleet(shipgirl):
                         self.mouse_start_drag = event.pos
                         self.selected_shipgirl = shipgirl
-                for shipgirl in self.menu_manager.player_fleet.shipgirls:
+                for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
                     if shipgirl is not None and shipgirl.rect.collidepoint(event.pos):
                         self.mouse_start_drag = event.pos
                         self.selected_shipgirl = shipgirl
+                        self.selected_shipgirl_index_from_fleet = i
+                for i, shipgirl in enumerate(self.menu_manager.player_fleet.backups):
+                    if shipgirl is not None and shipgirl.rect.collidepoint(event.pos):
+                        self.mouse_start_drag = event.pos
+                        self.selected_shipgirl = shipgirl
+                        self.selected_shipgirl_index_from_backup = i
             if event.type == pygame.MOUSEBUTTONUP:
-                mouse_end_drag = event.pos
-                if self.mouse_start_drag is not None and self.selected_shipgirl is not None:
+                if self.selected_shipgirl is not None:
                     for i, slot in enumerate(self.fleet_slots):
-                        if slot.collidepoint(mouse_end_drag):
-                            for j, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
-                                if self.selected_shipgirl == shipgirl:
-                                    self.menu_manager.player_fleet.shipgirls[j] = self.menu_manager.player_fleet.shipgirls[i]
-                                    if self.menu_manager.player_fleet.shipgirls[j] is not None:
-                                        self.menu_manager.player_fleet.shipgirls[j].rect.center = pygame.Vector2(self.fleet_slots[j].center)
-                                    break
-                            self.menu_manager.player_fleet.shipgirls[i] = self.selected_shipgirl
-                            self.selected_shipgirl.rect.center = pygame.Vector2(slot.center)
-                            if self.selected_shipgirl.sprite is not None:
-                                self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-                                self.selected_shipgirl.facing_left = False
-                            self.selected_shipgirl = None
-                            break
+                        if not slot.collidepoint(event.pos):
+                            continue
+                        if self.selected_shipgirl_index_from_fleet is not None:
+                            self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = self.menu_manager.player_fleet.shipgirls[i]
+                            if self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] is not None:
+                                self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet].rect.center = self.fleet_slots[self.selected_shipgirl_index_from_fleet].center
+                        if self.selected_shipgirl_index_from_backup is not None:
+                            self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = self.menu_manager.player_fleet.shipgirls[i]
+                            if self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] is not None:
+                                self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup].rect.center = self.backup_fleet_slots[self.selected_shipgirl_index_from_backup].center
+                        self.menu_manager.player_fleet.shipgirls[i] = self.selected_shipgirl
+                        self.selected_shipgirl.rect.center = self.fleet_slots[i].center
+                        if self.selected_shipgirl.sprite is not None:
+                            self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+                            self.selected_shipgirl.facing_left = False
+                        self.selected_shipgirl = None
+                if self.selected_shipgirl is not None:
+                    for i, slot in enumerate(self.backup_fleet_slots):
+                        if not slot.collidepoint(event.pos):
+                            continue
+                        if self.selected_shipgirl_index_from_fleet is not None:
+                            self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = self.menu_manager.player_fleet.backups[i]
+                            if self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] is not None:
+                                self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet].rect.center = self.fleet_slots[self.selected_shipgirl_index_from_fleet].center
+                        if self.selected_shipgirl_index_from_backup is not None:
+                            self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = self.menu_manager.player_fleet.backups[i]
+                            if self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] is not None:
+                                self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup].rect.center = self.backup_fleet_slots[self.selected_shipgirl_index_from_backup].center
+                        self.menu_manager.player_fleet.backups[i] = self.selected_shipgirl
+                        self.selected_shipgirl.rect.center = self.backup_fleet_slots[i].center
+                        if self.selected_shipgirl.sprite is not None:
+                            self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+                            self.selected_shipgirl.facing_left = False
+                        self.selected_shipgirl = None
+
                 self.mouse_start_drag = None
                 self.start_sortie_button.click(event.pos)
                 self.exit_fleet_selection_menu_button.click(event.pos)
         
         if "first_sortie" in self.menu_manager.quest_manager.started_quests:
-            self.start_sortie_button.active = len(self.menu_manager.player_fleet.shipgirl_names) > 1
+            self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 1
         else:
-            self.start_sortie_button.active = len(self.menu_manager.player_fleet.shipgirl_names) > 0
+            self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 0
 
-        for shipgirl in self.menu_manager.player_fleet.shipgirls:
+        for shipgirl in self.menu_manager.player_fleet.fleet:
             if shipgirl is not None:
                 shipgirl.animate(dt)
 
@@ -114,8 +152,11 @@ class FleetSelectionMenu:
 
         for slot, shipgirl in zip(self.fleet_slots, self.menu_manager.player_fleet.shipgirls):
             if shipgirl is None:
-                rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=slot.centerx, centery=slot.centery)
-                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                pygame.draw.rect(surface, Color.WHITE, slot, width=Box.OUTLINE_WIDTH)
+        
+        for slot, shipgirl in zip(self.backup_fleet_slots, self.menu_manager.player_fleet.backups):
+            if shipgirl is None:
+                pygame.draw.rect(surface, Color.WHITE, slot, width=Box.OUTLINE_WIDTH)
         
         mpos = pygame.mouse.get_pos()
         if self.mouse_start_drag is not None:
