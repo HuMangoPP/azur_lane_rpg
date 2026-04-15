@@ -1,41 +1,25 @@
 {
-	"twin_100": { "path": "assets/twin_100.png", "scale": 2 },
-	"twin_137": { "path": "assets/twin_137.png", "scale": 2 },
-	"twin_120": { "path": "assets/twin_120.png", "scale": 2 },
+	"twin_120": { "left": 0, "top": 0, "width": 64, "height": 64 },
+	"twin_150": { "left": 64, "top": 0, "width": 64, "height": 64 },
+	"twin_203": { "left": 128, "top": 0, "width": 64, "height": 64 },
+	"tri_406": { "left": 192, "top": 0, "width": 64, "height": 64 },
 
-	"twin_150": { "path": "assets/twin_150.png", "scale": 2 },
-	"tri_155": { "path": "assets/tri_155.png", "scale": 2 },
-	"quad_152": { "path": "assets/quad_152.png", "scale": 2 },
+	"ap_shell": { "left": 0, "top": 64, "width": 64, "height": 64 },
+	"autoloader": { "left": 64, "top": 64, "width": 64, "height": 64 },
+	"repair_toolkit": { "left": 128, "top": 64, "width": 64, "height": 64 },
+	"steering_gear": { "left": 192, "top": 64, "width": 64, "height": 64 },
 
-	"twin_203": { "path": "assets/twin_203.png", "scale": 2 },
-	"tri_234": { "path": "assets/tri_234.png", "scale": 2 },
-	"tri_203": { "path": "assets/tri_203.png", "scale": 2 },
+	"BB_blueprint": { "left": 0, "top": 128, "width": 64, "height": 64 },
+	"CA_blueprint": { "left": 64, "top": 128, "width": 64, "height": 64 },
+	"CL_blueprint": { "left": 128, "top": 128, "width": 64, "height": 64 },
+	"DD_blueprint": { "left": 192, "top": 128, "width": 64, "height": 64 },
+	"electronics": { "left": 0, "top": 192, "width": 64, "height": 64 },
+	"gunpowder": { "left": 64, "top": 192, "width": 64, "height": 64 },
+	"metals": { "left": 128, "top": 192, "width": 64, "height": 64 },
+	"plastics": { "left": 192, "top": 192, "width": 64, "height": 64 },
 
-	"tri_406": { "path": "assets/tri_406.png", "scale": 2 },
-	"quad_305": { "path": "assets/quad_305.png", "scale": 2 },
-	"twin_457": { "path": "assets/twin_457.png", "scale": 2 },
+	"wisdom_cube": { "left": 0, "top": 256, "width": 64, "height": 64 },
 
-	"ap_shell": { "path": "assets/ap_shell.png", "scale": 2 },
-	"autoloader": { "path": "assets/autoloader.png", "scale": 2 },
-	"repair_toolkit": { "path": "assets/repair_toolkit.png", "scale": 2 },
-	"steering_gear": { "path": "assets/steering_gear.png", "scale": 2 },
-
-	"BB_blueprint": { "path": "assets/BB_blueprint.png", "scale": 2 },
-	"CA_blueprint": { "path": "assets/CA_blueprint.png", "scale": 2 },
-	"CL_blueprint": { "path": "assets/CL_blueprint.png", "scale": 2 },
-	"DD_blueprint": { "path": "assets/DD_blueprint.png", "scale": 2 },
-	"electronics": { "path": "assets/electronics.png", "scale": 2 },
-	"gunpowder": { "path": "assets/gunpowder.png", "scale": 2 },
-	"metals": { "path": "assets/metals.png", "scale": 2 },
-	"plastics": { "path": "assets/plastics.png", "scale": 2 },
-	"wisdom_cube": { "path": "assets/wisdom_cube.png", "scale": 2 },
-
-	"TB_point_up": {"path": "assets/TB_point_up.png", "scale": 2},
-	"TB_point_down": {"path": "assets/TB_point_down.png", "scale": 2},
-
-	"DD": {"path": "assets/DD.png", "scale": 1},
-	"CA": {"path": "assets/CA.png", "scale": 1},
-	"BB": {"path": "assets/BB.png", "scale": 1},
-	"laffey": {"path": "assets/laffey.png", "scale": 1},
-	"new_jersey": {"path": "assets/new_jersey.png", "scale": 1}
+	"TB_point_up": { "left": 64, "top": 256, "width": 64, "height": 64 },
+	"TB_point_down": { "left": 128, "top": 256, "width": 64, "height": 64 }
 }

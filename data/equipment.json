@@ -7,23 +7,6 @@
 		"reload": 100,
 		"shell_type": "normal"
 	},
-	"twin_137": {
-		"type": "weapon",
-		"craft_reqs": { "DD_blueprint": 1, "metals": 1, "plastics": 1 },
-		"equippable_by": "DD",
-		"firepower": 1,
-		"reload": 300,
-		"shell_type": "AP"
-	},
-	"twin_100": {
-		"type": "weapon",
-		"craft_reqs": { "DD_blueprint": 1, "gunpowder": 1, "plastics": 1 },
-		"equippable_by": "DD",
-		"firepower": 1,
-		"reload": 500,
-		"shell_type": "HE"
-	},
-
 	"twin_150": {
 		"type": "weapon",
 		"craft_reqs": { "CL_blueprint": 1, "gunpowder": 1, "metals": 1 },
@@ -32,44 +15,11 @@
 		"reload": 100,
 		"shell_type": "normal"
 	},
-	"tri_155": {
-		"type": "weapon",
-		"craft_reqs": { "CL_blueprint": 1, "plastics": 1, "metals": 1 },
-		"equippable_by": "CL",
-		"firepower": 2,
-		"reload": 50,
-		"shell_type": "HE"
-	},
-	"quad_152": {
-		"type": "weapon",
-		"craft_reqs": { "CL_blueprint": 1, "plastics": 1, "gunpowder": 1 },
-		"equippable_by": "CL",
-		"firepower": 3,
-		"reload": 100,
-		"shell_type": "AP"
-	},
-
 	"twin_203": {
 		"type": "weapon",
 		"craft_reqs": { "CA_blueprint": 1, "gunpowder": 1, "metals": 1 },
 		"equippable_by": "CA",
 		"firepower": 2,
-		"reload": 50,
-		"shell_type": "AP"
-	},
-	"tri_234": {
-		"type": "weapon",
-		"craft_reqs": { "CA_blueprint": 1, "electronics": 1, "plastics": 1 },
-		"equippable_by": "CA",
-		"firepower": 3,
-		"reload": 25,
-		"shell_type": "normal"
-	},
-	"tri_203": {
-		"type": "weapon",
-		"craft_reqs": { "CA_blueprint": 1, "plastics": 1, "metals": 1 },
-		"equippable_by": "CA",
-		"firepower": 3,
 		"reload": 50,
 		"shell_type": "AP"
 	},
@@ -80,22 +30,6 @@
 		"firepower": 5,
 		"reload": 25,
 		"shell_type": "HE"
-	},
-	"quad_305": {
-		"type": "weapon",
-		"craft_reqs": { "BB_blueprint": 1, "electronics": 1, "plastics": 1 },
-		"equippable_by": "BB",
-		"firepower": 5,
-		"reload": 25,
-		"shell_type": "AP"
-	},
-	"twin_457": {
-		"type": "weapon",
-		"craft_reqs": { "BB_blueprint": 1, "electronics": 1, "gunpowder": 1 },
-		"equippable_by": "BB",
-		"firepower": 5,
-		"reload": 50,
-		"shell_type": "AP"
 	},
 	"steering_gear": {
 		"type": "aux",

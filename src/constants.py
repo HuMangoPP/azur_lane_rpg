@@ -11,11 +11,11 @@ def screen_y(t):
     return TEMP_SCREEN_SIZE.y * t
 
 class Box:
-    WIDTH = 50
-    HEIGHT = 50
+    WIDTH = 64
+    HEIGHT = 64
     OUTLINE_WIDTH = 2
 
-    PADDING = 10
+    PADDING = 8
 
 EDGE_PADDING = 20
 LEFT_OF_SCREEN = screen_x(0) + EDGE_PADDING
