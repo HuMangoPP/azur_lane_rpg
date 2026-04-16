@@ -211,8 +211,10 @@ class Shipgirl:
         )
         self.wander_target = self.pos.copy()
         self.pause_time = 0
-        if os.path.exists(f"live2d/laffey.json"):
-            self.sprite = Live2D(f"live2d/laffey.json")
+        if os.path.exists(f"live2d/{self.name}.json"):
+            self.sprite = Live2D(f"live2d/{self.name}.json")
+        elif os.path.exists("live2d/laffey.json"):
+            self.sprite = Live2D("live2d/laffey.json")
         else:
             self.sprite = None
         self.facing_left = False
