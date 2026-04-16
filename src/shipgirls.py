@@ -209,8 +209,8 @@ class Shipgirl:
         )
         self.wander_target = self.pos.copy()
         self.pause_time = 0
-        if os.path.exists(f"live2d/{self.name}/model.json"):
-            self.sprite = Live2D(f"live2d/{self.name}/model.json")
+        if os.path.exists(f"live2d/{self.name}.json"):
+            self.sprite = Live2D(f"live2d/{self.name}.json")
         else:
             self.sprite = None
         self.facing_left = False
@@ -255,7 +255,7 @@ class Shipgirl:
 
     def draw(self, screen, font):
         if self.sprite is not None:
-            self.sprite.draw(screen, self.rect.centerx, self.rect.centery, self.facing_left)
+            self.sprite.draw(screen, self.rect.centerx, self.rect.centery, not self.facing_left)
         else:
             pygame.draw.rect(screen, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
             _ = font.render(screen, self.name, self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
@@ -332,6 +332,8 @@ class PlayerFleet:
                 shipgirl.draw(screen, font)
 
 class SirenFleet:
+    SLOT_SIZE = 96 # TODO
+
     def __init__(self):
         self._front = []
         self._back = []
@@ -365,14 +367,14 @@ class SirenFleet:
         
         front_offset = (len(self._front)-1)/2
         for i, siren in enumerate(self._front):
-            siren.rect.centerx = screen_x(0.75) - (Box.WIDTH+Box.PADDING) + (i-front_offset)*(Box.WIDTH+Box.PADDING)
-            siren.rect.centery = screen_y(0.5) + (i-front_offset)*Box.WIDTH
+            siren.rect.centerx = screen_x(0.75) + (i-front_offset)*self.SLOT_SIZE/2
+            siren.rect.centery = screen_y(0.5) + (i-front_offset)*self.SLOT_SIZE
         
         back_offset = (len(self._back)-1)/2
         for i, siren in enumerate(self._back): 
-            siren.rect.centerx = screen_x(0.75) + (Box.WIDTH+Box.PADDING) + (i-back_offset)*(Box.WIDTH+Box.PADDING)
-            siren.rect.centery = screen_y(0.5) + (i-back_offset)*Box.WIDTH
-
+            siren.rect.centerx = screen_x(0.75) + 1.5*self.SLOT_SIZE + (i-back_offset)*self.SLOT_SIZE/2
+            siren.rect.centery = screen_y(0.5) + (i-back_offset)*self.SLOT_SIZE
+    
     def end_encounter(self):
         for siren in self.fleet:
             siren.battle_component.target = None

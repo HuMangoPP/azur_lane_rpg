@@ -90,9 +90,8 @@ class EncounterMenu:
                 if new_sortie_progress == 3:
                     self.menu_manager.quest_manager.quests["craft_weapon"] = craft_weapon_quest
             
-            for sortie_node in self.menu_manager.sortie_selection_menu.sortie_nodes:
-                if sortie_node.index <= DataFiles.save_file["sortie_progress"]:
-                    sortie_node.unlocked = True
+            self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
+            self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True
             self.menu_manager.port_menu.update_encountered_sirens()
             
             for drop in self.drops:

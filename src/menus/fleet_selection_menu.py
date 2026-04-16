@@ -8,6 +8,8 @@ from src.constants import DataFiles, Color, Box, RIGHT_OF_SCREEN, TOP_OF_SCREEN,
 from live2d.live2d import Live2D
 
 class FleetSelectionMenu:
+    SLOT_SIZE = 96 # TODO
+
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
@@ -48,8 +50,8 @@ class FleetSelectionMenu:
         fleet_slot_offset = (num_fleet_slots-1)/2
         self.fleet_slots = [
             get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=(fleet_slot_offset-slot_index)*(Box.WIDTH+Box.PADDING)+screen_x(0.25),
+                width=self.SLOT_SIZE, height=self.SLOT_SIZE,
+                centerx=(fleet_slot_offset-slot_index)*self.SLOT_SIZE+screen_x(0.33),
                 centery=screen_y(0.5)
             ) for slot_index in range(num_fleet_slots)
         ]
@@ -57,8 +59,8 @@ class FleetSelectionMenu:
         num_fleet_slots = len(self.menu_manager.player_fleet.backups)
         self.backup_fleet_slots = [
             get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=-slot_index*(Box.WIDTH+Box.PADDING)+self.fleet_slots[-1].centerx,
+                width=self.SLOT_SIZE, height=self.SLOT_SIZE,
+                centerx=-slot_index*self.SLOT_SIZE+self.fleet_slots[-1].centerx,
                 bottom=self.fleet_slots[0].top-2*Box.PADDING
             ) for slot_index in range(num_fleet_slots)
         ]

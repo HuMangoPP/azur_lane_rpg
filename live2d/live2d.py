@@ -174,7 +174,7 @@ class Live2D:
 
     def update(self, dt):
         self.t = (self.t + self.ANIMATION_SPEED * dt) % 1
-        t = math.radians(360 * math.floor(self.NUM_FRAMES * self.t) / self.NUM_FRAMES)
+        t = math.radians(360 * self.t)
         if self.animation == self.IDLE_ANIMATION:
             one_plus_sint = 0.5 * (1 + math.sin(t))
             anim_t = {"one_plus_sint": one_plus_sint}
