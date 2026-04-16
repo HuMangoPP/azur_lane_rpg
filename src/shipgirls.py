@@ -200,6 +200,8 @@ class ShipgirlBattleComponent:
         pygame.draw.circle(screen, Color.WHITE, center, radius, width=Box.OUTLINE_WIDTH)
 
 class Shipgirl:
+    SPRITE_SIZE = 96 # TODO
+
     def __init__(self, name, is_player):
         self.name = name
     
@@ -209,13 +211,13 @@ class Shipgirl:
         )
         self.wander_target = self.pos.copy()
         self.pause_time = 0
-        if os.path.exists(f"live2d/{self.name}.json"):
-            self.sprite = Live2D(f"live2d/{self.name}.json")
+        if os.path.exists(f"live2d/laffey.json"):
+            self.sprite = Live2D(f"live2d/laffey.json")
         else:
             self.sprite = None
         self.facing_left = False
             
-        self.rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=self.pos.x, centery=self.pos.y)
+        self.rect = get_rect(width=self.SPRITE_SIZE, height=self.SPRITE_SIZE, centerx=self.pos.x, centery=self.pos.y)
 
         self.battle_component = ShipgirlBattleComponent(self.name, is_player)
 
@@ -367,12 +369,12 @@ class SirenFleet:
         
         front_offset = (len(self._front)-1)/2
         for i, siren in enumerate(self._front):
-            siren.rect.centerx = screen_x(0.75) + (i-front_offset)*self.SLOT_SIZE/2
+            siren.rect.centerx = screen_x(0.8) - self.SLOT_SIZE + (i-front_offset)*self.SLOT_SIZE/2
             siren.rect.centery = screen_y(0.5) + (i-front_offset)*self.SLOT_SIZE
         
         back_offset = (len(self._back)-1)/2
         for i, siren in enumerate(self._back): 
-            siren.rect.centerx = screen_x(0.75) + 1.5*self.SLOT_SIZE + (i-back_offset)*self.SLOT_SIZE/2
+            siren.rect.centerx = screen_x(0.8) + self.SLOT_SIZE + (i-back_offset)*self.SLOT_SIZE/2
             siren.rect.centery = screen_y(0.5) + (i-back_offset)*self.SLOT_SIZE
     
     def end_encounter(self):
