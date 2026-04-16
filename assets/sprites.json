@@ -25,5 +25,6 @@
 
 	"laffey": { "left": 0, "top": 320, "width": 64, "height": 64 },
 	"new_jersey": { "left": 64, "top": 320, "width": 64, "height": 64 },
-	"guam": { "left": 128, "top": 320, "width": 64, "height": 64 }
+	"guam": { "left": 128, "top": 320, "width": 64, "height": 64 },
+	"san_diego": { "left": 192, "top": 320, "width": 64, "height": 64 }
 }
