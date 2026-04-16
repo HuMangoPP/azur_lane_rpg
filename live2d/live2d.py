@@ -1,7 +1,24 @@
 import json
 import math
 import pygame
-from engine.util import get_rect
+
+LAYER_SIZE = 96
+PART_NAMES = [
+    "bangs",
+    "right_bangs",
+    "right_hair",
+    "left_bangs",
+    "top_head",
+    "head",
+    "right_arm",
+    "torso",
+    "left_arm",
+    "right_leg",
+    "left_leg",
+    "left_hair",
+    "back_torso",
+    "back_hair"
+]
 
 class Live2DPart:
     def __init__(self, image, pivot):
@@ -62,11 +79,19 @@ class Cache:
         with open(model_file) as f:
             model_dict = json.load(f)
             self.model_dicts[model_file] = model_dict
-
+        
         parts = {}
-        for part, part_data in model_dict.items():
-            image = pygame.transform.scale_by(pygame.image.load(part_data["path"]).convert_alpha(), 1)
-            image.set_colorkey((255,0,0))
+        spritesheet = pygame.image.load(model_dict["spritesheet"]).convert()
+        spritesheet.set_colorkey(model_dict["colorkey"])
+        num_layers_in_row = spritesheet.get_width() // LAYER_SIZE
+        for i, part in enumerate(PART_NAMES):
+            crop = pygame.Rect(
+                (i % num_layers_in_row) * LAYER_SIZE,
+                (i // num_layers_in_row) * LAYER_SIZE,
+                LAYER_SIZE,
+                LAYER_SIZE
+            )
+            image = spritesheet.subsurface(crop)
             parts[part] = image
         self.parts[model_file] = parts
 
@@ -77,16 +102,15 @@ cache = Cache()
 class Live2D:
     DRAW_ORDER = [
         "back_hair",
-        "torso_back",
+        "back_torso",
         "left_leg",
         "right_leg",
+        "left_hair",
         "left_arm",
         "torso",
         "right_arm",
         "head",
-        "face",
-        "top_of_head",
-        "left_hair",
+        "top_head",
         "left_bangs",
         "right_hair",
         "right_bangs",
@@ -95,14 +119,13 @@ class Live2D:
 
     CONNECTIONS = {
         "back_hair": "head",
-        "torso_back": "torso",
+        "back_torso": "torso",
         "left_leg": "torso",
         "right_leg": "torso",
         "torso": None,
         "left_arm": "torso",
         "head": "torso",
-        "face": "head",
-        "top_of_head": "head",
+        "top_head": "head",
         "left_hair": "head",
         "left_bangs": "head",
         "right_hair": "head",
@@ -114,6 +137,9 @@ class Live2D:
     IDLE_ANIMATION = 0
     WALK_ANIMATION = 1
 
+    ANIMATION_SPEED = 0.8
+    NUM_FRAMES = 12
+
     def __init__(self, model_file):
         self.t = 0
         self.parts = {}
@@ -123,7 +149,8 @@ class Live2D:
         self.model_dict = cache.get_model_dict(model_file)
 
         self.parts = {}
-        for part, part_data in self.model_dict.items():
+        for part in PART_NAMES:
+            part_data = self.model_dict[part]
             image = cache.parts[model_file][part]
             self.parts[part] = Live2DPart(image, part_data["pivot"])
         
@@ -132,7 +159,6 @@ class Live2D:
                 live2d_part = self.parts[part]
                 live2d_part.parent_part = self.parts[parent_part]
         
-
     def set_rotation(self, part, angle):
         if part in self.parts:
             self.parts[part].rotation = angle
@@ -147,23 +173,24 @@ class Live2D:
             self.t = 0
 
     def update(self, dt):
-        self.t += dt
+        self.t = (self.t + self.ANIMATION_SPEED * dt) % 1
+        t = math.radians(360 * math.floor(self.NUM_FRAMES * self.t) / self.NUM_FRAMES)
         if self.animation == self.IDLE_ANIMATION:
-            t = math.radians(270 * self.t)
             one_plus_sint = 0.5 * (1 + math.sin(t))
             anim_t = {"one_plus_sint": one_plus_sint}
-            for part, part_data in self.model_dict.items():
+            for part in PART_NAMES:
+                part_data = self.model_dict[part]
                 idle_animation = part_data["idle"]
                 if idle_animation[1] is None:
                     continue
                 self.set_rotation(part, idle_animation[0] * anim_t[idle_animation[1]])
             self.set_offset("torso", pygame.Vector2(0, 5 * one_plus_sint))
         elif self.animation == self.WALK_ANIMATION:
-            t = math.radians(270 * self.t)
             sint = math.sin(t)
             sint_sq = sint ** 2
             anim_t = {"sint": sint, "sint_sq": sint_sq}
-            for part, part_data in self.model_dict.items():
+            for part in PART_NAMES:
+                part_data = self.model_dict[part]
                 walk_animation = part_data["walk"]
                 if walk_animation[1] is None:
                     continue

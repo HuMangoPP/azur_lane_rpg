@@ -1,91 +1,73 @@
 {
-	"torso_back": {
-		"path": "live2d/laffey/torso_back.png",
+	"spritesheet": "live2d/laffey/spritesheet.png",
+	"colorkey": [255, 0, 0],
+	"back_torso": {
 		"pivot": [34, 42],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
 	"left_leg": {
-		"path": "live2d/laffey/left_leg.png",
-		"pivot": [39, 50],
-		"idle": [10, "one_plus_sint"],
-		"walk": [-30, "sint"]
-	},
-	"right_leg": {
-		"path": "live2d/laffey/right_leg.png",
-		"pivot": [30, 50],
+		"pivot": [42, 70],
 		"idle": [-10, "one_plus_sint"],
 		"walk": [30, "sint"]
 	},
+	"right_leg": {
+		"pivot": [51, 70],
+		"idle": [10, "one_plus_sint"],
+		"walk": [-30, "sint"]
+	},
 	"torso": {
-		"path": "live2d/laffey/torso.png",
-		"pivot": [34, 34],
+		"pivot": [45, 60],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
 	"left_arm": {
-		"path": "live2d/laffey/left_arm.png",
-		"pivot": [38, 36],
-		"idle": [15, "one_plus_sint"],
-		"walk": [15, "sint"]
-	},
-	"right_arm": {
-		"path": "live2d/laffey/right_arm.png",
-		"pivot": [29, 35],
+		"pivot": [40, 53],
 		"idle": [-15, "one_plus_sint"],
 		"walk": [-15, "sint"]
 	},
+	"right_arm": {
+		"pivot": [52, 53],
+		"idle": [15, "one_plus_sint"],
+		"walk": [15, "sint"]
+	},
 	"back_hair": {
-		"path": "live2d/laffey/back_hair.png",
-		"pivot": [32, 20],
+		"pivot": [0, 0],
 		"idle": [0, null],
-		"walk": [0, null]
+		"walk": [-5, "sint"]
 	},
 	"head": {
-		"path": "live2d/laffey/head.png",
-		"pivot": [34, 34],
+		"pivot": [45, 51],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
-	"face": {
-		"path": "live2d/laffey/face.png",
-		"pivot": [36, 26],
-		"idle": [0, null],
-		"walk": [0, null]
-	},
-	"top_of_head": {
-		"path": "live2d/laffey/top_of_head.png",
-		"pivot": [34, 9],
+	"top_head": {
+		"pivot": [45, 20],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
 	"left_hair": {
-		"path": "live2d/laffey/left_hair.png",
-		"pivot": [46, 8],
-		"idle": [10, "one_plus_sint"],
-		"walk": [10, "sint_sq"]
+		"pivot": [28, 20],
+		"idle": [-5, "one_plus_sint"],
+		"walk": [-5, "sint"]
 	},
 	"left_bangs": {
-		"path": "live2d/laffey/left_bangs.png",
-		"pivot": [45, 14],
-		"idle": [5, "one_plus_sint"],
-		"walk": [5, "sint_sq"]
-	},
-	"right_hair": {
-		"path": "live2d/laffey/right_hair.png",
-		"pivot": [15, 10],
-		"idle": [-10, "one_plus_sint"],
-		"walk": [-10, "sint_sq"]
-	},
-	"right_bangs": {
-		"path": "live2d/laffey/right_bangs.png",
-		"pivot": [21, 12],
+		"pivot": [34, 23],
 		"idle": [-5, "one_plus_sint"],
 		"walk": [-5, "sint_sq"]
 	},
+	"right_hair": {
+		"pivot": [55, 23],
+		"idle": [5, "one_plus_sint"],
+		"walk": [-5, "sint"]
+	},
+	"right_bangs": {
+		"pivot": [65, 20],
+		"idle": [5, "one_plus_sint"],
+		"walk": [5, "sint_sq"]
+	},
 	"bangs": {
-		"path": "live2d/laffey/bangs.png",
-		"pivot": [35, 10],
+		"pivot": [42, 23],
 		"idle": [0, null],
 		"walk": [0, null]
 	}
