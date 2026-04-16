@@ -22,12 +22,12 @@
 		"walk": [0, null]
 	},
 	"left_arm": {
-		"pivot": [40, 53],
+		"pivot": [40, 54],
 		"idle": [-15, "one_plus_sint"],
 		"walk": [-15, "sint"]
 	},
 	"right_arm": {
-		"pivot": [52, 53],
+		"pivot": [53, 54],
 		"idle": [15, "one_plus_sint"],
 		"walk": [15, "sint"]
 	},
