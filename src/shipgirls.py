@@ -43,18 +43,18 @@ class ShipgirlBattleComponent:
 
         if name in DataFiles.shipgirl_data:
             info = DataFiles.shipgirl_data[name]
-            info["equipment"] = DataFiles.save_file["shipgirls"][name]["equipment"]
-            info["exp"] = DataFiles.save_file["shipgirls"][name]["exp"]
+            save = DataFiles.save_file["shipgirls"][name]
+            stats = DataFiles.stats_data[info["hull_type"]]
         else:
             info = DataFiles.siren_data[name]
 
-        self.base_max_hp = info["max_hp"]
-        self.base_evasion = info["evasion"]
-        self.base_firepower = info["firepower"]
-        self.base_reload = info["reload"]
+        self.base_max_hp = stats["max_hp"]
+        self.base_evasion = stats["evasion"]
+        self.base_firepower = stats["firepower"]
+        self.base_reload = stats["reload"]
         self.hull_type = info["hull_type"]
-        self.equipment = info["equipment"]
-        self.exp = info["exp"]
+        self.equipment = save["equipment"]
+        self.exp = save["exp"]
 
         self.hp = self.max_hp()
         self.cooldown_timer = 1

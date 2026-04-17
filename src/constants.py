@@ -64,6 +64,9 @@ class DataFiles:
     with open("data/shipgirls.json") as f:
         shipgirl_data = json.load(f)
 
+    with open("data/stats.json") as f:
+        stats_data = json.load(f)
+
     with open("data/sirens.json") as f:
         siren_data = json.load(f)
 

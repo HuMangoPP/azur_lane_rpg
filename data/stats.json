@@ -1,0 +1,26 @@
+{
+    "DD": {
+        "max_hp": [20, 3],
+		"evasion": [200, 20],
+		"firepower": [3, 1],
+		"reload": [200, 10]
+    },
+    "CL": {
+        "max_hp": [30, 5],
+		"evasion": [100, 10],
+		"firepower": [4, 1],
+		"reload": [175, 8]
+    },
+    "CA": {
+        "max_hp": [30, 5],
+		"evasion": [100, 10],
+		"firepower": [4, 1],
+		"reload": [175, 8]
+    },
+    "BB": {
+        "max_hp": [50, 5],
+		"evasion": [0, 5],
+		"firepower": [5, 1],
+		"reload": [150, 6]
+    }
+}

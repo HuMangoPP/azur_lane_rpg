@@ -2,145 +2,81 @@
 	"laffey": {
 		"unique_item": "huggy_pillow",
 		"faction": "USS",
-		"hull_type": "DD",
-		"max_hp": [20, 3],
-		"evasion": [200, 20],
-		"firepower": [3, 1],
-		"reload": [200, 10]
+		"hull_type": "DD"
 	},
 	"san_diego": {
 		"unique_item": "star_blaster",
 		"faction": "USS",
-		"hull_type": "CL",
-		"max_hp": [30, 5],
-		"evasion": [100, 10],
-		"firepower": [4, 1],
-		"reload": [175, 8]
+		"hull_type": "CL"
 	},
 	"guam": {
 		"unique_item": "battle_mech",
 		"faction": "USS",
-		"hull_type": "CA",
-		"max_hp": [30, 5],
-		"evasion": [100, 10],
-		"firepower": [4, 1],
-		"reload": [175, 8]
+		"hull_type": "CA"
 	},
 	"new_jersey": {
 		"unique_item": "dragon_cannon",
 		"faction": "USS",
-		"hull_type": "BB",
-		"max_hp": [50, 5],
-		"evasion": [0, 5],
-		"firepower": [5, 1],
-		"reload": [150, 6]
+		"hull_type": "BB"
 	},
 	"ayanami": {
 		"unique_item": "demon_blade",
 		"faction": "IJN",
-		"hull_type": "DD",
-		"max_hp": 20,
-		"evasion": 0,
-		"firepower": 4,
-		"reload": 300
+		"hull_type": "DD"
 	},
 	"shimanto": {
 		"unique_item": "white_dragon_scale",
 		"faction": "IJN",
-		"hull_type": "CL",
-		"max_hp": 15,
-		"evasion": 0,
-		"firepower": 1,
-		"reload": 200
+		"hull_type": "CL"
 	},
 	"unzen": {
 		"unique_item": "butterfly_wings",
 		"faction": "IJN",
-		"hull_type": "CA",
-		"max_hp": 20,
-		"evasion": 0,
-		"firepower": 1,
-		"reload": 150
+		"hull_type": "CA"
 	},
 	"musashi": {
 		"unique_item": "shogun",
 		"faction": "IJN",
-		"hull_type": "BB",
-		"max_hp": 30,
-		"evasion": 0,
-		"firepower": 2,
-		"reload": 100
+		"hull_type": "BB"
 	},
 	"javelin": {
 		"unique_item": "full_burst_javelin",
 		"faction": "HMS",
-		"hull_type": "DD",
-		"max_hp": 20,
-		"evasion": 0,
-		"firepower": 4,
-		"reload": 300
+		"hull_type": "DD"
 	},
 	"plymouth": {
 		"unique_item": "dove_feather",
 		"faction": "HMS",
-		"hull_type": "CL",
-		"max_hp": 15,
-		"evasion": 0,
-		"firepower": 1,
-		"reload": 200
+		"hull_type": "CL"
 	},
 	"drake": {
 		"unique_item": "flintlock",
 		"faction": "HMS",
-		"hull_type": "CA",
-		"max_hp": 20,
-		"evasion": 0,
-		"firepower": 1,
-		"reload": 150
+		"hull_type": "CA"
 	},
 	"lion": {
 		"unique_item": "lionflame",
 		"faction": "HMS",
-		"hull_type": "BB",
-		"max_hp": 30,
-		"evasion": 0,
-		"firepower": 2,
-		"reload": 100
+		"hull_type": "BB"
 	},
 	"z23": {
 		"unique_item": "raubtier",
 		"faction": "KMS",
-		"hull_type": "DD",
-		"max_hp": 20,
-		"evasion": 0,
-		"firepower": 4,
-		"reload": 300
+		"hull_type": "DD"
 	},
 	"emden": {
 		"unique_item": "twin_dragons",
 		"faction": "KMS",
-		"hull_type": "CL",
-		"max_hp": 15,
-		"evasion": 0,
-		"firepower": 1,
-		"reload": 200
+		"hull_type": "CL"
 	},
 	"hindenburg": {
 		"unique_item": "devil_horns",
 		"faction": "KMS",
-		"hull_type": "CA",
-		"max_hp": 20,
-		"evasion": 0,
-		"firepower": 1,
-		"reload": 150
+		"hull_type": "CA"
 	},
 	"bismarck": {
 		"unique_item": "flagship_banner",
 		"faction": "KMS",
-		"hull_type": "BB",
-		"max_hp": 30,
-		"evasion": 0,
-		"firepower": 2,
-		"reload": 100
+		"hull_type": "BB"
 	}
 }

@@ -40,7 +40,7 @@ class PortMenu:
             text="shipyard",
             text_color=Color.WHITE,
             callback=open_overlay_factory(self.SHIPYARD),
-            active=False
+            active=True
         )
         self.open_gear_lab_overlay_button = Button(
             rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(3/6), bottom=BOTTOM_OF_SCREEN),
@@ -338,12 +338,14 @@ class PortMenu:
                 (research_req, f"{inventory.get(research_req,0)}/1")
                 for research_req in research_reqs
             ]
+            hull_type = selected_entity_info.get("hull_type")
+            selected_entity_stats = DataFiles.stats_data[hull_type]
             shipgirl_stats = {
-                "HULL": selected_entity_info.get("hull_type"),
-                "HP": selected_entity_info.get("max_hp"),
-                "EVA": selected_entity_info.get("evasion"),
-                "FP": selected_entity_info.get("firepower"),
-                "RLD": selected_entity_info.get("reload"),
+                "HULL": hull_type,
+                "HP": selected_entity_stats["max_hp"],
+                "EVA": selected_entity_stats["evasion"],
+                "FP": selected_entity_stats["firepower"],
+                "RLD": selected_entity_stats["reload"],
             }
         else:
             research_icons = []
