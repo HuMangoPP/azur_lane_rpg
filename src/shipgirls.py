@@ -47,6 +47,8 @@ class ShipgirlBattleComponent:
             stats = DataFiles.stats_data[info["hull_type"]]
         else:
             info = DataFiles.siren_data[name]
+            stats = info
+            save = info
 
         self.base_max_hp = stats["max_hp"]
         self.base_evasion = stats["evasion"]

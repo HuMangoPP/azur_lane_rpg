@@ -31,5 +31,9 @@
 	"huggy_pillow": { "left": 0, "top": 384, "width": 64, "height": 64 },
 	"dragon_cannon": { "left": 64, "top": 384, "width": 64, "height": 64 },
 	"battle_mech": { "left": 128, "top": 384, "width": 64, "height": 64 },
-	"star_blaster": { "left": 192, "top": 384, "width": 64, "height": 64 }
+	"star_blaster": { "left": 192, "top": 384, "width": 64, "height": 64 },
+
+	"DD": { "left": 256, "top": 0, "width": 64, "height": 64 },
+	"CA": { "left": 256, "top": 64, "width": 64, "height": 64 },
+	"BB": { "left": 256, "top": 128, "width": 64, "height": 64 }
 }
