@@ -23,7 +23,8 @@ class Button:
         if not self.active:
             return
         
-        pygame.draw.rect(screen, self.color, self.rect)
+        if self.color is not None:
+            pygame.draw.rect(screen, self.color, self.rect)
         if self.sprite is not None:
             screen.blit(self.sprite, self.rect)
         if self.text is not None:

@@ -33,7 +33,6 @@ class PortMenu:
                 centerx=screen_x(1/6),
                 bottom=BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["depot"],
             callback=open_overlay_factory(self.DEPOT),
         )
@@ -43,7 +42,6 @@ class PortMenu:
                 centerx=screen_x(2/6),
                 bottom=BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["intel_center"],
             callback=open_overlay_factory(self.INTEL_CENTER),
         )
@@ -53,10 +51,9 @@ class PortMenu:
                 centerx=screen_x(3/6),
                 bottom=BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["shipyard"],
             callback=open_overlay_factory(self.SHIPYARD),
-            active=True
+            active=False
         )
 
         self.open_gear_lab_overlay_button = Button(
@@ -65,7 +62,6 @@ class PortMenu:
                 centerx=screen_x(4/6),
                 bottom=BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
             active=False
@@ -177,7 +173,6 @@ class PortMenu:
                 centerx=screen_x(5/6),
                 bottom=BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["sortie"],
             callback=open_select_sortie_menu,
             active=False

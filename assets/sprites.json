@@ -22,6 +22,7 @@
 
 	"TB_point_up": { "left": 64, "top": 256, "width": 64, "height": 64 },
 	"TB_point_down": { "left": 128, "top": 256, "width": 64, "height": 64 },
+	"TB": { "left": 192, "top": 256, "width": 64, "height": 64 },
 
 	"laffey": { "left": 0, "top": 320, "width": 64, "height": 64 },
 	"new_jersey": { "left": 64, "top": 320, "width": 64, "height": 64 },

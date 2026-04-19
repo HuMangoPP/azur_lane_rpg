@@ -1,8 +1,9 @@
+import math
 import pygame
 
-from engine.util import get_rect
+from engine.util import get_rect, get_vec
 
-from src.constants import Box, Color, screen_x, screen_y
+from src.constants import DataFiles, Box, Color, screen_x, screen_y
 
 class QuestManager:
     def __init__(self):
@@ -38,11 +39,13 @@ class QuestManager:
                 top=Box.PADDING + (Box.HEIGHT + Box.PADDING) * i
             )
             pygame.draw.rect(surface, Color.WHITE, rect, Box.OUTLINE_WIDTH)
+            surface.blit(DataFiles.sprites["TB"], rect)
 
+            textpos = (rect.right + Box.PADDING, rect.centery - Box.PADDING/2)
             if not quest.started:
-                font.render(surface, "new", rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                font.render(surface, "new", textpos, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
             elif quest.completed:
-                font.render(surface, "completed", rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                font.render(surface, "completed", textpos, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
         
         if self.selected_quest_id is not None:
             self.selected_quest.draw(surface, font)
@@ -98,7 +101,35 @@ class Quest:
     def draw(self, surface, font):
         pygame.draw.rect(surface, Color.BLUE_GREY, self.DIALOGUE_OVERLAY)
         pygame.draw.rect(surface, Color.DARK_BLUE, self.DIALOGUE_BOX)
-        pygame.draw.rect(surface, Color.BLUE, self.next_button)
+        middleleft = pygame.Vector2(self.DIALOGUE_BOX.left, self.DIALOGUE_BOX.centery)
+        polygon = [
+            middleleft + pygame.Vector2(0, 2*Box.PADDING),
+            middleleft + pygame.Vector2(0, -2*Box.PADDING),
+            middleleft + pygame.Vector2(-5*Box.PADDING, 0)
+        ]
+        pygame.draw.polygon(surface, Color.DARK_BLUE, polygon)
+        tb_sprite = DataFiles.sprites["TB"]
+        rect = tb_sprite.get_rect()
+        rect.right = polygon[-1].x
+        rect.centery = polygon[-1].y
+        surface.blit(tb_sprite, rect)
+
+        center = pygame.Vector2(self.next_button.center)
+        polygon = [
+            center + get_vec(self.next_button.width/2, 0),
+            center + get_vec(self.next_button.width/2, math.radians(120)),
+            center + get_vec(self.next_button.width/2, math.radians(240))
+        ]
+        pygame.draw.polygon(surface, Color.BLUE, polygon)
+        font.render(
+            surface,
+            "next",
+            center,
+            Color.WHITE,
+            1,
+            style="center",
+            outline_color=Color.BLACK
+        )
 
         text = self.dialogue_texts[self.dialogue_index]
         text_width = self.DIALOGUE_BOX.width - 2*Box.PADDING

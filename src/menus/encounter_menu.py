@@ -103,7 +103,6 @@ class EncounterMenu:
 
         self.return_to_port_button = Button(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.5), centery=screen_y(0.5)),
-            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["port"],
             callback=return_to_port,
             active=False
@@ -116,10 +115,7 @@ class EncounterMenu:
         
         self.retreat_button = Button(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
-            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["port"],
-            text="retreat",
-            text_color=Color.WHITE,
             callback=retreat
         )
 

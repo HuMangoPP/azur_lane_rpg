@@ -40,7 +40,6 @@ class FleetSelectionMenu:
         
         self.exit_fleet_selection_menu_button = Button(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
-            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["port"],
             callback=exit_fleet_selection_menu
         )
