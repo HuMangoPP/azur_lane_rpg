@@ -28,34 +28,47 @@ class PortMenu:
             return open_overlay
 
         self.open_depot_overlay_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(1/6), bottom=BOTTOM_OF_SCREEN),
+            rect=get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=screen_x(1/6),
+                bottom=BOTTOM_OF_SCREEN
+            ),
             color=Color.BLUE_GREY,
-            text="depot",
-            text_color=Color.WHITE,
+            sprite=DataFiles.sprites["depot"],
             callback=open_overlay_factory(self.DEPOT),
         )
-        self.open_shipyard_overlay_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(2/6), bottom=BOTTOM_OF_SCREEN),
+        self.open_intel_center_overlay_button = Button(
+            rect=get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=screen_x(2/6),
+                bottom=BOTTOM_OF_SCREEN
+            ),
             color=Color.BLUE_GREY,
-            text="shipyard",
-            text_color=Color.WHITE,
+            sprite=DataFiles.sprites["intel_center"],
+            callback=open_overlay_factory(self.INTEL_CENTER),
+        )
+        self.open_shipyard_overlay_button = Button(
+            rect=get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=screen_x(3/6),
+                bottom=BOTTOM_OF_SCREEN
+            ),
+            color=Color.BLUE_GREY,
+            sprite=DataFiles.sprites["shipyard"],
             callback=open_overlay_factory(self.SHIPYARD),
             active=True
         )
+
         self.open_gear_lab_overlay_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(3/6), bottom=BOTTOM_OF_SCREEN),
+            rect=get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=screen_x(4/6),
+                bottom=BOTTOM_OF_SCREEN
+            ),
             color=Color.BLUE_GREY,
-            text="gear lab",
-            text_color=Color.WHITE,
+            sprite=DataFiles.sprites["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
             active=False
-        )
-        self.open_intel_center_overlay_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(4/6), bottom=BOTTOM_OF_SCREEN),
-            color=Color.BLUE_GREY,
-            text="intel center",
-            text_color=Color.WHITE,
-            callback=open_overlay_factory(self.INTEL_CENTER),
         )
 
         self.overlay_bg = get_rect(width=600, height=400, centerx=screen_x(0.5), centery=screen_y(0.5))
@@ -159,10 +172,13 @@ class PortMenu:
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
 
         self.open_select_sortie_menu_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(5/6), bottom=BOTTOM_OF_SCREEN),
+            rect=get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=screen_x(5/6),
+                bottom=BOTTOM_OF_SCREEN
+            ),
             color=Color.BLUE_GREY,
-            text="sortie",
-            text_color=Color.WHITE,
+            sprite=DataFiles.sprites["sortie"],
             callback=open_select_sortie_menu,
             active=False
         )

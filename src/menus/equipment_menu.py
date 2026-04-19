@@ -41,10 +41,9 @@ class EquipmentMenu:
             self.selected_shipgirl = None
 
         self.exit_equipment_menu_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT,right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT,right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
             color=Color.BLUE_GREY,
-            text="go back",
-            text_color=Color.WHITE,
+            sprite=DataFiles.sprites["port"],
             callback=exit_equipment_menu
         )
 

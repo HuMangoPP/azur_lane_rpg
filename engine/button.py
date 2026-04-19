@@ -1,9 +1,10 @@
 import pygame
 
 class Button:
-    def __init__(self, rect, color, text, text_color, callback, active=True):
+    def __init__(self, rect, color=None, sprite=None, text=None, text_color=None, callback=None, active=True):
         self.active = active
         self.rect = rect
+        self.sprite = sprite
         self.color = color
         self.text = text
         self.text_color = text_color
@@ -23,4 +24,7 @@ class Button:
             return
         
         pygame.draw.rect(screen, self.color, self.rect)
-        font.render(screen, self.text, self.rect.center, self.text_color, 1, style="center")
+        if self.sprite is not None:
+            screen.blit(self.sprite, self.rect)
+        if self.text is not None:
+            font.render(screen, self.text, self.rect.center, self.text_color, 1, style="center")

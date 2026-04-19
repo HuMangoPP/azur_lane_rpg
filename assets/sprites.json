@@ -35,5 +35,12 @@
 
 	"DD": { "left": 256, "top": 0, "width": 64, "height": 64 },
 	"CA": { "left": 256, "top": 64, "width": 64, "height": 64 },
-	"BB": { "left": 256, "top": 128, "width": 64, "height": 64 }
+	"BB": { "left": 256, "top": 128, "width": 64, "height": 64 },
+
+	"depot": { "left": 320, "top": 0, "width": 64, "height": 64 },
+	"shipyard": { "left": 320, "top": 64, "width": 64, "height": 64 },
+	"gear_lab": { "left": 320, "top": 128, "width": 64, "height": 64 },
+	"sortie": { "left": 320, "top": 192, "width": 64, "height": 64 },
+	"intel_center": { "left": 320, "top": 256, "width": 64, "height": 64 },
+	"port": { "left": 320, "top": 320, "width": 64, "height": 64 }
 }
