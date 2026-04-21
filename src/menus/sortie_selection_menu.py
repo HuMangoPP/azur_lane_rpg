@@ -3,7 +3,7 @@ import pygame
 from engine.util import get_rect, pixel_to_hex, hex_to_pixel, get_cluster_edges
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Box, TOP_OF_SCREEN, RIGHT_OF_SCREEN, screen_x, screen_y
+from src.constants import DataFiles, Color, Box, screen_x, screen_y
 
 class SortieNode:
     SIZE = 50
@@ -107,7 +107,7 @@ class SortieSelectionMenu:
             self.menu_manager.current_menu = self.menu_manager.port_menu
 
         self.exit_sortie_selection_menu_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
             sprite=DataFiles.sprites["port"],
             callback=exit_sortie_selection_menu
         )

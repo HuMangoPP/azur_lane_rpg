@@ -17,11 +17,11 @@ class Box:
 
     PADDING = 8
 
-EDGE_PADDING = 20
-LEFT_OF_SCREEN = screen_x(0) + EDGE_PADDING
-RIGHT_OF_SCREEN = screen_x(1) - EDGE_PADDING
-TOP_OF_SCREEN = screen_y(0) + EDGE_PADDING
-BOTTOM_OF_SCREEN = screen_y(1) - EDGE_PADDING
+    EDGE_PADDING = 32
+    LEFT_OF_SCREEN = screen_x(0) + EDGE_PADDING
+    RIGHT_OF_SCREEN = screen_x(1) - EDGE_PADDING
+    TOP_OF_SCREEN = screen_y(0) + EDGE_PADDING
+    BOTTOM_OF_SCREEN = screen_y(1) - EDGE_PADDING
 
 class Color:
     WHITE = (255,255,255)

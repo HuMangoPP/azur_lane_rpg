@@ -3,7 +3,7 @@ import pygame
 from engine.util import get_rect
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Stats, Box, BOTTOM_OF_SCREEN, screen_x, screen_y
+from src.constants import DataFiles, Color, Stats, Box, screen_x, screen_y
 from src.shipgirls import Shipgirl
 
 class PortMenu:
@@ -31,7 +31,7 @@ class PortMenu:
             rect=get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(1/6),
-                bottom=BOTTOM_OF_SCREEN
+                bottom=Box.BOTTOM_OF_SCREEN
             ),
             sprite=DataFiles.sprites["depot"],
             callback=open_overlay_factory(self.DEPOT),
@@ -40,7 +40,7 @@ class PortMenu:
             rect=get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(2/6),
-                bottom=BOTTOM_OF_SCREEN
+                bottom=Box.BOTTOM_OF_SCREEN
             ),
             sprite=DataFiles.sprites["intel_center"],
             callback=open_overlay_factory(self.INTEL_CENTER),
@@ -49,7 +49,7 @@ class PortMenu:
             rect=get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(3/6),
-                bottom=BOTTOM_OF_SCREEN
+                bottom=Box.BOTTOM_OF_SCREEN
             ),
             sprite=DataFiles.sprites["shipyard"],
             callback=open_overlay_factory(self.SHIPYARD),
@@ -60,14 +60,27 @@ class PortMenu:
             rect=get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(4/6),
-                bottom=BOTTOM_OF_SCREEN
+                bottom=Box.BOTTOM_OF_SCREEN
             ),
             sprite=DataFiles.sprites["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
             active=False
         )
 
-        self.overlay_bg = get_rect(width=600, height=400, centerx=screen_x(0.5), centery=screen_y(0.5))
+        overlay_bg_width = (
+            3*Box.PADDING # padding
+            + 3*Box.WIDTH + 4*Box.PADDING # right panel
+            + 4*Box.WIDTH + 5*Box.PADDING # left panel
+        )
+        overlay_bg_height = (
+            2*Box.PADDING # padding
+            + Box.HEIGHT # filters
+            + 4*Box.HEIGHT + 5*Box.PADDING # left panel
+        )
+        self.overlay_bg = get_rect(
+            width=overlay_bg_width, height=overlay_bg_height,
+            centerx=screen_x(0.5), centery=screen_y(0.5)
+        )
         self.overlay_right_panel = get_rect(
             width=3*Box.WIDTH + 4*Box.PADDING,
             height=self.overlay_bg.height-2*Box.PADDING,
@@ -75,8 +88,8 @@ class PortMenu:
             top=self.overlay_bg.top+Box.PADDING
         )
         self.overlay_left_panel = get_rect(
-            width=self.overlay_bg.width-self.overlay_right_panel.width-3*Box.PADDING,
-            height=self.overlay_bg.height-2*Box.PADDING-Box.HEIGHT,
+            width=4*Box.WIDTH + 5*Box.PADDING,
+            height=4*Box.HEIGHT + 5*Box.PADDING,
             left=self.overlay_bg.left+Box.PADDING,
             bottom=self.overlay_bg.bottom-Box.PADDING
         )
@@ -171,7 +184,7 @@ class PortMenu:
             rect=get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(5/6),
-                bottom=BOTTOM_OF_SCREEN
+                bottom=Box.BOTTOM_OF_SCREEN
             ),
             sprite=DataFiles.sprites["sortie"],
             callback=open_select_sortie_menu,
@@ -466,8 +479,8 @@ class PortMenu:
                 "EVA": selected_entity_info.get("evasion"),
                 "FP": selected_entity_info.get("firepower"),
                 "RLD": selected_entity_info.get("reload"),
-                "TARGET": selected_entity_info.get("target_pref"),
-                "EXP": selected_entity_info.get("exp"),
+                # "TARGET": selected_entity_info.get("target_pref"),
+                # "EXP": selected_entity_info.get("exp"),
             }
         else:
             drop_icons = []

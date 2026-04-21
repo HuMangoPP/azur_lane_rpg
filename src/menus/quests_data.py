@@ -28,7 +28,7 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
 
     if text is not None:
         text_scale = 1
-        text_width = 4*Box.WIDTH - Box.PADDING
+        text_width = 8*Box.WIDTH - Box.PADDING
         text_height = font.get_height(text, text_scale, text_width)
         text_box_width = font.get_width(text, text_scale, text_width)
         text_rect = get_rect(

@@ -39,7 +39,8 @@ class QuestManager:
                 top=Box.PADDING + (Box.HEIGHT + Box.PADDING) * i
             )
             pygame.draw.rect(surface, Color.WHITE, rect, Box.OUTLINE_WIDTH)
-            surface.blit(DataFiles.sprites["TB"], rect)
+            if "TB" in DataFiles.sprites:
+                surface.blit(DataFiles.sprites["TB"], rect)
 
             textpos = (rect.right + Box.PADDING, rect.centery - Box.PADDING/2)
             if not quest.started:
@@ -117,14 +118,15 @@ class Quest:
         center = pygame.Vector2(self.next_button.center)
         polygon = [
             center + get_vec(self.next_button.width/2, 0),
-            center + get_vec(self.next_button.width/2, math.radians(120)),
-            center + get_vec(self.next_button.width/2, math.radians(240))
+            center + get_vec(self.next_button.width/2, math.radians(135)),
+            center + get_vec(self.next_button.width/2, math.radians(225))
         ]
         pygame.draw.polygon(surface, Color.BLUE, polygon)
+        pygame.draw.polygon(surface, Color.DARK_BLUE, polygon, width=Box.OUTLINE_WIDTH)
         font.render(
             surface,
             "next",
-            center,
+            self.next_button.center,
             Color.WHITE,
             1,
             style="center",

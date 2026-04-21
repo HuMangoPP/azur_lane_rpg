@@ -3,7 +3,7 @@ import pygame
 from engine.util import get_rect
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Box, RIGHT_OF_SCREEN, TOP_OF_SCREEN, BOTTOM_OF_SCREEN, screen_x, screen_y
+from src.constants import DataFiles, Color, Box, screen_x, screen_y
 
 from live2d.live2d import Live2D
 
@@ -27,7 +27,7 @@ class FleetSelectionMenu:
             self.menu_manager.encounter_menu.begin_sortie()
 
         self.start_sortie_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), bottom=BOTTOM_OF_SCREEN),
+            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), bottom=Box.BOTTOM_OF_SCREEN),
             color=Color.BLUE_GREY,
             text="start",
             text_color=Color.WHITE,
@@ -39,7 +39,7 @@ class FleetSelectionMenu:
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
         
         self.exit_fleet_selection_menu_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
             sprite=DataFiles.sprites["port"],
             callback=exit_fleet_selection_menu
         )

@@ -5,7 +5,7 @@ import pygame
 from engine.util import get_rect, get_vec
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Box, RIGHT_OF_SCREEN, TOP_OF_SCREEN, screen_x, screen_y
+from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.shipgirls import Shipgirl
 from src.menus.quests_data import construct_shipgirl_quest, craft_weapon_quest
 
@@ -53,7 +53,7 @@ class EncounterMenu:
             self.begin_encounter()
 
         self.next_encounter_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, centery=screen_y(0.5)),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, centery=screen_y(0.5)),
             color=Color.BLUE_GREY,
             text="next",
             text_color=Color.WHITE,
@@ -74,7 +74,7 @@ class EncounterMenu:
             self.open_reward_cache_button.active = False
             self.return_to_port_button.active = True
         
-        self.open_reward_cache_button = Button(
+        self.open_reward_cache_button = Button( # TODO make sprite
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), centery=screen_y(0.5)),
             color=Color.BLUE_GREY,
             text="cache",
@@ -102,7 +102,7 @@ class EncounterMenu:
             self.menu_manager.encounter_menu.return_to_port_button.active = False
 
         self.return_to_port_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.5), centery=screen_y(0.5)),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.5), centery=screen_y(0.75)),
             sprite=DataFiles.sprites["port"],
             callback=return_to_port,
             active=False
@@ -114,7 +114,7 @@ class EncounterMenu:
             self.menu_manager.player_fleet.end_encounter()        
         
         self.retreat_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
             sprite=DataFiles.sprites["port"],
             callback=retreat
         )

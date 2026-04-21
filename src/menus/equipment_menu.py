@@ -5,7 +5,7 @@ import pygame
 from engine.util import get_rect, get_vec
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Equipment, Stats, Box, RIGHT_OF_SCREEN, TOP_OF_SCREEN, screen_x, screen_y
+from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x, screen_y
 
 from live2d.live2d import Live2D
 
@@ -41,7 +41,7 @@ class EquipmentMenu:
             self.selected_shipgirl = None
 
         self.exit_equipment_menu_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT,right=RIGHT_OF_SCREEN, top=TOP_OF_SCREEN),
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT,right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
             sprite=DataFiles.sprites["port"],
             callback=exit_equipment_menu
         )
