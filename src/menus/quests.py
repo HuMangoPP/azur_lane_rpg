@@ -122,16 +122,7 @@ class Quest:
             center + get_vec(self.next_button.width/2, math.radians(225))
         ]
         pygame.draw.polygon(surface, Color.BLUE, polygon)
-        pygame.draw.polygon(surface, Color.DARK_BLUE, polygon, width=Box.OUTLINE_WIDTH)
-        font.render(
-            surface,
-            "next",
-            self.next_button.center,
-            Color.WHITE,
-            1,
-            style="center",
-            outline_color=Color.BLACK
-        )
+        font.render(surface, "next", self.next_button.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         text = self.dialogue_texts[self.dialogue_index]
         text_width = self.DIALOGUE_BOX.width - 2*Box.PADDING

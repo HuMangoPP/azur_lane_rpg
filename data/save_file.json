@@ -10,7 +10,11 @@
 		}
 	},
 	"equipment": {},
-	"inventory": {},
+	"inventory": {"DD_blueprint": 1,
+			"metals": 1,
+			"plastics": 1,
+			"gunpowder": 1,
+			"electronics": 1},
 	"research_target": null,
 	"research_progress": 0,
 	"sortie_progress": 0,

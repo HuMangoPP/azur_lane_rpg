@@ -235,7 +235,7 @@ class PortMenu:
     def draw_inventory_overlay(self, surface, font):
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_bg)
 
-        num_items_in_row = (self.overlay_bg.width - 2*Box.PADDING) // Box.WIDTH
+        num_items_in_row = (self.overlay_bg.width - 2*Box.PADDING) // Box.WIDTH - 1
         padding = (self.overlay_bg.width - 2*Box.PADDING - num_items_in_row*Box.WIDTH) / (num_items_in_row-1)
         item_index = 0
         for item, count in DataFiles.save_file["inventory"].items():
