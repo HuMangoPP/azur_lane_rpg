@@ -23,8 +23,16 @@ class PortMenu:
                 self.current_overlay = overlay_enum
 
                 if overlay_enum == self.SHIPYARD and DataFiles.save_file["research_target"] is not None:
-                    self.overlay_confirm_button.active = True
                     self.overlay_selected_entity = DataFiles.save_file["research_target"]
+                    self.overlay_confirm_button.active = True
+                    unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
+                    if unique_item in DataFiles.save_file["inventory"]:
+                        self.overlay_confirm_button.sprite = DataFiles.sprites["gear_lab"]
+                        self.overlay_confirm_button.text = "construct"
+                    else:
+                        self.overlay_confirm_button.sprite = DataFiles.sprites["research"]
+                        self.overlay_confirm_button.text = "research"
+
             return open_overlay
 
         self.open_depot_overlay_button = Button(
@@ -33,6 +41,7 @@ class PortMenu:
                 centerx=screen_x(1/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
+            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["depot"],
             callback=open_overlay_factory(self.DEPOT),
         )
@@ -42,6 +51,7 @@ class PortMenu:
                 centerx=screen_x(2/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
+            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["intel_center"],
             callback=open_overlay_factory(self.INTEL_CENTER),
         )
@@ -51,9 +61,10 @@ class PortMenu:
                 centerx=screen_x(3/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
+            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["shipyard"],
             callback=open_overlay_factory(self.SHIPYARD),
-            active=False
+            # active=False
         )
 
         self.open_gear_lab_overlay_button = Button(
@@ -62,15 +73,16 @@ class PortMenu:
                 centerx=screen_x(4/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
+            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
-            active=False
+            # active=False
         )
 
         overlay_bg_width = (
             3*Box.PADDING # padding
             + 3*Box.WIDTH + 4*Box.PADDING # right panel
-            + 4*Box.WIDTH + 5*Box.PADDING # left panel
+            + 5*Box.WIDTH + 6*Box.PADDING # left panel
         )
         overlay_bg_height = (
             2*Box.PADDING # padding
@@ -88,22 +100,24 @@ class PortMenu:
             top=self.overlay_bg.top+Box.PADDING
         )
         self.overlay_left_panel = get_rect(
-            width=4*Box.WIDTH + 5*Box.PADDING,
+            width=5*Box.WIDTH + 6*Box.PADDING,
             height=4*Box.HEIGHT + 5*Box.PADDING,
             left=self.overlay_bg.left+Box.PADDING,
             bottom=self.overlay_bg.bottom-Box.PADDING
         )
 
+        num_filter_rects = 5
+        filter_rect_padding = (self.overlay_left_panel.width - num_filter_rects*Box.WIDTH) / (num_filter_rects-1)
         self.overlay_filter_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.overlay_left_panel.left+i*(Box.WIDTH+Box.PADDING),
+                left=self.overlay_left_panel.left+i*(Box.WIDTH+filter_rect_padding),
                 bottom=self.overlay_left_panel.top
             ) for i in range(5)
         ]
         self.selected_overlay_filter = None
         self.shipgirl_filters = ["USS", "HMS", "IJN", "KMS"]
-        self.equipment_filters = ["AUX", "DD", "CL", "CA", "BB"]
+        self.equipment_filters = ["DD", "CL", "CA", "BB", "AUX"]
         self.siren_filters = ["DD", "CA", "BB"]
 
         num_icons_per_row = (self.overlay_left_panel.width-Box.PADDING) // (Box.WIDTH+Box.PADDING)
@@ -170,7 +184,8 @@ class PortMenu:
                 bottom=self.overlay_right_panel.bottom-Box.PADDING
             ),
             color=Color.BLUE_GREY,
-            text="confirm",
+            text=None,
+            text_pos=(0.66,0.5),
             text_color=Color.WHITE,
             callback=overlay_confirm,
             active=False
@@ -186,9 +201,10 @@ class PortMenu:
                 centerx=screen_x(5/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
+            color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["sortie"],
             callback=open_select_sortie_menu,
-            active=False
+            # active=False
         )
 
         self.update_encountered_sirens()
@@ -264,6 +280,18 @@ class PortMenu:
             if rect.collidepoint(mouseup_event.pos):
                 self.overlay_selected_entity = entity
                 self.overlay_confirm_button.active = activate_confirm_button
+
+                if self.current_overlay == self.SHIPYARD:
+                    unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
+                    if unique_item in DataFiles.save_file["inventory"]:
+                        self.overlay_confirm_button.sprite = DataFiles.sprites["gear_lab"]
+                        self.overlay_confirm_button.text = "construct"
+                    else:
+                        self.overlay_confirm_button.sprite = DataFiles.sprites["research"]
+                        self.overlay_confirm_button.text = "research"
+                else:
+                    self.overlay_confirm_button.sprite = DataFiles.sprites["gear_lab"]
+                    self.overlay_confirm_button.text = "construct"
         
         for i, (cat, rect) in enumerate(zip(entity_filters, self.overlay_filter_rects)):
             if rect.collidepoint(mouseup_event.pos):
@@ -406,7 +434,7 @@ class PortMenu:
     def draw_gear_lab_overlay(self, surface, font):
         if self.selected_overlay_filter is None:
             equipment = [equip for equip in DataFiles.equipment_data]
-        elif self.selected_overlay_filter == 0: # TODO
+        elif self.selected_overlay_filter == 4: # TODO
             equipment = [
                 equip for equip, equip_data in DataFiles.equipment_data.items()
                 if equip_data["type"] == "aux"
@@ -456,7 +484,7 @@ class PortMenu:
                         siren for siren in self.encountered_sirens
                         if self.siren_filters[self.selected_overlay_filter] == siren # TODO
                     ]
-                self.overlay_mouseup_logic(event, encountered_sirens, self.siren_filters, True)
+                self.overlay_mouseup_logic(event, encountered_sirens, self.siren_filters, False)
 
     def draw_intel_center_overlay(self, surface, font):
         if self.selected_overlay_filter is None:

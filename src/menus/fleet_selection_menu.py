@@ -29,7 +29,9 @@ class FleetSelectionMenu:
         self.start_sortie_button = Button(
             rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), bottom=Box.BOTTOM_OF_SCREEN),
             color=Color.BLUE_GREY,
+            sprite=DataFiles.sprites["start_sortie"],
             text="start",
+            text_pos=(0.66,0.5),
             text_color=Color.WHITE,
             callback=start_sortie,
             active=False
@@ -38,9 +40,13 @@ class FleetSelectionMenu:
         def exit_fleet_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
         
+        button_sprite = DataFiles.sprites["prev"]
+        button_rect = button_sprite.get_rect()
+        button_rect.right = Box.RIGHT_OF_SCREEN
+        button_rect.top = Box.TOP_OF_SCREEN
         self.exit_fleet_selection_menu_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
-            sprite=DataFiles.sprites["port"],
+            rect=button_rect,
+            sprite=button_sprite,
             callback=exit_fleet_selection_menu
         )
 

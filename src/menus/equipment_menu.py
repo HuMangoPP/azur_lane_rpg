@@ -40,11 +40,11 @@ class EquipmentMenu:
 
             self.selected_shipgirl = None
 
-        self.exit_equipment_menu_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT,right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
-            sprite=DataFiles.sprites["port"],
-            callback=exit_equipment_menu
-        )
+        button_sprite = DataFiles.sprites["prev"]
+        button_rect = button_sprite.get_rect()
+        button_rect.right = Box.RIGHT_OF_SCREEN
+        button_rect.top = Box.TOP_OF_SCREEN
+        self.exit_equipment_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_equipment_menu)
 
         self.stat_text_xy = [
             pygame.Vector2(screen_x(0.25)-Box.WIDTH/2, Box.HEIGHT/2+Box.PADDING*(2+1.5*i)+screen_y(0.5))

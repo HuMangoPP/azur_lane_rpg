@@ -97,7 +97,9 @@ class SortieSelectionMenu:
         self.start_sortie_button = Button(
             rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, top=0, left=0),
             color=Color.BLUE_GREY,
+            sprite=DataFiles.sprites["start_sortie"],
             text="sortie",
+            text_pos=(0.66,0.5),
             text_color=Color.WHITE,
             callback=start_sortie,
             active=False
@@ -106,11 +108,11 @@ class SortieSelectionMenu:
         def exit_sortie_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
 
-        self.exit_sortie_selection_menu_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
-            sprite=DataFiles.sprites["port"],
-            callback=exit_sortie_selection_menu
-        )
+        button_sprite = DataFiles.sprites["prev"]
+        button_rect = button_sprite.get_rect()
+        button_rect.right = Box.RIGHT_OF_SCREEN
+        button_rect.top = Box.TOP_OF_SCREEN
+        self.exit_sortie_selection_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_sortie_selection_menu)
 
     def update(self, dt, events):
         for event in events:

@@ -52,14 +52,11 @@ class EncounterMenu:
             self.current_encounter += 1
             self.begin_encounter()
 
-        self.next_encounter_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, centery=screen_y(0.5)),
-            color=Color.BLUE_GREY,
-            text="next",
-            text_color=Color.WHITE,
-            callback=next_encounter,
-            active=False
-        )
+        button_sprite = DataFiles.sprites["next"]
+        button_rect = button_sprite.get_rect()
+        button_rect.right = Box.RIGHT_OF_SCREEN
+        button_rect.centery = screen_y(0.5)
+        self.next_encounter_button = Button(rect=button_rect,sprite=button_sprite,callback=next_encounter,active=False)
 
         def open_reward_cache():
             if self.current_sortie == DataFiles.save_file["sortie_progress"]:
@@ -74,14 +71,10 @@ class EncounterMenu:
             self.open_reward_cache_button.active = False
             self.return_to_port_button.active = True
         
-        self.open_reward_cache_button = Button( # TODO make sprite
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), centery=screen_y(0.5)),
-            color=Color.BLUE_GREY,
-            text="cache",
-            text_color=Color.WHITE,
-            callback=open_reward_cache,
-            active=False
-        )
+        button_sprite = DataFiles.sprites["cache"]
+        button_rect = button_sprite.get_rect()
+        button_rect.center = (screen_x(0.75), screen_y(0.5))
+        self.open_reward_cache_button = Button(rect=button_rect,sprite=button_sprite,callback=open_reward_cache,active=False)
 
         def return_to_port():
             new_sortie_progress = self.current_sortie + 1
@@ -101,23 +94,21 @@ class EncounterMenu:
 
             self.menu_manager.encounter_menu.return_to_port_button.active = False
 
-        self.return_to_port_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.5), centery=screen_y(0.75)),
-            sprite=DataFiles.sprites["port"],
-            callback=return_to_port,
-            active=False
-        )
+        button_sprite = DataFiles.sprites["port"]
+        button_rect = button_sprite.get_rect()
+        button_rect.center = (screen_x(0.5), screen_y(0.75))
+        self.return_to_port_button = Button(rect=button_rect,sprite=button_sprite,callback=return_to_port,active=False)
 
         def retreat():
             self.menu_manager.current_menu = self.menu_manager.port_menu
 
             self.menu_manager.player_fleet.end_encounter()        
         
-        self.retreat_button = Button(
-            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
-            sprite=DataFiles.sprites["port"],
-            callback=retreat
-        )
+        button_sprite = DataFiles.sprites["port"]
+        button_rect = button_sprite.get_rect()
+        button_rect.right = Box.RIGHT_OF_SCREEN
+        button_rect.top = Box.TOP_OF_SCREEN
+        self.retreat_button = Button(rect=button_rect,sprite=button_sprite,callback=retreat)
 
         self.end_sortie_text_pos = pygame.Vector2(screen_x(0.5), screen_y(0.25))
         self.encounter_end_flag = True

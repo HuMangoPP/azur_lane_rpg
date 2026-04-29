@@ -215,8 +215,8 @@ class Shipgirl:
         self.pause_time = 0
         if os.path.exists(f"live2d/{self.name}.json"):
             self.sprite = Live2D(f"live2d/{self.name}.json")
-        elif os.path.exists("live2d/laffey.json"):
-            self.sprite = Live2D("live2d/laffey.json")
+        elif os.path.exists("live2d/TB.json"):
+            self.sprite = Live2D("live2d/TB.json")
         else:
             self.sprite = None
         self.facing_left = False
