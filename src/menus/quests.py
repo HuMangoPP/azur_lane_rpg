@@ -59,7 +59,7 @@ class Quest:
         top=DIALOGUE_OVERLAY.top + Box.PADDING,
         left=DIALOGUE_OVERLAY.left + Box.PADDING
     )
-    def __init__(self, dialogue_texts, stop_index, completion_criteria, tutorial_draw, on_start, on_complete):
+    def __init__(self, dialogue_texts, stop_index, completion_criteria, tutorial_draw, on_start, on_complete, rewards={}):
         self.started = False
         self.completed = False
 
@@ -77,6 +77,8 @@ class Quest:
         self.tutorial_draw = tutorial_draw
         self.on_start = on_start
         self.on_complete = on_complete
+
+        self.rewards = rewards
     
     def start(self, menu_manager):
         if self.started:
@@ -92,6 +94,8 @@ class Quest:
             if self.completed:
                 if self.dialogue_index == len(self.dialogue_texts):
                     self.dialogue_index = len(self.dialogue_texts) - 1
+                    for reward, amt in self.rewards.items():
+                        DataFiles.save_file["inventory"][reward] = DataFiles.save_file["inventory"].get(reward, 0) + amt
                     return True
             else:
                 if self.dialogue_index == self.stop_index:

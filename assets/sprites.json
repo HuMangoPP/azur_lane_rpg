@@ -55,5 +55,10 @@
 	"max_hp": { "left": 320, "top": 384, "width": 32, "height": 32 },
 	"firepower": { "left": 320, "top": 416, "width": 32, "height": 32 },
 	"evasion": { "left": 352, "top": 384, "width": 32, "height": 32 },
-	"reload": { "left": 352, "top": 416, "width": 32, "height": 32 }
+	"reload": { "left": 352, "top": 416, "width": 32, "height": 32 },
+
+	"USS": { "left": 384, "top": 0, "width": 64, "height": 64 },
+	"HMS": { "left": 384, "top": 64, "width": 64, "height": 64 },
+	"IJN": { "left": 384, "top": 128, "width": 64, "height": 64 },
+	"KMS": { "left": 384, "top": 192, "width": 64, "height": 64 }
 }

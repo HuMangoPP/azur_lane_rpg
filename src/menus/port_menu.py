@@ -16,6 +16,29 @@ class PortMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
+        factions = ["USS", "HMS", "IJN", "KMS"]
+        def choose_faction_factory(faction):
+            def choose_faction():
+                DataFiles.save_file["unlocked_factions"].append(faction)
+                for choose_faction_button in self.choose_faction_buttons:
+                    choose_faction_button.active = False
+            return choose_faction
+        
+        self.choose_faction_buttons = [
+            Button(
+                rect=get_rect(
+                    width=Box.WIDTH, height=Box.HEIGHT,
+                    centerx=screen_x(0.5) + (i-2)*Box.WIDTH+(i-1.5)*Box.PADDING,
+                    centery=screen_y(0.5)
+                ),
+                color=Color.BLUE_GREY,
+                sprite=DataFiles.sprites[faction],
+                callback=choose_faction_factory(faction),
+                active=False
+            )
+            for i, faction in enumerate(factions)
+        ]
+
         self.current_overlay = self.NO_OVERLAY
 
         def open_overlay_factory(overlay_enum):
@@ -44,6 +67,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["depot"],
             callback=open_overlay_factory(self.DEPOT),
+            active=False
         )
         self.open_intel_center_overlay_button = Button(
             rect=get_rect(
@@ -54,6 +78,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["intel_center"],
             callback=open_overlay_factory(self.INTEL_CENTER),
+            active=False
         )
         self.open_shipyard_overlay_button = Button(
             rect=get_rect(
@@ -64,7 +89,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["shipyard"],
             callback=open_overlay_factory(self.SHIPYARD),
-            # active=False
+            active=False
         )
 
         self.open_gear_lab_overlay_button = Button(
@@ -76,7 +101,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
-            # active=False
+            active=False
         )
 
         overlay_bg_width = (
@@ -127,7 +152,7 @@ class PortMenu:
                 width=Box.WIDTH, height=Box.HEIGHT,
                 left=self.overlay_left_panel.left+Box.PADDING+(i%num_icons_per_row)*(Box.WIDTH+icon_padding),
                 top=self.overlay_left_panel.top+Box.PADDING+(i//num_icons_per_row)*(Box.HEIGHT+icon_padding)
-            ) for i in range(18)
+            ) for i in range(16)
         ]
 
         self.overlay_right_name = pygame.Vector2(
@@ -168,6 +193,7 @@ class PortMenu:
                     for ingredient, req in selected_entity_reqs.items():
                         DataFiles.save_file["inventory"][ingredient] -= req
                     DataFiles.save_file["research_target"] = None
+                    self.overlay_selected_entity = None
                 else:
                     DataFiles.save_file["research_target"] = self.overlay_selected_entity
             elif self.current_overlay == self.GEAR_LAB:
@@ -204,7 +230,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["sortie"],
             callback=open_select_sortie_menu,
-            # active=False
+            active=False
         )
 
         self.update_encountered_sirens()
@@ -247,6 +273,9 @@ class PortMenu:
                 self.open_shipyard_overlay_button.click(event.pos)
                 self.open_gear_lab_overlay_button.click(event.pos)
                 self.open_intel_center_overlay_button.click(event.pos)
+
+                for choose_faction_button in self.choose_faction_buttons:
+                    choose_faction_button.click(event.pos)
 
     def draw_inventory_overlay(self, surface, font):
         pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_bg)
@@ -356,13 +385,15 @@ class PortMenu:
 
                 if self.selected_overlay_filter is None:
                     shipgirls = [
-                        shipgirl for shipgirl in DataFiles.shipgirl_data
+                        shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
                         if shipgirl not in DataFiles.save_file["shipgirls"]
+                        and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
                     ]
                 else:
                     shipgirls = [
                         shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
                         if shipgirl not in DataFiles.save_file["shipgirls"]
+                        and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
                         and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
                     ]
                 self.overlay_mouseup_logic(event, shipgirls, self.shipgirl_filters, True)
@@ -371,13 +402,15 @@ class PortMenu:
     def draw_shipyard_overlay(self, surface, font):
         if self.selected_overlay_filter is None:
             shipgirls = [
-                shipgirl for shipgirl in DataFiles.shipgirl_data
+                shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
                 if shipgirl not in DataFiles.save_file["shipgirls"]
+                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
             ]
         else:
             shipgirls = [
                 shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
                 if shipgirl not in DataFiles.save_file["shipgirls"]
+                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
                 and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
             ]
         if self.overlay_selected_entity:
@@ -561,3 +594,5 @@ class PortMenu:
             self.overlay_confirm_button.draw(surface, font)
     
         self.menu_manager.quest_manager.draw(surface, font)
+        for choose_faction_button in self.choose_faction_buttons:
+            choose_faction_button.draw(surface, font)

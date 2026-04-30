@@ -8,7 +8,7 @@ class Button:
         self.color = color
         self.text = text
         if text_pos is None:
-            self.text_pos = self.rect.center
+            self.text_pos = (self.rect.width/2, self.rect.height/2)
         else:
             self.text_pos = (
                 self.rect.width * text_pos[0],

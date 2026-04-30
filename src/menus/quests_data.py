@@ -63,10 +63,135 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
             box_width=text_width
         )
 
+choose_faction_dialogue_texts = [
+    "Hello commander, welcome to the Azur Lane port.",
+    "I am your virtual assistant. You may call me TB.",
+    "First things first, we will need to choose our faction.",
+    "Choose a faction.",
+    "We've successfully chosen a faction!"
+]
+choose_faction_stop_index = 4
+
+def choose_faction_completion_criteria(menu_manager):
+    return len(DataFiles.save_file["unlocked_factions"]) > 0
+
+def choose_faction_tutorial_draw(menu_manager, surface, font):
+    pass
+
+def choose_faction_on_start(menu_manager):
+    for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
+        choose_faction_button.active = True
+
+def choose_faction_on_complete(menu_manager):
+    quest_name = "construct_shipgirls"
+    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
+
+choose_faction_rewards = {
+    "DD_blueprint": 1,
+    "BB_blueprint": 1,
+    "wisdom_cube": 2,
+    "huggy_pillow": 1,
+    "dragon_cannon": 1,
+}
+
+choose_faction_quest = Quest(
+    choose_faction_dialogue_texts,
+    choose_faction_stop_index,
+    choose_faction_completion_criteria,
+    choose_faction_tutorial_draw,
+    choose_faction_on_start,
+    choose_faction_on_complete,
+    rewards=choose_faction_rewards
+)
+
+construct_shipgirls_dialogue_texts = [
+    "We should construct some shipgirls to join our fleet.",
+    "Construct Laffey and New Jersey.",
+    "Laffey and New Jersey have joined our fleet!"
+]
+construct_shipgirls_stop_index = 2
+
+def construct_shipgirls_completion_criteria(menu_manager):
+    return (
+        "laffey" in DataFiles.save_file["shipgirls"]
+        and "new_jersey" in DataFiles.save_file["shipgirls"]
+    )
+
+def construct_shipgirls_tutorial_draw(menu_manager, surface, font):
+    if menu_manager.current_menu != menu_manager.port_menu:
+        return
+    
+    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        button_rect = menu_manager.port_menu.open_shipyard_overlay_button.rect
+        rect = get_rect(
+            width=button_rect.width + 2*Box.PADDING,
+            height=button_rect.height + 2*Box.PADDING,
+            center=button_rect.center
+        )
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        draw_tb(surface, font, None, rect.topright, True, False)
+    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
+        if menu_manager.port_menu.selected_overlay_filter is None:
+            shipgirl_data = {
+                shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+                if shipgirl not in DataFiles.save_file["shipgirls"]
+                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
+            }
+        else:
+            shipgirl_data = {
+                shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+                if shipgirl not in DataFiles.save_file["shipgirls"]
+                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
+                and shipgirl_info["faction"] == menu_manager.port_menu.shipgirl_filters[menu_manager.port_menu.selected_overlay_filter]
+            }
+
+        for i, (shipgirl, shipgirl_info) in enumerate(shipgirl_data.items()):
+            if shipgirl in DataFiles.save_file["shipgirls"]:
+                continue
+            if shipgirl_info["faction"] not in DataFiles.save_file["unlocked_factions"]:
+                continue
+            if shipgirl_info["hull_type"] not in ["DD", "BB"]:
+                continue
+
+            rect = menu_manager.port_menu.overlay_left_icons[i]
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+            draw_tb(surface, font, None, rect.bottomleft, False, True)
+        
+        if menu_manager.port_menu.overlay_selected_entity in ["laffey", "new_jersey"]:
+            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+            draw_tb(surface, font, None, rect.bottomright, False, False)
+
+def construct_shipgirls_on_start(menu_manager):
+    menu_manager.port_menu.open_shipyard_overlay_button.active = True
+
+def construct_shipgirls_on_complete(menu_manager):
+    quest_name = "first_sortie"
+    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
+
+construct_shipgirls_quest = Quest(
+    construct_shipgirls_dialogue_texts,
+    construct_shipgirls_stop_index,
+    construct_shipgirls_completion_criteria,
+    construct_shipgirls_tutorial_draw,
+    construct_shipgirls_on_start,
+    construct_shipgirls_on_complete
+)
+
 first_sortie_dialogue_texts = [
-    "it's time to set sail!",
-    "sortie into zone 1",
-    "we've successfully controlled zone 1!"
+    "Now it's time to go on a sortie.",
+    "Sortie into zone 1.",
+    "We've successfully controlled zone 1!"
 ]
 first_sortie_stop_index = 2
 
@@ -167,7 +292,7 @@ def first_sortie_on_start(menu_manager):
 
 def first_sortie_on_complete(menu_manager):
     quest_name = "research_shipgirl"
-    menu_manager.quest_manager.quests[quest_name] = research_shipgirl_quest
+    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
 
@@ -181,10 +306,10 @@ first_sortie_quest = Quest(
 )
 
 research_shipgirl_dialogue_texts = [
-    "let's research a new shipgirl!",
-    "go to the shipyard and start research on guam",
-    "collect combat data during sorties to research new shipgirls",
-    "let's sortie into zone 2 to collect combat data"
+    "We can research a new shipgirl.",
+    "Go to the research and start researching Guam.",
+    "Let's sortie into zone 2 to collect combat data.",
+    "Collecting combat data contributes towards obtaining the shipgirl's unique item."
 ]
 research_shipgirl_stop_index = 2
 
@@ -243,15 +368,15 @@ research_shipgirl_quest = Quest(
 )
 
 construct_shipgirl_dialogue_texts = [
-    "we've collected enough combat data to construct guam!",
-    "go to the shipyard and construct guam",
-    "guam has joined our port!",
-    "let's add her to our fleet and sortie into zone 3"
+    "We've collected enough combat data and obtained Guam's unique item!",
+    "Go to the shipyard and construct Guam.",
+    "Guam has joined our port!",
+    "Let's add her to our fleet and sortie into zone 3."
 ]
 construct_shipgirl_stop_index = 2
 
 def construct_shipgirl_completion_criteria(menu_manager):
-    return menu_manager.available_shipgirls[-1].name == "guam"
+    return "guam" in DataFiles.save_file["shipgirls"]
 
 def construct_shipgirl_tutorial_draw(menu_manager, surface, font):
     if menu_manager.current_menu != menu_manager.port_menu:
@@ -305,9 +430,9 @@ construct_shipgirl_quest = Quest(
 )
 
 craft_weapon_dialogue_texts = [
-    "we've collected enough materials to craft a new gun!",
-    "go to the gear lab and craft a new DD gun",
-    "we've crafted a new gun!"
+    "We've collected enough materials to craft a new gun!",
+    "Go to the gear lab and craft a new DD gun.",
+    "We've crafted a new gun!"
 ]
 craft_weapon_stop_index = 2
 
@@ -355,7 +480,7 @@ def craft_weapon_on_start(menu_manager):
 
 def craft_weapon_on_complete(menu_manager):
     quest_name = "equip_weapon"
-    menu_manager.quest_manager.quests[quest_name] = equip_weapon_quest
+    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
 
@@ -369,10 +494,10 @@ craft_weapon_quest = Quest(
 )
 
 equip_weapon_dialogue_texts = [
-    "since we just crafted a new weapon, we should equip it",
-    "equip laffey with the new gun",
-    "laffey is now stronger!",
-    "let's sortie into the new zone to test it out!"
+    "Since we just crafted a new gun, we should equip it.",
+    "Equip the new gun onto Laffey.",
+    "Now Laffey is stronger!",
+    "Let's sortie into the new zone!"
 ]
 equip_weapon_stop_index = 2
 
@@ -426,6 +551,8 @@ equip_weapon_quest = Quest(
 )
 
 quests = {
+    "choose_faction": choose_faction_quest,
+    "construct_shipgirls": construct_shipgirls_quest,
     "first_sortie": first_sortie_quest,
     "research_shipgirl": research_shipgirl_quest,
     "construct_shipgirl": construct_shipgirl_quest,

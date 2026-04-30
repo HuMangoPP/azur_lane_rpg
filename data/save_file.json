@@ -1,24 +1,12 @@
 {
-	"shipgirls": {
-		"laffey": {
-			"equipment": [null, null, null],
-			"exp": 0
-		},
-		"new_jersey": {
-			"equipment": [null, null, null],
-			"exp": 0
-		}
-	},
+	"unlocked_factions": [],
+	"shipgirls": {},
 	"equipment": {},
-	"inventory": {"DD_blueprint": 1,
-			"metals": 1,
-			"plastics": 1,
-			"gunpowder": 1,
-			"electronics": 1},
+	"inventory": {},
 	"research_target": null,
 	"research_progress": 0,
 	"sortie_progress": 0,
 	"quests": {
-		"first_sortie": "new"
+		"choose_faction": "new"
 	}
 }
