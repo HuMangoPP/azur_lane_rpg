@@ -71,7 +71,7 @@ class Font:
             if style == "center":
                 line_width = char_width * len(line)
                 x = text_surf.get_width() / 2 - line_width / 2
-            else:
+            elif style in ["topleft", "centerleft"]:
                 x = self.padding / 2
             for char in line:
                 if char != " ":
@@ -93,13 +93,14 @@ class Font:
         if style == "center":
             rect = colored_text_surf.get_rect()
             rect.center = xy
-            if outline_color is not None:
-                self._outline(surface, text_surf, rect.topleft, outline_color)
-            surface.blit(colored_text_surf, rect)
-        else:
+        elif style == "centerleft":
+            rect = colored_text_surf.get_rect()
+            rect.left = xy[0]
+            rect.centery = xy[1]
+        elif style == "topleft":
             rect = colored_text_surf.get_rect()
             rect.topleft = xy
-            if outline_color is not None:
-                self._outline(surface, text_surf, rect.topleft, outline_color)
-            surface.blit(colored_text_surf, rect)
+        if outline_color is not None:
+            self._outline(surface, text_surf, rect.topleft, outline_color)
+        surface.blit(colored_text_surf, rect)
         return rect

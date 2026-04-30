@@ -51,11 +51,13 @@
 	"next": { "left": 352, "top": 320, "width": 32, "height": 32 },
 	"prev": { "left": 352, "top": 352, "width": 32, "height": 32 },
 
-	"hull_type": { "left": 320, "top": 352, "width": 32, "height": 32 },
-	"max_hp": { "left": 320, "top": 384, "width": 32, "height": 32 },
+	"hull_type": { "left": 320, "top": 384, "width": 32, "height": 32 },
+	"max_hp": { "left": 352, "top": 384, "width": 32, "height": 32 },
+	"evasion": { "left": 384, "top": 384, "width": 32, "height": 32 },
 	"firepower": { "left": 320, "top": 416, "width": 32, "height": 32 },
-	"evasion": { "left": 352, "top": 384, "width": 32, "height": 32 },
 	"reload": { "left": 352, "top": 416, "width": 32, "height": 32 },
+	"shell_type": { "left": 384, "top": 416, "width": 32, "height": 32 },
+	"target_pref": { "left": 416, "top": 416, "width": 32, "height": 32 },
 
 	"USS": { "left": 384, "top": 0, "width": 64, "height": 64 },
 	"HMS": { "left": 384, "top": 64, "width": 64, "height": 64 },

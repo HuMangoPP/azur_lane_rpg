@@ -3,7 +3,7 @@ import pygame
 from engine.util import get_rect
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Stats, Box, screen_x, screen_y
+from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.shipgirls import Shipgirl
 
 class PortMenu:
@@ -78,7 +78,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["intel_center"],
             callback=open_overlay_factory(self.INTEL_CENTER),
-            active=False
+            # active=False
         )
         self.open_shipyard_overlay_button = Button(
             rect=get_rect(
@@ -101,32 +101,35 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
-            active=False
+            # active=False
         )
 
+        overlay_left_panel_width = 5*(Box.WIDTH + Box.PADDING) + Box.PADDING
+        overlay_right_panel_width = 3*(Box.WIDTH + Box.PADDING) + Box.PADDING
         overlay_bg_width = (
             3*Box.PADDING # padding
-            + 3*Box.WIDTH + 4*Box.PADDING # right panel
-            + 5*Box.WIDTH + 6*Box.PADDING # left panel
+            + overlay_left_panel_width
+            + overlay_right_panel_width
         )
+        overlay_left_panel_height = 4*(Box.WIDTH + Box.PADDING) + Box.PADDING
         overlay_bg_height = (
             2*Box.PADDING # padding
             + Box.HEIGHT # filters
-            + 4*Box.HEIGHT + 5*Box.PADDING # left panel
+            + overlay_left_panel_height
         )
         self.overlay_bg = get_rect(
             width=overlay_bg_width, height=overlay_bg_height,
             centerx=screen_x(0.5), centery=screen_y(0.5)
         )
         self.overlay_right_panel = get_rect(
-            width=3*Box.WIDTH + 4*Box.PADDING,
+            width=overlay_right_panel_width,
             height=self.overlay_bg.height-2*Box.PADDING,
             right=self.overlay_bg.right-Box.PADDING,
             top=self.overlay_bg.top+Box.PADDING
         )
         self.overlay_left_panel = get_rect(
-            width=5*Box.WIDTH + 6*Box.PADDING,
-            height=4*Box.HEIGHT + 5*Box.PADDING,
+            width=overlay_left_panel_width,
+            height=overlay_left_panel_height,
             left=self.overlay_bg.left+Box.PADDING,
             bottom=self.overlay_bg.bottom-Box.PADDING
         )
@@ -169,7 +172,7 @@ class PortMenu:
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 left=self.overlay_right_panel.left+Box.PADDING+(i%num_icons_per_row)*(Box.WIDTH+Box.PADDING),
-                bottom=self.overlay_right_panel.bottom-2*Box.PADDING-Box.HEIGHT-(i//num_icons_per_row)*(Box.HEIGHT+Box.PADDING)
+                bottom=self.overlay_right_panel.bottom-2*Box.PADDING-Box.HEIGHT+(i//num_icons_per_row)*(Box.HEIGHT+Box.PADDING)
             ) for i in range(6)
         ]
 
@@ -357,15 +360,47 @@ class PortMenu:
                 surface.blit(DataFiles.sprites[self.overlay_selected_entity], self.overlay_right_icon)
             pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
 
-            x = self.overlay_right_panel.left + Box.PADDING
+            icon_size = 32 # TODO
+            left_align = [
+                self.overlay_right_panel.left + Box.PADDING,
+                self.overlay_right_panel.centerx + Box.PADDING
+            ]
             y = self.overlay_right_icon.bottom + Box.PADDING
+            info_index = 0
             for info_key, info_value in info.items():
                 if info_value is None:
                     continue
-                xy = (x, y)
-                info_name = Stats.STAT_NAMES.get(info_key, info_key)
-                font.render(surface, f"{info_name}: {info_value}", xy, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
-                y += Box.PADDING # TODO
+
+                x = left_align[info_index%2]
+                if info_key in DataFiles.sprites:
+                    info_icon = DataFiles.sprites[info_key]
+                    info_rect = info_icon.get_rect()
+                    info_rect.left = x
+                    info_rect.top = y
+                    surface.blit(info_icon, info_rect)
+                    font.render(
+                        surface,
+                        str(info_value),
+                        (info_rect.right + Box.PADDING, info_rect.centery),
+                        Color.WHITE,
+                        1,
+                        style="centerleft",
+                        outline_color=Color.BLACK
+                    )
+                else:
+                    font.render(
+                        surface,
+                        f"{info_key}: {info_value}",
+                        (x, y + icon_size/2),
+                        Color.WHITE,
+                        1,
+                        style="centerleft",
+                        outline_color=Color.BLACK
+                    )
+                
+                info_index += 1
+                if info_index % 2 == 0:
+                    y += icon_size
 
             for (icon_name, icon_text), rect in zip(icons, self.overlay_right_icons):
                 if icon_name in DataFiles.sprites:
@@ -426,11 +461,11 @@ class PortMenu:
             hull_type = selected_entity_info.get("hull_type")
             selected_entity_stats = DataFiles.stats_data[hull_type]
             shipgirl_stats = {
-                "HULL": hull_type,
-                "HP": selected_entity_stats["max_hp"],
-                "EVA": selected_entity_stats["evasion"],
-                "FP": selected_entity_stats["firepower"],
-                "RLD": selected_entity_stats["reload"],
+                "hull_type": hull_type,
+                "max_hp": selected_entity_stats["max_hp"],
+                "evasion": selected_entity_stats["evasion"],
+                "firepower": selected_entity_stats["firepower"],
+                "reload": selected_entity_stats["reload"],
             }
         else:
             research_icons = []
@@ -487,12 +522,12 @@ class PortMenu:
                 for material, req in crafting_reqs.items()
             ]
             equip_stats = {
-                "HULL": selected_entity_info.get("equippable_by"),
-                "HP": selected_entity_info.get("max_hp"),
-                "EVA": selected_entity_info.get("evasion"),
-                "FP": selected_entity_info.get("firepower"),
-                "RLD": selected_entity_info.get("reload"),
-                "SHELL": selected_entity_info.get("shell_type"),
+                "hull_type": selected_entity_info.get("equippable_by"),
+                "max_hp": selected_entity_info.get("max_hp"),
+                "evasion": selected_entity_info.get("evasion"),
+                "firepower": selected_entity_info.get("firepower"),
+                "reload": selected_entity_info.get("reload"),
+                "shell_type": selected_entity_info.get("shell_type"),
             }
         else:
             crafting_icons = []
@@ -535,12 +570,12 @@ class PortMenu:
                 for drop, drop_rate in drop_rates.items()
             ]
             siren_stats = {
-                "HULL": selected_entity_info.get("hull_type"),
-                "HP": selected_entity_info.get("max_hp"),
-                "EVA": selected_entity_info.get("evasion"),
-                "FP": selected_entity_info.get("firepower"),
-                "RLD": selected_entity_info.get("reload"),
-                # "TARGET": selected_entity_info.get("target_pref"),
+                "hull_type": selected_entity_info.get("hull_type"),
+                "max_hp": selected_entity_info.get("max_hp"),
+                "evasion": selected_entity_info.get("evasion"),
+                "firepower": selected_entity_info.get("firepower"),
+                "reload": selected_entity_info.get("reload"),
+                "target_pref": selected_entity_info.get("target_pref"),
                 # "EXP": selected_entity_info.get("exp"),
             }
         else:
