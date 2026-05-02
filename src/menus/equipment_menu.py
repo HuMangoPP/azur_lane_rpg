@@ -46,28 +46,34 @@ class EquipmentMenu:
         button_rect.top = Box.TOP_OF_SCREEN
         self.exit_equipment_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_equipment_menu)
 
-        self.stat_text_xy = [
-            pygame.Vector2(screen_x(0.25)-Box.WIDTH/2, Box.HEIGHT/2+Box.PADDING*(2+1.5*i)+screen_y(0.5))
-            for i in range(Stats.NUM_STATS)
-        ]
+        stats = ["max_hp", "evasion", "firepower", "reload"]
+        stat_rect_size = 32
+        self.stat_rects = {
+            stat: get_rect(
+                width=stat_rect_size, height=stat_rect_size,
+                left=screen_x(0.25) - Box.WIDTH/2,
+                top=screen_y(0.5) + Box.HEIGHT/2 + Box.PADDING + i*(stat_rect_size+Box.PADDING)
+            )
+            for i, stat in enumerate(stats)
+        }
 
     def get_stat(self, shipgirl, stat):
-        if stat == Stats.MAX_HP:
+        if stat == "max_hp":
             if self.hovered_equipment is None:
                 return shipgirl.battle_component.max_hp()
             else:
                 return shipgirl.battle_component.max_hp((self.selected_equipment, self.hovered_equipment))
-        elif stat == Stats.EVASION:
+        elif stat == "evasion":
             if self.hovered_equipment is None:
                 return shipgirl.battle_component.evasion()
             else:
                 return shipgirl.battle_component.evasion((self.selected_equipment, self.hovered_equipment))
-        elif stat == Stats.FIREPOWER:
+        elif stat == "firepower":
             if self.hovered_equipment is None:
                 return shipgirl.battle_component.firepower()
             else:
                 return shipgirl.battle_component.firepower((self.selected_equipment, self.hovered_equipment))
-        elif stat == Stats.RELOAD:
+        elif stat == "reload":
             if self.hovered_equipment is None:
                 return shipgirl.battle_component.reload()
             else:
@@ -76,22 +82,22 @@ class EquipmentMenu:
     def get_stat_delta(self, shipgirl, stat):
         if self.hovered_equipment is None:
             return 0
-        if stat == Stats.MAX_HP:
+        if stat == "max_hp":
             return (
                 shipgirl.battle_component.max_hp((self.selected_equipment, self.hovered_equipment))
                 - shipgirl.battle_component.max_hp()
             )
-        elif stat == Stats.EVASION:
+        elif stat == "evasion":
             return (
                 shipgirl.battle_component.evasion((self.selected_equipment, self.hovered_equipment))
                 - shipgirl.battle_component.evasion()
             )
-        elif stat == Stats.FIREPOWER:
+        elif stat == "firepower":
             return (
                 shipgirl.battle_component.firepower((self.selected_equipment, self.hovered_equipment))
                 - shipgirl.battle_component.firepower()
             )
-        elif stat == Stats.RELOAD:
+        elif stat == "reload":
             return (
                 shipgirl.battle_component.reload((self.selected_equipment, self.hovered_equipment))
                 - shipgirl.battle_component.reload()
@@ -146,30 +152,31 @@ class EquipmentMenu:
             # shipgirl chibi
             self.selected_shipgirl.draw(surface, font)
             # shipgirl stats
-            for stat, xy in enumerate(self.stat_text_xy):
-                font_rect = font.render(
+            for stat, rect in self.stat_rects.items():
+                surface.blit(DataFiles.sprites[stat], rect)
+                font.render(
                     surface,
-                    f"{stat}: {self.get_stat(self.selected_shipgirl, stat)}",
-                    xy,
+                    str(self.get_stat(self.selected_shipgirl, stat)),
+                    (rect.right + Box.PADDING, rect.centery),
                     Color.WHITE,
                     1,
-                    style="topleft",
+                    style="centerleft",
                     outline_color=Color.BLACK
                 )
                 stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
                 if stat_delta > 0:
-                    center = pygame.Vector2(font_rect.left-10,font_rect.centery) # TODO
+                    center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
                     pygame.draw.polygon(surface, (0,255,0),[
-                        center+get_vec(length=5, angle=math.radians(30)),
-                        center+get_vec(length=5, angle=math.radians(150)),
-                        center+get_vec(length=5, angle=math.radians(270))
+                        center+get_vec(length=Box.PADDING, angle=math.radians(30)),
+                        center+get_vec(length=Box.PADDING, angle=math.radians(150)),
+                        center+get_vec(length=Box.PADDING, angle=math.radians(270))
                     ])
                 elif stat_delta < 0:
-                    center = pygame.Vector2(font_rect.left-10,font_rect.centery)
+                    center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
                     pygame.draw.polygon(surface, (255,0,0),[
-                        center+get_vec(length=5, angle=math.radians(90)),
-                        center+get_vec(length=5, angle=math.radians(210)),
-                        center+get_vec(length=5, angle=math.radians(330))
+                        center+get_vec(length=Box.PADDING, angle=math.radians(90)),
+                        center+get_vec(length=Box.PADDING, angle=math.radians(210)),
+                        center+get_vec(length=Box.PADDING, angle=math.radians(330))
                     ])
             # shipgirl equipment
             for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):

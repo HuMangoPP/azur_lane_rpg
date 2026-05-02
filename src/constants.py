@@ -38,13 +38,6 @@ class Equipment:
     AUX2 = 2
 
 class Stats:
-    NUM_STATS = 4
-
-    MAX_HP = 0
-    EVASION = 1
-    FIREPOWER = 2
-    RELOAD = 3
-
     RESEARCH_EXP_REQUIREMENTS = [0, 0, 5, 8]
     EXP_BREAKPOINTS = [3, 5, 8, 13, 21]
 
