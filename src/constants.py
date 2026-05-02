@@ -26,6 +26,7 @@ class Box:
 class Color:
     WHITE = (255,255,255)
     BLACK = (10,10,10)
+    GREY = (50,50,50)
     BLUE_GREY = (100,100,150)
     BLUE = (75,75,125)
     DARK_BLUE = (50,50,100)
@@ -48,6 +49,14 @@ class Stats:
             exp -= cls.EXP_BREAKPOINTS[level_index]
             level_index += 1
         return level_index
+
+    @classmethod
+    def level_progress(cls, exp):
+        level_index = 0
+        while exp >= cls.EXP_BREAKPOINTS[level_index]:
+            exp -= cls.EXP_BREAKPOINTS[level_index]
+            level_index += 1
+        return exp / cls.EXP_BREAKPOINTS[level_index]
 
     @classmethod
     def stat(cls, exp, base_stat, stat_per_level):

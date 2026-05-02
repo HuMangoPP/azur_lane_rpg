@@ -5,16 +5,16 @@ import pygame
 from engine.util import get_rect, get_vec
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Box, screen_x, screen_y
+from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
 from src.shipgirls import Shipgirl
 from src.menus.quests_data import construct_shipgirl_quest, craft_weapon_quest
 
 class Drop:
-    def __init__(self, item, pos, vel):
+    def __init__(self, item, pos):
         self.item = item
         self.pos = pos
         self.bottom = pos.y + 50
-        self.vel = vel
+        self.vel = get_vec(100, math.radians(random.uniform(-15,15)-90))
 
     def update(self, dt):
         if self.pos.y < self.bottom:
@@ -62,11 +62,7 @@ class EncounterMenu:
             if self.current_sortie == DataFiles.save_file["sortie_progress"]:
                 rewards = DataFiles.sortie_data[self.current_sortie]["rewards"]
                 for reward in rewards:
-                    self.drops.append(Drop(
-                        reward,
-                        pygame.Vector2(screen_x(0.75), screen_y(0.5)),
-                        get_vec(100, math.radians(random.uniform(-15,15)-90))
-                    ))
+                    self.drops.append(Drop(reward, pygame.Vector2(screen_x(0.75), screen_y(0.5))))
 
             self.open_reward_cache_button.active = False
             self.return_to_port_button.active = True
@@ -114,6 +110,8 @@ class EncounterMenu:
         self.encounter_end_flag = True
 
         self.drops = []
+        self.research_exp = 0
+        self.exp_timer = 0
 
     def begin_sortie(self):
         self.open_reward_cache_button.active = False
@@ -231,11 +229,7 @@ class EncounterMenu:
                     for drop, drop_rate in siren_data["drops"].items():
                         drop_roll = random.random() * 100
                         if drop_roll < drop_rate:
-                            self.drops.append(Drop(
-                                drop,
-                                pygame.Vector2(siren.rect.center),
-                                get_vec(100, math.radians(random.uniform(-15,15)-90))
-                            ))
+                            self.drops.append(Drop(drop, pygame.Vector2(siren.rect.center)))
             self.menu_manager.siren_fleet.update(dt, self.menu_manager)
 
             for drop in self.drops:
@@ -246,6 +240,27 @@ class EncounterMenu:
                 for shipgirl in self.menu_manager.player_fleet.shipgirls
                 if shipgirl is not None
             )
+        
+        if self.research_exp > 0:
+            self.exp_timer += dt
+            if self.exp_timer > 1:
+                self.exp_timer = 1
+                DataFiles.save_file["research_progress"] += self.research_exp
+                num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
+                exp_req = Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
+                if DataFiles.save_file["research_progress"] >= exp_req:
+                    unique_item = DataFiles.shipgirl_data[DataFiles.save_file["research_target"]]["unique_item"]
+                    DataFiles.save_file["research_progress"] = 0
+                    self.drops.append(Drop(unique_item, pygame.Vector2(screen_x(0.5), screen_y(0.5))))
+
+                    if DataFiles.save_file["research_target"] == "guam":
+                        self.menu_manager.quest_manager.quests["construct_shipgirl"] = construct_shipgirl_quest
+                    DataFiles.save_file["research_target"] = None
+                self.research_exp = 0
+        elif self.exp_timer > 0:
+            self.exp_timer -= dt
+            if self.exp_timer < 0:
+                self.exp_timer = 0
 
         if self.encounter_end_flag:
             if not self.menu_manager.player_fleet.afloat:
@@ -262,19 +277,7 @@ class EncounterMenu:
                         if shipgirl is not None:
                             shipgirl.battle_component.exp += siren.battle_component.exp
                     if DataFiles.save_file["research_target"] is not None:
-                        DataFiles.save_file["research_progress"] += siren.battle_component.exp
-                
-                exp_req = 5 # TODO
-                if (
-                    DataFiles.save_file["research_target"] is not None
-                    and DataFiles.save_file["research_progress"] >= exp_req
-                ):
-                    unique_item = DataFiles.shipgirl_data[DataFiles.save_file["research_target"]]["unique_item"]
-                    DataFiles.save_file["inventory"][unique_item] = 1
-                    DataFiles.save_file["research_progress"] -= exp_req
-
-                    if DataFiles.save_file["research_target"] == "guam":
-                        self.menu_manager.quest_manager.quests["construct_shipgirl"] = construct_shipgirl_quest
+                        self.research_exp += siren.battle_component.exp
 
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()
@@ -292,7 +295,33 @@ class EncounterMenu:
         for drop in self.drops:
             drop.draw(surface, font)
         
-        if self.return_to_port_button.active:
+        if self.exp_timer > 0:
+            bar_width = 256
+            bar_height = 16
+            bar_background = get_rect(
+                width=bar_width, height=bar_height,
+                centerx=screen_x(0.5), bottom=Box.BOTTOM_OF_SCREEN
+            )
+            num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
+            exp_req = Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
+            research_progress = DataFiles.save_file["research_progress"] + self.research_exp * self.exp_timer
+            bar_fill = get_rect(
+                width=bar_width * min(1, research_progress/exp_req),
+                height=bar_height, left=bar_background.left, top=bar_background.top 
+            )
+            pygame.draw.rect(surface, Color.GREY, bar_background)
+            pygame.draw.rect(surface, Color.BLUE_GREY, bar_fill)
+            font.render(
+                surface,
+                "shipgirl research progress",
+                (bar_background.centerx, bar_background.top - bar_height),
+                Color.WHITE,
+                1,
+                style="center",
+                outline_color=Color.BLACK
+            )
+        
+        if self.next_encounter_button.active:
             if not self.menu_manager.player_fleet.afloat:
                 font.render(surface, "you lose", self.end_sortie_text_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             elif not self.menu_manager.siren_fleet.afloat:

@@ -27,7 +27,7 @@ class ShipgirlBattleComponent:
         "AP": {LIGHT_ARMOR: 1.0, MEDIUM_ARMOR: 1.25, HEAVY_ARMOR: 1.5},
     }
 
-    SHELL_SPEED = 100
+    SHELL_SPEED = 800
     SHELL_SCALE = 1/1000
 
     def __init__(self, name, is_player):
@@ -57,6 +57,11 @@ class ShipgirlBattleComponent:
         self.attack_timer = 0
         self.target = None
         self.evasion_gauge = 0
+
+        self.last_exp = save["exp"]
+        self.exp_timer = 0
+        self.last_level = Stats.level(self.last_exp)
+        self.level_timer = 0
 
     def max_hp(self, equipment_override=None):
         equipment = self.equipment.copy()
@@ -112,6 +117,22 @@ class ShipgirlBattleComponent:
         self.evasion_gauge = 0
 
     def update(self, dt, rect):
+        if self.last_exp < self.exp:
+            self.exp_timer += dt
+            exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
+            new_level = Stats.level(exp_animation)
+            if self.last_level < new_level:
+                self.level_timer = 1
+                self.last_level = new_level
+            if self.exp_timer > 1:
+                self.last_exp = self.exp
+                self.exp_timer = 1
+        elif self.exp_timer > 0:
+            self.exp_timer -= dt
+            if self.exp_timer < 0:
+                self.exp_timer = 0
+        self.level_timer = max(self.level_timer - dt, 0)
+
         if not self.active:
             return
         
@@ -140,7 +161,24 @@ class ShipgirlBattleComponent:
             self.attack_timer = 1
             self.cooldown_timer = 1
 
-    def draw(self, screen, rect):
+    def draw(self, screen, font, rect):
+        bar_width = 64
+        bar_height = 8
+        if self.exp_timer > 0:
+            exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
+            bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, bottom=rect.top-Box.PADDING)
+            bar_fill = get_rect(
+                width=bar_width*Stats.level_progress(exp_animation), height=bar_background.height,
+                left=bar_background.left, top=bar_background.top
+            )
+            pygame.draw.rect(screen, Color.GREY, bar_background)
+            pygame.draw.rect(screen, Color.BLUE_GREY, bar_fill)
+
+        if self.level_timer > 0:
+            t = 1 - self.level_timer
+            y = rect.top - rect.height * t
+            font.render(screen, "level up!", (rect.centerx, y), Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
         if not self.active:
             return
         
@@ -158,7 +196,7 @@ class ShipgirlBattleComponent:
             shell_angle = math.degrees(math.atan2(direction.y, direction.x))
             render_angle = shell_angle + shell_incline
 
-            shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "AP")
+            shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
             shell_sprite = pygame.transform.flip(
                 pygame.transform.rotate(DataFiles.sprites[f"{shell_type}_shell"], render_angle),
                 False, True
@@ -167,10 +205,12 @@ class ShipgirlBattleComponent:
             shell_rect.center = shell_pos
             screen.blit(shell_sprite, shell_rect)
         
-        bar_width = 50
-        bar_background = get_rect(width=bar_width, height=10, centerx=rect.centerx, top=rect.bottom+20) # TODO
-        bar_fill = get_rect(width=bar_width*self.hp/self.max_hp(), height=bar_background.height, left=bar_background.left, top=bar_background.top)
-        pygame.draw.rect(screen, (50,50,50), bar_background)
+        bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, top=rect.bottom+Box.PADDING)
+        bar_fill = get_rect(
+            width=bar_width*self.hp/self.max_hp(), height=bar_background.height,
+            left=bar_background.left, top=bar_background.top
+        )
+        pygame.draw.rect(screen, Color.GREY, bar_background)
         pygame.draw.rect(screen, Color.WHITE, bar_fill)
 
         if not self.is_player:
@@ -249,7 +289,7 @@ class Shipgirl:
             pygame.draw.rect(screen, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
             font.render(screen, self.name, self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        self.battle_component.draw(screen, self.rect)
+        self.battle_component.draw(screen, font, self.rect)
 
 class PlayerFleet:
     def __init__(self):

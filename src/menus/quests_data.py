@@ -345,12 +345,19 @@ def research_shipgirl_tutorial_draw(menu_manager, surface, font):
 
             draw_tb(surface, font, None, rect.bottomleft, False, True)
         else:
-            shipgirl_data = {
-                shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                if shipgirl not in DataFiles.save_file["shipgirls"]
-                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                and shipgirl_info["faction"] == menu_manager.port_menu.shipgirl_filters[menu_manager.port_menu.selected_overlay_filter]
-            }
+            if menu_manager.port_menu.selected_overlay_filter is None:
+                shipgirl_data = {
+                    shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+                    if shipgirl not in DataFiles.save_file["shipgirls"]
+                    and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
+                }
+            else:
+                shipgirl_data = {
+                    shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+                    if shipgirl not in DataFiles.save_file["shipgirls"]
+                    and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
+                    and shipgirl_info["faction"] == menu_manager.port_menu.shipgirl_filters[menu_manager.port_menu.selected_overlay_filter]
+                }
 
             for i, (shipgirl, shipgirl_info) in enumerate(shipgirl_data.items()):
                 if shipgirl in DataFiles.save_file["shipgirls"]:
