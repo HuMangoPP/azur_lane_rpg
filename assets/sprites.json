@@ -64,5 +64,11 @@
 	"IJN": { "left": 384, "top": 128, "width": 64, "height": 64 },
 	"KMS": { "left": 384, "top": 192, "width": 64, "height": 64 },
 
+	"DD": { "left": 256, "top": 320, "width": 32, "height": 32 },
+	"CL": { "left": 288, "top": 320, "width": 32, "height": 32 },
+	"CA": { "left": 256, "top": 352, "width": 32, "height": 32 },
+	"BB": { "left": 288, "top": 352, "width": 32, "height": 32 },
+	"AUX": { "left": 320, "top": 352, "width": 32, "height": 32 },
+
 	"shell": { "left": 384, "top": 256, "width": 32, "height": 32 }
 }
