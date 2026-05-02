@@ -103,4 +103,3 @@ class Font:
         if outline_color is not None:
             self._outline(surface, text_surf, rect.topleft, outline_color)
         surface.blit(colored_text_surf, rect)
-        return rect

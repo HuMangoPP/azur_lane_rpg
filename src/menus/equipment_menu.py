@@ -185,7 +185,10 @@ class EquipmentMenu:
                 else:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 if equipment is not None:
-                    _ = font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                    if equipment in DataFiles.sprites:
+                        surface.blit(DataFiles.sprites[equipment], rect)
+                    else:
+                        font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             # equippable equipment
             if self.selected_equipment == Equipment.WEAPON:
                 equippable = [
@@ -202,6 +205,9 @@ class EquipmentMenu:
                 ]
             for equipment, rect in zip(equippable, self.equippable_rects):
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                _ = font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                if equipment in DataFiles.sprites:
+                    surface.blit(DataFiles.sprites[equipment], rect)
+                else:
+                    font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
         # exit button
         self.exit_equipment_menu_button.draw(surface, font)

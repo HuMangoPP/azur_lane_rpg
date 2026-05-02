@@ -248,7 +248,7 @@ class Shipgirl:
             self.sprite.draw(screen, self.rect.centerx, self.rect.centery, not self.facing_left)
         else:
             pygame.draw.rect(screen, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
-            _ = font.render(screen, self.name, self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            font.render(screen, self.name, self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         self.battle_component.draw(screen, self.rect)
 
