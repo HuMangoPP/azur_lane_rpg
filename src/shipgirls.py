@@ -147,8 +147,7 @@ class ShipgirlBattleComponent:
                 if self.target.battle_component.evasion_gauge >= 1:
                     self.target.battle_component.evasion_gauge -= 1
                 else:
-                    weapon_info = DataFiles.equipment_data.get(self.equipment[0], {}) if self.equipment[0] is not None else {}
-                    shell_type = weapon_info.get("shell_type", "normal")
+                    shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
                     armor_type = self.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
                     self.target.battle_component.hp -= self.firepower() * self.DAMAGE_MULTIPLIER[shell_type][armor_type]
             return

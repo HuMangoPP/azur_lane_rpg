@@ -85,24 +85,19 @@ class DataFiles:
     
     sprites = load_sprites()
 
-length = 48
-height = 16
-shell_rect = pygame.Rect(0, 0, length, height)
+def create_shell_sprite(shell_key, color):
+    alphas = [10, 20, 50, 100, 200, 250]
+    lengths = [64, 62, 58, 52, 44, 34]
+    heights = [18, 16, 14, 12, 10, 8]
+    rights = [64, 62, 60, 58, 56, 54]
+    shell_sprite = pygame.Surface((lengths[0], heights[0]), flags=pygame.SRCALPHA)
+    for a, l, h, r in zip(alphas, lengths, heights, rights):
+        rect = pygame.Rect(0, 0, l, h)
+        rect.right = r
+        rect.centery = heights[0] / 2
+        pygame.draw.ellipse(shell_sprite, (*color, a), rect)
+    DataFiles.sprites[f"{shell_key}_shell"] = shell_sprite
 
-normal_shell = pygame.Surface(shell_rect.size)
-normal_shell.fill((255,0,0))
-pygame.draw.ellipse(normal_shell, (255, 208, 0), shell_rect)
-normal_shell.set_colorkey((255,0,0))
-DataFiles.sprites["normal_shell"] = normal_shell
-
-he_shell = pygame.Surface(shell_rect.size)
-he_shell.fill((255,0,0))
-pygame.draw.ellipse(he_shell, (255, 0, 144), shell_rect)
-he_shell.set_colorkey((255,0,0))
-DataFiles.sprites["HE_shell"] = he_shell
-
-ap_shell = pygame.Surface(shell_rect.size)
-ap_shell.fill((255,0,0))
-pygame.draw.ellipse(ap_shell, (0, 251, 255), shell_rect)
-ap_shell.set_colorkey((255,0,0))
-DataFiles.sprites["AP_shell"] = ap_shell
+create_shell_sprite("normal", (255, 242, 97))
+create_shell_sprite("HE", (255, 0, 64))
+create_shell_sprite("AP", (0, 255, 255))
