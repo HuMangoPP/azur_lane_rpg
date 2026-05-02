@@ -1,9 +1,6 @@
 {
-	"unlocked_factions": ["USS"],
-	"shipgirls": {
-		"laffey": { "equipment": [null, null, null], "exp": 0 },
-		"new_jersey": { "equipment": [null, null, null], "exp": 0 }
-	},
+	"unlocked_factions": [],
+	"shipgirls": {},
 	"equipment": {},
 	"inventory": {
 		"DD_blueprint": 0,
@@ -16,8 +13,6 @@
 	"research_progress": 0,
 	"sortie_progress": 0,
 	"quests": {
-		"choose_faction": "completed",
-		"construct_shipgirls": "completed",
-		"first_sortie": "new"
+		"choose_faction": "new"
 	}
 }

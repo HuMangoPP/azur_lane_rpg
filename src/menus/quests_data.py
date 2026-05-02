@@ -115,7 +115,7 @@ choose_faction_quest = Quest(
 construct_shipgirls_pre_quest_dialogue = [
     "We should construct some shipgirls to join our fleet."
 ]
-construct_shipgirls_quest_line = "Construct Laffey and New Jersey.",
+construct_shipgirls_quest_line = "Construct Laffey and New Jersey."
 construct_shipgirls_post_quest_dialogue = [
     "Laffey and New Jersey have joined our fleet!"
 ]

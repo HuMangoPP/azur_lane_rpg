@@ -62,17 +62,17 @@ class Font:
         lines = self._get_lines(text, char_width, box_width)
         text_width = max(len(line.strip()) for line in lines) * char_width
         if box_width == 0:
-            text_surf = pygame.Surface((text_width + self.padding, char_height + self.padding))
+            text_surf = pygame.Surface((text_width, char_height))
         else:
-            text_surf = pygame.Surface((text_width + self.padding, len(lines) * (char_height + self.padding) + self.padding))
+            text_surf = pygame.Surface((text_width, len(lines)*char_height + (len(lines)-1)*self.padding))
 
-        y = self.padding / 2
+        y = 0
         for line in lines:
             if style == "center":
                 line_width = char_width * len(line)
                 x = text_surf.get_width() / 2 - line_width / 2
             elif style in ["topleft", "centerleft"]:
-                x = self.padding / 2
+                x = 0
             for char in line:
                 if char != " ":
                     letter = pygame.transform.scale_by(
