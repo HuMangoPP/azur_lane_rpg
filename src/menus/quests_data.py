@@ -87,6 +87,9 @@ def choose_faction_on_complete(menu_manager):
     menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
+    
+    for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
+        choose_faction_button.active = False
 
 choose_faction_rewards = {
     "DD_blueprint": 1,
@@ -342,15 +345,24 @@ def research_shipgirl_tutorial_draw(menu_manager, surface, font):
 
             draw_tb(surface, font, None, rect.bottomleft, False, True)
         else:
-            button_rect = menu_manager.port_menu.overlay_left_icons[1]
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+            shipgirl_data = {
+                shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+                if shipgirl not in DataFiles.save_file["shipgirls"]
+                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
+                and shipgirl_info["faction"] == menu_manager.port_menu.shipgirl_filters[menu_manager.port_menu.selected_overlay_filter]
+            }
 
-            draw_tb(surface, font, None, rect.bottomright, False, False)
+            for i, (shipgirl, shipgirl_info) in enumerate(shipgirl_data.items()):
+                if shipgirl in DataFiles.save_file["shipgirls"]:
+                    continue
+                if shipgirl_info["faction"] not in DataFiles.save_file["unlocked_factions"]:
+                    continue
+                if shipgirl_info["hull_type"] not in ["CA"]:
+                    continue
+
+                rect = menu_manager.port_menu.overlay_left_icons[i]
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+                draw_tb(surface, font, None, rect.bottomleft, False, True)
 
 def research_shipgirl_on_start(menu_manager):
     menu_manager.port_menu.open_shipyard_overlay_button.active = True

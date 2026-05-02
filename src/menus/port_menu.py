@@ -78,7 +78,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["intel_center"],
             callback=open_overlay_factory(self.INTEL_CENTER),
-            # active=False
+            active=False
         )
         self.open_shipyard_overlay_button = Button(
             rect=get_rect(
@@ -101,7 +101,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
-            # active=False
+            active=False
         )
 
         overlay_left_panel_width = 5*(Box.WIDTH + Box.PADDING) + Box.PADDING
@@ -378,25 +378,26 @@ class PortMenu:
                     info_rect.left = x
                     info_rect.top = y
                     surface.blit(info_icon, info_rect)
-                    font.render(
-                        surface,
-                        str(info_value),
-                        (info_rect.right + Box.PADDING, info_rect.centery),
-                        Color.WHITE,
-                        1,
-                        style="centerleft",
-                        outline_color=Color.BLACK
-                    )
                 else:
+                    info_rect = get_rect(width=icon_size, height=icon_size, left=x, top=y)
                     font.render(
                         surface,
-                        f"{info_key}: {info_value}",
-                        (x, y + icon_size/2),
+                        str(info_key),
+                        info_rect.center,
                         Color.WHITE,
                         1,
-                        style="centerleft",
+                        style="center",
                         outline_color=Color.BLACK
                     )
+                font.render(
+                    surface,
+                    str(info_value),
+                    (info_rect.right + Box.PADDING, info_rect.centery),
+                    Color.WHITE,
+                    1,
+                    style="centerleft",
+                    outline_color=Color.BLACK
+                )
                 
                 info_index += 1
                 if info_index % 2 == 0:
@@ -576,7 +577,7 @@ class PortMenu:
                 "firepower": selected_entity_info.get("firepower"),
                 "reload": selected_entity_info.get("reload"),
                 "target_pref": selected_entity_info.get("target_pref"),
-                # "EXP": selected_entity_info.get("exp"),
+                "EXP": selected_entity_info.get("exp"),
             }
         else:
             drop_icons = []

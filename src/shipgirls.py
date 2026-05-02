@@ -29,12 +29,8 @@ class ShipgirlBattleComponent:
         "AP": {LIGHT_ARMOR: 1.0, MEDIUM_ARMOR: 1.25, HEAVY_ARMOR: 1.5},
     }
 
-    SHELL_SPEED = {
-        "DD": 1500,
-        "CL": 1500,
-        "CA": 1000,
-        "BB": 1000
-    }
+    SHELL_SPEED = 800
+    SHELL_SCALE = 1/1000
 
     def __init__(self, name, is_player):
         self.name = name
@@ -118,7 +114,7 @@ class ShipgirlBattleComponent:
         )
 
     def shell_speed(self):
-        return self.SHELL_SPEED[self.hull_type] + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
+        return self.SHELL_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
 
     def reset(self):
         self.hp = self.max_hp()
@@ -126,12 +122,16 @@ class ShipgirlBattleComponent:
         self.target = None
         self.evasion_gauge = 0
 
-    def update(self, dt):
+    def update(self, dt, rect):
         if not self.active:
             return
         
         if self.attack_timer > 0:
-            self.attack_timer = max(0, self.attack_timer - self.shell_speed()/1000*dt)
+            start_pos = pygame.Vector2(rect.center)
+            target_pos = pygame.Vector2(self.target.rect.center)
+            relpos = target_pos - start_pos
+            distance = relpos.length()
+            self.attack_timer = max(0, self.attack_timer - self.shell_speed()/distance*dt)
             if self.attack_timer <= 0:
                 self.target.battle_component.evasion_gauge += self.target.battle_component.evasion() / 1000
                 if self.target.battle_component.evasion_gauge >= 1:
@@ -158,31 +158,26 @@ class ShipgirlBattleComponent:
         if self.attack_timer > 0:
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)
+            relpos = target_pos - start_pos
+            direction = relpos.normalize()
+            distance = relpos.length()
             t = 1 - self.attack_timer
-            if self.hull_type in ["DD", "CL"]:
-                apex_pos = 0.5 * (start_pos + target_pos) + pygame.Vector2(0,-50)
-            else:
-                apex_pos = 0.5 * (start_pos + target_pos) + pygame.Vector2(0,-100)
-            shell_x = (target_pos.x - start_pos.x) * t + start_pos.x
-            shell_y = (
-                start_pos.y * (shell_x - apex_pos.x) * (shell_x - target_pos.x) / (start_pos.x - apex_pos.x) / (start_pos.x - target_pos.x)
-                + apex_pos.y * (shell_x - start_pos.x) * (shell_x - target_pos.x) / (apex_pos.x - start_pos.x) / (apex_pos.x - target_pos.x)
-                + target_pos.y * (shell_x - start_pos.x) * (shell_x - apex_pos.x) / (target_pos.x - start_pos.x) / (target_pos.x - apex_pos.x)
+            scale = distance * self.SHELL_SCALE
+            shell_y = scale * distance * t * (t-1)
+            shell_pos = start_pos + relpos * t + pygame.Vector2(0, shell_y)
+            shell_incline = math.degrees(math.atan(scale * (2*t - 1)))
+            shell_angle = math.degrees(math.atan2(direction.y, direction.x))
+            render_angle = shell_angle + shell_incline
+
+            shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "AP")
+            shell_sprite = pygame.transform.flip(
+                pygame.transform.rotate(DataFiles.sprites[f"{shell_type}_shell"], render_angle),
+                direction.x < 0,
+                True
             )
-            shell_pos = pygame.Vector2(shell_x, shell_y)
-            shell_yvel = (
-                start_pos.y * (2*shell_x - apex_pos.x - target_pos.x) / (start_pos.x - apex_pos.x) / (start_pos.x - target_pos.x)
-                + apex_pos.y * (2*shell_x - start_pos.x - target_pos.x) / (apex_pos.x - start_pos.x) / (apex_pos.x - target_pos.x)
-                + target_pos.y * (2*shell_x - start_pos.x - apex_pos.x) / (target_pos.x - start_pos.x) / (target_pos.x - apex_pos.x)
-            )
-            sign = (target_pos.x - start_pos.x) / abs(target_pos.x - start_pos.x)
-            shell_angle = math.atan2(sign* shell_yvel, sign)
-            shell_polygon = [
-                shell_pos + get_vec(20, shell_angle),
-                shell_pos + get_vec(10, shell_angle + math.radians(150)),
-                shell_pos + get_vec(10, shell_angle - math.radians(150))
-            ]
-            pygame.draw.polygon(screen, Color.WHITE, shell_polygon)
+            shell_rect = shell_sprite.get_rect()
+            shell_rect.center = shell_pos
+            screen.blit(shell_sprite, shell_rect)
         
         bar_width = 50
         bar_background = get_rect(width=bar_width, height=10, centerx=rect.centerx, top=rect.bottom+20) # TODO
@@ -325,7 +320,7 @@ class PlayerFleet:
             if shipgirl is not None:
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
-                shipgirl.battle_component.update(dt)
+                shipgirl.battle_component.update(dt, shipgirl.rect)
 
                 shipgirl.animate(dt)
 
@@ -393,15 +388,14 @@ class SirenFleet:
             if siren.battle_component.active:
                 if siren.battle_component.target is None:
                     siren.battle_component.target = menu_manager.player_fleet.front
-            siren.battle_component.update(dt)
+            siren.battle_component.update(dt, siren.rect)
 
             siren.animate(dt)
         
-        back_offset = (len(self._back)-1)/2
         for i, siren in enumerate(self._back):
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
-            siren.battle_component.update(dt)
+            siren.battle_component.update(dt, siren.rect)
 
             siren.animate(dt)
 

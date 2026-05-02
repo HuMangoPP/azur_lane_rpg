@@ -52,6 +52,7 @@ class MenuManager:
             elif quest_progress == "completed":
                 quest.start(self)
                 quest.completed = True
+                quest.on_complete(self)
                 self.quest_manager.quests.pop(quest_name, None)
 
     @property

@@ -74,3 +74,25 @@ class DataFiles:
         equipment_data = json.load(f)
     
     sprites = load_sprites()
+
+length = 48
+height = 16
+shell_rect = pygame.Rect(0, 0, length, height)
+
+normal_shell = pygame.Surface(shell_rect.size)
+normal_shell.fill((255,0,0))
+pygame.draw.ellipse(normal_shell, (255, 208, 0), shell_rect)
+normal_shell.set_colorkey((255,0,0))
+DataFiles.sprites["normal_shell"] = normal_shell
+
+he_shell = pygame.Surface(shell_rect.size)
+he_shell.fill((255,0,0))
+pygame.draw.ellipse(he_shell, (255, 0, 144), shell_rect)
+he_shell.set_colorkey((255,0,0))
+DataFiles.sprites["HE_shell"] = he_shell
+
+ap_shell = pygame.Surface(shell_rect.size)
+ap_shell.fill((255,0,0))
+pygame.draw.ellipse(ap_shell, (0, 251, 255), shell_rect)
+ap_shell.set_colorkey((255,0,0))
+DataFiles.sprites["AP_shell"] = ap_shell

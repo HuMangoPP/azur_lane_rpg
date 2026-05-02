@@ -62,5 +62,7 @@
 	"USS": { "left": 384, "top": 0, "width": 64, "height": 64 },
 	"HMS": { "left": 384, "top": 64, "width": 64, "height": 64 },
 	"IJN": { "left": 384, "top": 128, "width": 64, "height": 64 },
-	"KMS": { "left": 384, "top": 192, "width": 64, "height": 64 }
+	"KMS": { "left": 384, "top": 192, "width": 64, "height": 64 },
+
+	"shell": { "left": 384, "top": 256, "width": 32, "height": 32 }
 }
