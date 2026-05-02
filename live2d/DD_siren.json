@@ -1,5 +1,5 @@
 {
-	"spritesheet": "live2d/BB.png",
+	"spritesheet": "live2d/DD_siren.png",
 	"colorkey": [255, 0, 0],
 	"back_torso": {
 		"pivot": [34, 42],
@@ -47,17 +47,17 @@
 		"walk": [0, null]
 	},
 	"left_hair": {
-		"pivot": [29, 25],
+		"pivot": [32, 23],
 		"idle": [-5, "one_plus_sint"],
 		"walk": [-5, "sint"]
 	},
 	"left_bangs": {
-		"pivot": [29, 25],
+		"pivot": [31, 26],
 		"idle": [-5, "one_plus_sint"],
 		"walk": [-5, "sint_sq"]
 	},
 	"right_hair": {
-		"pivot": [65, 25],
+		"pivot": [65, 23],
 		"idle": [5, "one_plus_sint"],
 		"walk": [-5, "sint"]
 	},

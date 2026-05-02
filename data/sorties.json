@@ -2,11 +2,11 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD"],
+				"front": ["DD_siren"],
 				"back": []
 			},
 			{
-				"front": ["DD", "DD"],
+				"front": ["DD_siren", "DD_siren"],
 				"back": []
 			}
 		],
@@ -18,12 +18,12 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD", "DD"],
+				"front": ["DD_siren", "DD_siren"],
 				"back": []
 			},
 			{
-				"front": ["DD", "DD"],
-				"back": ["CA"]
+				"front": ["DD_siren", "DD_siren"],
+				"back": ["CA_siren"]
 			}
 		],
 		"rewards": {
@@ -34,16 +34,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD", "DD", "DD"],
+				"front": ["DD_siren", "DD_siren", "DD_siren"],
 				"back": []
 			},
 			{
-				"front": ["DD", "DD", "DD"],
-				"back": ["CA"]
+				"front": ["DD_siren", "DD_siren", "DD_siren"],
+				"back": ["CA_siren"]
 			},
 			{
-				"front": ["DD", "DD"],
-				"back": ["CA", "CA"]
+				"front": ["DD_siren", "DD_siren"],
+				"back": ["CA_siren", "CA_siren"]
 			}
 		],
 		"rewards": {
@@ -58,16 +58,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD", "DD", "DD"],
-				"back": ["DD"]
+				"front": ["DD_siren", "DD_siren", "DD_siren"],
+				"back": ["DD_siren"]
 			},
 			{
-				"front": ["DD", "DD", "DD"],
-				"back": ["CA", "CA"]
+				"front": ["DD_siren", "DD_siren", "DD_siren"],
+				"back": ["CA_siren", "CA_siren"]
 			},
 			{
-				"front": ["DD", "DD"],
-				"back": ["BB"]
+				"front": ["DD_siren", "DD_siren"],
+				"back": ["BB_siren"]
 			}
 		],
 		"rewards": {
@@ -87,11 +87,11 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD", "DD2"],
+				"front": ["DD_siren", "DD2"],
 				"back": []
 			},
 			{
-				"front": ["CA", "CA2"],
+				"front": ["CA_siren", "CA2"],
 				"back": []
 			},
 			{
@@ -99,7 +99,7 @@
 				"back": ["CA2"]
 			},
 			{
-				"front": ["DD", "DD2"],
+				"front": ["DD_siren", "DD2"],
 				"back": ["CA2"]
 			}
 		],
@@ -115,11 +115,11 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD", "DD2", "DD"],
+				"front": ["DD_siren", "DD2", "DD_siren"],
 				"back": []
 			},
 			{
-				"front": ["DD", "DD2"],
+				"front": ["DD_siren", "DD2"],
 				"back": ["DD2"]
 			},
 			{
@@ -127,7 +127,7 @@
 				"back": ["CA2", "CA2"]
 			},
 			{
-				"front": ["DD", "DD2"],
+				"front": ["DD_siren", "DD2"],
 				"back": ["CA2", "CA2"]
 			},
 			{

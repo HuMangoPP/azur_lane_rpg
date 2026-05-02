@@ -1,5 +1,5 @@
 {
-	"DD": {
+	"DD_siren": {
 		"hull_type": "DD",
 		"max_hp": [10, 0],
 		"evasion": [0, 0],
@@ -16,7 +16,7 @@
 		},
 		"equipment": [null, null, null]
 	},
-	"CA": {
+	"CA_siren": {
 		"hull_type": "CA",
 		"max_hp": [20, 0],
 		"evasion": [0, 0],
@@ -33,7 +33,7 @@
 		},
 		"equipment": [null, null, null]
 	},
-	"BB": {
+	"BB_siren": {
 		"hull_type": "BB",
 		"max_hp": [50, 0],
 		"evasion": [0, 0],

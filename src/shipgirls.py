@@ -27,7 +27,7 @@ class ShipgirlBattleComponent:
         "AP": {LIGHT_ARMOR: 1.0, MEDIUM_ARMOR: 1.25, HEAVY_ARMOR: 1.5},
     }
 
-    SHELL_SPEED = 800
+    SHELL_SPEED = 100
     SHELL_SCALE = 1/1000
 
     def __init__(self, name, is_player):
@@ -154,15 +154,14 @@ class ShipgirlBattleComponent:
             scale = distance * self.SHELL_SCALE
             shell_y = scale * distance * t * (t-1)
             shell_pos = start_pos + relpos * t + pygame.Vector2(0, shell_y)
-            shell_incline = math.degrees(math.atan(scale * (2*t - 1)))
+            shell_incline = math.degrees(math.atan(direction.x / abs(direction.x) * scale * (2*t - 1)))
             shell_angle = math.degrees(math.atan2(direction.y, direction.x))
             render_angle = shell_angle + shell_incline
 
             shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "AP")
             shell_sprite = pygame.transform.flip(
                 pygame.transform.rotate(DataFiles.sprites[f"{shell_type}_shell"], render_angle),
-                direction.x < 0,
-                True
+                False, True
             )
             shell_rect = shell_sprite.get_rect()
             shell_rect.center = shell_pos

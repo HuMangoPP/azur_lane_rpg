@@ -34,9 +34,9 @@
 	"battle_mech": { "left": 128, "top": 384, "width": 64, "height": 64 },
 	"star_blaster": { "left": 192, "top": 384, "width": 64, "height": 64 },
 
-	"DD": { "left": 256, "top": 0, "width": 64, "height": 64 },
-	"CA": { "left": 256, "top": 64, "width": 64, "height": 64 },
-	"BB": { "left": 256, "top": 128, "width": 64, "height": 64 },
+	"DD_siren": { "left": 256, "top": 0, "width": 64, "height": 64 },
+	"CA_siren": { "left": 256, "top": 64, "width": 64, "height": 64 },
+	"BB_siren": { "left": 256, "top": 128, "width": 64, "height": 64 },
 
 	"depot": { "left": 320, "top": 0, "width": 64, "height": 64 },
 	"shipyard": { "left": 320, "top": 64, "width": 64, "height": 64 },

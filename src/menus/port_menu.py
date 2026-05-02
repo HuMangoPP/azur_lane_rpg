@@ -343,7 +343,10 @@ class PortMenu:
                 pygame.draw.rect(surface, Color.DARK_BLUE, rect)
             else:
                 pygame.draw.rect(surface, Color.BLUE, rect)
-            font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            if cat in DataFiles.sprites:
+                surface.blit(DataFiles.sprites[cat], rect)
+            else:
+                font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         for entity, rect in zip(entities, self.overlay_left_icons):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)

@@ -1,5 +1,5 @@
 {
-	"spritesheet": "live2d/CA.png",
+	"spritesheet": "live2d/BB_siren.png",
 	"colorkey": [255, 0, 0],
 	"back_torso": {
 		"pivot": [34, 42],
@@ -47,22 +47,22 @@
 		"walk": [0, null]
 	},
 	"left_hair": {
-		"pivot": [25, 40],
+		"pivot": [29, 25],
 		"idle": [-5, "one_plus_sint"],
 		"walk": [-5, "sint"]
 	},
 	"left_bangs": {
-		"pivot": [30, 24],
+		"pivot": [29, 25],
 		"idle": [-5, "one_plus_sint"],
 		"walk": [-5, "sint_sq"]
 	},
 	"right_hair": {
-		"pivot": [69, 35],
+		"pivot": [65, 25],
 		"idle": [5, "one_plus_sint"],
 		"walk": [-5, "sint"]
 	},
 	"right_bangs": {
-		"pivot": [61, 26],
+		"pivot": [61, 24],
 		"idle": [5, "one_plus_sint"],
 		"walk": [5, "sint_sq"]
 	},

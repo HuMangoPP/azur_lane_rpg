@@ -52,7 +52,7 @@ class EquipmentMenu:
             stat: get_rect(
                 width=stat_rect_size, height=stat_rect_size,
                 left=screen_x(0.25) - Box.WIDTH/2,
-                top=screen_y(0.5) + Box.HEIGHT/2 + Box.PADDING + i*(stat_rect_size+Box.PADDING)
+                top=screen_y(0.5) + Box.HEIGHT + Box.PADDING + i*(stat_rect_size+Box.PADDING)
             )
             for i, stat in enumerate(stats)
         }
@@ -149,9 +149,8 @@ class EquipmentMenu:
 
     def draw(self, surface, font):
         if self.selected_shipgirl is not None:
-            # shipgirl chibi
             self.selected_shipgirl.draw(surface, font)
-            # shipgirl stats
+            
             for stat, rect in self.stat_rects.items():
                 surface.blit(DataFiles.sprites[stat], rect)
                 font.render(
@@ -178,7 +177,7 @@ class EquipmentMenu:
                         center+get_vec(length=Box.PADDING, angle=math.radians(210)),
                         center+get_vec(length=Box.PADDING, angle=math.radians(330))
                     ])
-            # shipgirl equipment
+            
             for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
                 if self.selected_equipment == i:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=2*Box.OUTLINE_WIDTH)
@@ -189,7 +188,7 @@ class EquipmentMenu:
                         surface.blit(DataFiles.sprites[equipment], rect)
                     else:
                         font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-            # equippable equipment
+            
             if self.selected_equipment == Equipment.WEAPON:
                 equippable = [
                     weapon_name for weapon_name, weapon_info in DataFiles.equipment_data.items()
@@ -209,5 +208,5 @@ class EquipmentMenu:
                     surface.blit(DataFiles.sprites[equipment], rect)
                 else:
                     font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-        # exit button
+        
         self.exit_equipment_menu_button.draw(surface, font)
