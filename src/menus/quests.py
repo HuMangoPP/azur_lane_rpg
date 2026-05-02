@@ -8,28 +8,24 @@ from src.constants import DataFiles, Box, Color, screen_x, screen_y
 class QuestManager:
     def __init__(self):
         self.quests = {}
-        self.selected_quest_id = None
+        self.selected_quest = None
     
     @property
     def started_quests(self):
         return {quest_id: quest for quest_id, quest in self.quests.items()}
 
-    @property
-    def selected_quest(self):
-        return self.quests.get(self.selected_quest_id)
-
     def select_quest(self, mpos):
-        for i, quest in enumerate(self.quests):
+        for i, quest in enumerate(self.quests.values()):
             rect = get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 left=Box.PADDING,
                 top=Box.PADDING + (Box.HEIGHT + Box.PADDING) * i
             )
             if rect.collidepoint(mpos):
-                self.selected_quest_id = quest
+                self.selected_quest = quest
                 break
         else:
-            self.selected_quest_id = None
+            self.selected_quest = None
 
     def draw(self, surface, font):
         for i, quest in enumerate(self.quests.values()):
@@ -48,7 +44,7 @@ class QuestManager:
             elif quest.completed:
                 font.render(surface, "completed", textpos, Color.WHITE, 1, style="topleft", outline_color=Color.BLACK)
         
-        if self.selected_quest_id is not None:
+        if self.selected_quest is not None:
             self.selected_quest.draw(surface, font)
 
 class Quest:
@@ -59,13 +55,28 @@ class Quest:
         top=DIALOGUE_OVERLAY.top + Box.PADDING,
         left=DIALOGUE_OVERLAY.left + Box.PADDING
     )
-    def __init__(self, dialogue_texts, stop_index, completion_criteria, tutorial_draw, on_start, on_complete, rewards={}):
+    def __init__(
+        self,
+        quest_id,
+        pre_quest_dialogue,
+        quest_line,
+        post_quest_dialogue,
+        completion_criteria,
+        tutorial_draw,
+        on_start,
+        on_complete,
+        rewards={}
+    ):
+        self.quest_id = quest_id
+
         self.started = False
         self.completed = False
 
-        self.dialogue_index = 0
-        self.dialogue_texts = dialogue_texts
-        self.stop_index = stop_index
+        self.pre_quest_dialogue_index = 0
+        self.pre_quest_dialogue = pre_quest_dialogue
+        self.quest_line = quest_line
+        self.post_quest_dialogue_index = 0
+        self.post_quest_dialogue = post_quest_dialogue
 
         self.next_button = get_rect(
             width=Box.WIDTH, height=Box.HEIGHT,
@@ -79,28 +90,26 @@ class Quest:
         self.on_complete = on_complete
 
         self.rewards = rewards
-    
-    def start(self, menu_manager):
-        if self.started:
-            return False
-        
-        self.started = True
-        self.on_start(menu_manager)
-        return True
 
     def go_next(self, menu_manager, mpos):
         if self.next_button.collidepoint(mpos):
-            self.dialogue_index += 1
             if self.completed:
-                if self.dialogue_index == len(self.dialogue_texts):
-                    self.dialogue_index = len(self.dialogue_texts) - 1
+                self.post_quest_dialogue_index += 1
+                if self.post_quest_dialogue_index == len(self.post_quest_dialogue):
                     for reward, amt in self.rewards.items():
                         DataFiles.save_file["inventory"][reward] = DataFiles.save_file["inventory"].get(reward, 0) + amt
+                    self.on_complete(menu_manager)
+                    DataFiles.save_file["quests"][self.quest_id] = "completed"
+                    menu_manager.quest_manager.quests.pop(self.quest_id)
                     return True
+            elif self.started:
+                return True
             else:
-                if self.dialogue_index == self.stop_index:
-                    self.dialogue_index = self.stop_index - 1
-                    return True
+                self.pre_quest_dialogue_index += 1
+                if self.pre_quest_dialogue_index == len(self.pre_quest_dialogue):
+                    self.started = True
+                    self.on_start(menu_manager)
+                    DataFiles.save_file["quests"][self.quest_id] = "in_progress"
         return False
     
     def draw(self, surface, font):
@@ -128,7 +137,12 @@ class Quest:
         pygame.draw.polygon(surface, Color.BLUE, polygon)
         font.render(surface, "next", self.next_button.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        text = self.dialogue_texts[self.dialogue_index]
+        if self.completed:
+            text = self.post_quest_dialogue[self.post_quest_dialogue_index]
+        elif self.started:
+            text = self.quest_line
+        else:
+            text = self.pre_quest_dialogue[self.pre_quest_dialogue_index]
         text_width = self.DIALOGUE_BOX.width - 2*Box.PADDING
         font.render(
             surface,

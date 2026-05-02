@@ -250,20 +250,16 @@ class PortMenu:
     def update_no_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                selected_quest_id = self.menu_manager.quest_manager.selected_quest_id
-                if selected_quest_id is not None:
+                selected_quest = self.menu_manager.quest_manager.selected_quest
+                if selected_quest is not None:
                     selected_quest = self.menu_manager.quest_manager.selected_quest
-                    finished_dialogue = selected_quest.go_next(self.menu_manager, event.pos)
-                    if finished_dialogue:
-                        if selected_quest.start(self.menu_manager):
-                            DataFiles.save_file["quests"][selected_quest_id] = "in_progress"
-                        
+                    close_dialogue = selected_quest.go_next(self.menu_manager, event.pos)
+                    if close_dialogue:
                         if selected_quest.completed:
-                            selected_quest.on_complete(self.menu_manager)
-                            self.menu_manager.quest_manager.quests.pop(selected_quest_id, None)
-                            DataFiles.save_file["quests"][selected_quest_id] = "completed"
-                        if selected_quest.started:
-                            self.menu_manager.quest_manager.selected_quest_id = None
+                            DataFiles.save_file["quests"][selected_quest.quest_id] = "completed"
+                        elif selected_quest.started:
+                            DataFiles.save_file["quests"][selected_quest.quest_id] = "in_progress"
+                        self.menu_manager.quest_manager.selected_quest = None
                     break
 
                 for shipgirl in self.menu_manager.available_shipgirls:

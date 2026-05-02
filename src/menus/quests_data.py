@@ -63,14 +63,15 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
             box_width=text_width
         )
 
-choose_faction_dialogue_texts = [
+choose_faction_pre_quest_dialogue = [
     "Hello commander, welcome to the Azur Lane port.",
     "I am your virtual assistant. You may call me TB.",
     "First things first, we will need to choose our faction.",
-    "Choose a faction.",
-    "We've successfully chosen a faction!"
 ]
-choose_faction_stop_index = 4
+choose_faction_quest_line = "Choose a faction."
+choose_faction_post_quest_dialogue = [
+    "You've successfully chosen a faction!"
+]
 
 def choose_faction_completion_criteria(menu_manager):
     return len(DataFiles.save_file["unlocked_factions"]) > 0
@@ -100,8 +101,10 @@ choose_faction_rewards = {
 }
 
 choose_faction_quest = Quest(
-    choose_faction_dialogue_texts,
-    choose_faction_stop_index,
+    "choose_faction",
+    choose_faction_pre_quest_dialogue,
+    choose_faction_quest_line,
+    choose_faction_post_quest_dialogue,
     choose_faction_completion_criteria,
     choose_faction_tutorial_draw,
     choose_faction_on_start,
@@ -109,12 +112,13 @@ choose_faction_quest = Quest(
     rewards=choose_faction_rewards
 )
 
-construct_shipgirls_dialogue_texts = [
-    "We should construct some shipgirls to join our fleet.",
-    "Construct Laffey and New Jersey.",
+construct_shipgirls_pre_quest_dialogue = [
+    "We should construct some shipgirls to join our fleet."
+]
+construct_shipgirls_quest_line = "Construct Laffey and New Jersey.",
+construct_shipgirls_post_quest_dialogue = [
     "Laffey and New Jersey have joined our fleet!"
 ]
-construct_shipgirls_stop_index = 2
 
 def construct_shipgirls_completion_criteria(menu_manager):
     return (
@@ -183,20 +187,23 @@ def construct_shipgirls_on_complete(menu_manager):
         DataFiles.save_file["quests"][quest_name] = "new"
 
 construct_shipgirls_quest = Quest(
-    construct_shipgirls_dialogue_texts,
-    construct_shipgirls_stop_index,
+    "construct_shipgirls",
+    construct_shipgirls_pre_quest_dialogue,
+    construct_shipgirls_quest_line,
+    construct_shipgirls_post_quest_dialogue,
     construct_shipgirls_completion_criteria,
     construct_shipgirls_tutorial_draw,
     construct_shipgirls_on_start,
     construct_shipgirls_on_complete
 )
 
-first_sortie_dialogue_texts = [
-    "Now it's time to go on a sortie.",
-    "Sortie into zone 1.",
+first_sortie_pre_quest_dialogue = [
+    "Now it's time to go on a sortie."
+]
+first_sortie_quest_line = "Sortie into zone 1."
+first_sortie_post_quest_dialogue = [
     "We've successfully controlled zone 1!"
 ]
-first_sortie_stop_index = 2
 
 def first_sortie_completion_criteria(menu_manager):
     return DataFiles.save_file["sortie_progress"] == 1
@@ -300,21 +307,24 @@ def first_sortie_on_complete(menu_manager):
         DataFiles.save_file["quests"][quest_name] = "new"
 
 first_sortie_quest = Quest(
-    first_sortie_dialogue_texts,
-    first_sortie_stop_index,
+    "first_sortie",
+    first_sortie_pre_quest_dialogue,
+    first_sortie_quest_line,
+    first_sortie_post_quest_dialogue,
     first_sortie_completion_criteria,
     first_sortie_tutorial_draw,
     first_sortie_on_start,
     first_sortie_on_complete
 )
 
-research_shipgirl_dialogue_texts = [
-    "We can research a new shipgirl.",
-    "Go to the research and start researching Guam.",
+research_shipgirl_pre_quest_dialogue = [
+    "We can research a new shipgirl."
+]
+research_shipgirl_quest_line = "Go to the research and start researching Guam."
+research_shipgirl_post_quest_dialogue = [
     "Let's sortie into zone 2 to collect combat data.",
     "Collecting combat data contributes towards obtaining the shipgirl's unique item."
 ]
-research_shipgirl_stop_index = 2
 
 def research_shipgirl_completion_criteria(menu_manager):
     return DataFiles.save_file["research_target"] == "guam"
@@ -378,21 +388,24 @@ def research_shipgirl_on_complete(menu_manager):
     pass
 
 research_shipgirl_quest = Quest(
-    research_shipgirl_dialogue_texts,
-    research_shipgirl_stop_index,
+    "research_shipgirl",
+    research_shipgirl_pre_quest_dialogue,
+    research_shipgirl_quest_line,
+    research_shipgirl_post_quest_dialogue,
     research_shipgirl_completion_criteria,
     research_shipgirl_tutorial_draw,
     research_shipgirl_on_start,
     research_shipgirl_on_complete
 )
 
-construct_shipgirl_dialogue_texts = [
-    "We've collected enough combat data and obtained Guam's unique item!",
-    "Go to the shipyard and construct Guam.",
+construct_shipgirl_pre_quest_dialogue = [
+    "We've collected enough combat data and obtained Guam's unique item!"
+]
+construct_shipgirl_quest_line = "Go to the shipyard and construct Guam."
+construct_shipgirl_post_quest_dialogue = [
     "Guam has joined our port!",
     "Let's add her to our fleet and sortie into zone 3."
 ]
-construct_shipgirl_stop_index = 2
 
 def construct_shipgirl_completion_criteria(menu_manager):
     return "guam" in DataFiles.save_file["shipgirls"]
@@ -440,20 +453,23 @@ def construct_shipgirl_on_complete(menu_manager):
     pass
 
 construct_shipgirl_quest = Quest(
-    construct_shipgirl_dialogue_texts,
-    construct_shipgirl_stop_index,
+    "construct_shipgirl",
+    construct_shipgirl_pre_quest_dialogue,
+    construct_shipgirl_quest_line,
+    construct_shipgirl_post_quest_dialogue,
     construct_shipgirl_completion_criteria,
     construct_shipgirl_tutorial_draw,
     construct_shipgirl_on_start,
     construct_shipgirl_on_complete
 )
 
-craft_weapon_dialogue_texts = [
-    "We've collected enough materials to craft a new gun!",
-    "Go to the gear lab and craft a new DD gun.",
+craft_weapon_pre_quest_dialogue = [
+    "We've collected enough materials to craft a new gun!"
+]
+craft_weapon_quest_line = "Go to the gear lab and craft a new DD gun."
+craft_weapon_post_quest_dialogue = [
     "We've crafted a new gun!"
 ]
-craft_weapon_stop_index = 2
 
 def craft_weapon_completion_criteria(menu_manager):
     return DataFiles.save_file["equipment"].get("twin_120", 0) == 1
@@ -504,21 +520,24 @@ def craft_weapon_on_complete(menu_manager):
         DataFiles.save_file["quests"][quest_name] = "new"
 
 craft_weapon_quest = Quest(
-    craft_weapon_dialogue_texts,
-    craft_weapon_stop_index,
+    "craft_weapon",
+    craft_weapon_pre_quest_dialogue,
+    craft_weapon_quest_line,
+    craft_weapon_post_quest_dialogue,
     craft_weapon_completion_criteria,
     craft_weapon_tutorial_draw,
     craft_weapon_on_start,
     craft_weapon_on_complete
 )
 
-equip_weapon_dialogue_texts = [
-    "Since we just crafted a new gun, we should equip it.",
-    "Equip the new gun onto Laffey.",
+equip_weapon_pre_quest_dialogue = [
+    "Since we just crafted a new gun, we should equip it."
+]
+equip_weapon_quest_line = "Equip the new gun onto Laffey."
+equip_weapon_post_quest_dialogue = [
     "Now Laffey is stronger!",
     "Let's sortie into the new zone!"
 ]
-equip_weapon_stop_index = 2
 
 def equip_weapon_completion_criteria(menu_manager):
     return DataFiles.save_file["shipgirls"]["laffey"]["equipment"][Equipment.WEAPON] == "twin_120"
@@ -561,8 +580,10 @@ def equip_weapon_on_complete(menu_manager):
     pass
 
 equip_weapon_quest = Quest(
-    equip_weapon_dialogue_texts,
-    equip_weapon_stop_index,
+    "equip_weapon",
+    equip_weapon_pre_quest_dialogue,
+    equip_weapon_quest_line,
+    equip_weapon_post_quest_dialogue,
     equip_weapon_completion_criteria,
     equip_weapon_tutorial_draw,
     equip_weapon_on_start,
@@ -570,11 +591,11 @@ equip_weapon_quest = Quest(
 )
 
 quests = {
-    "choose_faction": choose_faction_quest,
-    "construct_shipgirls": construct_shipgirls_quest,
-    "first_sortie": first_sortie_quest,
-    "research_shipgirl": research_shipgirl_quest,
-    "construct_shipgirl": construct_shipgirl_quest,
-    "craft_weapon": craft_weapon_quest,
-    "equip_weapon": equip_weapon_quest
+    choose_faction_quest.quest_id: choose_faction_quest,
+    construct_shipgirls_quest.quest_id: construct_shipgirls_quest,
+    first_sortie_quest.quest_id: first_sortie_quest,
+    research_shipgirl_quest.quest_id: research_shipgirl_quest,
+    construct_shipgirl_quest.quest_id: construct_shipgirl_quest,
+    craft_weapon_quest.quest_id: craft_weapon_quest,
+    equip_weapon_quest.quest_id: equip_weapon_quest
 }

@@ -46,11 +46,12 @@ class MenuManager:
             if quest_progress == "new":
                 self.quest_manager.quests[quest_name] = quest
             elif quest_progress == "in_progress":
-                quest.start(self)
-                quest.dialogue_index = quest.stop_index - 1
+                quest.started = True
+                quest.on_start(self)
                 self.quest_manager.quests[quest_name] = quest
             elif quest_progress == "completed":
-                quest.start(self)
+                quest.started = True
+                quest.on_start(self)
                 quest.completed = True
                 quest.on_complete(self)
                 self.quest_manager.quests.pop(quest_name, None)

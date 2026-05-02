@@ -18,6 +18,6 @@
 	"quests": {
 		"choose_faction": "completed",
 		"construct_shipgirls": "completed",
-		"first_sortie": "in_progress"
+		"first_sortie": "new"
 	}
 }

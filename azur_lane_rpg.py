@@ -31,10 +31,7 @@ while running:
     menu_manager.current_menu.update(dt, events)
 
     for quest in menu_manager.quest_manager.started_quests.values():
-        quest_completed = quest.completion_criteria(menu_manager)
-        if not quest.completed and quest_completed:
-            quest.dialogue_index += 1
-        quest.completed = quest_completed
+        quest.completed = quest.completed or quest.completion_criteria(menu_manager)
 
     temp_screen.fill((50,20,20)) # TODO
     menu_manager.current_menu.draw(temp_screen, font)
