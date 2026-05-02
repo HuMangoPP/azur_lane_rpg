@@ -45,12 +45,20 @@ class Stats:
     FIREPOWER = 2
     RELOAD = 3
 
-    STAT_NAMES = {
-        MAX_HP: "HP",
-        EVASION: "EVA",
-        FIREPOWER: "FP",
-        RELOAD: "RLD",
-    }
+    RESEARCH_EXP_REQUIREMENTS = [0, 0, 5, 8]
+    EXP_BREAKPOINTS = [3, 5, 8, 13, 21]
+
+    @classmethod
+    def level(cls, exp):
+        level_index = 0
+        while exp >= cls.EXP_BREAKPOINTS[level_index]:
+            exp -= cls.EXP_BREAKPOINTS[level_index]
+            level_index += 1
+        return level_index
+
+    @classmethod
+    def stat(cls, exp, base_stat, stat_per_level):
+        return base_stat + stat_per_level * cls.level(exp)
 
 from engine.load_sprites import load_sprites
 

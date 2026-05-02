@@ -3,7 +3,7 @@ import pygame
 from engine.util import get_rect
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Box, screen_x, screen_y
+from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
 from src.shipgirls import Shipgirl
 
 class PortMenu:
@@ -67,7 +67,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["depot"],
             callback=open_overlay_factory(self.DEPOT),
-            active=False
+            # active=False
         )
         self.open_intel_center_overlay_button = Button(
             rect=get_rect(
@@ -78,7 +78,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["intel_center"],
             callback=open_overlay_factory(self.INTEL_CENTER),
-            active=False
+            # active=False
         )
         self.open_shipyard_overlay_button = Button(
             rect=get_rect(
@@ -89,7 +89,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["shipyard"],
             callback=open_overlay_factory(self.SHIPYARD),
-            active=False
+            # active=False
         )
 
         self.open_gear_lab_overlay_button = Button(
@@ -101,7 +101,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
-            active=False
+            # active=False
         )
 
         overlay_left_panel_width = 5*(Box.WIDTH + Box.PADDING) + Box.PADDING
@@ -187,9 +187,10 @@ class PortMenu:
                     unique_item: 1
                 }
                 if all(DataFiles.save_file["inventory"].get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items()):
+                    num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
                     DataFiles.save_file["shipgirls"][self.overlay_selected_entity] = {
                         "equipment": [None, None, None],
-                        "exp": 0
+                        "exp": Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
                     }
                     shipgirl = Shipgirl(self.overlay_selected_entity, True)
                     self.menu_manager.available_shipgirls.append(shipgirl)
@@ -461,12 +462,15 @@ class PortMenu:
             ]
             hull_type = selected_entity_info.get("hull_type")
             selected_entity_stats = DataFiles.stats_data[hull_type]
+            num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
+            research_shipgirl_exp = Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
             shipgirl_stats = {
                 "hull_type": hull_type,
-                "max_hp": selected_entity_stats["max_hp"],
-                "evasion": selected_entity_stats["evasion"],
-                "firepower": selected_entity_stats["firepower"],
-                "reload": selected_entity_stats["reload"],
+                "max_hp": Stats.stat(research_shipgirl_exp, *selected_entity_stats["max_hp"]),
+                "evasion": Stats.stat(research_shipgirl_exp, *selected_entity_stats["evasion"]),
+                "firepower": Stats.stat(research_shipgirl_exp, *selected_entity_stats["firepower"]),
+                "reload": Stats.stat(research_shipgirl_exp, *selected_entity_stats["reload"]),
+                "EXP": research_shipgirl_exp
             }
         else:
             research_icons = []
@@ -572,12 +576,12 @@ class PortMenu:
             ]
             siren_stats = {
                 "hull_type": selected_entity_info.get("hull_type"),
-                "max_hp": selected_entity_info.get("max_hp"),
-                "evasion": selected_entity_info.get("evasion"),
-                "firepower": selected_entity_info.get("firepower"),
-                "reload": selected_entity_info.get("reload"),
-                "target_pref": selected_entity_info.get("target_pref"),
-                "EXP": selected_entity_info.get("exp"),
+                "max_hp": selected_entity_info["max_hp"][0],
+                "evasion": selected_entity_info["evasion"][0],
+                "firepower": selected_entity_info["firepower"][0],
+                "reload": selected_entity_info["reload"][0],
+                "target_pref": selected_entity_info["target_pref"],
+                "EXP": selected_entity_info["exp"],
             }
         else:
             drop_icons = []

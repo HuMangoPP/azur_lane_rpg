@@ -5,13 +5,11 @@ import pygame
 
 from engine.util import get_rect, get_vec, draw_slice
 
-from src.constants import DataFiles, Color, Equipment, Box, screen_x, screen_y
+from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y
 
 from live2d.live2d import Live2D
 
 class ShipgirlBattleComponent:
-    LEVEL_EXPS = [3, 5, 7, 9, 11]
-    
     LIGHT_ARMOR = 0
     MEDIUM_ARMOR = 1
     HEAVY_ARMOR = 2
@@ -60,21 +58,12 @@ class ShipgirlBattleComponent:
         self.target = None
         self.evasion_gauge = 0
 
-    @property
-    def level(self):
-        level_index = 0
-        exp = self.exp
-        while exp >= self.LEVEL_EXPS[level_index]:
-            exp -= self.LEVEL_EXPS[level_index]
-            level_index += 1
-        return level_index
-
     def max_hp(self, equipment_override=None):
         equipment = self.equipment.copy()
         if equipment_override is not None:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
-            self.base_max_hp[0] + self.base_max_hp[1] * self.level
+            Stats.stat(self.exp, *self.base_max_hp)
             + DataFiles.equipment_data.get(equipment[Equipment.WEAPON], {}).get("max_hp", 0)
             + DataFiles.equipment_data.get(equipment[Equipment.AUX1], {}).get("max_hp", 0)
             + DataFiles.equipment_data.get(equipment[Equipment.AUX2], {}).get("max_hp", 0)
@@ -85,7 +74,7 @@ class ShipgirlBattleComponent:
         if equipment_override is not None:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
-            self.base_evasion[0] + self.base_evasion[1] * self.level
+            Stats.stat(self.exp, *self.base_evasion)
             + DataFiles.equipment_data.get(equipment[Equipment.WEAPON], {}).get("evasion", 0)
             + DataFiles.equipment_data.get(equipment[Equipment.AUX1], {}).get("evasion", 0)
             + DataFiles.equipment_data.get(equipment[Equipment.AUX2], {}).get("evasion", 0)
@@ -96,7 +85,7 @@ class ShipgirlBattleComponent:
         if equipment_override is not None:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
-            self.base_firepower[0] + self.base_firepower[1] * self.level
+            Stats.stat(self.exp, *self.base_firepower)
             + DataFiles.equipment_data.get(equipment[Equipment.WEAPON], {}).get("firepower", 0)
             + DataFiles.equipment_data.get(equipment[Equipment.AUX1], {}).get("firepower", 0)
             + DataFiles.equipment_data.get(equipment[Equipment.AUX2], {}).get("firepower", 0)
@@ -107,7 +96,7 @@ class ShipgirlBattleComponent:
         if equipment_override is not None:
             equipment[equipment_override[0]] = equipment_override[1]
         return (
-            self.base_reload[0] + self.base_reload[1] * self.level
+            Stats.stat(self.exp, *self.base_reload)
             + DataFiles.equipment_data.get(equipment[Equipment.WEAPON], {}).get("reload", 0)
             + DataFiles.equipment_data.get(equipment[Equipment.AUX1], {}).get("reload", 0)
             + DataFiles.equipment_data.get(equipment[Equipment.AUX2], {}).get("reload", 0)

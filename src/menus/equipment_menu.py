@@ -149,7 +149,7 @@ class EquipmentMenu:
             for stat, xy in enumerate(self.stat_text_xy):
                 font_rect = font.render(
                     surface,
-                    f"{Stats.STAT_NAMES[stat]}: {self.get_stat(self.selected_shipgirl, stat)}",
+                    f"{stat}: {self.get_stat(self.selected_shipgirl, stat)}",
                     xy,
                     Color.WHITE,
                     1,
