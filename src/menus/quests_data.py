@@ -95,7 +95,7 @@ def choose_faction_on_start(menu_manager):
 
 def choose_faction_on_complete(menu_manager):
     quest_name = construct_shipgirls_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
+    menu_manager.quest_manager.quests[quest_name] = construct_shipgirls_quest
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
     
@@ -250,7 +250,7 @@ def construct_shipgirls_on_start(menu_manager):
 
 def construct_shipgirls_on_complete(menu_manager):
     quest_name = first_sortie_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
+    menu_manager.quest_manager.quests[quest_name] = first_sortie_quest
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
 
@@ -373,7 +373,7 @@ def first_sortie_on_start(menu_manager):
 
 def first_sortie_on_complete(menu_manager):
     quest_name = research_shipgirl_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
+    menu_manager.quest_manager.quests[quest_name] = research_shipgirl_quest
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
 
@@ -497,7 +497,7 @@ def craft_weapon_on_start(menu_manager):
 
 def craft_weapon_on_complete(menu_manager):
     quest_name = equip_weapon_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
+    menu_manager.quest_manager.quests[quest_name] = equip_weapon_quest
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
 

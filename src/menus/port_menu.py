@@ -49,7 +49,7 @@ class PortMenu:
                     self.overlay_selected_entity = DataFiles.save_file["research_target"]
                     self.overlay_confirm_button.active = True
                     unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
-                    if unique_item in DataFiles.save_file["inventory"]:
+                    if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
                         self.overlay_confirm_button.sprite = DataFiles.sprites["gear_lab"]
                         self.overlay_confirm_button.text = "construct"
                     else:
@@ -313,7 +313,7 @@ class PortMenu:
 
                 if self.current_overlay == self.SHIPYARD:
                     unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
-                    if unique_item in DataFiles.save_file["inventory"]:
+                    if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
                         self.overlay_confirm_button.sprite = DataFiles.sprites["gear_lab"]
                         self.overlay_confirm_button.text = "construct"
                     else:

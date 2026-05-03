@@ -42,10 +42,10 @@ class MenuManager:
 
         self.quest_manager = QuestManager()
         for quest in quests:
-            if quest not in DataFiles.save_file["quests"]:
+            quest_id = quest.quest_id
+            if quest_id not in DataFiles.save_file["quests"]:
                 continue
 
-            quest_id = quest.quest_id
             quest_progress = DataFiles.save_file["quests"][quest_id]
             if quest_progress == "new":
                 self.quest_manager.quests[quest_id] = quest

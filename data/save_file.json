@@ -8,10 +8,6 @@
 		"lion": {
 			"equipment": [null, null, null],
 			"exp": 8
-		},
-		"drake": {
-			"equipment": [null, null, null],
-			"exp": 5
 		}
 	},
 	"equipment": {},
@@ -28,12 +24,11 @@
 	},
 	"research_target": null,
 	"research_progress": 0,
-	"sortie_progress": 2,
+	"sortie_progress": 1,
 	"quests": {
 		"choose_faction": "completed",
 		"construct_shipgirls": "completed",
 		"first_sortie": "completed",
-		"research_shipgirl": "completed",
-		"construct_shipgirl": "completed"
+		"research_shipgirl": "new"
 	}
 }

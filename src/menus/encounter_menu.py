@@ -7,7 +7,7 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
 from src.shipgirls import Shipgirl
-from src.menus.quests_data import first_sortie_quest, construct_shipgirl_quest, craft_weapon_quest
+from src.menus.quests_data import first_sortie_quest, research_shipgirl_quest, construct_shipgirl_quest, craft_weapon_quest
 
 class Drop:
     def __init__(self, item, pos):
@@ -253,7 +253,10 @@ class EncounterMenu:
                     DataFiles.save_file["research_progress"] = 0
                     self.drops.append(Drop(unique_item, pygame.Vector2(screen_x(0.5), screen_y(0.5))))
 
-                    if construct_shipgirl_quest.quest_id not in DataFiles.save_file["quests"]:
+                    if (
+                        construct_shipgirl_quest.quest_id not in DataFiles.save_file["quests"]
+                        and research_shipgirl_quest.completion_criteria(self.menu_manager)
+                    ):
                         self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
                     DataFiles.save_file["research_target"] = None
                 self.research_exp = 0
