@@ -4,6 +4,7 @@ from engine.util import get_rect
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
+from src.menus.quests_data import first_sortie_quest
 
 from live2d.live2d import Live2D
 
@@ -134,7 +135,7 @@ class FleetSelectionMenu:
                 self.start_sortie_button.click(event.pos)
                 self.exit_fleet_selection_menu_button.click(event.pos)
         
-        if "first_sortie" in self.menu_manager.quest_manager.started_quests:
+        if first_sortie_quest.quest_id in self.menu_manager.quest_manager.started_quests:
             self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 1
         else:
             self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 0

@@ -7,7 +7,7 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
 from src.shipgirls import Shipgirl
-from src.menus.quests_data import construct_shipgirl_quest, craft_weapon_quest
+from src.menus.quests_data import first_sortie_quest, construct_shipgirl_quest, craft_weapon_quest
 
 class Drop:
     def __init__(self, item, pos):
@@ -77,7 +77,7 @@ class EncounterMenu:
             if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
                 DataFiles.save_file["sortie_progress"] = new_sortie_progress
                 if new_sortie_progress == 3:
-                    self.menu_manager.quest_manager.quests["craft_weapon"] = craft_weapon_quest
+                    self.menu_manager.quest_manager.quests[craft_weapon_quest.quest_id] = craft_weapon_quest
             
             self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
             self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True
@@ -150,7 +150,7 @@ class EncounterMenu:
 
         if (
             self.current_encounter == 0
-            and "first_sortie" in self.menu_manager.quest_manager.started_quests
+            and first_sortie_quest.quest_id in self.menu_manager.quest_manager.started_quests
         ):
             self.encounter_started = False
         else:

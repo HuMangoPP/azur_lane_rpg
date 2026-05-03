@@ -94,7 +94,7 @@ def choose_faction_on_start(menu_manager):
         choose_faction_button.active = True
 
 def choose_faction_on_complete(menu_manager):
-    quest_name = "construct_shipgirls"
+    quest_name = construct_shipgirls_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
@@ -249,7 +249,7 @@ def construct_shipgirls_on_start(menu_manager):
     menu_manager.port_menu.open_shipyard_overlay_button.active = True
 
 def construct_shipgirls_on_complete(menu_manager):
-    quest_name = "first_sortie"
+    quest_name = first_sortie_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
@@ -372,7 +372,7 @@ def first_sortie_on_start(menu_manager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
 
 def first_sortie_on_complete(menu_manager):
-    quest_name = "research_shipgirl"
+    quest_name = research_shipgirl_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
@@ -496,7 +496,7 @@ def craft_weapon_on_start(menu_manager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
 
 def craft_weapon_on_complete(menu_manager):
-    quest_name = "equip_weapon"
+    quest_name = equip_weapon_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
@@ -577,12 +577,12 @@ equip_weapon_quest = Quest(
     equip_weapon_on_complete
 )
 
-quests = {
-    choose_faction_quest.quest_id: choose_faction_quest,
-    construct_shipgirls_quest.quest_id: construct_shipgirls_quest,
-    first_sortie_quest.quest_id: first_sortie_quest,
-    research_shipgirl_quest.quest_id: research_shipgirl_quest,
-    construct_shipgirl_quest.quest_id: construct_shipgirl_quest,
-    craft_weapon_quest.quest_id: craft_weapon_quest,
-    equip_weapon_quest.quest_id: equip_weapon_quest
-}
+quests = [
+    choose_faction_quest,
+    construct_shipgirls_quest,
+    first_sortie_quest,
+    research_shipgirl_quest,
+    construct_shipgirl_quest,
+    craft_weapon_quest,
+    equip_weapon_quest
+]

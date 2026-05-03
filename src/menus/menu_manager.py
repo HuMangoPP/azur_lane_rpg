@@ -41,20 +41,24 @@ class MenuManager:
         self.current_menu = self.port_menu
 
         self.quest_manager = QuestManager()
-        for quest_name, quest_progress in DataFiles.save_file["quests"].items():
-            quest = quests[quest_name]
+        for quest in quests:
+            if quest not in DataFiles.save_file["quests"]:
+                continue
+
+            quest_id = quest.quest_id
+            quest_progress = DataFiles.save_file["quests"][quest_id]
             if quest_progress == "new":
-                self.quest_manager.quests[quest_name] = quest
+                self.quest_manager.quests[quest_id] = quest
             elif quest_progress == "in_progress":
                 quest.started = True
                 quest.on_start(self)
-                self.quest_manager.quests[quest_name] = quest
+                self.quest_manager.quests[quest_id] = quest
             elif quest_progress == "completed":
                 quest.started = True
                 quest.on_start(self)
                 quest.completed = True
                 quest.on_complete(self)
-                self.quest_manager.quests.pop(quest_name, None)
+                self.quest_manager.quests.pop(quest_id, None)
 
     @property
     def port_menu(self):
