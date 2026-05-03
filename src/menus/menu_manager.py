@@ -47,6 +47,7 @@ class MenuManager:
                 continue
 
             quest_progress = DataFiles.save_file["quests"][quest_id]
+            print(quest_id, quest_progress)
             if quest_progress == "new":
                 self.quest_manager.quests[quest_id] = quest
             elif quest_progress == "in_progress":

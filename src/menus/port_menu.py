@@ -41,6 +41,9 @@ class PortMenu:
 
         self.current_overlay = self.NO_OVERLAY
 
+        self.visited_inventory = False
+        self.visited_intel_center = False
+
         def open_overlay_factory(overlay_enum):
             def open_overlay():
                 self.current_overlay = overlay_enum
@@ -67,7 +70,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["depot"],
             callback=open_overlay_factory(self.DEPOT),
-            # active=False
+            active=False
         )
         self.open_intel_center_overlay_button = Button(
             rect=get_rect(
@@ -78,7 +81,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["intel_center"],
             callback=open_overlay_factory(self.INTEL_CENTER),
-            # active=False
+            active=False
         )
         self.open_shipyard_overlay_button = Button(
             rect=get_rect(
@@ -89,7 +92,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["shipyard"],
             callback=open_overlay_factory(self.SHIPYARD),
-            # active=False
+            active=False
         )
 
         self.open_gear_lab_overlay_button = Button(
@@ -101,7 +104,7 @@ class PortMenu:
             color=Color.BLUE_GREY,
             sprite=DataFiles.sprites["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
-            # active=False
+            active=False
         )
 
         overlay_left_panel_width = 5*(Box.WIDTH + Box.PADDING) + Box.PADDING
@@ -551,6 +554,9 @@ class PortMenu:
     def update_intel_center_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
+                if self.overlay_selected_entity is not None:
+                    self.visited_intel_center = True
+
                 self.exit_overlay(event)
 
                 if self.selected_overlay_filter is None:
@@ -604,6 +610,7 @@ class PortMenu:
             for event in events:
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.exit_overlay(event)
+                    self.visited_inventory = True
         elif self.current_overlay == self.SHIPYARD:
             self.update_shipyard_overlay(events)
         elif self.current_overlay == self.GEAR_LAB:

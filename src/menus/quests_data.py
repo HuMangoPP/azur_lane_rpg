@@ -28,7 +28,7 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
 
     if text is not None:
         text_scale = 1
-        max_text_width = 7*30
+        max_text_width = 7*25
         text_height = font.get_height(text, text_scale, max_text_width)
         text_box_width = font.get_width(text, text_scale, max_text_width)
         text_rect = get_rect(
@@ -372,8 +372,8 @@ def first_sortie_on_start(menu_manager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
 
 def first_sortie_on_complete(menu_manager):
-    quest_name = research_shipgirl_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = research_shipgirl_quest
+    quest_name = inventory_quest.quest_id
+    menu_manager.quest_manager.quests[quest_name] = inventory_quest
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
 
@@ -386,6 +386,128 @@ first_sortie_quest = Quest(
     None,
     first_sortie_on_start,
     first_sortie_on_complete
+)
+
+inventory_pre_quest_dialogue = [
+    "We found some rewards in a hidden siren cache from our sortie.",
+    "Let me show you were our items are stored."
+]
+inventory_quest_line = "Visit the depot."
+inventory_post_quest_dialogue = [
+    "Now you know how to access the depot!"
+]
+
+def inventory_completion_criteria(menu_manager):
+    return menu_manager.port_menu.visited_inventory
+
+def inventory_tutorial_draw(menu_manager, surface, font):
+    if menu_manager.current_menu != menu_manager.port_menu:
+        return
+
+    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        button_rect = menu_manager.port_menu.open_depot_overlay_button.rect
+        rect = get_rect(
+            width=button_rect.width + 2*Box.PADDING,
+            height=button_rect.height + 2*Box.PADDING,
+            center=button_rect.center
+        )
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        draw_tb(surface, font, None, rect.topright, True, False)
+    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DEPOT:
+        rect = menu_manager.port_menu.overlay_bg
+        draw_tb(
+            surface, font,
+            "You can see all of your items here!",
+            (rect.left, rect.centery),
+            False, True
+        )
+
+def inventory_on_start(menu_manager):
+    menu_manager.port_menu.open_depot_overlay_button.active = True
+
+def inventory_on_complete(menu_manager):
+    quest_name = intel_center_quest.quest_id
+    menu_manager.quest_manager.quests[quest_name] = intel_center_quest
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
+
+inventory_quest = Quest(
+    "inventory",
+    inventory_pre_quest_dialogue,
+    inventory_quest_line,
+    inventory_post_quest_dialogue,
+    inventory_completion_criteria,
+    inventory_tutorial_draw,
+    inventory_on_start,
+    inventory_on_complete
+)
+
+intel_center_pre_quest_dialogue = [
+    "During our sortie, we encounter some enemy sirens.",
+    "By successfully completing sorties, we can collect data about the enemies.",
+    "Let me show you were you can read more about our enemies."
+]
+intel_center_quest_line = "Visit the intel center."
+intel_center_post_quest_dialogue = [
+    "Now you know how to access the intel center!",
+    "This information can help you get an advantage when fighting sirens."
+]
+
+def intel_center_completion_criteria(menu_manager):
+    return menu_manager.port_menu.visited_intel_center
+
+def intel_center_tutorial_draw(menu_manager, surface, font):
+    if menu_manager.current_menu != menu_manager.port_menu:
+        return
+
+    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        button_rect = menu_manager.port_menu.open_intel_center_overlay_button.rect
+        rect = get_rect(
+            width=button_rect.width + 2*Box.PADDING,
+            height=button_rect.height + 2*Box.PADDING,
+            center=button_rect.center
+        )
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        draw_tb(surface, font, None, rect.topright, True, False)
+    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.INTEL_CENTER:
+        if menu_manager.port_menu.overlay_selected_entity is None:
+            siren_rect = menu_manager.port_menu.overlay_left_icons[0]
+            rect = get_rect(
+                width=siren_rect.width + 2*Box.PADDING,
+                height=siren_rect.height + 2*Box.PADDING,
+                center=siren_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+            draw_tb(surface, font, None, rect.bottomright, False, False)
+        else:
+            rect = menu_manager.port_menu.overlay_right_panel
+            draw_tb(
+                surface, font,
+                "The intel center has information on siren stats as well as the potential drops from defeating the siren.",
+                (rect.right, rect.centery),
+                False, False
+            )
+
+def intel_center_on_start(menu_manager):
+    menu_manager.port_menu.open_intel_center_overlay_button.active = True
+
+def intel_center_on_complete(menu_manager):
+    quest_name = research_shipgirl_quest.quest_id
+    menu_manager.quest_manager.quests[quest_name] = research_shipgirl_quest
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
+
+intel_center_quest = Quest(
+    "intel_center",
+    intel_center_pre_quest_dialogue,
+    intel_center_quest_line,
+    intel_center_post_quest_dialogue,
+    intel_center_completion_criteria,
+    intel_center_tutorial_draw,
+    intel_center_on_start,
+    intel_center_on_complete
 )
 
 research_shipgirl_pre_quest_dialogue = [
@@ -581,6 +703,8 @@ quests = [
     choose_faction_quest,
     construct_shipgirls_quest,
     first_sortie_quest,
+    inventory_quest,
+    intel_center_quest,
     research_shipgirl_quest,
     construct_shipgirl_quest,
     craft_weapon_quest,
