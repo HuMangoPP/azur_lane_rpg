@@ -198,6 +198,7 @@ class PortMenu:
                         DataFiles.save_file["inventory"][ingredient] -= req
                     DataFiles.save_file["research_target"] = None
                     self.overlay_selected_entity = None
+                    self.overlay_confirm_button.active = False
                 else:
                     DataFiles.save_file["research_target"] = self.overlay_selected_entity
             elif self.current_overlay == self.GEAR_LAB:
@@ -300,9 +301,9 @@ class PortMenu:
     def exit_overlay(self, mouseup_event):
         if not self.overlay_bg.collidepoint(mouseup_event.pos):
             self.current_overlay = self.NO_OVERLAY
-            self.overlay_confirm_button.active = False
             self.selected_overlay_filter = None
             self.overlay_selected_entity = None
+            self.overlay_confirm_button.active = False
 
     def overlay_mouseup_logic(self, mouseup_event, entities, entity_filters, activate_confirm_button):
         for entity, rect in zip(entities, self.overlay_left_icons):

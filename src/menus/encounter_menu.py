@@ -253,8 +253,8 @@ class EncounterMenu:
                     DataFiles.save_file["research_progress"] = 0
                     self.drops.append(Drop(unique_item, pygame.Vector2(screen_x(0.5), screen_y(0.5))))
 
-                    if DataFiles.save_file["research_target"] == "guam":
-                        self.menu_manager.quest_manager.quests["construct_shipgirl"] = construct_shipgirl_quest
+                    if construct_shipgirl_quest.quest_id not in DataFiles.save_file["quests"]:
+                        self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
                     DataFiles.save_file["research_target"] = None
                 self.research_exp = 0
         elif self.exp_timer > 0:

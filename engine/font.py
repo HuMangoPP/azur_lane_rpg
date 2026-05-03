@@ -42,7 +42,7 @@ class Font:
         char_width = scale * self.font_width
         char_height = scale * self.font_height
         lines = self._get_lines(text, char_width, box_width)
-        return len(lines) * (char_height + self.padding) + self.padding
+        return len(lines)*char_height + (len(lines)-1)*self.padding
 
     def _outline(self, surface, text_surf, xy, outline_color):
         outline_text_surf = pygame.Surface(text_surf.get_size())

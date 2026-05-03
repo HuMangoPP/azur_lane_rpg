@@ -22,6 +22,7 @@ class FleetSelectionMenu:
             if all(shipgirl is None for shipgirl in self.menu_manager.player_fleet.shipgirls):
                 return
             self.menu_manager.current_menu = self.menu_manager.encounter_menu
+            self.start_sortie_button.active = False
             
             self.menu_manager.player_fleet.begin_sortie()
             self.menu_manager.encounter_menu.begin_sortie()
@@ -39,6 +40,7 @@ class FleetSelectionMenu:
 
         def exit_fleet_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
+            self.start_sortie_button.active = False
         
         button_sprite = DataFiles.sprites["prev"]
         button_rect = button_sprite.get_rect()

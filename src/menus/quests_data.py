@@ -28,12 +28,12 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
 
     if text is not None:
         text_scale = 1
-        text_width = 8*Box.WIDTH - Box.PADDING
-        text_height = font.get_height(text, text_scale, text_width)
-        text_box_width = font.get_width(text, text_scale, text_width)
+        max_text_width = 7*30
+        text_height = font.get_height(text, text_scale, max_text_width)
+        text_box_width = font.get_width(text, text_scale, max_text_width)
         text_rect = get_rect(
-            width=text_box_width + Box.PADDING,
-            height=text_height + Box.PADDING,
+            width=text_box_width + 2*Box.PADDING,
+            height=text_height + 2*Box.PADDING,
             centerx=pointer_rect.centerx,
             bottom=pointer_rect.top
         )
@@ -56,11 +56,11 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
         font.render(
             surface,
             text,
-            pygame.Vector2(text_rect.topleft) + pygame.Vector2(0.5*Box.PADDING, 0.5*Box.PADDING),
+            pygame.Vector2(text_rect.topleft) + pygame.Vector2(Box.PADDING, Box.PADDING),
             Color.WHITE,
             text_scale,
             outline_color=Color.BLACK,
-            box_width=text_width
+            box_width=max_text_width
         )
 
 choose_faction_pre_quest_dialogue = [
@@ -74,7 +74,17 @@ choose_faction_post_quest_dialogue = [
 ]
 
 def choose_faction_completion_criteria(menu_manager):
-    return len(DataFiles.save_file["unlocked_factions"]) > 0
+    completed = len(DataFiles.save_file["unlocked_factions"]) > 0
+    if completed:
+        chosen_faction = DataFiles.save_file["unlocked_factions"][0]
+        for shipgirl_info in DataFiles.shipgirl_data.values():
+            if shipgirl_info["faction"] != chosen_faction:
+                continue
+            if shipgirl_info["hull_type"] not in ["DD", "BB"]:
+                continue
+            choose_faction_quest.rewards[shipgirl_info["unique_item"]] = 1
+
+    return completed
 
 def choose_faction_tutorial_draw(menu_manager, surface, font):
     pass
@@ -92,12 +102,65 @@ def choose_faction_on_complete(menu_manager):
     for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
         choose_faction_button.active = False
 
+    shipgirls = {}
+    chosen_faction = DataFiles.save_file["unlocked_factions"][0]
+    for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items():
+        if shipgirl_info["faction"] != chosen_faction:
+            continue
+        shipgirls[shipgirl_info["hull_type"]] = shipgirl
+
+    construct_shipgirls_quest.completion_criteria = construct_shipgirls_completion_criteria_factory([shipgirls["DD"], shipgirls["BB"]])
+    construct_shipgirls_quest.tutorial_draw = construct_shipgirls_tutorial_draw_factory([shipgirls["DD"], shipgirls["BB"]])
+
+    first_sortie_quest.tutorial_draw = first_sortie_tutorial_draw_factory([shipgirls["DD"], shipgirls["BB"]])
+
+    equip_weapon_quest.completion_criteria = equip_weapon_completion_criteria_factory(shipgirls["DD"])
+    equip_weapon_quest.tutorial_draw = equip_weapon_completion_criteria_factory(shipgirls["DD"])
+
+    construct_shipgirls_quest.quest_line = construct_shipgirls_quest.quest_line.replace(
+        "DD_shipgirl",
+        shipgirls["DD"]
+    ).replace("BB_shipgirl", shipgirls["BB"])
+    construct_shipgirls_quest.post_quest_dialogue = [
+        dialogue.replace("DD_shipgirl", shipgirls["DD"]).replace("BB_shipgirl", shipgirls["BB"])
+        for dialogue in construct_shipgirls_quest.post_quest_dialogue
+    ]
+
+    research_shipgirl_quest.quest_line = research_shipgirl_quest.quest_line.replace(
+        "CA_shipgirl",
+        shipgirls["CA"]
+    )
+    research_shipgirl_quest.completion_criteria = research_shipgirl_completion_criteria_factory(shipgirls["CA"])
+    research_shipgirl_quest.tutorial_draw = construct_shipgirls_tutorial_draw_factory([shipgirls["CA"]])
+
+    construct_shipgirl_quest.pre_quest_dialogue = [
+        dialogue.replace("CA_shipgirl", shipgirls["CA"])
+        for dialogue in construct_shipgirl_quest.pre_quest_dialogue
+    ]
+    construct_shipgirl_quest.quest_line = construct_shipgirl_quest.quest_line.replace(
+        "CA_shipgirl",
+        shipgirls["CA"]
+    )
+    construct_shipgirl_quest.post_quest_dialogue = [
+        dialogue.replace("CA_shipgirl", shipgirls["CA"])
+        for dialogue in construct_shipgirl_quest.post_quest_dialogue
+    ]
+    construct_shipgirl_quest.completion_criteria = construct_shipgirls_completion_criteria_factory([shipgirls["CA"]])
+    construct_shipgirl_quest.tutorial_draw = construct_shipgirls_tutorial_draw_factory([shipgirls["CA"]])
+
+    equip_weapon_quest.quest_line = equip_weapon_quest.quest_line.replace(
+        "DD_shipgirl",
+        shipgirls["DD"]
+    ).replace("BB_shipgirl", shipgirls["BB"])
+    equip_weapon_quest.post_quest_dialogue = [
+        dialogue.replace("DD_shipgirl", shipgirls["DD"]).replace("BB_shipgirl", shipgirls["BB"])
+        for dialogue in equip_weapon_quest.post_quest_dialogue
+    ]
+
 choose_faction_rewards = {
     "DD_blueprint": 1,
     "BB_blueprint": 1,
     "wisdom_cube": 2,
-    "huggy_pillow": 1,
-    "dragon_cannon": 1,
 }
 
 choose_faction_quest = Quest(
@@ -115,123 +178,26 @@ choose_faction_quest = Quest(
 construct_shipgirls_pre_quest_dialogue = [
     "We should construct some shipgirls to join our fleet."
 ]
-construct_shipgirls_quest_line = "Construct Laffey and New Jersey."
+construct_shipgirls_quest_line = "Construct DD_shipgirl and BB_shipgirl."
 construct_shipgirls_post_quest_dialogue = [
-    "Laffey and New Jersey have joined our fleet!"
+    "DD_shipgirl and BB_shipgirl have joined our fleet!"
 ]
 
-def construct_shipgirls_completion_criteria(menu_manager):
-    return (
-        "laffey" in DataFiles.save_file["shipgirls"]
-        and "new_jersey" in DataFiles.save_file["shipgirls"]
-    )
-
-def construct_shipgirls_tutorial_draw(menu_manager, surface, font):
-    if menu_manager.current_menu != menu_manager.port_menu:
-        return
-    
-    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
-        button_rect = menu_manager.port_menu.open_shipyard_overlay_button.rect
-        rect = get_rect(
-            width=button_rect.width + 2*Box.PADDING,
-            height=button_rect.height + 2*Box.PADDING,
-            center=button_rect.center
+def construct_shipgirls_completion_criteria_factory(shipgirls):
+    def construct_shipgirls_completion_criteria(menu_manager):
+        return all(
+            shipgirl in DataFiles.save_file["shipgirls"]
+            for shipgirl in shipgirls
         )
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+    return construct_shipgirls_completion_criteria
 
-        draw_tb(surface, font, None, rect.topright, True, False)
-    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
-        if menu_manager.port_menu.selected_overlay_filter is None:
-            shipgirl_data = {
-                shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                if shipgirl not in DataFiles.save_file["shipgirls"]
-                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-            }
-        else:
-            shipgirl_data = {
-                shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                if shipgirl not in DataFiles.save_file["shipgirls"]
-                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                and shipgirl_info["faction"] == menu_manager.port_menu.shipgirl_filters[menu_manager.port_menu.selected_overlay_filter]
-            }
-
-        for i, (shipgirl, shipgirl_info) in enumerate(shipgirl_data.items()):
-            if shipgirl in DataFiles.save_file["shipgirls"]:
-                continue
-            if shipgirl_info["faction"] not in DataFiles.save_file["unlocked_factions"]:
-                continue
-            if shipgirl_info["hull_type"] not in ["DD", "BB"]:
-                continue
-
-            rect = menu_manager.port_menu.overlay_left_icons[i]
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
+def construct_shipgirls_tutorial_draw_factory(shipgirls):
+    def construct_shipgirls_tutorial_draw(menu_manager, surface, font):
+        if menu_manager.current_menu != menu_manager.port_menu:
+            return
         
-        if menu_manager.port_menu.overlay_selected_entity in ["laffey", "new_jersey"]:
-            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-            draw_tb(surface, font, None, rect.bottomright, False, False)
-
-def construct_shipgirls_on_start(menu_manager):
-    menu_manager.port_menu.open_shipyard_overlay_button.active = True
-
-def construct_shipgirls_on_complete(menu_manager):
-    quest_name = "first_sortie"
-    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
-
-construct_shipgirls_quest = Quest(
-    "construct_shipgirls",
-    construct_shipgirls_pre_quest_dialogue,
-    construct_shipgirls_quest_line,
-    construct_shipgirls_post_quest_dialogue,
-    construct_shipgirls_completion_criteria,
-    construct_shipgirls_tutorial_draw,
-    construct_shipgirls_on_start,
-    construct_shipgirls_on_complete
-)
-
-first_sortie_pre_quest_dialogue = [
-    "Now it's time to go on a sortie."
-]
-first_sortie_quest_line = "Sortie into zone 1."
-first_sortie_post_quest_dialogue = [
-    "We've successfully controlled zone 1!"
-]
-
-def first_sortie_completion_criteria(menu_manager):
-    return DataFiles.save_file["sortie_progress"] == 1
-
-def first_sortie_tutorial_draw(menu_manager, surface, font):
-    if menu_manager.current_menu == menu_manager.port_menu:
-        button_rect = menu_manager.port_menu.open_select_sortie_menu_button.rect
-        rect = get_rect(
-            width=button_rect.width + 2*Box.PADDING,
-            height=button_rect.height + 2*Box.PADDING,
-            center=button_rect.center
-        )
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-        draw_tb(surface, font, None, rect.topright, True, False)
-    elif menu_manager.current_menu == menu_manager.sortie_selection_menu:
-        q, r = menu_manager.sortie_selection_menu.sortie_nodes[0].hexes[0]
-        xy = hex_to_pixel(q, r, SortieNode.SIZE)
-        rect = get_rect(
-            width=2*SortieNode.SIZE, height=2*SortieNode.SIZE,
-            center=pygame.Vector2(xy) + SortieNode.center
-        )
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-        draw_tb(surface, font, None, rect.bottomleft, False, True)
-    elif menu_manager.current_menu == menu_manager.fleet_selection_menu:
-        if menu_manager.fleet_selection_menu.start_sortie_button.active:
-            button_rect = menu_manager.fleet_selection_menu.start_sortie_button.rect
+        if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+            button_rect = menu_manager.port_menu.open_shipyard_overlay_button.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,
@@ -239,122 +205,8 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.topleft, True, True)
-        else:
-            center_fleet_slot = menu_manager.fleet_selection_menu.fleet_slots[1]
-            rect = get_rect(
-                width=3*96 + 2*Box.PADDING, # TODO
-                height=96 + 2*Box.PADDING,
-                center=center_fleet_slot.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(
-                surface, font,
-                "drag laffey and new jersey to your fleet",
-                rect.bottomright,
-                False, False
-            )
-    elif menu_manager.current_menu == menu_manager.encounter_menu:
-        if not menu_manager.encounter_menu.encounter_started:
-            for siren in menu_manager.siren_fleet.front:
-                pygame.draw.rect(surface, Color.RED, siren.rect, width=Box.OUTLINE_WIDTH)
-            
-            draw_tb(
-                surface, font,
-                "drag all of your shipgirls onto the enemy siren",
-                menu_manager.siren_fleet.front[0].rect.topleft,
-                True, True
-            )
-        elif menu_manager.encounter_menu.next_encounter_button.active:
-            button_rect = menu_manager.encounter_menu.next_encounter_button.rect
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
-        elif menu_manager.encounter_menu.open_reward_cache_button.active:
-            button_rect = menu_manager.encounter_menu.open_reward_cache_button.rect
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
-        elif menu_manager.encounter_menu.return_to_port_button.active:
-            button_rect = menu_manager.encounter_menu.return_to_port_button.rect
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
-
-def first_sortie_on_start(menu_manager):
-    menu_manager.port_menu.open_select_sortie_menu_button.active = True
-
-def first_sortie_on_complete(menu_manager):
-    quest_name = "research_shipgirl"
-    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
-
-first_sortie_quest = Quest(
-    "first_sortie",
-    first_sortie_pre_quest_dialogue,
-    first_sortie_quest_line,
-    first_sortie_post_quest_dialogue,
-    first_sortie_completion_criteria,
-    first_sortie_tutorial_draw,
-    first_sortie_on_start,
-    first_sortie_on_complete
-)
-
-research_shipgirl_pre_quest_dialogue = [
-    "We can research a new shipgirl."
-]
-research_shipgirl_quest_line = "Go to the research and start researching Guam."
-research_shipgirl_post_quest_dialogue = [
-    "Let's sortie into zone 2 to collect combat data.",
-    "Collecting combat data contributes towards obtaining the shipgirl's unique item."
-]
-
-def research_shipgirl_completion_criteria(menu_manager):
-    return DataFiles.save_file["research_target"] == "guam"
-
-def research_shipgirl_tutorial_draw(menu_manager, surface, font):
-    if menu_manager.current_menu != menu_manager.port_menu:
-        return
-    
-    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
-        button_rect = menu_manager.port_menu.open_shipyard_overlay_button.rect
-        rect = get_rect(
-            width=button_rect.width + 2*Box.PADDING,
-            height=button_rect.height + 2*Box.PADDING,
-            center=button_rect.center
-        )
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-        draw_tb(surface, font, None, rect.topright, True, False)
-    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
-        if menu_manager.port_menu.overlay_selected_entity == "guam":
-            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
-        else:
+            draw_tb(surface, font, None, rect.topright, True, False)
+        elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
             if menu_manager.port_menu.selected_overlay_filter is None:
                 shipgirl_data = {
                     shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
@@ -374,12 +226,181 @@ def research_shipgirl_tutorial_draw(menu_manager, surface, font):
                     continue
                 if shipgirl_info["faction"] not in DataFiles.save_file["unlocked_factions"]:
                     continue
-                if shipgirl_info["hull_type"] not in ["CA"]:
+                if shipgirl not in shipgirls:
                     continue
 
                 rect = menu_manager.port_menu.overlay_left_icons[i]
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
                 draw_tb(surface, font, None, rect.bottomleft, False, True)
+            
+            if menu_manager.port_menu.overlay_selected_entity in shipgirls:
+                button_rect = menu_manager.port_menu.overlay_confirm_button.rect
+                rect = get_rect(
+                    width=button_rect.width + 2*Box.PADDING,
+                    height=button_rect.height + 2*Box.PADDING,
+                    center=button_rect.center
+                )
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+                draw_tb(surface, font, None, rect.bottomright, False, False)
+
+    return construct_shipgirls_tutorial_draw
+
+def construct_shipgirls_on_start(menu_manager):
+    menu_manager.port_menu.open_shipyard_overlay_button.active = True
+
+def construct_shipgirls_on_complete(menu_manager):
+    quest_name = "first_sortie"
+    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
+
+construct_shipgirls_quest = Quest(
+    "construct_shipgirls",
+    construct_shipgirls_pre_quest_dialogue,
+    construct_shipgirls_quest_line,
+    construct_shipgirls_post_quest_dialogue,
+    None,
+    None,
+    construct_shipgirls_on_start,
+    construct_shipgirls_on_complete
+)
+
+first_sortie_pre_quest_dialogue = [
+    "Now it's time to go on a sortie."
+]
+first_sortie_quest_line = "Sortie into zone 1."
+first_sortie_post_quest_dialogue = [
+    "We've successfully controlled zone 1!"
+]
+
+def first_sortie_completion_criteria(menu_manager):
+    return DataFiles.save_file["sortie_progress"] == 1
+
+def first_sortie_tutorial_draw_factory(shipgirls):
+    def first_sortie_tutorial_draw(menu_manager, surface, font):
+        if menu_manager.current_menu == menu_manager.port_menu:
+            button_rect = menu_manager.port_menu.open_select_sortie_menu_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.topright, True, False)
+        elif menu_manager.current_menu == menu_manager.sortie_selection_menu:
+            q, r = menu_manager.sortie_selection_menu.sortie_nodes[0].hexes[0]
+            xy = hex_to_pixel(q, r, SortieNode.SIZE)
+            rect = get_rect(
+                width=2*SortieNode.SIZE, height=2*SortieNode.SIZE,
+                center=pygame.Vector2(xy) + SortieNode.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomleft, False, True)
+        elif menu_manager.current_menu == menu_manager.fleet_selection_menu:
+            if menu_manager.fleet_selection_menu.start_sortie_button.active:
+                button_rect = menu_manager.fleet_selection_menu.start_sortie_button.rect
+                rect = get_rect(
+                    width=button_rect.width + 2*Box.PADDING,
+                    height=button_rect.height + 2*Box.PADDING,
+                    center=button_rect.center
+                )
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+                draw_tb(surface, font, None, rect.topleft, True, True)
+            else:
+                center_fleet_slot = menu_manager.fleet_selection_menu.fleet_slots[1]
+                rect = get_rect(
+                    width=3*96 + 2*Box.PADDING, # TODO
+                    height=96 + 2*Box.PADDING,
+                    center=center_fleet_slot.center
+                )
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+                draw_tb(
+                    surface, font,
+                    f"drag {shipgirls[0]} and {shipgirls[1]} to your fleet",
+                    rect.bottomright,
+                    False, False
+                )
+        elif menu_manager.current_menu == menu_manager.encounter_menu:
+            if not menu_manager.encounter_menu.encounter_started:
+                for siren in menu_manager.siren_fleet.front:
+                    pygame.draw.rect(surface, Color.RED, siren.rect, width=Box.OUTLINE_WIDTH)
+                
+                draw_tb(
+                    surface, font,
+                    "drag all of your shipgirls onto the enemy siren",
+                    menu_manager.siren_fleet.front[0].rect.topleft,
+                    True, True
+                )
+            elif menu_manager.encounter_menu.next_encounter_button.active:
+                button_rect = menu_manager.encounter_menu.next_encounter_button.rect
+                rect = get_rect(
+                    width=button_rect.width + 2*Box.PADDING,
+                    height=button_rect.height + 2*Box.PADDING,
+                    center=button_rect.center
+                )
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+                draw_tb(surface, font, None, rect.bottomleft, False, True)
+            elif menu_manager.encounter_menu.open_reward_cache_button.active:
+                button_rect = menu_manager.encounter_menu.open_reward_cache_button.rect
+                rect = get_rect(
+                    width=button_rect.width + 2*Box.PADDING,
+                    height=button_rect.height + 2*Box.PADDING,
+                    center=button_rect.center
+                )
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+                draw_tb(surface, font, None, rect.bottomleft, False, True)
+            elif menu_manager.encounter_menu.return_to_port_button.active:
+                button_rect = menu_manager.encounter_menu.return_to_port_button.rect
+                rect = get_rect(
+                    width=button_rect.width + 2*Box.PADDING,
+                    height=button_rect.height + 2*Box.PADDING,
+                    center=button_rect.center
+                )
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+                draw_tb(surface, font, None, rect.bottomleft, False, True)
+
+    return first_sortie_tutorial_draw
+
+def first_sortie_on_start(menu_manager):
+    menu_manager.port_menu.open_select_sortie_menu_button.active = True
+
+def first_sortie_on_complete(menu_manager):
+    quest_name = "research_shipgirl"
+    menu_manager.quest_manager.quests[quest_name] = quests[quest_name]
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
+
+first_sortie_quest = Quest(
+    "first_sortie",
+    first_sortie_pre_quest_dialogue,
+    first_sortie_quest_line,
+    first_sortie_post_quest_dialogue,
+    first_sortie_completion_criteria,
+    None,
+    first_sortie_on_start,
+    first_sortie_on_complete
+)
+
+research_shipgirl_pre_quest_dialogue = [
+    "We can research a new shipgirl."
+]
+research_shipgirl_quest_line = "Go to the research and start researching CA_shipgirl."
+research_shipgirl_post_quest_dialogue = [
+    "Let's sortie into zone 2 to collect combat data.",
+    "Collecting combat data contributes towards obtaining the shipgirl's unique item."
+]
+
+def research_shipgirl_completion_criteria_factory(shipgirl):
+    def research_shipgirl_completion_criteria(menu_manager):
+        return DataFiles.save_file["research_target"] == shipgirl
+    return research_shipgirl_completion_criteria
 
 def research_shipgirl_on_start(menu_manager):
     menu_manager.port_menu.open_shipyard_overlay_button.active = True
@@ -392,60 +413,21 @@ research_shipgirl_quest = Quest(
     research_shipgirl_pre_quest_dialogue,
     research_shipgirl_quest_line,
     research_shipgirl_post_quest_dialogue,
-    research_shipgirl_completion_criteria,
-    research_shipgirl_tutorial_draw,
+    None,
+    None,
     research_shipgirl_on_start,
     research_shipgirl_on_complete
 )
 
 construct_shipgirl_pre_quest_dialogue = [
-    "We've collected enough combat data and obtained Guam's unique item!"
+    "We've collected enough combat data and obtained CA_shipgirl's unique item!"
 ]
-construct_shipgirl_quest_line = "Go to the shipyard and construct Guam."
+construct_shipgirl_quest_line = "Go to the shipyard and construct CA_shipgirl."
 construct_shipgirl_post_quest_dialogue = [
-    "Guam has joined our port!",
+    "CA_shipgirl has joined our port!",
     "Let's add her to our fleet and sortie into zone 3."
 ]
 
-def construct_shipgirl_completion_criteria(menu_manager):
-    return "guam" in DataFiles.save_file["shipgirls"]
-
-def construct_shipgirl_tutorial_draw(menu_manager, surface, font):
-    if menu_manager.current_menu != menu_manager.port_menu:
-        return
-
-    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
-        button_rect = menu_manager.port_menu.open_shipyard_overlay_button.rect
-        rect = get_rect(
-            width=button_rect.width + 2*Box.PADDING,
-            height=button_rect.height + 2*Box.PADDING,
-            center=button_rect.center
-        )
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-        draw_tb(surface, font, None, rect.topright, True, False)
-    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
-        if menu_manager.port_menu.overlay_selected_entity == "guam":
-            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
-        else:
-            button_rect = menu_manager.port_menu.overlay_left_icons[1]
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(surface, font, None, rect.bottomright, False, False)
-    
 def construct_shipgirl_on_start(menu_manager):
     pass
 
@@ -457,8 +439,8 @@ construct_shipgirl_quest = Quest(
     construct_shipgirl_pre_quest_dialogue,
     construct_shipgirl_quest_line,
     construct_shipgirl_post_quest_dialogue,
-    construct_shipgirl_completion_criteria,
-    construct_shipgirl_tutorial_draw,
+    None,
+    None,
     construct_shipgirl_on_start,
     construct_shipgirl_on_complete
 )
@@ -533,45 +515,50 @@ craft_weapon_quest = Quest(
 equip_weapon_pre_quest_dialogue = [
     "Since we just crafted a new gun, we should equip it."
 ]
-equip_weapon_quest_line = "Equip the new gun onto Laffey."
+equip_weapon_quest_line = "Equip the new gun onto DD_shipgirl."
 equip_weapon_post_quest_dialogue = [
-    "Now Laffey is stronger!",
+    "Now DD_shipgirl is stronger!",
     "Let's sortie into the new zone!"
 ]
 
-def equip_weapon_completion_criteria(menu_manager):
-    return DataFiles.save_file["shipgirls"]["laffey"]["equipment"][Equipment.WEAPON] == "twin_120"
+def equip_weapon_completion_criteria_factory(shipgirl):
+    def equip_weapon_completion_criteria(menu_manager):
+        return DataFiles.save_file["shipgirls"][shipgirl]["equipment"][Equipment.WEAPON] == "twin_120"
+    
+    return equip_weapon_completion_criteria
 
-def equip_weapon_tutorial_draw(menu_manager, surface, font):
-    if menu_manager.current_menu == menu_manager.port_menu:
-        rect = menu_manager.available_shipgirls[0].rect
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-        draw_tb(surface, font, None, rect.bottomright, False, False)
-    elif (
-        menu_manager.current_menu == menu_manager.equipment_menu
-        and menu_manager.equipment_menu.selected_shipgirl.name == "laffey"
-    ):
-        if menu_manager.equipment_menu.selected_equipment == Equipment.WEAPON:
-            button_rect = menu_manager.equipment_menu.equippable_rects[0]
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
+def equip_weapon_tutorial_draw_factory(shipgirl):
+    def equip_weapon_tutorial_draw(menu_manager, surface, font):
+        if menu_manager.current_menu == menu_manager.port_menu:
+            rect = menu_manager.available_shipgirls[0].rect
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
-        else:
-            button_rect = menu_manager.equipment_menu.equipped_rects[0]
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+            draw_tb(surface, font, None, rect.bottomright, False, False)
+        elif (
+            menu_manager.current_menu == menu_manager.equipment_menu
+            and menu_manager.equipment_menu.selected_shipgirl.name == shipgirl
+        ):
+            if menu_manager.equipment_menu.selected_equipment == Equipment.WEAPON:
+                button_rect = menu_manager.equipment_menu.equippable_rects[0]
+                rect = get_rect(
+                    width=button_rect.width + 2*Box.PADDING,
+                    height=button_rect.height + 2*Box.PADDING,
+                    center=button_rect.center
+                )
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
+                draw_tb(surface, font, None, rect.bottomleft, False, True)
+            else:
+                button_rect = menu_manager.equipment_menu.equipped_rects[0]
+                rect = get_rect(
+                    width=button_rect.width + 2*Box.PADDING,
+                    height=button_rect.height + 2*Box.PADDING,
+                    center=button_rect.center
+                )
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+                draw_tb(surface, font, None, rect.bottomleft, False, True)
+    return equip_weapon_tutorial_draw
         
 def equip_weapon_on_start(menu_manager):
     pass
@@ -584,8 +571,8 @@ equip_weapon_quest = Quest(
     equip_weapon_pre_quest_dialogue,
     equip_weapon_quest_line,
     equip_weapon_post_quest_dialogue,
-    equip_weapon_completion_criteria,
-    equip_weapon_tutorial_draw,
+    None,
+    None,
     equip_weapon_on_start,
     equip_weapon_on_complete
 )

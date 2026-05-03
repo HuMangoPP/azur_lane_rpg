@@ -1,4 +1,5 @@
 import pygame
+import json
 
 pygame.init()
 SCREEN_SIZE = pygame.Vector2(1120, 630)
@@ -46,7 +47,7 @@ pygame.quit()
 for shipgirl in menu_manager.available_shipgirls:
     DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
 
-print(DataFiles.save_file)
-
-# with open("data/save_file.json", "w") as f:
-#     json.dump(save_file, f, indent=4)
+save_file = input("Save file? ")
+if save_file == "y":
+    with open("data/save_file.json", "w") as f:
+        json.dump(DataFiles.save_file, f, indent=4)
