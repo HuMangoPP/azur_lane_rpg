@@ -432,9 +432,8 @@ class SirenFleet:
 
             siren.animate(dt)
 
-    def draw_shipgirl(self, surface, font):
-        for siren in self.fleet:
-            siren.draw(surface, font)
+    def get_draw_order(self):
+        return sorted([siren for siren in self.fleet], key=lambda siren : siren.rect.bottom)
         
     def draw_battle_component(self, surface, font):
         for siren in self.fleet:

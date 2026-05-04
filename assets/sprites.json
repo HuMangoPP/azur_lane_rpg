@@ -73,5 +73,7 @@
 		"BB": { "left": 32, "top": 352, "width": 32, "height": 32 },
 		"AUX": { "left": 64, "top": 352, "width": 32, "height": 32 }
 	},
-	"encounter": {}
+	"encounter": {
+		"wave": { "left": 0, "top": 0, "width": 128, "height": 128 }
+	}
 }

@@ -1,4 +1,5 @@
 import json
+import colorsys
 import pygame
 
 TEMP_SCREEN_SIZE = pygame.Vector2(1120, 630)
@@ -31,6 +32,8 @@ class Color:
     BLUE = (75,75,125)
     DARK_BLUE = (50,50,100)
     RED = (255,10,10)
+
+    SKY_BLUE = (100, 195, 255)
 
 class Equipment:
     NUM_EQUIPS = 3
@@ -101,3 +104,33 @@ def create_shell_sprite(shell_key, color):
 create_shell_sprite("normal", (255, 242, 97))
 create_shell_sprite("HE", (255, 0, 64))
 create_shell_sprite("AP", (0, 255, 255))
+
+def create_wave_sprite(wave_index, wave_color):
+    wave = DataFiles.sprites["encounter"]["wave"]
+    wave.set_colorkey((255,255,255))
+    colored_wave = pygame.Surface(wave.get_size())
+    colored_wave.fill(wave_color)
+    colored_wave.blit(wave, (0,0))
+    colored_wave.set_colorkey((255,0,0))
+    wave.set_colorkey((255,0,0))
+
+    num_reps = 10
+    wave_layer = pygame.Surface((colored_wave.get_width()*num_reps, colored_wave.get_height()))
+    wave_layer.fill((255,0,0))
+    wave_layer.set_colorkey((255,0,0))
+    for j in range(num_reps):
+        wave_layer.blit(colored_wave, (j*colored_wave.get_width(), 0))
+
+    DataFiles.sprites["encounter"][f"wave{wave_index}"] = wave_layer
+
+num_waves = 15
+base_hue = 0.55
+for wave_index in range(num_waves):
+    t = wave_index / (num_waves - 1)
+    saturation = 0.3 + t * 0.5
+    value = 0.85 - t * 0.5
+    r, g, b = colorsys.hsv_to_rgb(base_hue, saturation, value)
+    wave_color = (int(r*255), int(g*255), int(b*255))
+    create_wave_sprite(num_waves-1-wave_index, wave_color)
+
+DataFiles.sprites["encounter"]["num_waves"] = num_waves

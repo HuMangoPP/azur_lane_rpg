@@ -113,6 +113,9 @@ class EncounterMenu:
         self.research_exp = 0
         self.exp_timer = 0
 
+        num_waves = DataFiles.sprites["encounter"]["num_waves"]
+        self.wave_timers = [math.radians(360)*random.random() for _ in range(num_waves)]
+
     def begin_sortie(self):
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
@@ -234,6 +237,11 @@ class EncounterMenu:
 
             for drop in self.drops:
                 drop.update(dt)
+            
+            self.wave_timers = [
+                (wave_timer + dt*2*(i+1)/len(self.wave_timers)) % math.radians(360)
+                for i, wave_timer in enumerate(self.wave_timers)
+            ]
         else:
             self.encounter_started = all(
                 shipgirl.battle_component.target is not None
@@ -288,8 +296,38 @@ class EncounterMenu:
                 self.retreat_button.active = False
 
     def draw(self, surface, font):
-        self.menu_manager.player_fleet.draw_shipgirl(surface, font)
-        self.menu_manager.siren_fleet.draw_shipgirl(surface, font)
+        surface.fill(Color.SKY_BLUE)
+        
+        siren_draw_order = self.menu_manager.siren_fleet.get_draw_order()
+        siren_pointer = 0
+        num_waves = DataFiles.sprites["encounter"]["num_waves"]
+        for i, wave_timer in enumerate(self.wave_timers):
+            wave_layer = DataFiles.sprites["encounter"][f"wave{i}"]
+            wave_rect = wave_layer.get_rect()
+            extra_width = wave_layer.get_width() - surface.get_width()
+            x_offset = extra_width/2 * math.sin(wave_timer) - extra_width/2
+            wave_rect.left = x_offset
+            wave_height_offset = wave_layer.get_height()/4
+            current_wave_y = screen_y(1) - wave_height_offset*(num_waves-1-i)
+            prev_wave_y = screen_y(1) - wave_height_offset*(num_waves-i)
+            wave_rect.bottom = current_wave_y
+
+            while (
+                siren_pointer < len(siren_draw_order)
+                and prev_wave_y <= siren_draw_order[siren_pointer].rect.bottom+wave_height_offset
+                and siren_draw_order[siren_pointer].rect.bottom+wave_height_offset < current_wave_y
+            ):
+                siren_draw_order[siren_pointer].draw(surface, font)
+                siren_pointer += 1
+            
+            if (
+                prev_wave_y <= screen_y(0.5)+96/2+wave_height_offset
+                and screen_y(0.5)+96/2+wave_height_offset < current_wave_y
+            ):
+                self.menu_manager.player_fleet.draw_shipgirl(surface, font)
+
+            surface.blit(wave_layer, wave_rect)
+
         self.next_encounter_button.draw(surface, font)
         self.open_reward_cache_button.draw(surface, font)
         self.return_to_port_button.draw(surface, font)
