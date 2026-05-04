@@ -35,8 +35,7 @@ class QuestManager:
                 top=Box.PADDING + (Box.HEIGHT + Box.PADDING) * i
             )
             pygame.draw.rect(surface, Color.WHITE, rect, Box.OUTLINE_WIDTH)
-            if "TB" in DataFiles.sprites:
-                surface.blit(DataFiles.sprites["TB"], rect)
+            surface.blit(DataFiles.sprites["user_interface"]["TB"], rect)
 
             textpos = (rect.right + Box.PADDING, rect.centery)
             if not quest.started:
@@ -198,7 +197,7 @@ class Quest:
             middleleft + pygame.Vector2(-5*Box.PADDING, 0)
         ]
         pygame.draw.polygon(surface, Color.DARK_BLUE, polygon)
-        tb_sprite = DataFiles.sprites["TB"]
+        tb_sprite = DataFiles.sprites["user_interface"]["TB"]
         rect = tb_sprite.get_rect()
         rect.right = polygon[-1].x
         rect.centery = polygon[-1].y
@@ -230,9 +229,9 @@ class Quest:
 
         if show_reward:
             for rect, (reward, amt) in zip(self.reward_rects, self.rewards.items()):
-                if reward in DataFiles.sprites:
+                if reward in DataFiles.sprites["entity"]:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                    surface.blit(DataFiles.sprites[reward], rect)
+                    surface.blit(DataFiles.sprites["entity"][reward], rect)
                     font.render(surface, str(amt), rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
                 else:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)

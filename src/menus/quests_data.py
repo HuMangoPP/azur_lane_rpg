@@ -10,9 +10,9 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
     point_pos = pygame.Vector2(point_pos)
 
     if point_down:
-        pointer = DataFiles.sprites["TB_point_down"]
+        pointer = DataFiles.sprites["user_interface"]["TB_point_down"]
     else:
-        pointer = DataFiles.sprites["TB_point_up"]
+        pointer = DataFiles.sprites["user_interface"]["TB_point_up"]
     
     pointer = pygame.transform.flip(pointer, point_right, False)
     pointer_rect = pointer.get_rect()

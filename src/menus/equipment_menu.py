@@ -40,7 +40,7 @@ class EquipmentMenu:
 
             self.selected_shipgirl = None
 
-        button_sprite = DataFiles.sprites["prev"]
+        button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = button_sprite.get_rect()
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.top = Box.TOP_OF_SCREEN
@@ -152,7 +152,7 @@ class EquipmentMenu:
             self.selected_shipgirl.draw(surface, font)
             
             for stat, rect in self.stat_rects.items():
-                surface.blit(DataFiles.sprites[stat], rect)
+                surface.blit(DataFiles.sprites["user_interface"][stat], rect)
                 font.render(
                     surface,
                     str(self.get_stat(self.selected_shipgirl, stat)),
@@ -184,8 +184,8 @@ class EquipmentMenu:
                 else:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 if equipment is not None:
-                    if equipment in DataFiles.sprites:
-                        surface.blit(DataFiles.sprites[equipment], rect)
+                    if equipment in DataFiles.sprites["entity"]:
+                        surface.blit(DataFiles.sprites["entity"][equipment], rect)
                     else:
                         font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             
@@ -204,8 +204,8 @@ class EquipmentMenu:
                 ]
             for equipment, rect in zip(equippable, self.equippable_rects):
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                if equipment in DataFiles.sprites:
-                    surface.blit(DataFiles.sprites[equipment], rect)
+                if equipment in DataFiles.sprites["entity"]:
+                    surface.blit(DataFiles.sprites["entity"][equipment], rect)
                 else:
                     font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
         

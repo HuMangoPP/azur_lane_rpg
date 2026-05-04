@@ -32,7 +32,7 @@ class PortMenu:
                     centery=screen_y(0.5)
                 ),
                 color=Color.BLUE_GREY,
-                sprite=DataFiles.sprites[faction],
+                sprite=DataFiles.sprites["user_interface"][faction],
                 callback=choose_faction_factory(faction),
                 active=False
             )
@@ -53,10 +53,10 @@ class PortMenu:
                     self.overlay_confirm_button.active = True
                     unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                        self.overlay_confirm_button.sprite = DataFiles.sprites["gear_lab"]
+                        self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
                         self.overlay_confirm_button.text = "construct"
                     else:
-                        self.overlay_confirm_button.sprite = DataFiles.sprites["research"]
+                        self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["research"]
                         self.overlay_confirm_button.text = "research"
 
             return open_overlay
@@ -68,7 +68,7 @@ class PortMenu:
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["depot"],
+            sprite=DataFiles.sprites["user_interface"]["depot"],
             callback=open_overlay_factory(self.DEPOT),
             active=False
         )
@@ -79,7 +79,7 @@ class PortMenu:
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["intel_center"],
+            sprite=DataFiles.sprites["user_interface"]["intel_center"],
             callback=open_overlay_factory(self.INTEL_CENTER),
             active=False
         )
@@ -90,7 +90,7 @@ class PortMenu:
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["shipyard"],
+            sprite=DataFiles.sprites["user_interface"]["shipyard"],
             callback=open_overlay_factory(self.SHIPYARD),
             active=False
         )
@@ -102,7 +102,7 @@ class PortMenu:
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["gear_lab"],
+            sprite=DataFiles.sprites["user_interface"]["gear_lab"],
             callback=open_overlay_factory(self.GEAR_LAB),
             active=False
         )
@@ -236,7 +236,7 @@ class PortMenu:
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["sortie"],
+            sprite=DataFiles.sprites["user_interface"]["sortie"],
             callback=open_select_sortie_menu,
             active=False
         )
@@ -294,8 +294,8 @@ class PortMenu:
             top = self.overlay_bg.top + Box.PADDING + (item_index//num_items_in_row)*(Box.HEIGHT+padding)
             rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            if item in DataFiles.sprites:
-                surface.blit(DataFiles.sprites[item], rect)
+            if item in DataFiles.sprites["entity"]:
+                surface.blit(DataFiles.sprites["entity"][item], rect)
                 font.render(surface, str(count), rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             else:
                 font.render(surface, f"{item} ({count})", rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
@@ -317,13 +317,13 @@ class PortMenu:
                 if self.current_overlay == self.SHIPYARD:
                     unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                        self.overlay_confirm_button.sprite = DataFiles.sprites["gear_lab"]
+                        self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
                         self.overlay_confirm_button.text = "construct"
                     else:
-                        self.overlay_confirm_button.sprite = DataFiles.sprites["research"]
+                        self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["research"]
                         self.overlay_confirm_button.text = "research"
                 else:
-                    self.overlay_confirm_button.sprite = DataFiles.sprites["gear_lab"]
+                    self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
                     self.overlay_confirm_button.text = "construct"
         
         for i, (cat, rect) in enumerate(zip(entity_filters, self.overlay_filter_rects)):
@@ -343,8 +343,8 @@ class PortMenu:
                 pygame.draw.rect(surface, Color.DARK_BLUE, rect)
             else:
                 pygame.draw.rect(surface, Color.BLUE, rect)
-            if cat in DataFiles.sprites:
-                icon = DataFiles.sprites[cat]
+            if cat in DataFiles.sprites["user_interface"]:
+                icon = DataFiles.sprites["user_interface"][cat]
                 icon_rect = icon.get_rect()
                 icon_rect.center = rect.center
                 surface.blit(icon, icon_rect)
@@ -353,8 +353,8 @@ class PortMenu:
 
         for entity, rect in zip(entities, self.overlay_left_icons):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            if entity in DataFiles.sprites:
-                image = DataFiles.sprites[entity]
+            if entity in DataFiles.sprites["entity"]:
+                image = DataFiles.sprites["entity"][entity]
                 image_rect = image.get_rect()
                 image_rect.center = rect.center
                 surface.blit(image, image_rect)
@@ -363,8 +363,8 @@ class PortMenu:
         
         if self.overlay_selected_entity:
             font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-            if self.overlay_selected_entity in DataFiles.sprites:
-                surface.blit(DataFiles.sprites[self.overlay_selected_entity], self.overlay_right_icon)
+            if self.overlay_selected_entity in DataFiles.sprites["entity"]:
+                surface.blit(DataFiles.sprites["entity"][self.overlay_selected_entity], self.overlay_right_icon)
             pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
 
             icon_size = 32 # TODO
@@ -379,8 +379,8 @@ class PortMenu:
                     continue
 
                 x = left_align[info_index%2]
-                if info_key in DataFiles.sprites:
-                    info_icon = DataFiles.sprites[info_key]
+                if info_key in DataFiles.sprites["user_interface"]:
+                    info_icon = DataFiles.sprites["user_interface"][info_key]
                     info_rect = info_icon.get_rect()
                     info_rect.left = x
                     info_rect.top = y
@@ -411,8 +411,8 @@ class PortMenu:
                     y += icon_size
 
             for (icon_name, icon_text), rect in zip(icons, self.overlay_right_icons):
-                if icon_name in DataFiles.sprites:
-                    surface.blit(DataFiles.sprites[icon_name], rect)
+                if icon_name in DataFiles.sprites["entity"]:
+                    surface.blit(DataFiles.sprites["entity"][icon_name], rect)
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 else:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)

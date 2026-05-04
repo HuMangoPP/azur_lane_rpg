@@ -197,7 +197,7 @@ class ShipgirlBattleComponent:
 
             shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
             shell_sprite = pygame.transform.flip(
-                pygame.transform.rotate(DataFiles.sprites[f"{shell_type}_shell"], render_angle),
+                pygame.transform.rotate(DataFiles.sprites["encounter"][f"{shell_type}_shell"], render_angle),
                 False, True
             )
             shell_rect = shell_sprite.get_rect()

@@ -96,7 +96,7 @@ def create_shell_sprite(shell_key, color):
         rect.right = r
         rect.centery = heights[0] / 2
         pygame.draw.ellipse(shell_sprite, (*color, a), rect)
-    DataFiles.sprites[f"{shell_key}_shell"] = shell_sprite
+    DataFiles.sprites["encounter"][f"{shell_key}_shell"] = shell_sprite
 
 create_shell_sprite("normal", (255, 242, 97))
 create_shell_sprite("HE", (255, 0, 64))

@@ -31,7 +31,7 @@ class FleetSelectionMenu:
         self.start_sortie_button = Button(
             rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), bottom=Box.BOTTOM_OF_SCREEN),
             color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["start_sortie"],
+            sprite=DataFiles.sprites["user_interface"]["start_sortie"],
             text="start",
             text_pos=(0.66,0.5),
             text_color=Color.WHITE,
@@ -43,7 +43,7 @@ class FleetSelectionMenu:
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
             self.start_sortie_button.active = False
         
-        button_sprite = DataFiles.sprites["prev"]
+        button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = button_sprite.get_rect()
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.top = Box.TOP_OF_SCREEN
@@ -151,8 +151,8 @@ class FleetSelectionMenu:
 
         for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.menu_manager.available_shipgirl_rects):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            if shipgirl.name in DataFiles.sprites:
-                portrait = DataFiles.sprites[shipgirl.name]
+            if shipgirl.name in DataFiles.sprites["entity"]:
+                portrait = DataFiles.sprites["entity"][shipgirl.name]
                 portrait_rect = portrait.get_rect()
                 portrait_rect.center = rect.center
                 surface.blit(portrait, portrait_rect)

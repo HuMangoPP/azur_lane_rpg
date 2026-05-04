@@ -23,8 +23,8 @@ class Drop:
             self.vel = self.vel + pygame.Vector2(0, 200) * dt
     
     def draw(self, surface, font):
-        if self.item in DataFiles.sprites:
-            image = DataFiles.sprites[self.item]
+        if self.item in DataFiles.sprites["entity"]:
+            image = DataFiles.sprites["entity"][self.item]
             rect = image.get_rect()
             rect.center = self.pos
             surface.blit(image, rect)
@@ -52,7 +52,7 @@ class EncounterMenu:
             self.current_encounter += 1
             self.begin_encounter()
 
-        button_sprite = DataFiles.sprites["next"]
+        button_sprite = DataFiles.sprites["user_interface"]["next"]
         button_rect = button_sprite.get_rect()
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.centery = screen_y(0.5)
@@ -67,7 +67,7 @@ class EncounterMenu:
             self.open_reward_cache_button.active = False
             self.return_to_port_button.active = True
         
-        button_sprite = DataFiles.sprites["cache"]
+        button_sprite = DataFiles.sprites["user_interface"]["cache"]
         button_rect = button_sprite.get_rect()
         button_rect.center = (screen_x(0.75), screen_y(0.5))
         self.open_reward_cache_button = Button(rect=button_rect,sprite=button_sprite,callback=open_reward_cache,active=False)
@@ -90,7 +90,7 @@ class EncounterMenu:
 
             self.menu_manager.encounter_menu.return_to_port_button.active = False
 
-        button_sprite = DataFiles.sprites["port"]
+        button_sprite = DataFiles.sprites["user_interface"]["port"]
         button_rect = button_sprite.get_rect()
         button_rect.center = (screen_x(0.5), screen_y(0.75))
         self.return_to_port_button = Button(rect=button_rect,sprite=button_sprite,callback=return_to_port,active=False)
@@ -100,7 +100,7 @@ class EncounterMenu:
 
             self.menu_manager.player_fleet.end_encounter()        
         
-        button_sprite = DataFiles.sprites["port"]
+        button_sprite = DataFiles.sprites["user_interface"]["port"]
         button_rect = button_sprite.get_rect()
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.top = Box.TOP_OF_SCREEN

@@ -97,7 +97,7 @@ class SortieSelectionMenu:
         self.start_sortie_button = Button(
             rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, top=0, left=0),
             color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["start_sortie"],
+            sprite=DataFiles.sprites["user_interface"]["start_sortie"],
             text="sortie",
             text_pos=(0.66,0.5),
             text_color=Color.WHITE,
@@ -108,7 +108,7 @@ class SortieSelectionMenu:
         def exit_sortie_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
 
-        button_sprite = DataFiles.sprites["prev"]
+        button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = button_sprite.get_rect()
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.top = Box.TOP_OF_SCREEN
@@ -191,7 +191,7 @@ class SortieSelectionMenu:
                 rect.left = rect.left + self.selected_sortie_info_panel.left
                 rect.top = rect.top + self.selected_sortie_info_panel.top
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                if reward in DataFiles.sprites:
-                    surface.blit(DataFiles.sprites[reward], rect)
+                if reward in ["entity"]:
+                    surface.blit(DataFiles.sprites["entity"][reward], rect)
                 else:
                     font.render(surface, reward, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
