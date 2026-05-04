@@ -160,7 +160,7 @@ class ShipgirlBattleComponent:
             self.attack_timer = 1
             self.cooldown_timer = 1
 
-    def draw(self, screen, font, rect):
+    def draw(self, surface, font, rect):
         bar_width = 64
         bar_height = 8
         if self.exp_timer > 0:
@@ -170,13 +170,13 @@ class ShipgirlBattleComponent:
                 width=bar_width*Stats.level_progress(exp_animation), height=bar_background.height,
                 left=bar_background.left, top=bar_background.top
             )
-            pygame.draw.rect(screen, Color.GREY, bar_background)
-            pygame.draw.rect(screen, Color.BLUE_GREY, bar_fill)
+            pygame.draw.rect(surface, Color.GREY, bar_background)
+            pygame.draw.rect(surface, Color.BLUE_GREY, bar_fill)
 
         if self.level_timer > 0:
             t = 1 - self.level_timer
             y = rect.top - rect.height * t
-            font.render(screen, "level up!", (rect.centerx, y), Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            font.render(surface, "level up!", (rect.centerx, y), Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         if not self.active:
             return
@@ -202,15 +202,15 @@ class ShipgirlBattleComponent:
             )
             shell_rect = shell_sprite.get_rect()
             shell_rect.center = shell_pos
-            screen.blit(shell_sprite, shell_rect)
+            surface.blit(shell_sprite, shell_rect)
         
         bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, top=rect.bottom+Box.PADDING)
         bar_fill = get_rect(
             width=bar_width*self.hp/self.max_hp(), height=bar_background.height,
             left=bar_background.left, top=bar_background.top
         )
-        pygame.draw.rect(screen, Color.GREY, bar_background)
-        pygame.draw.rect(screen, Color.WHITE, bar_fill)
+        pygame.draw.rect(surface, Color.GREY, bar_background)
+        pygame.draw.rect(surface, Color.WHITE, bar_fill)
 
         if not self.is_player:
             return
@@ -220,8 +220,8 @@ class ShipgirlBattleComponent:
         start_angle = -90
         end_angle = start_angle + 360 * (1 - self.cooldown_timer)
         color = (50,200,50) if self.target is not None else (200,50,50)
-        draw_slice(screen, color, center, radius, start_angle, end_angle)
-        pygame.draw.circle(screen, Color.WHITE, center, radius, width=Box.OUTLINE_WIDTH)
+        draw_slice(surface, color, center, radius, start_angle, end_angle)
+        pygame.draw.circle(surface, Color.WHITE, center, radius, width=Box.OUTLINE_WIDTH)
 
 class Shipgirl:
     SPRITE_SIZE = 96 # TODO
@@ -281,14 +281,12 @@ class Shipgirl:
         if self.sprite is not None:
             self.sprite.update(dt)
 
-    def draw(self, screen, font):
+    def draw(self, surface, font):
         if self.sprite is not None:
-            self.sprite.draw(screen, self.rect.centerx, self.rect.centery, not self.facing_left)
+            self.sprite.draw(surface, self.rect.centerx, self.rect.centery, not self.facing_left)
         else:
-            pygame.draw.rect(screen, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
-            font.render(screen, self.name, self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-
-        self.battle_component.draw(screen, font, self.rect)
+            pygame.draw.rect(surface, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
+            font.render(surface, self.name, self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
 class PlayerFleet:
     def __init__(self):
@@ -351,13 +349,21 @@ class PlayerFleet:
 
                 shipgirl.animate(dt)
 
-    def draw(self, screen, font):
+    def draw_shipgirl(self, surface, font):
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
-                shipgirl.draw(screen, font)
+                shipgirl.draw(surface, font)
         for shipgirl in self.backups:
             if shipgirl is not None:
-                shipgirl.draw(screen, font)
+                shipgirl.draw(surface, font)
+    
+    def draw_battle_component(self, surface, font):
+        for shipgirl in self.shipgirls:
+            if shipgirl is not None:
+                shipgirl.battle_component.draw(surface, font, shipgirl.rect)
+        for shipgirl in self.backups:
+            if shipgirl is not None:
+                shipgirl.battle_component.draw(surface, font, shipgirl.rect)
 
 class SirenFleet:
     SLOT_SIZE = 96 # TODO
@@ -426,6 +432,10 @@ class SirenFleet:
 
             siren.animate(dt)
 
-    def draw(self, screen, font):
+    def draw_shipgirl(self, surface, font):
         for siren in self.fleet:
-            siren.draw(screen, font)
+            siren.draw(surface, font)
+        
+    def draw_battle_component(self, surface, font):
+        for siren in self.fleet:
+            siren.battle_component.draw(surface, font, siren.rect)

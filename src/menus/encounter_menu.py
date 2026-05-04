@@ -288,12 +288,14 @@ class EncounterMenu:
                 self.retreat_button.active = False
 
     def draw(self, surface, font):
-        self.menu_manager.player_fleet.draw(surface, font)
-        self.menu_manager.siren_fleet.draw(surface, font)
+        self.menu_manager.player_fleet.draw_shipgirl(surface, font)
+        self.menu_manager.siren_fleet.draw_shipgirl(surface, font)
         self.next_encounter_button.draw(surface, font)
         self.open_reward_cache_button.draw(surface, font)
         self.return_to_port_button.draw(surface, font)
         self.retreat_button.draw(surface, font)
+        self.menu_manager.player_fleet.draw_battle_component(surface, font)
+        self.menu_manager.siren_fleet.draw_battle_component(surface, font)
 
         for drop in self.drops:
             drop.draw(surface, font)

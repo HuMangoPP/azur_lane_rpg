@@ -22,7 +22,7 @@ def get_rect(width, height, left=None, centerx=None, right=None, top=None, cente
 def get_vec(length, angle):
     return length * pygame.Vector2(math.cos(angle), math.sin(angle))
 
-def draw_slice(screen, color, center, radius, start_angle, end_angle, width=0, resolution=10):
+def draw_slice(surface, color, center, radius, start_angle, end_angle, width=0, resolution=10):
     points = [center]
     if end_angle > start_angle:
         current_angle = start_angle
@@ -44,7 +44,7 @@ def draw_slice(screen, color, center, radius, start_angle, end_angle, width=0, r
             vec = get_vec(radius, math.radians(angle))
             points.append(center + vec)
         
-        pygame.draw.polygon(screen, color, points, width=width)
+        pygame.draw.polygon(surface, color, points, width=width)
 
 def hex_to_pixel(q, r, size):
     x = size * (math.sqrt(3) * q + math.sqrt(3)/2 * r)

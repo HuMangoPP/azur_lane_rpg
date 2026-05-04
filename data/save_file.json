@@ -18,7 +18,7 @@
 		"full_burst_javelin": 0,
 		"lionflame": 0
 	},
-	"research_target": null,
+	"research_target": "drake",
 	"research_progress": 0,
 	"sortie_progress": 1,
 	"quests": {
@@ -26,6 +26,7 @@
 		"construct_shipgirls": "completed",
 		"first_sortie": "completed",
 		"inventory": "completed",
-		"intel_center": "new"
+		"intel_center": "completed",
+		"research_shipgirl": "completed"
 	}
 }

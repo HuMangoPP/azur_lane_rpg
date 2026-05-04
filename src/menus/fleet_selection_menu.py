@@ -145,7 +145,7 @@ class FleetSelectionMenu:
                 shipgirl.animate(dt)
 
     def draw(self, surface, font):
-        self.menu_manager.player_fleet.draw(surface, font)
+        self.menu_manager.player_fleet.draw_shipgirl(surface, font)
         self.start_sortie_button.draw(surface, font)
         self.exit_fleet_selection_menu_button.draw(surface, font)
 

@@ -26,14 +26,14 @@ class Button:
         
         self.callback()
 
-    def draw(self, screen, font):
+    def draw(self, surface, font):
         if not self.active:
             return
         
         if self.color is not None:
-            pygame.draw.rect(screen, self.color, self.rect)
+            pygame.draw.rect(surface, self.color, self.rect)
         if self.sprite is not None:
-            screen.blit(self.sprite, self.rect)
+            surface.blit(self.sprite, self.rect)
         if self.text is not None:
             text_pos = pygame.Vector2(self.rect.topleft) + pygame.Vector2(self.text_pos)
-            font.render(screen, self.text, text_pos, self.text_color, 1, style="center")
+            font.render(surface, self.text, text_pos, self.text_color, 1, style="center")

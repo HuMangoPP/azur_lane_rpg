@@ -191,7 +191,7 @@ class SortieSelectionMenu:
                 rect.left = rect.left + self.selected_sortie_info_panel.left
                 rect.top = rect.top + self.selected_sortie_info_panel.top
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                if reward in ["entity"]:
+                if reward in DataFiles.sprites["entity"]:
                     surface.blit(DataFiles.sprites["entity"][reward], rect)
                 else:
                     font.render(surface, reward, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
