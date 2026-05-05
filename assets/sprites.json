@@ -71,7 +71,12 @@
 		"CL": { "left": 32, "top": 320, "width": 32, "height": 32 },
 		"CA": { "left": 0, "top": 352, "width": 32, "height": 32 },
 		"BB": { "left": 32, "top": 352, "width": 32, "height": 32 },
-		"AUX": { "left": 64, "top": 352, "width": 32, "height": 32 }
+		"AUX": { "left": 64, "top": 352, "width": 32, "height": 32 },
+
+		"compass": { "left": 128, "top": 256, "width": 64, "height": 64 },
+		"cleared": { "left": 128, "top": 320, "width": 32, "height": 32 },
+		"uncleared": { "left": 160, "top": 320, "width": 32, "height": 32 },
+		"locked": { "left": 128, "top": 352, "width": 32, "height": 32 }
 	},
 	"encounter": {
 		"wave": { "left": 0, "top": 0, "width": 128, "height": 128 }

@@ -6,7 +6,7 @@ from engine.button import Button
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 
 class SortieNode:
-    SIZE = 50
+    SIZE = 32
     center = pygame.Vector2(screen_x(0.25), screen_y(0.5))
 
     def __init__(self, index, hexes):
@@ -34,28 +34,39 @@ class SortieNode:
 
     def draw(self, surface, font):
         if self.cleared:
-            color = Color.BLUE_GREY
+            fill = Color.CLEARED_ZONE_FILL
+            outline = Color.CLEARED_ZONE_OUTLINE
+            glow = Color.CLEARED_ZONE_GLOW
+            icon = DataFiles.sprites["user_interface"]["cleared"]
         elif self.unlocked:
-            color = Color.DARK_BLUE
+            fill = Color.UNCLEARED_ZONE_FILL
+            outline = Color.UNCLEARED_ZONE_OUTLINE
+            glow = Color.UNCLEARED_ZONE_GLOW
+            icon = DataFiles.sprites["user_interface"]["uncleared"]
         else:
-            color = Color.BLACK
-        polygon = get_cluster_edges(self.hexes, self.SIZE)
-        polygon = [pygame.Vector2(point) + self.center for point in polygon]
-        pygame.draw.polygon(surface, color, polygon)
-        outline_width = (2 if self.hovered else 1) * Box.OUTLINE_WIDTH
-        pygame.draw.polygon(surface, Color.WHITE, polygon, width=outline_width)
+            fill = Color.LOCKED_ZONE_FILL
+            outline = Color.LOCKED_ZONE_OUTLINE
+            glow = Color.LOCKED_ZONE_GLOW
+            icon = DataFiles.sprites["user_interface"]["locked"]
 
+        polygon = get_cluster_edges(self.hexes, self.SIZE)
+
+        # shadow_polygon = [pygame.Vector2(point) + self.center + pygame.Vector2(self.SIZE/8,self.SIZE/4) for point in polygon]
+        # pygame.draw.polygon(surface, Color.OCEAN_SHADOW, shadow_polygon)
+
+        polygon = [pygame.Vector2(point) + self.center for point in polygon]
+        pygame.draw.polygon(surface, fill, polygon)
+        if self.hovered:
+            pygame.draw.polygon(surface, outline, polygon, width=2*Box.OUTLINE_WIDTH)
+            pygame.draw.polygon(surface, glow, polygon, width=Box.OUTLINE_WIDTH)
+        else:
+            pygame.draw.polygon(surface, outline, polygon, width=Box.OUTLINE_WIDTH)
+        
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
-            font.render(
-                surface,
-                str(self.index + 1),
-                pygame.Vector2(x, y) + self.center,
-                Color.WHITE,
-                1,
-                style="center",
-                outline_color=Color.BLACK
-            )
+            icon_rect = icon.get_rect()
+            icon_rect.center = pygame.Vector2(x,y) + self.center
+            surface.blit(icon, icon_rect)
 
 
 class SortieSelectionMenu:
@@ -158,9 +169,17 @@ class SortieSelectionMenu:
                     sortie_node.hover(event.pos)
 
     def draw(self, surface, font):
+        surface.fill(Color.OCEAN_BLUE)
+
         self.exit_sortie_selection_menu_button.draw(surface, font)
 
-        for sortie_node in self.sortie_nodes:
+        compass = DataFiles.sprites["user_interface"]["compass"]
+        compass_rect = compass.get_rect()
+        compass_rect.bottom = Box.BOTTOM_OF_SCREEN
+        compass_rect.left = Box.LEFT_OF_SCREEN
+        surface.blit(compass, compass_rect)
+
+        for sortie_node in self.sortie_nodes[::-1]:
             sortie_node.draw(surface, font)
         
         if self.selected_sortie_node is not None:

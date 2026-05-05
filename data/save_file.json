@@ -26,10 +26,10 @@
 	},
 	"research_target": null,
 	"research_progress": 0,
-	"sortie_progress": 0,
+	"sortie_progress": 1,
 	"quests": {
 		"choose_faction": "completed",
 		"construct_shipgirls": "completed",
-		"first_sortie": "new"
+		"first_sortie": "in_progress"
 	}
 }
