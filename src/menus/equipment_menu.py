@@ -46,16 +46,28 @@ class EquipmentMenu:
         button_rect.top = Box.TOP_OF_SCREEN
         self.exit_equipment_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_equipment_menu)
 
+        self.stats_panel = get_rect(
+            width=2.5*Box.WIDTH + 2*Box.PADDING,
+            height=2*Box.PADDING + 9+16+2*Box.PADDING + 2*Box.HEIGHT+3*Box.PADDING,
+            centerx=screen_x(0.25),
+            centery=screen_y(0.5)
+        )
+
         stats = ["max_hp", "evasion", "firepower", "reload"]
         stat_rect_size = 32
         self.stat_rects = {
             stat: get_rect(
                 width=stat_rect_size, height=stat_rect_size,
-                left=screen_x(0.25) - Box.WIDTH/2,
-                top=screen_y(0.5) + Box.HEIGHT + Box.PADDING + i*(stat_rect_size+Box.PADDING)
+                left=self.stats_panel.left+3*Box.PADDING,
+                bottom=self.stats_panel.bottom-Box.PADDING - (len(stats)-1-i)*(stat_rect_size+Box.PADDING)
             )
             for i, stat in enumerate(stats)
         }
+        self.exp_bar_bg = get_rect(
+            width=128, height=16,
+            left=self.stats_panel.left+Box.PADDING,
+            top=self.stats_panel.top+Box.PADDING+9+Box.PADDING
+        )
 
     def get_stat(self, shipgirl, stat):
         if stat == "max_hp":
@@ -141,7 +153,7 @@ class EquipmentMenu:
                     self.hovered_equipment = None
         
         if self.selected_shipgirl is not None:
-            self.selected_shipgirl.rect.centerx = screen_x(0.25)
+            self.selected_shipgirl.rect.centerx = screen_x(0.5)
             self.selected_shipgirl.rect.centery = screen_y(0.5)
             if self.selected_shipgirl.sprite is not None:
                 self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
@@ -151,6 +163,29 @@ class EquipmentMenu:
         if self.selected_shipgirl is not None:
             self.selected_shipgirl.draw(surface, font)
             
+            pygame.draw.rect(surface, Color.BLUE, self.stats_panel)
+
+            level_progress = Stats.level_progress(self.selected_shipgirl.battle_component.exp)
+            exp_bar = get_rect(
+                width=level_progress*self.exp_bar_bg.width,
+                height=self.exp_bar_bg.height,
+                left=self.exp_bar_bg.left,
+                top=self.exp_bar_bg.top
+            )
+            pygame.draw.rect(surface, Color.GREY, self.exp_bar_bg)
+            pygame.draw.rect(surface, Color.BLUE_GREY, exp_bar)
+
+            level = Stats.level(self.selected_shipgirl.battle_component.exp) + 1
+            font.render(
+                surface,
+                f"level {level}",
+                (self.exp_bar_bg.left, self.stats_panel.top+Box.PADDING),
+                Color.WHITE,
+                1,
+                style="topleft",
+                outline_color=Color.BLACK
+            )
+
             for stat, rect in self.stat_rects.items():
                 surface.blit(DataFiles.sprites["user_interface"][stat], rect)
                 font.render(

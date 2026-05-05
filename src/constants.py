@@ -123,7 +123,7 @@ def create_wave_sprite(wave_index, wave_color):
 
     DataFiles.sprites["encounter"][f"wave{wave_index}"] = wave_layer
 
-num_waves = 15
+num_waves = 15 # TODO make waves taller and decrease the number of waves total. also make some smaller waves specifically to blend in where the shipgirls are "floating"
 base_hue = 0.55
 for wave_index in range(num_waves):
     t = wave_index / (num_waves - 1)
