@@ -13,23 +13,41 @@ class EquipmentMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
+        self.equipment_section = get_rect(
+            width=3*Box.WIDTH+2*Box.PADDING+2*Box.PADDING + 2*Box.PADDING,
+            height=Box.HEIGHT+2*Box.PADDING + 2*Box.PADDING + 2*Box.HEIGHT+Box.PADDING+2*Box.PADDING + 2*Box.PADDING,
+            centerx=screen_x(0.75),
+            centery=screen_y(0.5)
+        )
+
         self.selected_shipgirl = None
+        self.equipment_panel = get_rect(
+            width=self.equipment_section.width - 2*Box.PADDING,
+            height=Box.HEIGHT + 2*Box.PADDING,
+            centerx=self.equipment_section.centerx,
+            top=self.equipment_section.top+Box.PADDING
+        )
         self.equipped_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=(i-1)*(Box.WIDTH+Box.PADDING)+screen_x(0.75),
-                centery=screen_y(0.5)
+                left=self.equipment_panel.left+Box.PADDING + i*(Box.WIDTH+Box.PADDING),
+                centery=self.equipment_panel.centery
             ) for i in range(Equipment.NUM_EQUIPS)
         ]
         self.selected_equipment = Equipment.WEAPON
 
-        num_rects_in_row = 3
-        x_rect_offset = (num_rects_in_row-1)/2
+        self.equippable_panel = get_rect(
+            width=self.equipment_section.width - 2*Box.PADDING,
+            height=2*Box.HEIGHT+Box.PADDING + 2*Box.PADDING,
+            centerx=self.equipment_section.centerx,
+            bottom=self.equipment_section.bottom-Box.PADDING
+        )
+
         self.equippable_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=(i%num_rects_in_row-x_rect_offset)*(Box.WIDTH+Box.PADDING)+screen_x(0.75),
-                top=(i//num_rects_in_row)*(Box.HEIGHT+Box.PADDING)+Box.HEIGHT/2+Box.PADDING+screen_y(0.5)
+                left=self.equippable_panel.left+Box.PADDING + (i%3)*(Box.WIDTH+Box.PADDING),
+                top=self.equippable_panel.top+Box.PADDING + (i//3)*(Box.HEIGHT+Box.PADDING)
             )
             for i in range(6)
         ]
@@ -213,6 +231,8 @@ class EquipmentMenu:
                         center+get_vec(length=Box.PADDING, angle=math.radians(330))
                     ])
             
+            pygame.draw.rect(surface, Color.BLUE_GREY, self.equipment_section)
+            pygame.draw.rect(surface, Color.BLUE, self.equipment_panel)
             for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
                 if self.selected_equipment == i:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=2*Box.OUTLINE_WIDTH)
@@ -237,6 +257,15 @@ class EquipmentMenu:
                     if DataFiles.save_file["equipment"].get(aux_name, 0) > 0
                     and aux_info["type"] == "aux"
                 ]
+            
+            pygame.draw.rect(surface, Color.BLUE, self.equippable_panel)
+            point_at = self.equipped_rects[self.selected_equipment]
+            pointer = [
+                (point_at.centerx, point_at.bottom+Box.PADDING),
+                (point_at.centerx-Box.PADDING, self.equippable_panel.top),
+                (point_at.centerx+Box.PADDING, self.equippable_panel.top)
+            ]
+            pygame.draw.polygon(surface, Color.BLUE, pointer)
             for equipment, rect in zip(equippable, self.equippable_rects):
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 if equipment in DataFiles.sprites["entity"]:
