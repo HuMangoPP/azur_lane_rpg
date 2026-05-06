@@ -79,6 +79,13 @@
 		"locked": { "left": 128, "top": 352, "width": 32, "height": 32 }
 	},
 	"encounter": {
+		"wave0": { "left": 0, "top": 0, "width": 1024, "height": 128 },
+		"wave1": { "left": 0, "top": 128, "width": 1024, "height": 128 },
+		"wave2": { "left": 0, "top": 256, "width": 1024, "height": 128 },
+		"wave3": { "left": 0, "top": 384, "width": 1024, "height": 128 },
+		"wave4": { "left": 0, "top": 512, "width": 1024, "height": 128 }
+	},
+	"sortie_selection": {
 		"wave": { "left": 0, "top": 0, "width": 128, "height": 128 }
 	}
 }

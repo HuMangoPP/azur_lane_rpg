@@ -75,8 +75,13 @@ class FleetSelectionMenu:
         ]
 
         num_waves = DataFiles.sprites["encounter"]["num_waves"]
+        index_offset = (num_waves-1)/2
+        slot_size = self.menu_manager.siren_fleet.SLOT_SIZE
+        self.wave_ys = [
+            screen_y(0.5) + (i-index_offset)/2*slot_size
+            for i in range(num_waves)
+        ]
         self.wave_timers = [math.radians(360)*random.random() for _ in range(num_waves)]
-
 
     def update(self, dt, events):
         for event in events:
@@ -158,24 +163,14 @@ class FleetSelectionMenu:
     def draw(self, surface, font):
         surface.fill(Color.SKY_BLUE)
         
-        num_waves = DataFiles.sprites["encounter"]["num_waves"]
-        for i, wave_timer in enumerate(self.wave_timers):
+        for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
             wave_layer = DataFiles.sprites["encounter"][f"wave{i}"]
             wave_rect = wave_layer.get_rect()
-            extra_width = wave_layer.get_width() - surface.get_width()
-            x_offset = extra_width/2 * math.sin(wave_timer) - extra_width/2
-            wave_rect.left = x_offset
-            wave_height_offset = wave_layer.get_height()/4
-            current_wave_y = screen_y(1) - wave_height_offset*(num_waves-1-i)
-            prev_wave_y = screen_y(1) - wave_height_offset*(num_waves-i)
-            wave_rect.bottom = current_wave_y
-            
-            if (
-                prev_wave_y <= screen_y(0.5)+96/2+wave_height_offset
-                and screen_y(0.5)+96/2+wave_height_offset < current_wave_y
-            ):
+            wave_x = 128 * math.sin(wave_timer) + screen_x(0.5)
+            wave_rect.centerx = wave_x
+            wave_rect.top = wave_y
+            if i == 2:
                 self.menu_manager.player_fleet.draw_shipgirl(surface, font)
-
             surface.blit(wave_layer, wave_rect)
 
         self.start_sortie_button.draw(surface, font)

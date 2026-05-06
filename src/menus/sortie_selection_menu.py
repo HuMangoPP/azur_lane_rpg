@@ -1,3 +1,5 @@
+import math
+import random
 import pygame
 
 from engine.util import get_rect, pixel_to_hex, hex_to_pixel, get_cluster_edges
@@ -125,6 +127,20 @@ class SortieSelectionMenu:
         button_rect.top = Box.TOP_OF_SCREEN
         self.exit_sortie_selection_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_sortie_selection_menu)
 
+        num_waves = 10
+        self.wave_pos = [
+            pygame.Vector2(screen_x(1)*random.random(), screen_y(1)*random.random())
+            for _ in range(num_waves)
+        ]
+        self.wave_x_timer = [
+            math.radians(360)*random.random()
+            for _ in range(num_waves)
+        ]
+        self.wave_y_timer = [
+            math.radians(360)*random.random()
+            for _ in range(num_waves)
+        ]
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -168,8 +184,24 @@ class SortieSelectionMenu:
                 for sortie_node in self.sortie_nodes:
                     sortie_node.hover(event.pos)
 
+        self.wave_x_timer = [
+            (wave_x_timer + dt)%math.radians(360)
+            for wave_x_timer in self.wave_x_timer
+        ]
+
+        self.wave_y_timer = [
+            (wave_y_timer + 8*dt)%math.radians(360)
+            for wave_y_timer in self.wave_y_timer
+        ]
+
     def draw(self, surface, font):
         surface.fill(Color.OCEAN_BLUE)
+
+        for wave_pos, wave_x_timer, wave_y_timer in zip(self.wave_pos, self.wave_x_timer, self.wave_y_timer):
+            wave = DataFiles.sprites["sortie_selection"]["wave"]
+            wave_rect = wave.get_rect()
+            wave_rect.center = wave_pos + pygame.Vector2(wave_rect.width/2*math.sin(wave_x_timer), 0)
+            surface.blit(wave, wave_rect)
 
         self.exit_sortie_selection_menu_button.draw(surface, font)
 
