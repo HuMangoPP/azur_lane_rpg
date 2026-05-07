@@ -122,7 +122,20 @@ create_shell_sprite("AP", (0, 255, 255))
 
 DataFiles.sprites["encounter"]["num_waves"] = 5
 
-def create_wave_sprite(wave_index, wave_color):
+def create_encounter_wave_sprite(wave_index):
+    wave = DataFiles.sprites["encounter"][f"wave{wave_index}"]
+    higher_wave = pygame.Surface((wave.get_width(), 2*wave.get_height()))
+    wave_color = wave.get_at((0, wave.get_height()-1))
+    higher_wave.fill(wave_color)
+    wave.set_colorkey(wave_color)
+    higher_wave.blit(wave, (0,0))
+    higher_wave.set_colorkey((255,0,0))
+    DataFiles.sprites["encounter"][f"wave{wave_index}"] = higher_wave
+
+for wave_index in range(DataFiles.sprites["encounter"]["num_waves"]):
+    create_encounter_wave_sprite(wave_index)
+
+def create_sortie_select_wave_sprite(wave_index, wave_color):
     wave = DataFiles.sprites["sortie_selection"]["wave"]
     wave.set_colorkey((255,255,255))
     colored_wave = pygame.Surface((wave.get_width(), 2*wave.get_height()))
@@ -133,15 +146,15 @@ def create_wave_sprite(wave_index, wave_color):
 
     DataFiles.sprites["sortie_selection"][f"wave{wave_index}"] = colored_wave
 
-num_waves = 9 # TODO make waves taller and decrease the number of waves total. also make some smaller waves specifically to blend in where the shipgirls are "floating"
+num_waves = 7
 base_hue = 0.6
 for wave_index in range(num_waves):
     t = wave_index / (num_waves - 1)
-    s = 4*(t-1/2)**2
-    saturation = 0.5 + s * 0.5
-    value = 0.85 - s * 0.5
+    s = min(1, 4*(t-0.4)**2)
+    saturation = 0.65 + s * 0.35
+    value = 0.9 - s * 0.5
     r, g, b = colorsys.hsv_to_rgb(base_hue, saturation, value)
     wave_color = (int(r*255), int(g*255), int(b*255))
-    create_wave_sprite(num_waves-1-wave_index, wave_color)
+    create_sortie_select_wave_sprite(num_waves-1-wave_index, wave_color)
 
 DataFiles.sprites["sortie_selection"]["num_waves"] = num_waves

@@ -245,7 +245,7 @@ class EncounterMenu:
                 drop.update(dt)
             
             self.wave_timers = [
-                (wave_timer + dt*2*(i+1)/len(self.wave_timers)) % math.radians(360)
+                (wave_timer + dt*(i+1)/len(self.wave_timers)) % math.radians(360)
                 for i, wave_timer in enumerate(self.wave_timers)
             ]
         else:
@@ -304,12 +304,13 @@ class EncounterMenu:
     def draw(self, surface, font):
         surface.fill(Color.SKY_BLUE)
         
+        num_waves = DataFiles.sprites["encounter"]["num_waves"]
         siren_draw_order = self.menu_manager.siren_fleet.get_draw_order()
         siren_pointer = 0
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
             wave_layer = DataFiles.sprites["encounter"][f"wave{i}"]
             wave_rect = wave_layer.get_rect()
-            wave_x = 128 * math.sin(wave_timer) + screen_x(0.5)
+            wave_x = 64 * math.sin(wave_timer) + screen_x(0.5)
             wave_rect.centerx = wave_x
             wave_rect.top = wave_y
             while (
@@ -318,7 +319,7 @@ class EncounterMenu:
             ):
                 siren_draw_order[siren_pointer].draw(surface, font)
                 siren_pointer += 1
-            if i == 2:
+            if i == (num_waves-1)//2:
                 self.menu_manager.player_fleet.draw_shipgirl(surface, font)
             surface.blit(wave_layer, wave_rect)
 

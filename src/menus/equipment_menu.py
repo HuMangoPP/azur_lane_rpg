@@ -87,6 +87,17 @@ class EquipmentMenu:
             top=self.stats_panel.top+Box.PADDING+9+Box.PADDING
         )
 
+        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        wave_layer = DataFiles.sprites["sortie_selection"]["wave"]
+        self.wave_ys = [
+            screen_y(0.5) + wave_layer.get_height()/2*(i-num_waves/2)
+            for i in range(num_waves)
+        ]
+        self.wave_timers = [
+            math.radians(360)*random.random()
+            for _ in range(num_waves)
+        ]
+
     def get_stat(self, shipgirl, stat):
         if stat == "max_hp":
             if self.hovered_equipment is None:
@@ -177,9 +188,24 @@ class EquipmentMenu:
                 self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
             self.selected_shipgirl.animate(dt)
 
+        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        self.wave_timers = [
+            (wave_timer + (i+1)/num_waves*dt)%math.radians(360)
+            for i, wave_timer in enumerate(self.wave_timers)
+        ]
+
     def draw(self, surface, font):
+        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
+            wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
+            wave_rect = wave.get_rect()
+            wave_rect.top = wave_y
+            wave_rect.centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
+            if i == (num_waves-1)//2 and self.selected_shipgirl is not None:
+                self.selected_shipgirl.draw(surface, font)
+            surface.blit(wave, wave_rect)
+
         if self.selected_shipgirl is not None:
-            self.selected_shipgirl.draw(surface, font)
             
             pygame.draw.rect(surface, Color.BLUE, self.stats_panel)
 

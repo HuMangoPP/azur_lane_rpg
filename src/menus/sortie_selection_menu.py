@@ -9,7 +9,7 @@ from src.constants import DataFiles, Color, Box, screen_x, screen_y
 
 class SortieNode:
     SIZE = 32
-    center = pygame.Vector2(screen_x(0.25), screen_y(0.5))
+    center = pygame.Vector2(screen_x(0.5), screen_y(0.5))
 
     def __init__(self, index, hexes):
         self.index = index
@@ -129,9 +129,8 @@ class SortieSelectionMenu:
 
         num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
         wave_layer = DataFiles.sprites["sortie_selection"]["wave"]
-        wave_index_offset = (num_waves-1)/2
         self.wave_ys = [
-            screen_y(0.5) + wave_layer.get_height()/2*(i-wave_index_offset)
+            screen_y(0.5) + wave_layer.get_height()/2*(i-num_waves/2)
             for i in range(num_waves)
         ]
         self.wave_timers = [
@@ -195,7 +194,7 @@ class SortieSelectionMenu:
             wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
             wave_rect = wave.get_rect()
             wave_rect.top = wave_y
-            wave_rect.centerx = 128 * math.sin(wave_timer) + screen_x(0.5)
+            wave_rect.centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
             surface.blit(wave, wave_rect)
 
         self.exit_sortie_selection_menu_button.draw(surface, font)
