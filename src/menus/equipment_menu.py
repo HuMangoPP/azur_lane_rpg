@@ -88,9 +88,8 @@ class EquipmentMenu:
         )
 
         num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
-        wave_layer = DataFiles.sprites["sortie_selection"]["wave"]
         self.wave_ys = [
-            screen_y(0.5) + wave_layer.get_height()/2*(i-num_waves/2)
+            screen_y(0.5) + 64*(i-num_waves/2)
             for i in range(num_waves)
         ]
         self.wave_timers = [
