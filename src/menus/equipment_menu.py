@@ -9,6 +9,22 @@ from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x, scr
 
 from live2d.live2d import Live2D
 
+class Cloud:
+    def __init__(self, index, x, y, speed):
+        self.sprite = DataFiles.sprites["sortie_selection"][f"cloud{index}"]
+        self.x = x
+        self.y = y
+        self.speed = speed
+    
+    def update(self, dt):
+        self.x = self.x + self.speed * dt
+    
+    def draw(self, surface):
+        rect = self.sprite.get_rect()
+        rect.centerx = self.x
+        rect.top = self.y
+        surface.blit(self.sprite, rect)
+
 class EquipmentMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -89,13 +105,18 @@ class EquipmentMenu:
 
         num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
         self.wave_ys = [
-            screen_y(0.5) + 64*(i-num_waves/2)
+            screen_y(0.5) + 48*(i-(num_waves-1)/2)
             for i in range(num_waves)
         ]
         self.wave_timers = [
             math.radians(360)*random.random()
             for _ in range(num_waves)
         ]
+
+        self.cloud_timer = 0
+        self.cloud_spawn_time = 0
+        self.clouds = []
+
 
     def get_stat(self, shipgirl, stat):
         if stat == "max_hp":
@@ -193,16 +214,52 @@ class EquipmentMenu:
             for i, wave_timer in enumerate(self.wave_timers)
         ]
 
+        for cloud in self.clouds:
+            cloud.update(dt)
+        self.clouds = [
+            cloud for cloud in self.clouds
+            if cloud.x >= -128
+            and cloud.x <= screen_x(1) + 128
+        ]
+
+        self.cloud_timer += dt
+        if self.cloud_timer > self.cloud_spawn_time:
+            move_right = random.random() > 0.5
+            self.clouds.append(Cloud(
+                random.randint(1, DataFiles.sprites["sortie_selection"]["num_clouds"])-1,
+                0 if move_right else screen_x(1),
+                random.uniform(0, 128),
+                random.uniform(32, 64) * (1 if move_right else -1)
+            ))
+            self.cloud_timer = 0
+            self.cloud_spawn_time = random.uniform(5, 10)
+
     def draw(self, surface, font):
+        sky_surf = DataFiles.sprites["sortie_selection"]["sky"]
+        sky_surf_rect = sky_surf.get_rect()
+        sky_surf_rect.top = 0
+        num_sky_reps = 9
+        sky_rep_offset = (num_sky_reps-1)/2
+        for i in range(num_sky_reps):
+            sky_surf_rect.centerx = screen_x(0.5) + sky_surf_rect.width * (i-sky_rep_offset)
+            surface.blit(sky_surf, sky_surf_rect)
+
+        for cloud in self.clouds:
+            cloud.draw(surface)
+            
         num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        num_wave_reps = 5
+        wave_rep_offset = (num_wave_reps-1)/2
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
+            if i == (num_waves-1)//2 and self.selected_shipgirl is not None:
+                self.selected_shipgirl.draw(surface, font)
             wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
             wave_rect = wave.get_rect()
             wave_rect.top = wave_y
-            wave_rect.centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
-            if i == (num_waves-1)//2 and self.selected_shipgirl is not None:
-                self.selected_shipgirl.draw(surface, font)
-            surface.blit(wave, wave_rect)
+            centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
+            for j in range(num_wave_reps):
+                wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
+                surface.blit(wave, wave_rect)
 
         if self.selected_shipgirl is not None:
             

@@ -138,3 +138,11 @@ for wave_index in range(DataFiles.sprites["encounter"]["num_waves"]):
 DataFiles.sprites["sortie_selection"]["num_waves"] = 7
 for wave_index in range(DataFiles.sprites["sortie_selection"]["num_waves"]):
     create_wave_sprite("sortie_selection", wave_index)
+
+sky_surf = pygame.Surface((1,2))
+sky_surf.set_at((0, 0), (89, 150, 227))
+sky_surf.set_at((0, 1), (150, 197, 255))
+sky_surf_scaled = pygame.transform.smoothscale(sky_surf, (128, 256))
+DataFiles.sprites["sortie_selection"]["sky"] = sky_surf_scaled
+
+DataFiles.sprites["sortie_selection"]["num_clouds"] = 10

@@ -86,12 +86,23 @@
 		"wave4": { "left": 0, "top": 512, "width": 1024, "height": 128 }
 	},
 	"sortie_selection": {
-		"wave0": { "left": 0, "top": 0, "width": 1024, "height": 128 },
-		"wave1": { "left": 0, "top": 128, "width": 1024, "height": 128 },
-		"wave2": { "left": 0, "top": 256, "width": 1024, "height": 128 },
-		"wave3": { "left": 0, "top": 384, "width": 1024, "height": 128 },
-		"wave4": { "left": 0, "top": 512, "width": 1024, "height": 128 },
-		"wave5": { "left": 0, "top": 640, "width": 1024, "height": 128 },
-		"wave6": { "left": 0, "top": 768, "width": 1024, "height": 128 }
+		"wave0": { "left": 0, "top": 0, "width": 256, "height": 128 },
+		"wave1": { "left": 0, "top": 128, "width": 256, "height": 128 },
+		"wave2": { "left": 0, "top": 256, "width": 256, "height": 128 },
+		"wave3": { "left": 0, "top": 384, "width": 256, "height": 128 },
+		"wave4": { "left": 0, "top": 512, "width": 256, "height": 128 },
+		"wave5": { "left": 0, "top": 640, "width": 256, "height": 128 },
+		"wave6": { "left": 0, "top": 768, "width": 256, "height": 128 },
+
+		"cloud0": { "left": 256, "top": 0, "width": 256, "height": 128 },
+		"cloud1": { "left": 256, "top": 128, "width": 256, "height": 128 },
+		"cloud2": { "left": 256, "top": 256, "width": 256, "height": 128 },
+		"cloud3": { "left": 256, "top": 384, "width": 256, "height": 128 },
+		"cloud4": { "left": 256, "top": 512, "width": 128, "height": 128 },
+		"cloud5": { "left": 384, "top": 512, "width": 128, "height": 128 },
+		"cloud6": { "left": 256, "top": 640, "width": 128, "height": 128 },
+		"cloud7": { "left": 384, "top": 640, "width": 128, "height": 128 },
+		"cloud8": { "left": 256, "top": 768, "width": 128, "height": 128 },
+		"cloud9": { "left": 384, "top": 768, "width": 128, "height": 128 }
 	}
 }
