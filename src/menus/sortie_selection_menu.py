@@ -6,6 +6,7 @@ from engine.util import get_rect, pixel_to_hex, hex_to_pixel, get_cluster_edges
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
+from src.menus.background import Background
 
 class SortieNode:
     SIZE = 32
@@ -70,22 +71,6 @@ class SortieNode:
             icon_rect.center = pygame.Vector2(x,y) + self.center
             surface.blit(icon, icon_rect)
 
-class Cloud:
-    def __init__(self, index, x, y, speed):
-        self.sprite = DataFiles.sprites["sortie_selection"][f"cloud{index}"]
-        self.x = x
-        self.y = y
-        self.speed = speed
-    
-    def update(self, dt):
-        self.x = self.x + self.speed * dt
-    
-    def draw(self, surface):
-        rect = self.sprite.get_rect()
-        rect.centerx = self.x
-        rect.top = self.y
-        surface.blit(self.sprite, rect)
-
 class SortieSelectionMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -142,19 +127,7 @@ class SortieSelectionMenu:
         button_rect.top = Box.TOP_OF_SCREEN
         self.exit_sortie_selection_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_sortie_selection_menu)
 
-        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
-        self.wave_ys = [
-            screen_y(0.5) + 48*(i-(num_waves-1)/2)
-            for i in range(num_waves)
-        ]
-        self.wave_timers = [
-            math.radians(360)*random.random()
-            for _ in range(num_waves)
-        ]
-
-        self.cloud_timer = 0
-        self.cloud_spawn_time = 0
-        self.clouds = []
+        self.background = Background()
 
     def update(self, dt, events):
         for event in events:
@@ -199,55 +172,10 @@ class SortieSelectionMenu:
                 for sortie_node in self.sortie_nodes:
                     sortie_node.hover(event.pos)
 
-        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
-        self.wave_timers = [
-            (wave_timer + (i+1)/num_waves*dt)%math.radians(360)
-            for i, wave_timer in enumerate(self.wave_timers)
-        ]
-
-        for cloud in self.clouds:
-            cloud.update(dt)
-        self.clouds = [
-            cloud for cloud in self.clouds
-            if cloud.x >= -128
-            and cloud.x <= screen_x(1) + 128
-        ]
-
-        self.cloud_timer += dt
-        if self.cloud_timer > self.cloud_spawn_time:
-            move_right = random.random() > 0.5
-            self.clouds.append(Cloud(
-                random.randint(1, DataFiles.sprites["sortie_selection"]["num_clouds"])-1,
-                0 if move_right else screen_x(1),
-                random.uniform(0, 128),
-                random.uniform(32, 64) * (1 if move_right else -1)
-            ))
-            self.cloud_timer = 0
-            self.cloud_spawn_time = random.uniform(5, 10)
+        self.background.update(dt)
 
     def draw(self, surface, font):
-        sky_surf = DataFiles.sprites["sortie_selection"]["sky"]
-        sky_surf_rect = sky_surf.get_rect()
-        sky_surf_rect.top = 0
-        num_sky_reps = 9
-        sky_rep_offset = (num_sky_reps-1)/2
-        for i in range(num_sky_reps):
-            sky_surf_rect.centerx = screen_x(0.5) + sky_surf_rect.width * (i-sky_rep_offset)
-            surface.blit(sky_surf, sky_surf_rect)
-
-        for cloud in self.clouds:
-            cloud.draw(surface)
-
-        num_wave_reps = 5
-        wave_rep_offset = (num_wave_reps-1)/2
-        for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
-            wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
-            wave_rect = wave.get_rect()
-            wave_rect.top = wave_y
-            centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
-            for j in range(num_wave_reps):
-                wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
-                surface.blit(wave, wave_rect)
+        self.background.draw(surface, font)
 
         self.exit_sortie_selection_menu_button.draw(surface, font)
 

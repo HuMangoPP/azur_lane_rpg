@@ -432,9 +432,30 @@ class SirenFleet:
 
             siren.animate(dt)
 
-    def get_draw_order(self):
-        return sorted([siren for siren in self.fleet], key=lambda siren : siren.rect.bottom)
+    def get_draw_indices(self):
+        draw_indices = []
+        if len(self._front) == 1:
+            draw_indices.append((3, self._front[0]))
+        elif len(self._front) == 2:
+            draw_indices.append((2, self._front[0]))
+            draw_indices.append((4, self._front[1]))
+        elif len(self._front) == 3:
+            draw_indices.append((1, self._front[0]))
+            draw_indices.append((3, self._front[1]))
+            draw_indices.append((5, self._front[2]))
         
+        if len(self._back) == 1:
+            draw_indices.append((3, self._back[0]))
+        elif len(self._back) == 2:
+            draw_indices.append((2, self._back[0]))
+            draw_indices.append((4, self._back[1]))
+        elif len(self._back) == 3:
+            draw_indices.append((1, self._back[0]))
+            draw_indices.append((3, self._back[1]))
+            draw_indices.append((5, self._back[2]))
+        
+        return draw_indices
+
     def draw_battle_component(self, surface, font):
         for siren in self.fleet:
             siren.battle_component.draw(surface, font, siren.rect)

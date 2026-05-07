@@ -120,8 +120,6 @@ create_shell_sprite("normal", (255, 242, 97))
 create_shell_sprite("HE", (255, 0, 64))
 create_shell_sprite("AP", (0, 255, 255))
 
-DataFiles.sprites["encounter"]["num_waves"] = 5
-
 def create_wave_sprite(sprite_group, wave_index):
     wave = DataFiles.sprites[sprite_group][f"wave{wave_index}"]
     higher_wave = pygame.Surface((wave.get_width(), 2*wave.get_height()))
@@ -132,17 +130,14 @@ def create_wave_sprite(sprite_group, wave_index):
     higher_wave.set_colorkey((255,0,0))
     DataFiles.sprites[sprite_group][f"wave{wave_index}"] = higher_wave
 
-for wave_index in range(DataFiles.sprites["encounter"]["num_waves"]):
-    create_wave_sprite("encounter", wave_index)
-
-DataFiles.sprites["sortie_selection"]["num_waves"] = 7
-for wave_index in range(DataFiles.sprites["sortie_selection"]["num_waves"]):
-    create_wave_sprite("sortie_selection", wave_index)
+DataFiles.sprites["background"]["num_waves"] = 7
+for wave_index in range(DataFiles.sprites["background"]["num_waves"]):
+    create_wave_sprite("background", wave_index)
 
 sky_surf = pygame.Surface((1,2))
 sky_surf.set_at((0, 0), (89, 150, 227))
 sky_surf.set_at((0, 1), (150, 197, 255))
 sky_surf_scaled = pygame.transform.smoothscale(sky_surf, (128, 256))
-DataFiles.sprites["sortie_selection"]["sky"] = sky_surf_scaled
+DataFiles.sprites["background"]["sky"] = sky_surf_scaled
 
-DataFiles.sprites["sortie_selection"]["num_clouds"] = 10
+DataFiles.sprites["background"]["num_clouds"] = 10

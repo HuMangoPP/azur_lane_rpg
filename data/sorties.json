@@ -8,6 +8,10 @@
 			{
 				"front": ["DD_siren", "DD_siren"],
 				"back": []
+			},
+			{
+				"front": ["DD_siren", "DD_siren","DD_siren"],
+				"back": []
 			}
 		],
 		"rewards": {
