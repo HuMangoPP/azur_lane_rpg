@@ -127,16 +127,14 @@ class SortieSelectionMenu:
         button_rect.top = Box.TOP_OF_SCREEN
         self.exit_sortie_selection_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_sortie_selection_menu)
 
-        num_waves = 10
-        self.wave_pos = [
-            pygame.Vector2(screen_x(1)*random.random(), screen_y(1)*random.random())
-            for _ in range(num_waves)
+        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        wave_layer = DataFiles.sprites["sortie_selection"]["wave"]
+        wave_index_offset = (num_waves-1)/2
+        self.wave_ys = [
+            screen_y(0.5) + wave_layer.get_height()/2*(i-wave_index_offset)
+            for i in range(num_waves)
         ]
-        self.wave_x_timer = [
-            math.radians(360)*random.random()
-            for _ in range(num_waves)
-        ]
-        self.wave_y_timer = [
+        self.wave_timers = [
             math.radians(360)*random.random()
             for _ in range(num_waves)
         ]
@@ -184,23 +182,20 @@ class SortieSelectionMenu:
                 for sortie_node in self.sortie_nodes:
                     sortie_node.hover(event.pos)
 
-        self.wave_x_timer = [
-            (wave_x_timer + dt)%math.radians(360)
-            for wave_x_timer in self.wave_x_timer
-        ]
-
-        self.wave_y_timer = [
-            (wave_y_timer + 8*dt)%math.radians(360)
-            for wave_y_timer in self.wave_y_timer
+        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        self.wave_timers = [
+            (wave_timer + (i+1)/num_waves*dt)%math.radians(360)
+            for i, wave_timer in enumerate(self.wave_timers)
         ]
 
     def draw(self, surface, font):
         surface.fill(Color.OCEAN_BLUE)
 
-        for wave_pos, wave_x_timer, wave_y_timer in zip(self.wave_pos, self.wave_x_timer, self.wave_y_timer):
-            wave = DataFiles.sprites["sortie_selection"]["wave"]
+        for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
+            wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
             wave_rect = wave.get_rect()
-            wave_rect.center = wave_pos + pygame.Vector2(wave_rect.width/2*math.sin(wave_x_timer), 0)
+            wave_rect.top = wave_y
+            wave_rect.centerx = 128 * math.sin(wave_timer) + screen_x(0.5)
             surface.blit(wave, wave_rect)
 
         self.exit_sortie_selection_menu_button.draw(surface, font)

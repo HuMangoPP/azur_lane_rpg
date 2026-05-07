@@ -86,6 +86,6 @@
 		"wave4": { "left": 0, "top": 512, "width": 1024, "height": 128 }
 	},
 	"sortie_selection": {
-		"wave": { "left": 0, "top": 0, "width": 128, "height": 128 }
+		"wave": { "left": 0, "top": 0, "width": 1024, "height": 128 }
 	}
 }
