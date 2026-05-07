@@ -140,4 +140,21 @@ sky_surf.set_at((0, 1), (150, 197, 255))
 sky_surf_scaled = pygame.transform.smoothscale(sky_surf, (128, 256))
 DataFiles.sprites["background"]["sky"] = sky_surf_scaled
 
+def create_cloud_shadow_sprite(sprite_group, cloud_index):
+    cloud = DataFiles.sprites[sprite_group][f"cloud{cloud_index}"]
+    cloud_shadow = pygame.Surface(cloud.get_size())
+    cloud_shadow.fill((100,100,100))
+    cloud.set_colorkey((255,255,255))
+    cloud_shadow.blit(cloud, (0,0))
+    cloud_shadow.set_colorkey((255,0,0))
+    cloud.set_colorkey((255,0,0))
+
+    cloud_shadow2 = pygame.Surface(cloud_shadow.get_size())
+    cloud_shadow2.fill((0,0,0))
+    cloud_shadow2.blit(cloud_shadow, (0,0))
+
+    DataFiles.sprites[sprite_group][f"cloud_shadow{cloud_index}"] = cloud_shadow2
+
 DataFiles.sprites["background"]["num_clouds"] = 10
+for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
+    create_cloud_shadow_sprite("background", cloud_index)

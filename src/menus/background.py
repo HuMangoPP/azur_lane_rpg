@@ -5,8 +5,11 @@ import pygame
 from src.constants import DataFiles, screen_x, screen_y
 
 class Cloud:
+    SHADOW_OFFSET = pygame.Vector2(4, 8)
+
     def __init__(self, index, x, y, speed):
         self.sprite = DataFiles.sprites["background"][f"cloud{index}"]
+        self.shadow = DataFiles.sprites["background"][f"cloud_shadow{index}"]
         self.x = x
         self.y = y
         self.speed = speed
@@ -15,6 +18,11 @@ class Cloud:
         self.x = self.x + self.speed * dt
     
     def draw(self, surface):
+        shadow_rect = self.shadow.get_rect()
+        shadow_rect.centerx = self.x + self.SHADOW_OFFSET.x
+        shadow_rect.top = self.y + self.SHADOW_OFFSET.y
+        surface.blit(self.shadow, shadow_rect, special_flags=pygame.BLEND_RGBA_SUB)
+
         rect = self.sprite.get_rect()
         rect.centerx = self.x
         rect.top = self.y
@@ -58,7 +66,7 @@ class Background:
             self.clouds.append(Cloud(
                 random.randint(1, DataFiles.sprites["background"]["num_clouds"])-1,
                 0 if move_right else screen_x(1),
-                random.uniform(0, 128),
+                random.uniform(-64, 64),
                 random.uniform(32, 64) * (1 if move_right else -1)
             ))
             self.cloud_timer = 0
