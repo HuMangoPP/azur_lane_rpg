@@ -3,7 +3,7 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, get_vec, draw_slice
+from engine.util import get_rect, draw_annulus
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y
 
@@ -216,12 +216,16 @@ class ShipgirlBattleComponent:
             return
 
         center = pygame.Vector2(rect.centerx, rect.top-50) # TODO
-        radius = 30
+        inner_radius = 16
+        outer_radius = 32
         start_angle = -90
-        end_angle = start_angle + 360 * (1 - self.cooldown_timer)
+        stop_angle = start_angle + (1 - self.cooldown_timer) * 360
         color = (50,200,50) if self.target is not None else (200,50,50)
-        draw_slice(surface, color, center, radius, start_angle, end_angle)
-        pygame.draw.circle(surface, Color.WHITE, center, radius, width=Box.OUTLINE_WIDTH)
+        draw_annulus(surface, color, center, inner_radius, outer_radius, start_angle, stop_angle)
+        attack_icon = DataFiles.sprites["user_interface"]["attack"]
+        attack_icon_rect = attack_icon.get_rect()
+        attack_icon_rect.center = center
+        surface.blit(attack_icon, attack_icon_rect)
 
 class Shipgirl:
     SPRITE_SIZE = 96 # TODO

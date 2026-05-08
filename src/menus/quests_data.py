@@ -115,7 +115,7 @@ def choose_faction_on_complete(menu_manager):
     first_sortie_quest.tutorial_draw = first_sortie_tutorial_draw_factory([shipgirls["DD"], shipgirls["BB"]])
 
     equip_weapon_quest.completion_criteria = equip_weapon_completion_criteria_factory(shipgirls["DD"])
-    equip_weapon_quest.tutorial_draw = equip_weapon_completion_criteria_factory(shipgirls["DD"])
+    equip_weapon_quest.tutorial_draw = equip_weapon_tutorial_draw_factory(shipgirls["DD"])
 
     construct_shipgirls_quest.quest_line = construct_shipgirls_quest.quest_line.replace(
         "DD_shipgirl",

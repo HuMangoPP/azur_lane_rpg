@@ -127,8 +127,6 @@ class SortieSelectionMenu:
         button_rect.top = Box.TOP_OF_SCREEN
         self.exit_sortie_selection_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_sortie_selection_menu)
 
-        self.background = Background()
-
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -172,10 +170,10 @@ class SortieSelectionMenu:
                 for sortie_node in self.sortie_nodes:
                     sortie_node.hover(event.pos)
 
-        self.background.update(dt)
+        self.menu_manager.background.update(dt)
 
     def draw(self, surface, font):
-        self.background.draw(surface, font)
+        self.menu_manager.background.draw(surface, font)
 
         self.exit_sortie_selection_menu_button.draw(surface, font)
 

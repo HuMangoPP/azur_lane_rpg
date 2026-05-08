@@ -88,8 +88,6 @@ class EquipmentMenu:
             top=self.stats_panel.top+Box.PADDING+9+Box.PADDING
         )
 
-        self.background = Background()
-
     def get_stat(self, shipgirl, stat):
         if stat == "max_hp":
             if self.hovered_equipment is None:
@@ -180,10 +178,10 @@ class EquipmentMenu:
                 self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
             self.selected_shipgirl.animate(dt)
 
-        self.background.update(dt)
+        self.menu_manager.background.update(dt)
 
     def draw(self, surface, font):
-        self.background.draw(surface, font, shipgirl=self.selected_shipgirl)
+        self.menu_manager.background.draw(surface, font, shipgirl=self.selected_shipgirl)
 
         if self.selected_shipgirl is not None:
             

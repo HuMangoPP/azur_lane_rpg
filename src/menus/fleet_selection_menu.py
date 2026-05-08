@@ -75,8 +75,6 @@ class FleetSelectionMenu:
             ) for slot_index in range(num_fleet_slots)
         ]
 
-        self.background = Background()
-
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -149,10 +147,10 @@ class FleetSelectionMenu:
             if shipgirl is not None:
                 shipgirl.animate(dt)
 
-        self.background.update(dt)
+        self.menu_manager.background.update(dt)
 
     def draw(self, surface, font):
-        self.background.draw(surface, font, player_fleet=self.menu_manager.player_fleet)
+        self.menu_manager.background.draw(surface, font, player_fleet=self.menu_manager.player_fleet)
 
         self.start_sortie_button.draw(surface, font)
         self.exit_fleet_selection_menu_button.draw(surface, font)

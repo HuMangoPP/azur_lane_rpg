@@ -76,7 +76,9 @@
 		"compass": { "left": 128, "top": 256, "width": 64, "height": 64 },
 		"cleared": { "left": 128, "top": 320, "width": 32, "height": 32 },
 		"uncleared": { "left": 160, "top": 320, "width": 32, "height": 32 },
-		"locked": { "left": 128, "top": 352, "width": 32, "height": 32 }
+		"locked": { "left": 128, "top": 352, "width": 32, "height": 32 },
+
+		"attack": { "left": 160, "top": 384, "width": 32, "height": 32 }
 	},
 	"encounter": {},
 	"background": {

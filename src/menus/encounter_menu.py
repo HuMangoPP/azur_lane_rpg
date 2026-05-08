@@ -114,8 +114,6 @@ class EncounterMenu:
         self.research_exp = 0
         self.exp_timer = 0
 
-        self.background = Background()
-
     def begin_sortie(self):
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
@@ -290,10 +288,10 @@ class EncounterMenu:
                 self.next_encounter_button.active = True
                 self.retreat_button.active = False
 
-        self.background.update(dt)
+        self.menu_manager.background.update(dt)
 
     def draw(self, surface, font):
-        self.background.draw(surface, font, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
+        self.menu_manager.background.draw(surface, font, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
 
         self.next_encounter_button.draw(surface, font)
         self.open_reward_cache_button.draw(surface, font)
@@ -343,10 +341,27 @@ class EncounterMenu:
             for siren in self.menu_manager.siren_fleet.fleet:
                 if siren.rect.collidepoint(mpos):
                     if self.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
-                        # TODO 
-                        if siren in self.menu_manager.siren_fleet.front:
-                            pygame.draw.circle(surface, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+                        if siren in self.menu_manager.siren_fleet.front: # TODO
+                            color = (50,200,50)
                         else:
-                            pygame.draw.circle(surface, (200,50,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+                            color = (200,50,50)
                     else:
-                        pygame.draw.circle(surface, (50,200,50), pygame.Vector2(mpos) + pygame.Vector2(30, 30), 25)
+                        color = (50,200,50)
+                    
+                    inner_radius = 16
+                    outer_radius = 32
+                    annulus = pygame.Surface((2*outer_radius, 2*outer_radius))
+                    annulus.fill((0,0,0))
+                    pygame.draw.circle(annulus, color, (outer_radius, outer_radius), outer_radius)
+                    pygame.draw.circle(annulus, (0,0,0), (outer_radius, outer_radius), inner_radius)
+                    annulus.set_colorkey((0,0,0))
+                    annulus_rect = annulus.get_rect()
+
+                    drawpos = pygame.Vector2(mpos) + pygame.Vector2(48)
+                    annulus_rect.center = drawpos
+                    surface.blit(annulus, annulus_rect)
+
+                    attack_icon = DataFiles.sprites["user_interface"]["attack"]
+                    attack_icon_rect = attack_icon.get_rect()
+                    attack_icon_rect.center = drawpos
+                    surface.blit(attack_icon, attack_icon_rect)

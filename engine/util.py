@@ -22,29 +22,27 @@ def get_rect(width, height, left=None, centerx=None, right=None, top=None, cente
 def get_vec(length, angle):
     return length * pygame.Vector2(math.cos(angle), math.sin(angle))
 
-def draw_slice(surface, color, center, radius, start_angle, end_angle, width=0, resolution=10):
-    points = [center]
-    if end_angle > start_angle:
-        current_angle = start_angle
-        angles = []
-        while current_angle < end_angle:
-            angles.append(current_angle)
-            current_angle += resolution
-        angles.append(end_angle)
-    else:
-        current_angle = start_angle
-        angles = []
-        while current_angle > end_angle:
-            angles.append(current_angle)
-            current_angle -= resolution
-        angles.append(end_angle)
-
+def draw_annulus(surface, color, center, inner_radius, outer_radius, start_angle, stop_angle, resolution=10):
+    points = [pygame.Vector2(outer_radius, outer_radius)]
+    current_angle = start_angle
+    angles = []
+    while current_angle < stop_angle:
+        angles.append(current_angle)
+        current_angle += resolution
+    angles.append(stop_angle)
     if len(angles) > 2:
         for angle in angles:
-            vec = get_vec(radius, math.radians(angle))
-            points.append(center + vec)
+            vec = get_vec(outer_radius, math.radians(angle))
+            points.append(points[0] + vec)
         
-        pygame.draw.polygon(surface, color, points, width=width)
+        annulus = pygame.Surface((2*outer_radius, 2*outer_radius))
+        annulus.fill((0,0,0))
+        pygame.draw.polygon(annulus, color, points)
+        pygame.draw.circle(annulus, (0,0,0), (outer_radius, outer_radius), inner_radius)
+        annulus.set_colorkey((0,0,0))
+        annulus_rect = annulus.get_rect()
+        annulus_rect.center = center
+        surface.blit(annulus, annulus_rect)
 
 def hex_to_pixel(q, r, size):
     x = size * (math.sqrt(3) * q + math.sqrt(3)/2 * r)
