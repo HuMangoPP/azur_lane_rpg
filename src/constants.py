@@ -33,6 +33,16 @@ class Color:
     DARK_BLUE = (50,50,100)
     RED = (255,10,10)
 
+    CARGO_BOX = (184, 144, 114)
+    CARGO_BOX_BACK = (112, 78, 53)
+
+    DOSSIER_PAGE = (255, 255, 255)
+    DOSSIER = (231, 201, 169)
+    DOSSIER_BACK = (220, 177, 130)
+
+    BLUEPRINT_PAGE = (0, 65, 186)
+    BLUEPRINT_PAGE_BACK = (0, 32, 130)
+
     SKY_BLUE = (100, 195, 255)
 
     CLEARED_ZONE_FILL = (32, 176, 171)

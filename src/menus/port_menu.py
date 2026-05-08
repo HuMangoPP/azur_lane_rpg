@@ -1,6 +1,7 @@
+import math
 import pygame
 
-from engine.util import get_rect
+from engine.util import get_rect, get_vec
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
@@ -48,16 +49,22 @@ class PortMenu:
             def open_overlay():
                 self.current_overlay = overlay_enum
 
-                if overlay_enum == self.SHIPYARD and DataFiles.save_file["research_target"] is not None:
-                    self.overlay_selected_entity = DataFiles.save_file["research_target"]
-                    self.overlay_confirm_button.active = True
-                    unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
-                    if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                        self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
-                        self.overlay_confirm_button.text = "construct"
-                    else:
-                        self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["research"]
-                        self.overlay_confirm_button.text = "research"
+                if overlay_enum == self.SHIPYARD:
+                    if DataFiles.save_file["research_target"] is not None:
+                        self.overlay_selected_entity = DataFiles.save_file["research_target"]
+                        self.overlay_confirm_button.active = True
+                        unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
+                        if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
+                            self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
+                            self.overlay_confirm_button.text = "construct"
+                        else:
+                            self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["research"]
+                            self.overlay_confirm_button.text = "research"
+                    
+                    for i, faction in enumerate(self.shipgirl_filters):
+                        if DataFiles.save_file["unlocked_factions"][0] == faction:
+                            self.selected_overlay_filter = i
+                            break
 
             return open_overlay
 
@@ -107,76 +114,92 @@ class PortMenu:
             active=False
         )
 
-        overlay_left_panel_width = 5*(Box.WIDTH + Box.PADDING) + Box.PADDING
-        overlay_right_panel_width = 3*(Box.WIDTH + Box.PADDING) + Box.PADDING
-        overlay_bg_width = (
-            3*Box.PADDING # padding
-            + overlay_left_panel_width
-            + overlay_right_panel_width
+        self.dossier_overlay = get_rect(
+            width=5*(Box.WIDTH+Box.PADDING)+Box.PADDING + 2*Box.PADDING,
+            height=3*(Box.HEIGHT+Box.PADDING)+Box.PADDING + 2*Box.PADDING + Box.HEIGHT,
+            right=screen_x(0.5) - Box.PADDING,
+            centery=screen_y(0.5)
         )
-        overlay_left_panel_height = 4*(Box.WIDTH + Box.PADDING) + Box.PADDING
-        overlay_bg_height = (
-            2*Box.PADDING # padding
-            + Box.HEIGHT # filters
-            + overlay_left_panel_height
+        self.dossier_bg = get_rect(
+            width=self.dossier_overlay.width,
+            height=self.dossier_overlay.height - Box.HEIGHT,
+            right=self.dossier_overlay.right,
+            bottom=self.dossier_overlay.bottom
         )
-        self.overlay_bg = get_rect(
-            width=overlay_bg_width, height=overlay_bg_height,
-            centerx=screen_x(0.5), centery=screen_y(0.5)
-        )
-        self.overlay_right_panel = get_rect(
-            width=overlay_right_panel_width,
-            height=self.overlay_bg.height-2*Box.PADDING,
-            right=self.overlay_bg.right-Box.PADDING,
-            top=self.overlay_bg.top+Box.PADDING
-        )
-        self.overlay_left_panel = get_rect(
-            width=overlay_left_panel_width,
-            height=overlay_left_panel_height,
-            left=self.overlay_bg.left+Box.PADDING,
-            bottom=self.overlay_bg.bottom-Box.PADDING
-        )
-
-        num_filter_rects = 5
-        filter_rect_padding = (self.overlay_left_panel.width - num_filter_rects*Box.WIDTH) / (num_filter_rects-1)
-        self.overlay_filter_rects = [
+        num_dossier_tabs = 5
+        dossier_tab_padding = (self.dossier_bg.width - num_dossier_tabs*Box.WIDTH) / (num_dossier_tabs-1)
+        self.dossier_tabs = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.overlay_left_panel.left+i*(Box.WIDTH+filter_rect_padding),
-                bottom=self.overlay_left_panel.top
-            ) for i in range(5)
+                left=self.dossier_bg.left+i*(Box.WIDTH+dossier_tab_padding),
+                bottom=self.dossier_bg.top
+            ) for i in range(num_dossier_tabs)
         ]
-        self.selected_overlay_filter = None
+        self.dossier_page = get_rect(
+            width=self.dossier_overlay.width - 2*Box.PADDING,
+            height=self.dossier_overlay.height - Box.HEIGHT - 2*Box.PADDING,
+            right=self.dossier_overlay.right - Box.PADDING,
+            bottom=self.dossier_overlay.bottom - Box.PADDING
+        )
+        dossier_page_center = pygame.Vector2(self.dossier_page.center)
+        rotated_angle = 5
+        page_horizontal = get_vec(self.dossier_page.width/2, math.radians(rotated_angle))
+        page_vertical = get_vec(self.dossier_page.height/2, math.radians(90+rotated_angle))
+        self.misaligned_dossier_page = [
+            dossier_page_center + page_horizontal + page_vertical,
+            dossier_page_center - page_horizontal + page_vertical,
+            dossier_page_center - page_horizontal - page_vertical,
+            dossier_page_center + page_horizontal - page_vertical,
+        ]
+
+        self.blueprint_page = get_rect(
+            width=4*(Box.WIDTH + Box.PADDING) + Box.PADDING,
+            height=5*(Box.HEIGHT + Box.PADDING) + Box.PADDING,
+            left=screen_x(0.5) + Box.PADDING,
+            centery=screen_y(0.5)
+        )
+        blueprint_page_center = pygame.Vector2(self.blueprint_page.center)
+        rotated_angle = 5
+        page_horizontal = get_vec(self.blueprint_page.width/2, math.radians(rotated_angle))
+        page_vertical = get_vec(self.blueprint_page.height/2, math.radians(90+rotated_angle))
+        self.misaligned_blueprint_page = [
+            blueprint_page_center + page_horizontal + page_vertical,
+            blueprint_page_center - page_horizontal + page_vertical,
+            blueprint_page_center - page_horizontal - page_vertical,
+            blueprint_page_center + page_horizontal - page_vertical,
+        ]
+
+        self.selected_overlay_filter = 0
         self.shipgirl_filters = ["USS", "HMS", "IJN", "KMS"]
         self.equipment_filters = ["DD", "CL", "CA", "BB", "AUX"]
         self.siren_filters = ["DD", "CA", "BB"]
 
-        num_icons_per_row = (self.overlay_left_panel.width-Box.PADDING) // (Box.WIDTH+Box.PADDING)
-        icon_padding = (self.overlay_left_panel.width - 2*Box.PADDING - num_icons_per_row*Box.WIDTH) / (num_icons_per_row-1)
-        self.overlay_left_icons = [
+        num_icons_per_row = (self.dossier_page.width-Box.PADDING) // (Box.WIDTH+Box.PADDING)
+        icon_padding = (self.dossier_page.width - 2*Box.PADDING - num_icons_per_row*Box.WIDTH) / (num_icons_per_row-1)
+        self.dossier_icons = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.overlay_left_panel.left+Box.PADDING+(i%num_icons_per_row)*(Box.WIDTH+icon_padding),
-                top=self.overlay_left_panel.top+Box.PADDING+(i//num_icons_per_row)*(Box.HEIGHT+icon_padding)
+                left=self.dossier_page.left+Box.PADDING+(i%num_icons_per_row)*(Box.WIDTH+icon_padding),
+                top=self.dossier_page.top+Box.PADDING+(i//num_icons_per_row)*(Box.HEIGHT+icon_padding)
             ) for i in range(16)
         ]
 
-        self.overlay_right_name = pygame.Vector2(
-            self.overlay_right_panel.centerx,
-            self.overlay_right_panel.top+Box.PADDING
+        self.blueprint_name = pygame.Vector2(
+            self.blueprint_page.centerx,
+            self.blueprint_page.top + Box.PADDING + 5
         )
-        self.overlay_right_icon = get_rect(
+        self.blueprint_icon = get_rect(
             width=Box.WIDTH, height=Box.HEIGHT,
-            centerx=self.overlay_right_panel.centerx,
-            top=self.overlay_right_name.y+Box.PADDING
+            centerx=self.blueprint_page.centerx,
+            top=self.blueprint_name.y + 5 + Box.PADDING
         )
         num_icons_per_row = 3
-        self.overlay_right_icons = [
+        self.blueprint_icons = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.overlay_right_panel.left+Box.PADDING+(i%num_icons_per_row)*(Box.WIDTH+Box.PADDING),
-                bottom=self.overlay_right_panel.bottom-2*Box.PADDING-Box.HEIGHT+(i//num_icons_per_row)*(Box.HEIGHT+Box.PADDING)
-            ) for i in range(6)
+                centerx=self.blueprint_page.centerx+(i%num_icons_per_row-1)*(Box.WIDTH+Box.PADDING),
+                bottom=self.blueprint_page.bottom-2*Box.PADDING-Box.HEIGHT+(i//num_icons_per_row)*(Box.HEIGHT+Box.PADDING)
+            ) for i in range(2*num_icons_per_row)
         ]
 
         def overlay_confirm():
@@ -214,8 +237,8 @@ class PortMenu:
         self.overlay_confirm_button = Button(
             rect=get_rect(
                 width=2*Box.WIDTH, height=Box.HEIGHT,
-                centerx=self.overlay_right_panel.centerx,
-                bottom=self.overlay_right_panel.bottom-Box.PADDING
+                centerx=self.blueprint_page.centerx,
+                bottom=self.blueprint_page.bottom-Box.PADDING
             ),
             color=Color.BLUE_GREY,
             text=None,
@@ -225,6 +248,12 @@ class PortMenu:
             active=False
         )
         self.overlay_selected_entity = None
+
+        self.depot_overlay = get_rect(
+            width=6*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+            height=4*(Box.HEIGHT+Box.PADDING) + Box.PADDING,
+            center=(screen_x(0.5), screen_y(0.5))
+        )
 
         def open_select_sortie_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
@@ -282,18 +311,18 @@ class PortMenu:
                     choose_faction_button.click(event.pos)
 
     def draw_inventory_overlay(self, surface, font):
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_bg)
+        pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.depot_overlay)
 
-        num_items_in_row = (self.overlay_bg.width - 2*Box.PADDING) // Box.WIDTH - 1
-        padding = (self.overlay_bg.width - 2*Box.PADDING - num_items_in_row*Box.WIDTH) / (num_items_in_row-1)
+        num_items_in_row = (self.depot_overlay.width - Box.PADDING) // (Box.WIDTH+Box.PADDING)
+        padding = (self.depot_overlay.width - 2*Box.PADDING - num_items_in_row*Box.WIDTH) / (num_items_in_row-1)
         item_index = 0
         for item, count in DataFiles.save_file["inventory"].items():
             if count <= 0:
                 continue
-            left = self.overlay_bg.left + Box.PADDING + (item_index%num_items_in_row)*(Box.WIDTH + padding)
-            top = self.overlay_bg.top + Box.PADDING + (item_index//num_items_in_row)*(Box.HEIGHT+padding)
+            left = self.depot_overlay.left + Box.PADDING + (item_index%num_items_in_row)*(Box.WIDTH + padding)
+            top = self.depot_overlay.top + Box.PADDING + (item_index//num_items_in_row)*(Box.HEIGHT+padding)
             rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
             if item in DataFiles.sprites["entity"]:
                 surface.blit(DataFiles.sprites["entity"][item], rect)
                 font.render(surface, str(count), rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
@@ -302,14 +331,27 @@ class PortMenu:
             item_index += 1
 
     def exit_overlay(self, mouseup_event):
-        if not self.overlay_bg.collidepoint(mouseup_event.pos):
-            self.current_overlay = self.NO_OVERLAY
-            self.selected_overlay_filter = None
-            self.overlay_selected_entity = None
-            self.overlay_confirm_button.active = False
+        if self.current_overlay == self.DEPOT:
+            if not self.depot_overlay.collidepoint(mouseup_event.pos):
+                self.current_overlay = self.NO_OVERLAY
+                self.overlay_selected_entity = None
+                self.overlay_confirm_button.active = False
+                self.selected_overlay_filter = 0
+        else:
+            if (
+                not self.dossier_overlay.collidepoint(mouseup_event.pos)
+                and (
+                    self.overlay_selected_entity is None
+                    or not self.blueprint_page.collidepoint(mouseup_event.pos)
+                )
+            ):
+                self.current_overlay = self.NO_OVERLAY
+                self.overlay_selected_entity = None
+                self.overlay_confirm_button.active = False
+                self.selected_overlay_filter = 0
 
     def overlay_mouseup_logic(self, mouseup_event, entities, entity_filters, activate_confirm_button):
-        for entity, rect in zip(entities, self.overlay_left_icons):
+        for entity, rect in zip(entities, self.dossier_icons):
             if rect.collidepoint(mouseup_event.pos):
                 self.overlay_selected_entity = entity
                 self.overlay_confirm_button.active = activate_confirm_button
@@ -326,23 +368,17 @@ class PortMenu:
                     self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
                     self.overlay_confirm_button.text = "construct"
         
-        for i, (cat, rect) in enumerate(zip(entity_filters, self.overlay_filter_rects)):
+        for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
             if rect.collidepoint(mouseup_event.pos):
-                if self.selected_overlay_filter == i:
-                    self.selected_overlay_filter = None
-                else:
-                    self.selected_overlay_filter = i
+                self.selected_overlay_filter = i
 
     def draw_dual_panel_overlay(self, surface, font, entities, entity_filters, info, icons):
-        pygame.draw.rect(surface, Color.BLUE_GREY, self.overlay_bg)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_left_panel)
-        pygame.draw.rect(surface, Color.DARK_BLUE, self.overlay_right_panel)
-
-        for i, (cat, rect) in enumerate(zip(entity_filters, self.overlay_filter_rects)):
+        pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
+        for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
             if self.selected_overlay_filter == i:
-                pygame.draw.rect(surface, Color.DARK_BLUE, rect)
+                pygame.draw.rect(surface, Color.DOSSIER, rect)
             else:
-                pygame.draw.rect(surface, Color.BLUE, rect)
+                pygame.draw.rect(surface, Color.DOSSIER_BACK, rect)
             if cat in DataFiles.sprites["user_interface"]:
                 icon = DataFiles.sprites["user_interface"][cat]
                 icon_rect = icon.get_rect()
@@ -351,28 +387,33 @@ class PortMenu:
             else:
                 font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        for entity, rect in zip(entities, self.overlay_left_icons):
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+        pygame.draw.polygon(surface, Color.DOSSIER_PAGE, self.misaligned_dossier_page)
+        pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
+
+        for entity, rect in zip(entities, self.dossier_icons):
             if entity in DataFiles.sprites["entity"]:
                 image = DataFiles.sprites["entity"][entity]
                 image_rect = image.get_rect()
                 image_rect.center = rect.center
                 surface.blit(image, image_rect)
             else:
-                font.render(surface, entity, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                font.render(surface, entity, rect.center, Color.BLACK, 1, style="center")
+            pygame.draw.rect(surface, Color.BLACK, rect, width=Box.OUTLINE_WIDTH)
         
         if self.overlay_selected_entity:
-            font.render(surface, self.overlay_selected_entity, self.overlay_right_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
+            pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
+            font.render(surface, self.overlay_selected_entity, self.blueprint_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             if self.overlay_selected_entity in DataFiles.sprites["entity"]:
-                surface.blit(DataFiles.sprites["entity"][self.overlay_selected_entity], self.overlay_right_icon)
-            pygame.draw.rect(surface, Color.WHITE, self.overlay_right_icon, width=Box.OUTLINE_WIDTH)
+                surface.blit(DataFiles.sprites["entity"][self.overlay_selected_entity], self.blueprint_icon)
+            pygame.draw.rect(surface, Color.WHITE, self.blueprint_icon, width=Box.OUTLINE_WIDTH)
 
             icon_size = 32 # TODO
             left_align = [
-                self.overlay_right_panel.left + Box.PADDING,
-                self.overlay_right_panel.centerx + Box.PADDING
+                self.blueprint_icons[0].left + Box.PADDING,
+                self.blueprint_page.centerx + Box.PADDING
             ]
-            y = self.overlay_right_icon.bottom + Box.PADDING
+            y = self.blueprint_icon.bottom + Box.PADDING
             info_index = 0
             for info_key, info_value in info.items():
                 if info_value is None:
@@ -410,7 +451,7 @@ class PortMenu:
                 if info_index % 2 == 0:
                     y += icon_size
 
-            for (icon_name, icon_text), rect in zip(icons, self.overlay_right_icons):
+            for (icon_name, icon_text), rect in zip(icons, self.blueprint_icons):
                 if icon_name in DataFiles.sprites["entity"]:
                     surface.blit(DataFiles.sprites["entity"][icon_name], rect)
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
@@ -426,36 +467,22 @@ class PortMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 self.exit_overlay(event)
 
-                if self.selected_overlay_filter is None:
-                    shipgirls = [
-                        shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                        if shipgirl not in DataFiles.save_file["shipgirls"]
-                        and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                    ]
-                else:
-                    shipgirls = [
-                        shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                        if shipgirl not in DataFiles.save_file["shipgirls"]
-                        and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                        and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
-                    ]
+                shipgirls = [
+                    shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+                    if shipgirl not in DataFiles.save_file["shipgirls"]
+                    and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
+                    and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
+                ]
                 self.overlay_mouseup_logic(event, shipgirls, self.shipgirl_filters, True)
                 self.overlay_confirm_button.click(event.pos)
 
     def draw_shipyard_overlay(self, surface, font):
-        if self.selected_overlay_filter is None:
-            shipgirls = [
-                shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                if shipgirl not in DataFiles.save_file["shipgirls"]
-                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-            ]
-        else:
-            shipgirls = [
-                shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                if shipgirl not in DataFiles.save_file["shipgirls"]
-                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
-            ]
+        shipgirls = [
+            shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+            if shipgirl not in DataFiles.save_file["shipgirls"]
+            and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
+            and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
+        ]
         if self.overlay_selected_entity:
             selected_entity_info = DataFiles.shipgirl_data.get(self.overlay_selected_entity, {})
             hull_type = selected_entity_info["hull_type"]
@@ -494,9 +521,7 @@ class PortMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 self.exit_overlay(event)
 
-                if self.selected_overlay_filter is None:
-                    equipment = [equip for equip in DataFiles.equipment_data]
-                elif self.selected_overlay_filter == 4: # TODO
+                if self.selected_overlay_filter == 4: # TODO
                     equipment = [
                         equip for equip, equip_data in DataFiles.equipment_data.items()
                         if equip_data["type"] == "aux"
@@ -511,9 +536,7 @@ class PortMenu:
                 self.overlay_confirm_button.click(event.pos)
 
     def draw_gear_lab_overlay(self, surface, font):
-        if self.selected_overlay_filter is None:
-            equipment = [equip for equip in DataFiles.equipment_data]
-        elif self.selected_overlay_filter == 4: # TODO
+        if self.selected_overlay_filter == 4: # TODO
             equipment = [
                 equip for equip, equip_data in DataFiles.equipment_data.items()
                 if equip_data["type"] == "aux"
@@ -558,24 +581,17 @@ class PortMenu:
                     self.visited_intel_center = True
 
                 self.exit_overlay(event)
-
-                if self.selected_overlay_filter is None:
-                    encountered_sirens = self.encountered_sirens
-                else:
-                    encountered_sirens = [
-                        siren for siren in self.encountered_sirens
-                        if self.siren_filters[self.selected_overlay_filter] == siren # TODO
-                    ]
+                encountered_sirens = [
+                    siren for siren in self.encountered_sirens
+                    if siren.startswith(self.siren_filters[self.selected_overlay_filter])
+                ]
                 self.overlay_mouseup_logic(event, encountered_sirens, self.siren_filters, False)
 
     def draw_intel_center_overlay(self, surface, font):
-        if self.selected_overlay_filter is None:
-            encountered_sirens = self.encountered_sirens
-        else:
-            encountered_sirens = [
-                siren for siren in self.encountered_sirens
-                if self.siren_filters[self.selected_overlay_filter] == siren # TODO
-            ]
+        encountered_sirens = [
+            siren for siren in self.encountered_sirens
+            if siren.startswith(self.siren_filters[self.selected_overlay_filter])
+        ]
         if self.overlay_selected_entity:
             selected_entity_info = DataFiles.siren_data.get(self.overlay_selected_entity)
             drop_rates = selected_entity_info["drops"]
