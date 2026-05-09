@@ -58,7 +58,7 @@ class Color:
     LOCKED_ZONE_GLOW = (189, 89, 127)
 
     OCEAN_BLUE = (21, 53, 122)
-    OCEAN_SHADOW = (19, 33, 64)
+    OCEAN_SHADOW = (0, 16, 71)
 
 class Equipment:
     NUM_EQUIPS = 3
@@ -142,19 +142,19 @@ create_shell_sprite("normal", (255, 242, 97))
 create_shell_sprite("HE", (255, 0, 64))
 create_shell_sprite("AP", (0, 255, 255))
 
-def create_wave_sprite(sprite_group, wave_index):
-    wave = DataFiles.sprites[sprite_group][f"wave{wave_index}"]
+def create_background_wave_sprite(wave_index):
+    wave = DataFiles.sprites["background"][f"wave{wave_index}"]
     higher_wave = pygame.Surface((wave.get_width(), 2*wave.get_height()))
     wave_color = wave.get_at((0, wave.get_height()-1))
     higher_wave.fill(wave_color)
     wave.set_colorkey(wave_color)
     higher_wave.blit(wave, (0,0))
     higher_wave.set_colorkey((255,0,0))
-    DataFiles.sprites[sprite_group][f"wave{wave_index}"] = higher_wave
+    DataFiles.sprites["background"][f"wave{wave_index}"] = higher_wave
 
 DataFiles.sprites["background"]["num_waves"] = 7
 for wave_index in range(DataFiles.sprites["background"]["num_waves"]):
-    create_wave_sprite("background", wave_index)
+    create_background_wave_sprite(wave_index)
 
 sky_surf = pygame.Surface((1,2))
 sky_surf.set_at((0, 0), (89, 150, 227))
@@ -162,8 +162,8 @@ sky_surf.set_at((0, 1), (150, 197, 255))
 sky_surf_scaled = pygame.transform.smoothscale(sky_surf, (128, 256))
 DataFiles.sprites["background"]["sky"] = sky_surf_scaled
 
-def create_cloud_shadow_sprite(sprite_group, cloud_index):
-    cloud = DataFiles.sprites[sprite_group][f"cloud{cloud_index}"]
+def create_cloud_shadow_sprite(cloud_index):
+    cloud = DataFiles.sprites["background"][f"cloud{cloud_index}"]
     cloud_shadow = pygame.Surface(cloud.get_size())
     cloud_shadow.fill((100,100,100))
     cloud.set_colorkey((255,255,255))
@@ -175,11 +175,33 @@ def create_cloud_shadow_sprite(sprite_group, cloud_index):
     cloud_shadow2.fill((0,0,0))
     cloud_shadow2.blit(cloud_shadow, (0,0))
 
-    DataFiles.sprites[sprite_group][f"cloud_shadow{cloud_index}"] = cloud_shadow2
+    DataFiles.sprites["background"][f"cloud_shadow{cloud_index}"] = cloud_shadow2
 
 DataFiles.sprites["background"]["num_clouds"] = 10
 for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
-    create_cloud_shadow_sprite("background", cloud_index)
+    create_cloud_shadow_sprite(cloud_index)
+
+def create_sortie_selection_wave_sprite(wave_index, wave_color):
+    wave = DataFiles.sprites["sortie_selection"][f"wave"]
+    higher_wave = pygame.Surface((wave.get_width(), 2*wave.get_height()))
+    higher_wave.fill(wave_color)
+    wave.set_colorkey((255,255,255))
+    higher_wave.blit(wave, (0,0))
+    higher_wave.set_colorkey((255,0,0))
+    DataFiles.sprites["sortie_selection"][f"wave{wave_index}"] = higher_wave
+
+num_waves = 11
+DataFiles.sprites["sortie_selection"]["num_waves"] = num_waves
+base_hue = 0.65
+for wave_index in range(DataFiles.sprites["sortie_selection"]["num_waves"]):
+    t = wave_index / (num_waves- 1)
+    s = 4*(t-0.5)**2
+    saturation = 0.5 + s*0.5
+    value = 1.0 - s*0.5
+
+    r, g, b = colorsys.hsv_to_rgb(base_hue, saturation, value)
+    wave_color = (int(r*255), int(g*255), int(b*255))
+    create_sortie_selection_wave_sprite(wave_index, wave_color)
 
 blueprint_surf = pygame.Surface((3,3))
 blueprint_surf.fill((0, 65, 186))

@@ -107,7 +107,7 @@ class Background:
 
             wave = DataFiles.sprites["background"][f"wave{i}"]
             wave_rect = wave.get_rect()
-            wave_rect.top = wave_y
+            wave_rect.top = wave_y + 8 * math.sin(2*wave_timer)
             centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
             for j in range(num_wave_reps):
                 wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)

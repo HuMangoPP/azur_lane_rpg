@@ -9,7 +9,7 @@ from src.constants import DataFiles, Color, Box, screen_x, screen_y
 
 class SortieNode:
     SIZE = 32
-    center = pygame.Vector2(screen_x(0.5), screen_y(0.5))
+    center = pygame.Vector2(screen_x(0.1), screen_y(0.8))
 
     def __init__(self, index, hexes):
         self.index = index
@@ -17,6 +17,16 @@ class SortieNode:
         self.unlocked = self.index <= DataFiles.save_file["sortie_progress"]
         self.cleared = self.index < DataFiles.save_file["sortie_progress"]
         self.hovered = False
+
+        cluster_edges = get_cluster_edges(self.hexes, self.SIZE)
+        self.polygon = [
+            pygame.Vector2(point) + self.center
+            for point in cluster_edges
+        ]
+        self.shadow_polygon = [
+            point + pygame.Vector2(self.SIZE/4,self.SIZE/2)
+            for point in self.polygon
+        ]
     
     def hover(self, mouse_pos):
         mouse_x, mouse_y = mouse_pos
@@ -34,7 +44,10 @@ class SortieNode:
         
         return True
 
-    def draw(self, surface, font):
+    def draw_shadow(self, surface):
+        pygame.draw.polygon(surface, Color.OCEAN_SHADOW, self.shadow_polygon)
+
+    def draw(self, surface):
         if self.cleared:
             fill = Color.CLEARED_ZONE_FILL
             outline = Color.CLEARED_ZONE_OUTLINE
@@ -51,18 +64,12 @@ class SortieNode:
             glow = Color.LOCKED_ZONE_GLOW
             icon = DataFiles.sprites["user_interface"]["locked"]
 
-        polygon = get_cluster_edges(self.hexes, self.SIZE)
-
-        # shadow_polygon = [pygame.Vector2(point) + self.center + pygame.Vector2(self.SIZE/8,self.SIZE/4) for point in polygon]
-        # pygame.draw.polygon(surface, Color.OCEAN_SHADOW, shadow_polygon)
-
-        polygon = [pygame.Vector2(point) + self.center for point in polygon]
-        pygame.draw.polygon(surface, fill, polygon)
+        pygame.draw.polygon(surface, fill, self.polygon)
         if self.hovered:
-            pygame.draw.polygon(surface, outline, polygon, width=2*Box.OUTLINE_WIDTH)
-            pygame.draw.polygon(surface, glow, polygon, width=Box.OUTLINE_WIDTH)
+            pygame.draw.polygon(surface, outline, self.polygon, width=2*Box.OUTLINE_WIDTH)
+            pygame.draw.polygon(surface, glow, self.polygon, width=Box.OUTLINE_WIDTH)
         else:
-            pygame.draw.polygon(surface, outline, polygon, width=Box.OUTLINE_WIDTH)
+            pygame.draw.polygon(surface, outline, self.polygon, width=Box.OUTLINE_WIDTH)
         
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
@@ -126,14 +133,24 @@ class SortieSelectionMenu:
         button_rect.top = Box.TOP_OF_SCREEN
         self.exit_sortie_selection_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_sortie_selection_menu)
 
+        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        self.wave_ys = [
+            screen_y(0.5) + 64*(i-(num_waves+2)/2)
+            for i in range(num_waves)
+        ]
+        self.wave_timers = [
+            math.radians(360)*random.random()
+            for _ in range(num_waves)
+        ]
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.mousedown = True
-            if event.type == pygame.MOUSEMOTION:
-                if self.mousedown and self.selected_sortie_node is None:
-                    movement = pygame.Vector2(event.rel)
-                    SortieNode.center += movement
+            # if event.type == pygame.MOUSEMOTION:
+            #     if self.mousedown and self.selected_sortie_node is None:
+            #         movement = pygame.Vector2(event.rel)
+            #         SortieNode.center += movement
             if event.type == pygame.MOUSEBUTTONUP:
                 self.mousedown = False
                 self.exit_sortie_selection_menu_button.click(event.pos)
@@ -169,10 +186,23 @@ class SortieSelectionMenu:
                 for sortie_node in self.sortie_nodes:
                     sortie_node.hover(event.pos)
 
-        self.menu_manager.background.update(dt)
+        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        self.wave_timers = [
+            (wave_timer + (i+1)/num_waves*dt)%math.radians(360)
+            for i, wave_timer in enumerate(self.wave_timers)
+        ]
 
     def draw(self, surface, font):
-        self.menu_manager.background.draw(surface, font)
+        num_wave_reps = 5
+        wave_rep_offset = (num_wave_reps-1)/2
+        for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
+            wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
+            wave_rect = wave.get_rect()
+            wave_rect.top = wave_y + 8 * math.sin(2*wave_timer)
+            centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
+            for j in range(num_wave_reps):
+                wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
+                surface.blit(wave, wave_rect)
 
         self.exit_sortie_selection_menu_button.draw(surface, font)
 
@@ -182,8 +212,10 @@ class SortieSelectionMenu:
         compass_rect.left = Box.LEFT_OF_SCREEN
         surface.blit(compass, compass_rect)
 
+        for sortie_node in self.sortie_nodes:
+            sortie_node.draw_shadow(surface)
         for sortie_node in self.sortie_nodes[::-1]:
-            sortie_node.draw(surface, font)
+            sortie_node.draw(surface)
         
         if self.selected_sortie_node is not None:
             pygame.draw.rect(surface, Color.DARK_BLUE, self.selected_sortie_info_panel)
