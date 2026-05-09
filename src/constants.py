@@ -40,7 +40,7 @@ class Color:
     DOSSIER = (231, 201, 169)
     DOSSIER_BACK = (220, 177, 130)
 
-    BLUEPRINT_PAGE = (0, 65, 186)
+    BLUEPRINT_PAGE = (74, 109, 229)
     BLUEPRINT_PAGE_BACK = (0, 32, 130)
 
     SKY_BLUE = (100, 195, 255)
@@ -113,6 +113,18 @@ class DataFiles:
     
     sprites = load_sprites()
 
+    @classmethod
+    def recolor_sprite(cls, sprite_group, sprite_key, color):
+        sprite = cls.sprites[sprite_group][sprite_key]
+        sprite.set_colorkey((255,255,255))
+        colored_sprite = pygame.Surface(sprite.get_size())
+        colored_sprite.fill(color)
+        colored_sprite.blit(sprite, (0,0))
+        colored_sprite.set_colorkey((255,0,0))
+        sprite.set_colorkey((255,0,0))
+        return colored_sprite
+
+
 def create_shell_sprite(shell_key, color):
     alphas = [10, 20, 50, 100, 200, 250]
     lengths = [64, 62, 58, 52, 44, 34]
@@ -168,3 +180,41 @@ def create_cloud_shadow_sprite(sprite_group, cloud_index):
 DataFiles.sprites["background"]["num_clouds"] = 10
 for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
     create_cloud_shadow_sprite("background", cloud_index)
+
+blueprint_surf = pygame.Surface((3,3))
+blueprint_surf.fill((0, 65, 186))
+blueprint_surf.set_at((1,1), (128, 159, 255))
+
+blueprint_page_size = (
+    4*(Box.WIDTH + Box.PADDING) + Box.PADDING,
+    5*(Box.HEIGHT + Box.PADDING) + Box.PADDING,
+)
+blueprint_surf_scaled = pygame.transform.smoothscale(blueprint_surf, blueprint_page_size)
+DataFiles.sprites["user_interface"]["port_menu_blueprint"] = blueprint_surf_scaled
+
+blueprint_page_size = (
+    3*(Box.WIDTH + Box.PADDING)+Box.PADDING,
+    4*(Box.HEIGHT+Box.PADDING)+Box.PADDING
+)
+blueprint_surf_scaled = pygame.transform.smoothscale(blueprint_surf, blueprint_page_size)
+blueprint_rect = blueprint_surf_scaled.get_rect()
+warship_polygon = [
+    (blueprint_rect.centerx + 0.7*Box.WIDTH, blueprint_rect.centery + Box.PADDING),
+    (blueprint_rect.centerx + 0.7*Box.WIDTH, blueprint_rect.centery - 0.8*Box.HEIGHT),
+    (blueprint_rect.centerx + 0.5*Box.WIDTH, blueprint_rect.centery - 1.4*Box.HEIGHT),
+    (blueprint_rect.centerx + 0.2*Box.WIDTH, blueprint_rect.centery - 1.8*Box.HEIGHT),
+    (blueprint_rect.centerx, blueprint_rect.centery - 2.0*Box.HEIGHT),
+    (blueprint_rect.centerx - 0.2*Box.WIDTH, blueprint_rect.centery - 1.8*Box.HEIGHT),
+    (blueprint_rect.centerx - 0.5*Box.WIDTH, blueprint_rect.centery - 1.4*Box.HEIGHT),
+    (blueprint_rect.centerx - 0.7*Box.WIDTH, blueprint_rect.centery - 0.8*Box.HEIGHT),
+    (blueprint_rect.centerx - 0.7*Box.WIDTH, blueprint_rect.centery + Box.PADDING),
+]
+pygame.draw.lines(blueprint_surf_scaled, Color.WHITE, False, warship_polygon, width=2)
+warship_polygon = [
+    (blueprint_rect.centerx + 0.7*Box.WIDTH, blueprint_rect.centery + Box.PADDING + Box.HEIGHT),
+    (blueprint_rect.centerx + 0.7*Box.WIDTH, blueprint_rect.centery + 2.0*Box.HEIGHT),
+    (blueprint_rect.centerx - 0.7*Box.WIDTH, blueprint_rect.centery + 2.0*Box.HEIGHT),
+    (blueprint_rect.centerx - 0.7*Box.WIDTH, blueprint_rect.centery + Box.PADDING + Box.HEIGHT),
+]
+pygame.draw.lines(blueprint_surf_scaled, Color.WHITE, False, warship_polygon, width=2)
+DataFiles.sprites["user_interface"]["equipment_menu_blueprint"] = blueprint_surf_scaled

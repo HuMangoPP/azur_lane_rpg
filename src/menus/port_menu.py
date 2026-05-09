@@ -152,12 +152,9 @@ class PortMenu:
             dossier_page_center + page_horizontal - page_vertical,
         ]
 
-        self.blueprint_page = get_rect(
-            width=4*(Box.WIDTH + Box.PADDING) + Box.PADDING,
-            height=5*(Box.HEIGHT + Box.PADDING) + Box.PADDING,
-            left=screen_x(0.5) + Box.PADDING,
-            centery=screen_y(0.5)
-        )
+        self.blueprint_page = DataFiles.sprites["user_interface"]["port_menu_blueprint"].get_rect()
+        self.blueprint_page.left = screen_x(0.5) + Box.PADDING
+        self.blueprint_page.centery = screen_y(0.5)
         blueprint_page_center = pygame.Vector2(self.blueprint_page.center)
         rotated_angle = 5
         page_horizontal = get_vec(self.blueprint_page.width/2, math.radians(rotated_angle))
@@ -402,7 +399,7 @@ class PortMenu:
         
         if self.overlay_selected_entity:
             pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
-            pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
+            surface.blit(DataFiles.sprites["user_interface"]["port_menu_blueprint"], self.blueprint_page)
             font.render(surface, self.overlay_selected_entity, self.blueprint_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             if self.overlay_selected_entity in DataFiles.sprites["entity"]:
                 surface.blit(DataFiles.sprites["entity"][self.overlay_selected_entity], self.blueprint_icon)

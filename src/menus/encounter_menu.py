@@ -8,7 +8,6 @@ from engine.button import Button
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
 from src.shipgirls import Shipgirl
 from src.menus.quests_data import first_sortie_quest, research_shipgirl_quest, construct_shipgirl_quest, craft_weapon_quest
-from src.menus.background import Background
 
 class Drop:
     def __init__(self, item, pos):

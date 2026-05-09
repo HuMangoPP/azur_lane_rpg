@@ -6,7 +6,6 @@ from engine.util import get_rect, get_vec
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x, screen_y
-from src.menus.background import Background
 
 from live2d.live2d import Live2D
 
@@ -14,45 +13,102 @@ class EquipmentMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
-        self.equipment_section = get_rect(
-            width=3*Box.WIDTH+2*Box.PADDING+2*Box.PADDING + 2*Box.PADDING,
-            height=Box.HEIGHT+2*Box.PADDING + 2*Box.PADDING + 2*Box.HEIGHT+Box.PADDING+2*Box.PADDING + 2*Box.PADDING,
-            centerx=screen_x(0.75),
-            centery=screen_y(0.5)
-        )
-
         self.selected_shipgirl = None
-        self.equipment_panel = get_rect(
-            width=self.equipment_section.width - 2*Box.PADDING,
-            height=Box.HEIGHT + 2*Box.PADDING,
-            centerx=self.equipment_section.centerx,
-            top=self.equipment_section.top+Box.PADDING
-        )
+
+        self.blueprint_page = DataFiles.sprites["user_interface"]["equipment_menu_blueprint"].get_rect()
+        self.blueprint_page.right = screen_x(0.75) - Box.PADDING
+        self.blueprint_page.centery = screen_y(0.5)
+        blueprint_page_center = pygame.Vector2(self.blueprint_page.center)
+        rotated_angle = 5
+        page_horizontal = get_vec(self.blueprint_page.width/2, math.radians(rotated_angle))
+        page_vertical = get_vec(self.blueprint_page.height/2, math.radians(90+rotated_angle))
+        self.misaligned_blueprint_page = [
+            blueprint_page_center + page_horizontal + page_vertical,
+            blueprint_page_center + page_horizontal - page_vertical,
+            blueprint_page_center - page_horizontal - page_vertical,
+            blueprint_page_center - page_horizontal + page_vertical,
+        ]
         self.equipped_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.equipment_panel.left+Box.PADDING + i*(Box.WIDTH+Box.PADDING),
-                centery=self.equipment_panel.centery
-            ) for i in range(Equipment.NUM_EQUIPS)
+                centerx=self.blueprint_page.centerx,
+                bottom=screen_y(0.5) - Box.PADDING
+            ),
+            get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                right=self.blueprint_page.centerx - Box.PADDING,
+                top=screen_y(0.5) + Box.PADDING
+            ),
+            get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                left=self.blueprint_page.centerx + Box.PADDING,
+                top=screen_y(0.5) + Box.PADDING
+            )
         ]
         self.selected_equipment = Equipment.WEAPON
 
-        self.equippable_panel = get_rect(
-            width=self.equipment_section.width - 2*Box.PADDING,
-            height=2*Box.HEIGHT+Box.PADDING + 2*Box.PADDING,
-            centerx=self.equipment_section.centerx,
-            bottom=self.equipment_section.bottom-Box.PADDING
+        num_equipment_per_row = 3
+        num_equipment_rows = 2
+        self.equipment_depot = get_rect(
+            width=num_equipment_per_row*(Box.WIDTH+Box.PADDING)+Box.PADDING,
+            height=num_equipment_rows*(Box.HEIGHT+Box.PADDING)+Box.PADDING,
+            left=self.blueprint_page.right + Box.PADDING,
+            centery=screen_y(0.5)
         )
-
         self.equippable_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.equippable_panel.left+Box.PADDING + (i%3)*(Box.WIDTH+Box.PADDING),
-                top=self.equippable_panel.top+Box.PADDING + (i//3)*(Box.HEIGHT+Box.PADDING)
+                left=self.equipment_depot.left+Box.PADDING + (i%num_equipment_per_row)*(Box.WIDTH+Box.PADDING),
+                top=self.equipment_depot.top+Box.PADDING + (i//num_equipment_per_row)*(Box.HEIGHT+Box.PADDING) 
             )
-            for i in range(6)
+            for i in range(num_equipment_per_row * num_equipment_rows)
         ]
         self.hovered_equipment = None
+
+        self.dossier_page = get_rect(
+            width=2.5*Box.WIDTH + 2*Box.PADDING,
+            height=2*Box.PADDING + 9+16+2*Box.PADDING + 2*Box.HEIGHT+3*Box.PADDING,
+            centerx=screen_x(0.25),
+            centery=screen_y(0.5)
+        )
+        dossier_page_center = pygame.Vector2(self.dossier_page.center)
+        rotated_angle = 5
+        page_horizontal = get_vec(self.dossier_page.width/2, math.radians(rotated_angle))
+        page_vertical = get_vec(self.dossier_page.height/2, math.radians(90 + rotated_angle))
+        self.misaligned_dossier_page = [
+            dossier_page_center + page_horizontal + page_vertical,
+            dossier_page_center + page_horizontal - page_vertical,
+            dossier_page_center - page_horizontal - page_vertical,
+            dossier_page_center - page_horizontal + page_vertical,
+        ]
+        self.dossier_bg = get_rect(
+            width=self.dossier_page.width + 2*Box.PADDING,
+            height=self.dossier_page.height + 2*Box.PADDING,
+            center=self.dossier_page.center
+        )
+        dossier_bg_topleft = pygame.Vector2(self.dossier_bg.topleft)
+        self.dossier_tab = [
+            dossier_bg_topleft,
+            dossier_bg_topleft + pygame.Vector2(Box.WIDTH+Box.PADDING, 0),
+            dossier_bg_topleft + pygame.Vector2(Box.WIDTH-Box.PADDING, -Box.HEIGHT/2),
+            dossier_bg_topleft + pygame.Vector2(0, -Box.HEIGHT/2)
+        ]
+
+        stats = ["max_hp", "evasion", "firepower", "reload"]
+        stat_rect_size = 32
+        self.stat_rects = {
+            stat: get_rect(
+                width=stat_rect_size, height=stat_rect_size,
+                left=self.dossier_page.left+3*Box.PADDING,
+                bottom=self.dossier_page.bottom-Box.PADDING - (len(stats)-1-i)*(stat_rect_size+Box.PADDING)
+            )
+            for i, stat in enumerate(stats)
+        }
+        self.exp_bar_bg = get_rect(
+            width=128, height=16,
+            left=self.dossier_page.left+Box.PADDING,
+            top=self.dossier_page.top+Box.PADDING+9+Box.PADDING
+        )
 
         def exit_equipment_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
@@ -64,29 +120,6 @@ class EquipmentMenu:
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.top = Box.TOP_OF_SCREEN
         self.exit_equipment_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_equipment_menu)
-
-        self.stats_panel = get_rect(
-            width=2.5*Box.WIDTH + 2*Box.PADDING,
-            height=2*Box.PADDING + 9+16+2*Box.PADDING + 2*Box.HEIGHT+3*Box.PADDING,
-            centerx=screen_x(0.25),
-            centery=screen_y(0.5)
-        )
-
-        stats = ["max_hp", "evasion", "firepower", "reload"]
-        stat_rect_size = 32
-        self.stat_rects = {
-            stat: get_rect(
-                width=stat_rect_size, height=stat_rect_size,
-                left=self.stats_panel.left+3*Box.PADDING,
-                bottom=self.stats_panel.bottom-Box.PADDING - (len(stats)-1-i)*(stat_rect_size+Box.PADDING)
-            )
-            for i, stat in enumerate(stats)
-        }
-        self.exp_bar_bg = get_rect(
-            width=128, height=16,
-            left=self.stats_panel.left+Box.PADDING,
-            top=self.stats_panel.top+Box.PADDING+9+Box.PADDING
-        )
 
     def get_stat(self, shipgirl, stat):
         if stat == "max_hp":
@@ -172,20 +205,20 @@ class EquipmentMenu:
                     self.hovered_equipment = None
         
         if self.selected_shipgirl is not None:
-            self.selected_shipgirl.rect.centerx = screen_x(0.5)
+            self.selected_shipgirl.rect.right = screen_x(0.5)
             self.selected_shipgirl.rect.centery = screen_y(0.5)
             if self.selected_shipgirl.sprite is not None:
                 self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
             self.selected_shipgirl.animate(dt)
 
-        self.menu_manager.background.update(dt)
-
     def draw(self, surface, font):
-        self.menu_manager.background.draw(surface, font, shipgirl=self.selected_shipgirl)
-
         if self.selected_shipgirl is not None:
-            
-            pygame.draw.rect(surface, Color.BLUE, self.stats_panel)
+            self.selected_shipgirl.draw(surface, font)
+
+            pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
+            pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
+            pygame.draw.polygon(surface, Color.DOSSIER_PAGE, self.misaligned_dossier_page)
+            pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
 
             level_progress = Stats.level_progress(self.selected_shipgirl.battle_component.exp)
             exp_bar = get_rect(
@@ -201,23 +234,22 @@ class EquipmentMenu:
             font.render(
                 surface,
                 f"level {level}",
-                (self.exp_bar_bg.left, self.stats_panel.top+Box.PADDING),
-                Color.WHITE,
+                (self.exp_bar_bg.left, self.dossier_page.top+Box.PADDING),
+                Color.BLACK,
                 1,
-                style="topleft",
-                outline_color=Color.BLACK
+                style="topleft"
             )
 
             for stat, rect in self.stat_rects.items():
-                surface.blit(DataFiles.sprites["user_interface"][stat], rect)
+                stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.BLACK)
+                surface.blit(stat_icon, rect)
                 font.render(
                     surface,
                     str(self.get_stat(self.selected_shipgirl, stat)),
                     (rect.right + Box.PADDING, rect.centery),
-                    Color.WHITE,
-                    1,
-                    style="centerleft",
-                    outline_color=Color.BLACK
+                    Color.BLACK,
+                    2,
+                    style="centerleft"
                 )
                 stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
                 if stat_delta > 0:
@@ -235,8 +267,8 @@ class EquipmentMenu:
                         center+get_vec(length=Box.PADDING, angle=math.radians(330))
                     ])
             
-            pygame.draw.rect(surface, Color.BLUE_GREY, self.equipment_section)
-            pygame.draw.rect(surface, Color.BLUE, self.equipment_panel)
+            pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
+            surface.blit(DataFiles.sprites["user_interface"]["equipment_menu_blueprint"], self.blueprint_page)
             for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
                 if self.selected_equipment == i:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=2*Box.OUTLINE_WIDTH)
@@ -262,16 +294,9 @@ class EquipmentMenu:
                     and aux_info["type"] == "aux"
                 ]
             
-            pygame.draw.rect(surface, Color.BLUE, self.equippable_panel)
-            point_at = self.equipped_rects[self.selected_equipment]
-            pointer = [
-                (point_at.centerx, point_at.bottom+Box.PADDING),
-                (point_at.centerx-Box.PADDING, self.equippable_panel.top),
-                (point_at.centerx+Box.PADDING, self.equippable_panel.top)
-            ]
-            pygame.draw.polygon(surface, Color.BLUE, pointer)
+            pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.equipment_depot)
             for equipment, rect in zip(equippable, self.equippable_rects):
-                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                pygame.draw.rect(surface, Color.CARGO_BOX, rect)
                 if equipment in DataFiles.sprites["entity"]:
                     surface.blit(DataFiles.sprites["entity"][equipment], rect)
                 else:

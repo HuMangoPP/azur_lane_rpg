@@ -6,7 +6,6 @@ from engine.util import get_rect, pixel_to_hex, hex_to_pixel, get_cluster_edges
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
-from src.menus.background import Background
 
 class SortieNode:
     SIZE = 32

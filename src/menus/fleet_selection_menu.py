@@ -7,7 +7,6 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.quests_data import first_sortie_quest
-from src.menus.background import Background
 
 from live2d.live2d import Live2D
 

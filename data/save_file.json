@@ -2,7 +2,7 @@
 	"unlocked_factions": ["USS"],
 	"shipgirls": {
 		"laffey": {
-			"equipment": ["twin_120", null, null],
+			"equipment": [null, null, null],
 			"exp": 19
 		},
 		"new_jersey": {
@@ -15,7 +15,11 @@
 		}
 	},
 	"equipment": {
-		"twin_120": 0
+		"twin_120": 1,
+		"steering_gear": 1,
+		"repair_toolkit": 1,
+		"autoloader": 1,
+		"ap_shell": 1
 	},
 	"inventory": {
 		"DD_blueprint": 0,
