@@ -9,7 +9,7 @@ from src.constants import DataFiles, Color, Box, screen_x, screen_y
 
 class SortieNode:
     SIZE = 32
-    center = pygame.Vector2(screen_x(0.1), screen_y(0.8))
+    center = pygame.Vector2(screen_x(0.15), screen_y(0.75))
 
     def __init__(self, index, hexes):
         self.index = index
@@ -77,6 +77,44 @@ class SortieNode:
             icon_rect.center = pygame.Vector2(x,y) + self.center
             surface.blit(icon, icon_rect)
 
+class Fog:
+    def __init__(self, centroids, disperse=False):
+        self.centroids = centroids
+        self.disperse = disperse
+        self.disperse_timer = 1
+
+        self.cloud_timers = [
+            math.radians(360)*random.random()
+            for _ in self.centroids
+        ]
+    
+    def update(self, dt):
+        if self.disperse_timer <= 0:
+            return
+        
+        self.cloud_timers = [
+            (cloud_timer + dt)%math.radians(360)
+            for cloud_timer in self.cloud_timers
+        ]
+        if self.disperse:
+            self.disperse_timer = max(0, self.disperse_timer - 0.2*dt)
+
+    def draw(self, surface):
+        if self.disperse_timer <= 0:
+            return
+        cloud = DataFiles.sprites["background"]["cloud0"].copy()
+        cloud.set_alpha(int(255*self.disperse_timer))
+        cloud_rect = cloud.get_rect()
+        cloud_shadow = DataFiles.sprites["background"]["cloud_shadow0"]
+        cloud_shadow_rect = cloud_shadow.get_rect()
+        for centroid, cloud_timer in zip(self.centroids, self.cloud_timers):
+            center = centroid + pygame.Vector2(32*math.sin(cloud_timer), 8*math.sin(2*cloud_timer))
+            if not self.disperse:
+                cloud_shadow_rect.center = center + pygame.Vector2(8, 8)
+                surface.blit(cloud_shadow, cloud_shadow_rect, special_flags=pygame.BLEND_RGB_SUB)
+            cloud_rect.center = center
+            surface.blit(cloud, cloud_rect)
+
 class SortieSelectionMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -143,10 +181,20 @@ class SortieSelectionMenu:
             for _ in range(num_waves)
         ]
 
+        self.fogs = [
+            Fog([], disperse=DataFiles.save_file["chapter_progress"] >= 0),
+            Fog([
+                pygame.Vector2(484, 316),
+                pygame.Vector2(430, 369),
+                pygame.Vector2(498, 229),
+                pygame.Vector2(571, 284),
+            ], disperse=DataFiles.save_file["chapter_progress"] >= 1)
+        ]
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.mousedown = True
+                print(event.pos)
             # if event.type == pygame.MOUSEMOTION:
             #     if self.mousedown and self.selected_sortie_node is None:
             #         movement = pygame.Vector2(event.rel)
@@ -192,6 +240,9 @@ class SortieSelectionMenu:
             for i, wave_timer in enumerate(self.wave_timers)
         ]
 
+        for fog in self.fogs:
+            fog.update(dt)
+
     def draw(self, surface, font):
         num_wave_reps = 5
         wave_rep_offset = (num_wave_reps-1)/2
@@ -216,6 +267,9 @@ class SortieSelectionMenu:
             sortie_node.draw_shadow(surface)
         for sortie_node in self.sortie_nodes[::-1]:
             sortie_node.draw(surface)
+        
+        for fog in self.fogs:
+            fog.draw(surface)
         
         if self.selected_sortie_node is not None:
             pygame.draw.rect(surface, Color.DARK_BLUE, self.selected_sortie_info_panel)

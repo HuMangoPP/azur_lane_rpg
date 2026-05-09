@@ -78,6 +78,11 @@ class EncounterMenu:
                 DataFiles.save_file["sortie_progress"] = new_sortie_progress
                 if new_sortie_progress == 3:
                     self.menu_manager.quest_manager.quests[craft_weapon_quest.quest_id] = craft_weapon_quest
+
+            new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
+            if DataFiles.save_file["chapter_progress"] < new_chapter_progress:
+                DataFiles.save_file["chapter_progress"] = new_chapter_progress
+                self.menu_manager.sortie_selection_menu.fogs[new_chapter_progress].disperse = True
             
             self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
             self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True

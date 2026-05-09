@@ -37,6 +37,7 @@
 	"research_target": null,
 	"research_progress": 0,
 	"sortie_progress": 3,
+	"chapter_progress": 0,
 	"quests": {
 		"choose_faction": "completed",
 		"construct_shipgirls": "completed",

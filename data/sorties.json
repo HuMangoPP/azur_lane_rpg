@@ -13,7 +13,8 @@
 		"rewards": {
 			"CA_blueprint": 1
 		},
-		"coordinates": [[0, 0]]
+		"coordinates": [[0, 0]],
+		"chapter": 0
 	},
 	{
 		"encounters": [
@@ -29,7 +30,8 @@
 		"rewards": {
 			"wisdom_cube": 1
 		},
-		"coordinates": [[1, -1]]
+		"coordinates": [[1, 0]],
+		"chapter": 0
 	},
 	{
 		"encounters": [
@@ -53,7 +55,8 @@
 			"gunpowder": 1,
 			"electronics": 1
 		},
-		"coordinates": [[0, 1]]
+		"coordinates": [[2, -1]],
+		"chapter": 0
 	},
 	{
 		"encounters": [
@@ -78,12 +81,14 @@
 			"electronics": 1
 		},
 		"coordinates": [
-			[1, 0],
 			[2, 0],
-			[1, 1],
-			[2, -1]
-		]
+			[3, 0],
+			[3, -1],
+			[4, -1]
+		],
+		"chapter": 0
 	},
+
 	{
 		"encounters": [
 			{
@@ -110,7 +115,8 @@
 			"gunpowder": 1,
 			"electronics": 1
 		},
-		"coordinates": [[2, 1]]
+		"coordinates": [[5, -2]],
+		"chapter": 1
 	},
 	{
 		"encounters": [
@@ -139,7 +145,8 @@
 			"CL_blueprint": 1,
 			"wisdom_cube": 1
 		},
-		"coordinates": [[3, 0]]
+		"coordinates": [[6, -2]],
+		"chapter": 1
 	},
 	{
 		"encounters": [
@@ -167,7 +174,8 @@
 			"gunpowder": 1,
 			"electronics": 1
 		},
-		"coordinates": [[3, 1]]
+		"coordinates": [[7, -3]],
+		"chapter": 1
 	},
 	{
 		"encounters": [
@@ -190,10 +198,11 @@
 		],
 		"rewards": {},
 		"coordinates": [
-			[4, 0],
-			[4, 1],
-			[5, 0],
-			[5, -1]
-		]
+			[8, -4],
+			[9, -4],
+			[8, -5],
+			[9, -5]
+		],
+		"chapter": 1
 	}
 ]
