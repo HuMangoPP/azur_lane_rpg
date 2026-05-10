@@ -51,9 +51,7 @@
 		"rewards": {
 			"DD_blueprint": 1,
 			"metals": 1,
-			"plastics": 1,
-			"gunpowder": 1,
-			"electronics": 1
+			"gunpowder": 1
 		},
 		"coordinates": [[2, -1]],
 		"chapter": 0
@@ -75,9 +73,7 @@
 		],
 		"rewards": {
 			"BB_blueprint": 1,
-			"metals": 1,
 			"plastics": 1,
-			"gunpowder": 1,
 			"electronics": 1
 		},
 		"coordinates": [
@@ -111,8 +107,6 @@
 		"rewards": {
 			"CA_blueprint": 1,
 			"metals": 1,
-			"plastics": 1,
-			"gunpowder": 1,
 			"electronics": 1
 		},
 		"coordinates": [[5, -2]],
@@ -169,10 +163,8 @@
 		],
 		"rewards": {
 			"CL_blueprint": 1,
-			"metals": 1,
 			"plastics": 1,
-			"gunpowder": 1,
-			"electronics": 1
+			"gunpowder": 1
 		},
 		"coordinates": [[7, -3]],
 		"chapter": 1

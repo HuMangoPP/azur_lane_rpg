@@ -53,9 +53,8 @@ class EncounterMenu:
             self.begin_encounter()
 
         button_sprite = DataFiles.recolor_sprite("user_interface", "next", Color.BLACK)
-        button_sprite = DataFiles.sprites["user_interface"]["next"]
         button_rect = button_sprite.get_rect()
-        button_rect.width = 2*button_rect.width
+        button_rect.width = button_rect.width
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.centery = screen_y(0.5)
         self.next_encounter_button = Button(
@@ -65,7 +64,7 @@ class EncounterMenu:
             background_styling={
                 "background_color": Color.WHITE,
                 "background_img": button_sprite,
-                "background_img_align": (1/4, 1/2)
+                "background_img_align": (1/2, 1/2)
             }
         )
 

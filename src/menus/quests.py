@@ -72,12 +72,12 @@ class Quest:
     )
 
     NEXT_BUTTON = get_rect(
-        width=64, height=32,
+        width=96, height=32,
         centerx=DIALOGUE_OVERLAY.centerx,
         centery=DIALOGUE_OVERLAY.bottom
     )
     QUEST_BUTTON = get_rect(
-        width=64, height=32,
+        width=96, height=32,
         centerx=QUEST_LINE_OVERLAY.centerx,
         centery=QUEST_LINE_OVERLAY.bottom
     )
@@ -189,39 +189,39 @@ class Quest:
             show_reward = False
         
         pygame.draw.rect(surface, Color.GREY, overlay)
-        pygame.draw.rect(surface, Color.WHITE, box)
+        pygame.draw.rect(surface, Color.BLACK, box)
         middleleft = pygame.Vector2(box.left, box.centery)
         polygon = [
             middleleft + pygame.Vector2(0, 2*Box.PADDING),
             middleleft + pygame.Vector2(0, -2*Box.PADDING),
             middleleft + pygame.Vector2(-5*Box.PADDING, 0)
         ]
-        pygame.draw.polygon(surface, Color.WHITE, polygon)
+        pygame.draw.polygon(surface, Color.BLACK, polygon)
         tb_sprite = DataFiles.sprites["user_interface"]["TB"]
         rect = tb_sprite.get_rect()
         rect.right = polygon[-1].x
         rect.centery = polygon[-1].y
         surface.blit(tb_sprite, rect)
 
-        if button_text == "next":
-            pygame.draw.rect(surface, Color.WHITE, button)
-            next_sprite = DataFiles.recolor_sprite("user_interface", "next", Color.BLACK)
-            next_sprite_rect = next_sprite.get_rect()
-            next_sprite_rect.center = button.center
-            surface.blit(next_sprite, next_sprite_rect)
-        else:
-            pygame.draw.rect(surface, Color.WHITE, button)
-            font.render(surface, button_text, button.center, Color.BLACK, 2, style="center")
-
         text_width = box.width - 2*Box.PADDING
         font.render(
             surface,
             text,
             pygame.Vector2(box.topleft) + pygame.Vector2(Box.PADDING, Box.PADDING),
-            Color.BLACK,
+            Color.WHITE,
             1, 
             box_width=text_width
         )
+
+        if button_text == "next":
+            pygame.draw.rect(surface, Color.BLACK, button)
+            next_sprite = DataFiles.recolor_sprite("user_interface", "next", Color.WHITE)
+            next_sprite_rect = next_sprite.get_rect()
+            next_sprite_rect.center = button.center
+            surface.blit(next_sprite, next_sprite_rect)
+        else:
+            pygame.draw.rect(surface, Color.BLACK, button)
+            font.render(surface, button_text, button.center, Color.WHITE, 1, style="center")
 
         if show_reward:
             for rect, (reward, amt) in zip(self.reward_rects, self.rewards.items()):

@@ -127,19 +127,17 @@ class SortieSelectionMenu:
             for sortie_index, sortie_info in enumerate(DataFiles.sortie_data)
         ]
 
-        num_rects = 6
+        num_rect_rows = 1
         num_rects_in_row = 3
         panel_width = Box.PADDING + num_rects_in_row*(Box.WIDTH+Box.PADDING)
-        reward_rect_start = 6*Box.PADDING
-        panel_height = reward_rect_start + num_rects//num_rects_in_row*(Box.HEIGHT+Box.PADDING) + Box.HEIGHT+Box.PADDING
+        font_height = 9
+        panel_height = (
+            2*Box.PADDING + 2*font_height
+            + 2*Box.PADDING + font_height
+            + num_rect_rows*(Box.HEIGHT+Box.PADDING)
+            + Box.HEIGHT+Box.PADDING
+        )
         self.selected_sortie_info_panel = get_rect(width=panel_width, height=panel_height, left=0, top=0)
-        self.reward_rects = [
-            get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT, 
-                left=Box.PADDING + (Box.WIDTH+Box.PADDING) * (i%num_rects_in_row),
-                top=reward_rect_start + (Box.HEIGHT+Box.PADDING) * (i//num_rects_in_row)
-            ) for i in range(num_rects)
-        ]
 
         def start_sortie():
             self.menu_manager.current_menu = self.menu_manager.fleet_selection_menu
@@ -243,6 +241,13 @@ class SortieSelectionMenu:
                         self.start_sortie_button.active = True
                         self.start_sortie_button.rect.centerx = self.selected_sortie_info_panel.centerx
                         self.start_sortie_button.rect.bottom = self.selected_sortie_info_panel.bottom - Box.PADDING
+
+                        if sortie_node.cleared:
+                            self.start_sortie_button.background_color = Color.CLEARED_ZONE_FILL
+                        elif sortie_node.unlocked:
+                            self.start_sortie_button.background_color = Color.UNCLEARED_ZONE_FILL
+                        else:
+                            self.start_sortie_button.background_color = Color.LOCKED_ZONE_FILL
                 else:
                     if not self.selected_sortie_info_panel.collidepoint(event.pos):
                         self.selected_sortie_node = None
@@ -290,32 +295,46 @@ class SortieSelectionMenu:
             fog.draw(surface)
         
         if self.selected_sortie_node is not None:
-            pygame.draw.rect(surface, Color.GREY, self.selected_sortie_info_panel)
+            pygame.draw.rect(surface, Color.BLACK, self.selected_sortie_info_panel)
+            title_card_rect = get_rect(
+                width=self.selected_sortie_info_panel.width,
+                height=2*font.font_height + 2*Box.PADDING,
+                left=self.selected_sortie_info_panel.left,
+                top=self.selected_sortie_info_panel.top
+            )
+            if self.selected_sortie_node.cleared:
+                title_card_color = Color.CLEARED_ZONE_FILL
+            elif self.selected_sortie_node.unlocked:
+                title_card_color = Color.UNCLEARED_ZONE_FILL
+            else:
+                title_card_color = Color.LOCKED_ZONE_FILL
+            pygame.draw.rect(surface, title_card_color, title_card_rect)
             self.start_sortie_button.draw(surface, font)
             font.render(
                 surface,
                 f"zone {self.selected_sortie_node.index + 1}",
-                (self.selected_sortie_info_panel.centerx, self.selected_sortie_info_panel.top + 2*Box.PADDING),
+                title_card_rect.center,
                 Color.WHITE,
                 2,
                 style="center",
-                outline_color=Color.BLACK
             )
+
             font.render(
                 surface,
                 "rewards",
-                (self.selected_sortie_info_panel.left+Box.PADDING, self.selected_sortie_info_panel.top + 4*Box.PADDING),
+                (self.selected_sortie_info_panel.left + Box.PADDING, title_card_rect.bottom + Box.PADDING),
                 Color.WHITE,
                 1,
                 style="topleft",
-                outline_color=Color.BLACK
             )
 
             rewards = DataFiles.sortie_data[self.selected_sortie_node.index]["rewards"]
-            for reward, reward_rect in zip(rewards, self.reward_rects):
-                rect = reward_rect.copy()
-                rect.left = rect.left + self.selected_sortie_info_panel.left
-                rect.top = rect.top + self.selected_sortie_info_panel.top
+            for i, reward in enumerate(rewards):
+                rect = get_rect(
+                    width=Box.WIDTH, height=Box.HEIGHT,
+                    left=self.selected_sortie_info_panel.left + Box.PADDING + (i%3)*(Box.WIDTH+Box.PADDING),
+                    top=title_card_rect.bottom + 2*Box.PADDING + font.font_height + (i//3)*(Box.HEIGHT+Box.PADDING)
+                )
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 if reward in DataFiles.sprites["entity"]:
                     surface.blit(DataFiles.sprites["entity"][reward], rect)

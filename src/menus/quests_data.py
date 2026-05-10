@@ -414,7 +414,7 @@ def inventory_tutorial_draw(menu_manager, surface, font):
 
         draw_tb(surface, font, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DEPOT:
-        rect = menu_manager.port_menu.overlay_bg
+        rect = menu_manager.port_menu.depot_overlay
         draw_tb(
             surface, font,
             "You can see all of your items here!",
@@ -481,7 +481,7 @@ def intel_center_tutorial_draw(menu_manager, surface, font):
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
             draw_tb(surface, font, None, rect.bottomright, False, False)
         else:
-            rect = menu_manager.port_menu.overlay_right_panel
+            rect = menu_manager.port_menu.blueprint_page
             draw_tb(
                 surface, font,
                 "The intel center has information on siren stats as well as the potential drops from defeating the siren.",

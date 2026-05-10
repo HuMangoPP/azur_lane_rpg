@@ -9,7 +9,7 @@
 	},
 	"twin_150": {
 		"type": "weapon",
-		"craft_reqs": { "CL_blueprint": 1, "gunpowder": 1, "metals": 1 },
+		"craft_reqs": { "CL_blueprint": 1, "gunpowder": 1, "plastics": 1 },
 		"equippable_by": "CL",
 		"firepower": 1,
 		"reload": 100,
@@ -17,7 +17,7 @@
 	},
 	"twin_203": {
 		"type": "weapon",
-		"craft_reqs": { "CA_blueprint": 1, "gunpowder": 1, "metals": 1 },
+		"craft_reqs": { "CA_blueprint": 1, "electronics": 1, "metals": 1 },
 		"equippable_by": "CA",
 		"firepower": 2,
 		"reload": 50,
@@ -25,7 +25,7 @@
 	},
 	"tri_406": {
 		"type": "weapon",
-		"craft_reqs": { "BB_blueprint": 1, "electronics": 1, "metals": 1 },
+		"craft_reqs": { "BB_blueprint": 1, "electronics": 1, "plastics": 1 },
 		"equippable_by": "BB",
 		"firepower": 5,
 		"reload": 25,
