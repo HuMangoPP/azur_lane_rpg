@@ -215,7 +215,7 @@ class Quest:
 
         if button_text == "next":
             pygame.draw.rect(surface, Color.BLACK, button)
-            next_sprite = DataFiles.recolor_sprite("user_interface", "next", Color.WHITE)
+            next_sprite = DataFiles.sprites["user_interface"]["next"]
             next_sprite_rect = next_sprite.get_rect()
             next_sprite_rect.center = button.center
             surface.blit(next_sprite, next_sprite_rect)

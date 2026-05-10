@@ -168,18 +168,15 @@ class SortieSelectionMenu:
         def exit_sortie_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
 
-        button_sprite = DataFiles.recolor_sprite("user_interface", "prev", Color.BLACK)
-        button_rect = button_sprite.get_rect()
-        button_rect.width = 2*button_rect.width
-        button_rect.right = Box.RIGHT_OF_SCREEN
-        button_rect.top = Box.TOP_OF_SCREEN
+        button_sprite = DataFiles.sprites["user_interface"]["prev"]
+        button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
         self.exit_sortie_selection_menu_button = Button(
             button_rect,
             exit_sortie_selection_menu,
             background_styling={
-                "background_color": Color.WHITE,
+                "background_color": Color.BLACK,
                 "background_img": button_sprite,
-                "background_img_align": (1/4, 1/2)
+                "opacity": 128
             }
         )
 

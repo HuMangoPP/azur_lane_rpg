@@ -52,19 +52,16 @@ class EncounterMenu:
             self.current_encounter += 1
             self.begin_encounter()
 
-        button_sprite = DataFiles.recolor_sprite("user_interface", "next", Color.BLACK)
-        button_rect = button_sprite.get_rect()
-        button_rect.width = button_rect.width
-        button_rect.right = Box.RIGHT_OF_SCREEN
-        button_rect.centery = screen_y(0.5)
+        button_sprite = DataFiles.sprites["user_interface"]["next"]
+        button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,centery=screen_y(0.5))
         self.next_encounter_button = Button(
             button_rect,
             next_encounter,
             active=False,
             background_styling={
-                "background_color": Color.WHITE,
+                "background_color": Color.BLACK,
                 "background_img": button_sprite,
-                "background_img_align": (1/2, 1/2)
+                "opacity": 128
             }
         )
 
@@ -111,13 +108,16 @@ class EncounterMenu:
             self.menu_manager.encounter_menu.return_to_port_button.active = False
 
         button_sprite = DataFiles.sprites["user_interface"]["port"]
-        button_rect = button_sprite.get_rect()
-        button_rect.center = (screen_x(0.5), screen_y(0.75))
+        button_rect = get_rect(width=48,height=48,centerx=screen_x(0.5),centery=screen_y(0.75))
         self.return_to_port_button = Button(
             button_rect,
             return_to_port,
             active=False,
-            background_styling={"background_img": button_sprite}
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": button_sprite,
+                "opacity": 128
+            }
         )
 
         def retreat():
@@ -126,13 +126,15 @@ class EncounterMenu:
             self.menu_manager.player_fleet.end_encounter()        
         
         button_sprite = DataFiles.sprites["user_interface"]["port"]
-        button_rect = button_sprite.get_rect()
-        button_rect.right = Box.RIGHT_OF_SCREEN
-        button_rect.top = Box.TOP_OF_SCREEN
+        button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
         self.retreat_button = Button(
             button_rect,
             retreat,
-            background_styling={"background_img": button_sprite}
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": button_sprite,
+                "opacity": 128
+            }
         )
 
         self.end_sortie_text_pos = pygame.Vector2(screen_x(0.5), screen_y(0.25))

@@ -13,6 +13,7 @@ class Button:
             self.background_img_align = (1/2, 1/2)
         self.outline_color = background_styling.get("outline_color")
         self.outline_width = background_styling.get("outline_width")
+        self.opacity = background_styling.get("opacity")
         
         self.text = text_styling.get("text")
         self.text_align = text_styling.get("text_align")
@@ -34,7 +35,11 @@ class Button:
             return
         
         if self.background_color is not None:
-            pygame.draw.rect(surface, self.background_color, self.rect)
+            background = pygame.Surface(self.rect.size)
+            background.fill(self.background_color)
+            if self.opacity is not None:
+                background.set_alpha(self.opacity)
+            surface.blit(background, self.rect)
         
         if self.outline_color is not None:
             pygame.draw.rect(surface, self.outline_color, self.rect, self.outline_width)

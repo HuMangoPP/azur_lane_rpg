@@ -31,7 +31,7 @@ class FleetSelectionMenu:
             self.menu_manager.encounter_menu.begin_sortie()
 
         self.start_sortie_button = Button(
-            get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), bottom=Box.BOTTOM_OF_SCREEN),
+            get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, bottom=Box.BOTTOM_OF_SCREEN),
             start_sortie,
             active=False,
             background_styling={
@@ -50,18 +50,15 @@ class FleetSelectionMenu:
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
             self.start_sortie_button.active = False
         
-        button_sprite = DataFiles.recolor_sprite("user_interface", "prev", Color.BLACK)
-        button_rect = button_sprite.get_rect()
-        button_rect.width = 2*button_rect.width
-        button_rect.right = Box.RIGHT_OF_SCREEN
-        button_rect.top = Box.TOP_OF_SCREEN
+        button_sprite = DataFiles.sprites["user_interface"]["prev"]
+        button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
         self.exit_fleet_selection_menu_button = Button(
             button_rect,
             exit_fleet_selection_menu,
             background_styling={
-                "background_color": Color.WHITE,
+                "background_color": Color.BLACK,
                 "background_img": button_sprite,
-                "background_img_align": (1/4, 1/2)
+                "opacity": 128
             }
         )
 
