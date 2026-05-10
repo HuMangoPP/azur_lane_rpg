@@ -97,7 +97,7 @@ class Fog:
             for cloud_timer in self.cloud_timers
         ]
         if self.disperse:
-            self.disperse_timer = max(0, self.disperse_timer - 0.2*dt)
+            self.disperse_timer = max(0, self.disperse_timer - 0.33*dt)
 
     def draw(self, surface):
         if self.disperse_timer <= 0:
@@ -152,24 +152,38 @@ class SortieSelectionMenu:
             self.start_sortie_button.active = False
         
         self.start_sortie_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, top=0, left=0),
-            color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["user_interface"]["start_sortie"],
-            text="sortie",
-            text_pos=(0.66,0.5),
-            text_color=Color.WHITE,
-            callback=start_sortie,
-            active=False
+            get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, top=0, left=0),
+            start_sortie,
+            active=False,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["start_sortie"],
+                "background_img_align": (1/4, 1/2)
+            },
+            text_styling={
+                "text": "sortie",
+                "text_align": (2/3, 1/2),
+                "text_color": Color.WHITE
+            }
         )
 
         def exit_sortie_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
 
-        button_sprite = DataFiles.sprites["user_interface"]["prev"]
+        button_sprite = DataFiles.recolor_sprite("user_interface", "prev", Color.BLACK)
         button_rect = button_sprite.get_rect()
+        button_rect.width = 2*button_rect.width
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.top = Box.TOP_OF_SCREEN
-        self.exit_sortie_selection_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_sortie_selection_menu)
+        self.exit_sortie_selection_menu_button = Button(
+            button_rect,
+            exit_sortie_selection_menu,
+            background_styling={
+                "background_color": Color.WHITE,
+                "background_img": button_sprite,
+                "background_img_align": (1/4, 1/2)
+            }
+        )
 
         num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
         self.wave_ys = [
@@ -182,7 +196,11 @@ class SortieSelectionMenu:
         ]
 
         self.fogs = [
-            Fog([], disperse=DataFiles.save_file["chapter_progress"] >= 0),
+            Fog([
+                pygame.Vector2(180, 471),
+                pygame.Vector2(306, 492),
+                pygame.Vector2(309, 415),
+            ], disperse=DataFiles.save_file["chapter_progress"] >= 0),
             Fog([
                 pygame.Vector2(484, 316),
                 pygame.Vector2(430, 369),
@@ -272,7 +290,7 @@ class SortieSelectionMenu:
             fog.draw(surface)
         
         if self.selected_sortie_node is not None:
-            pygame.draw.rect(surface, Color.DARK_BLUE, self.selected_sortie_info_panel)
+            pygame.draw.rect(surface, Color.GREY, self.selected_sortie_info_panel)
             self.start_sortie_button.draw(surface, font)
             font.render(
                 surface,

@@ -28,9 +28,6 @@ class Color:
     WHITE = (255,255,255)
     BLACK = (10,10,10)
     GREY = (50,50,50)
-    BLUE_GREY = (100,100,150)
-    BLUE = (75,75,125)
-    DARK_BLUE = (50,50,100)
     RED = (255,10,10)
 
     CARGO_BOX = (184, 144, 114)
@@ -59,6 +56,8 @@ class Color:
 
     OCEAN_BLUE = (21, 53, 122)
     OCEAN_SHADOW = (0, 16, 71)
+
+    EXP_BAR_FILL = (100,100,150)
 
 class Equipment:
     NUM_EQUIPS = 3

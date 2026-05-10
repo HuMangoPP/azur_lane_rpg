@@ -52,11 +52,22 @@ class EncounterMenu:
             self.current_encounter += 1
             self.begin_encounter()
 
+        button_sprite = DataFiles.recolor_sprite("user_interface", "next", Color.BLACK)
         button_sprite = DataFiles.sprites["user_interface"]["next"]
         button_rect = button_sprite.get_rect()
+        button_rect.width = 2*button_rect.width
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.centery = screen_y(0.5)
-        self.next_encounter_button = Button(rect=button_rect,sprite=button_sprite,callback=next_encounter,active=False)
+        self.next_encounter_button = Button(
+            button_rect,
+            next_encounter,
+            active=False,
+            background_styling={
+                "background_color": Color.WHITE,
+                "background_img": button_sprite,
+                "background_img_align": (1/4, 1/2)
+            }
+        )
 
         def open_reward_cache():
             if self.current_sortie == DataFiles.save_file["sortie_progress"]:
@@ -70,7 +81,12 @@ class EncounterMenu:
         button_sprite = DataFiles.sprites["user_interface"]["cache"]
         button_rect = button_sprite.get_rect()
         button_rect.center = (screen_x(0.75), screen_y(0.5))
-        self.open_reward_cache_button = Button(rect=button_rect,sprite=button_sprite,callback=open_reward_cache,active=False)
+        self.open_reward_cache_button = Button(
+            button_rect,
+            open_reward_cache,
+            active=False,
+            background_styling={"background_img": button_sprite}
+        )
 
         def return_to_port():
             new_sortie_progress = self.current_sortie + 1
@@ -98,7 +114,12 @@ class EncounterMenu:
         button_sprite = DataFiles.sprites["user_interface"]["port"]
         button_rect = button_sprite.get_rect()
         button_rect.center = (screen_x(0.5), screen_y(0.75))
-        self.return_to_port_button = Button(rect=button_rect,sprite=button_sprite,callback=return_to_port,active=False)
+        self.return_to_port_button = Button(
+            button_rect,
+            return_to_port,
+            active=False,
+            background_styling={"background_img": button_sprite}
+        )
 
         def retreat():
             self.menu_manager.current_menu = self.menu_manager.port_menu
@@ -109,7 +130,11 @@ class EncounterMenu:
         button_rect = button_sprite.get_rect()
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.top = Box.TOP_OF_SCREEN
-        self.retreat_button = Button(rect=button_rect,sprite=button_sprite,callback=retreat)
+        self.retreat_button = Button(
+            button_rect,
+            retreat,
+            background_styling={"background_img": button_sprite}
+        )
 
         self.end_sortie_text_pos = pygame.Vector2(screen_x(0.5), screen_y(0.25))
         self.encounter_end_flag = True
@@ -322,7 +347,7 @@ class EncounterMenu:
                 height=bar_height, left=bar_background.left, top=bar_background.top 
             )
             pygame.draw.rect(surface, Color.GREY, bar_background)
-            pygame.draw.rect(surface, Color.BLUE_GREY, bar_fill)
+            pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
             font.render(
                 surface,
                 "shipgirl research progress",

@@ -27,15 +27,17 @@ class PortMenu:
         
         self.choose_faction_buttons = [
             Button(
-                rect=get_rect(
+                get_rect(
                     width=Box.WIDTH, height=Box.HEIGHT,
                     centerx=screen_x(0.5) + (i-2)*Box.WIDTH+(i-1.5)*Box.PADDING,
                     centery=screen_y(0.5)
                 ),
-                color=Color.BLUE_GREY,
-                sprite=DataFiles.sprites["user_interface"][faction],
-                callback=choose_faction_factory(faction),
-                active=False
+                choose_faction_factory(faction),
+                active=False,
+                background_styling={
+                    "background_color": Color.BLACK,
+                    "background_img": DataFiles.sprites["user_interface"][f"{faction}_big"]
+                }
             )
             for i, faction in enumerate(factions)
         ]
@@ -69,49 +71,57 @@ class PortMenu:
             return open_overlay
 
         self.open_depot_overlay_button = Button(
-            rect=get_rect(
+            get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(1/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["user_interface"]["depot"],
-            callback=open_overlay_factory(self.DEPOT),
-            active=False
+            open_overlay_factory(self.DEPOT),
+            active=False,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["depot"]
+            }
         )
         self.open_intel_center_overlay_button = Button(
-            rect=get_rect(
+            get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(2/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["user_interface"]["intel_center"],
-            callback=open_overlay_factory(self.INTEL_CENTER),
-            active=False
+            open_overlay_factory(self.INTEL_CENTER),
+            active=False,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["intel_center"]
+            }
         )
         self.open_shipyard_overlay_button = Button(
-            rect=get_rect(
+            get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(3/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["user_interface"]["shipyard"],
-            callback=open_overlay_factory(self.SHIPYARD),
-            active=False
+            open_overlay_factory(self.SHIPYARD),
+            active=False,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["shipyard"]
+            }
         )
 
         self.open_gear_lab_overlay_button = Button(
-            rect=get_rect(
+            get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(4/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["user_interface"]["gear_lab"],
-            callback=open_overlay_factory(self.GEAR_LAB),
-            active=False
+            open_overlay_factory(self.GEAR_LAB),
+            active=False,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["gear_lab"]
+            }
         )
 
         self.dossier_overlay = get_rect(
@@ -127,11 +137,12 @@ class PortMenu:
             bottom=self.dossier_overlay.bottom
         )
         num_dossier_tabs = 5
-        dossier_tab_padding = (self.dossier_bg.width - num_dossier_tabs*Box.WIDTH) / (num_dossier_tabs-1)
+        tab_width = self.dossier_bg.width / num_dossier_tabs
+        tab_height = 48
         self.dossier_tabs = [
             get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.dossier_bg.left+i*(Box.WIDTH+dossier_tab_padding),
+                width=tab_width, height=tab_height,
+                left=self.dossier_bg.left+i*tab_width,
                 bottom=self.dossier_bg.top
             ) for i in range(num_dossier_tabs)
         ]
@@ -232,17 +243,24 @@ class PortMenu:
                         DataFiles.save_file["inventory"][ingredient] -= req
 
         self.overlay_confirm_button = Button(
-            rect=get_rect(
+            get_rect(
                 width=2*Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx,
                 bottom=self.blueprint_page.bottom-Box.PADDING
             ),
-            color=Color.BLUE_GREY,
-            text=None,
-            text_pos=(0.66,0.5),
-            text_color=Color.WHITE,
-            callback=overlay_confirm,
-            active=False
+            overlay_confirm,
+            active=False,
+            background_styling={
+                "background_img": None,
+                "background_img_align": (1/4, 1/2),
+                "outline_color": Color.WHITE,
+                "outline_width": Box.OUTLINE_WIDTH
+            },
+            text_styling={
+                "text": None,
+                "text_align": (2/3, 1/2),
+                "text_color": Color.WHITE
+            }
         )
         self.overlay_selected_entity = None
 
@@ -256,15 +274,17 @@ class PortMenu:
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
 
         self.open_select_sortie_menu_button = Button(
-            rect=get_rect(
+            get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=screen_x(5/6),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
-            color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["user_interface"]["sortie"],
-            callback=open_select_sortie_menu,
-            active=False
+            open_select_sortie_menu,
+            active=False,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["sortie"]
+            }
         )
 
         self.update_encountered_sirens()
@@ -356,13 +376,13 @@ class PortMenu:
                 if self.current_overlay == self.SHIPYARD:
                     unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                        self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
+                        self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["gear_lab"]
                         self.overlay_confirm_button.text = "construct"
                     else:
-                        self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["research"]
+                        self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["research"]
                         self.overlay_confirm_button.text = "research"
                 else:
-                    self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
+                    self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["gear_lab"]
                     self.overlay_confirm_button.text = "construct"
         
         for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
@@ -373,13 +393,21 @@ class PortMenu:
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
         for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
             if self.selected_overlay_filter == i:
-                pygame.draw.rect(surface, Color.DOSSIER, rect)
+                color = Color.DOSSIER
             else:
-                pygame.draw.rect(surface, Color.DOSSIER_BACK, rect)
+                color = Color.DOSSIER_BACK
+            tab_polygon = [
+                rect.topleft,
+                rect.bottomleft,
+                rect.bottomright,
+                (rect.left+Box.WIDTH, rect.top)
+            ]
+            pygame.draw.polygon(surface, color, tab_polygon)
             if cat in DataFiles.sprites["user_interface"]:
                 icon = DataFiles.sprites["user_interface"][cat]
                 icon_rect = icon.get_rect()
-                icon_rect.center = rect.center
+                icon_rect.centerx = rect.left + rect.height/2
+                icon_rect.centery = rect.top + rect.height/2
                 surface.blit(icon, icon_rect)
             else:
                 font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
@@ -554,10 +582,10 @@ class PortMenu:
             ]
             equip_stats = {
                 "hull_type": selected_entity_info.get("equippable_by"),
-                "max_hp": selected_entity_info.get("max_hp"),
-                "evasion": selected_entity_info.get("evasion"),
-                "firepower": selected_entity_info.get("firepower"),
-                "reload": selected_entity_info.get("reload"),
+                "max_hp": selected_entity_info.get("max_hp", 0),
+                "evasion": selected_entity_info.get("evasion", 0),
+                "firepower": selected_entity_info.get("firepower", 0),
+                "reload": selected_entity_info.get("reload", 0),
                 "shell_type": selected_entity_info.get("shell_type"),
             }
         else:

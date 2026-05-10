@@ -171,7 +171,7 @@ class ShipgirlBattleComponent:
                 left=bar_background.left, top=bar_background.top
             )
             pygame.draw.rect(surface, Color.GREY, bar_background)
-            pygame.draw.rect(surface, Color.BLUE_GREY, bar_fill)
+            pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
 
         if self.level_timer > 0:
             t = 1 - self.level_timer

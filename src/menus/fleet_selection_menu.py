@@ -31,28 +31,38 @@ class FleetSelectionMenu:
             self.menu_manager.encounter_menu.begin_sortie()
 
         self.start_sortie_button = Button(
-            rect=get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), bottom=Box.BOTTOM_OF_SCREEN),
-            color=Color.BLUE_GREY,
-            sprite=DataFiles.sprites["user_interface"]["start_sortie"],
-            text="start",
-            text_pos=(0.66,0.5),
-            text_color=Color.WHITE,
-            callback=start_sortie,
-            active=False
+            get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, centerx=screen_x(0.75), bottom=Box.BOTTOM_OF_SCREEN),
+            start_sortie,
+            active=False,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["start_sortie"],
+                "background_img_align": (1/4, 1/2)
+            },
+            text_styling={
+                "text": "start",
+                "text_align": (2/3, 1/2),
+                "text_color": Color.WHITE
+            }
         )
 
         def exit_fleet_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
             self.start_sortie_button.active = False
         
-        button_sprite = DataFiles.sprites["user_interface"]["prev"]
+        button_sprite = DataFiles.recolor_sprite("user_interface", "prev", Color.BLACK)
         button_rect = button_sprite.get_rect()
+        button_rect.width = 2*button_rect.width
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.top = Box.TOP_OF_SCREEN
         self.exit_fleet_selection_menu_button = Button(
-            rect=button_rect,
-            sprite=button_sprite,
-            callback=exit_fleet_selection_menu
+            button_rect,
+            exit_fleet_selection_menu,
+            background_styling={
+                "background_color": Color.WHITE,
+                "background_img": button_sprite,
+                "background_img_align": (1/4, 1/2)
+            }
         )
 
         num_fleet_slots = len(self.menu_manager.player_fleet.shipgirls)

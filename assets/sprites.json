@@ -62,10 +62,14 @@
 		"shell_type": { "left": 128, "top": 416, "width": 32, "height": 32 },
 		"target_pref": { "left": 160, "top": 416, "width": 32, "height": 32 },
 
-		"USS": { "left": 128, "top": 0, "width": 64, "height": 64 },
-		"HMS": { "left": 128, "top": 64, "width": 64, "height": 64 },
-		"IJN": { "left": 128, "top": 128, "width": 64, "height": 64 },
-		"KMS": { "left": 128, "top": 192, "width": 64, "height": 64 },
+		"USS_big": { "left": 128, "top": 0, "width": 64, "height": 64 },
+		"HMS_big": { "left": 128, "top": 64, "width": 64, "height": 64 },
+		"IJN_big": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"KMS_big": { "left": 128, "top": 192, "width": 64, "height": 64 },
+		"USS": { "left": 128, "top": 256, "width": 32, "height": 32 },
+		"HMS": { "left": 160, "top": 256, "width": 32, "height": 32 },
+		"IJN": { "left": 128, "top": 288, "width": 32, "height": 32 },
+		"KMS": { "left": 160, "top": 288, "width": 32, "height": 32 },
 
 		"DD": { "left": 0, "top": 320, "width": 32, "height": 32 },
 		"CL": { "left": 32, "top": 320, "width": 32, "height": 32 },
@@ -73,7 +77,7 @@
 		"BB": { "left": 32, "top": 352, "width": 32, "height": 32 },
 		"AUX": { "left": 64, "top": 352, "width": 32, "height": 32 },
 
-		"compass": { "left": 128, "top": 256, "width": 64, "height": 64 },
+		"compass": { "left": 192, "top": 0, "width": 128, "height": 128 },
 		"cleared": { "left": 128, "top": 320, "width": 32, "height": 32 },
 		"uncleared": { "left": 160, "top": 320, "width": 32, "height": 32 },
 		"locked": { "left": 128, "top": 352, "width": 32, "height": 32 },

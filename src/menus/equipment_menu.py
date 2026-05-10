@@ -115,11 +115,20 @@ class EquipmentMenu:
 
             self.selected_shipgirl = None
 
-        button_sprite = DataFiles.sprites["user_interface"]["prev"]
+        button_sprite = DataFiles.recolor_sprite("user_interface", "prev", Color.BLACK)
         button_rect = button_sprite.get_rect()
+        button_rect.width = 2*button_rect.width
         button_rect.right = Box.RIGHT_OF_SCREEN
         button_rect.top = Box.TOP_OF_SCREEN
-        self.exit_equipment_menu_button = Button(rect=button_rect,sprite=button_sprite,callback=exit_equipment_menu)
+        self.exit_equipment_menu_button = Button(
+            button_rect,
+            exit_equipment_menu,
+            background_styling={
+                "background_color": Color.WHITE,
+                "background_img": button_sprite,
+                "background_img_align": (1/4, 1/2)
+            }
+        )
 
     def get_stat(self, shipgirl, stat):
         if stat == "max_hp":
@@ -228,7 +237,7 @@ class EquipmentMenu:
                 top=self.exp_bar_bg.top
             )
             pygame.draw.rect(surface, Color.GREY, self.exp_bar_bg)
-            pygame.draw.rect(surface, Color.BLUE_GREY, exp_bar)
+            pygame.draw.rect(surface, Color.EXP_BAR_FILL, exp_bar)
 
             level = Stats.level(self.selected_shipgirl.battle_component.exp) + 1
             font.render(

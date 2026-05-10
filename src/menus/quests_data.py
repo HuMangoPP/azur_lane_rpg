@@ -51,15 +51,14 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
                 (text_rect.left-Box.PADDING, text_rect.bottom+Box.PADDING),
                 (text_rect.left+Box.PADDING, text_rect.bottom)
             ]
-        pygame.draw.rect(surface, Color.DARK_BLUE, text_rect)
-        pygame.draw.polygon(surface, Color.DARK_BLUE, polygon)
+        pygame.draw.rect(surface, Color.WHITE, text_rect)
+        pygame.draw.polygon(surface, Color.WHITE, polygon)
         font.render(
             surface,
             text,
             pygame.Vector2(text_rect.topleft) + pygame.Vector2(Box.PADDING, Box.PADDING),
-            Color.WHITE,
+            Color.BLACK,
             text_scale,
-            outline_color=Color.BLACK,
             box_width=max_text_width
         )
 
@@ -229,7 +228,7 @@ def construct_shipgirls_tutorial_draw_factory(shipgirls):
                 if shipgirl not in shipgirls:
                     continue
 
-                rect = menu_manager.port_menu.overlay_left_icons[i]
+                rect = menu_manager.port_menu.dossier_icons[i]
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
                 draw_tb(surface, font, None, rect.bottomleft, False, True)
             
@@ -473,7 +472,7 @@ def intel_center_tutorial_draw(menu_manager, surface, font):
         draw_tb(surface, font, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.INTEL_CENTER:
         if menu_manager.port_menu.overlay_selected_entity is None:
-            siren_rect = menu_manager.port_menu.overlay_left_icons[0]
+            siren_rect = menu_manager.port_menu.dossier_icons[0]
             rect = get_rect(
                 width=siren_rect.width + 2*Box.PADDING,
                 height=siren_rect.height + 2*Box.PADDING,
@@ -604,7 +603,7 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font):
 
             draw_tb(surface, font, None, rect.bottomleft, False, True)
         else:
-            button_rect = menu_manager.port_menu.overlay_left_icons[0]
+            button_rect = menu_manager.port_menu.dossier_icons[0]
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,
