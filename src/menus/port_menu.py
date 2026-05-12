@@ -80,7 +80,8 @@ class PortMenu:
             active=False,
             background_styling={
                 "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["depot"]
+                "background_img": DataFiles.sprites["user_interface"]["depot"],
+                "opacity": 160,
             }
         )
         self.open_intel_center_overlay_button = Button(
@@ -93,7 +94,8 @@ class PortMenu:
             active=False,
             background_styling={
                 "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["intel_center"]
+                "background_img": DataFiles.sprites["user_interface"]["intel_center"],
+                "opacity": 160,
             }
         )
         self.open_shipyard_overlay_button = Button(
@@ -106,7 +108,8 @@ class PortMenu:
             active=False,
             background_styling={
                 "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["shipyard"]
+                "background_img": DataFiles.sprites["user_interface"]["shipyard"],
+                "opacity": 160,
             }
         )
 
@@ -120,7 +123,8 @@ class PortMenu:
             active=False,
             background_styling={
                 "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["gear_lab"]
+                "background_img": DataFiles.sprites["user_interface"]["gear_lab"],
+                "opacity": 160,
             }
         )
 
@@ -283,7 +287,8 @@ class PortMenu:
             active=False,
             background_styling={
                 "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["sortie"]
+                "background_img": DataFiles.sprites["user_interface"]["sortie"],
+                "opacity": 160,
             }
         )
 
@@ -410,7 +415,7 @@ class PortMenu:
                 icon_rect.centery = rect.top + rect.height/2
                 surface.blit(icon, icon_rect)
             else:
-                font.render(surface, cat, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                font.render(surface, cat, rect.center, Color.WHITE, 1, style="center")
 
         pygame.draw.polygon(surface, Color.DOSSIER_PAGE, self.misaligned_dossier_page)
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
@@ -428,7 +433,7 @@ class PortMenu:
         if self.overlay_selected_entity:
             pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
             surface.blit(DataFiles.sprites["user_interface"]["port_menu_blueprint"], self.blueprint_page)
-            font.render(surface, self.overlay_selected_entity, self.blueprint_name, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            font.render(surface, self.overlay_selected_entity, self.blueprint_name, Color.WHITE, 1, style="center")
             if self.overlay_selected_entity in DataFiles.sprites["entity"]:
                 surface.blit(DataFiles.sprites["entity"][self.overlay_selected_entity], self.blueprint_icon)
             pygame.draw.rect(surface, Color.WHITE, self.blueprint_icon, width=Box.OUTLINE_WIDTH)
@@ -459,8 +464,7 @@ class PortMenu:
                         info_rect.center,
                         Color.WHITE,
                         1,
-                        style="center",
-                        outline_color=Color.BLACK
+                        style="center"
                     )
                 font.render(
                     surface,
@@ -469,7 +473,6 @@ class PortMenu:
                     Color.WHITE,
                     1,
                     style="centerleft",
-                    outline_color=Color.BLACK
                 )
                 
                 info_index += 1

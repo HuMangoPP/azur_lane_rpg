@@ -51,13 +51,13 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
                 (text_rect.left-Box.PADDING, text_rect.bottom+Box.PADDING),
                 (text_rect.left+Box.PADDING, text_rect.bottom)
             ]
-        pygame.draw.rect(surface, Color.WHITE, text_rect)
-        pygame.draw.polygon(surface, Color.WHITE, polygon)
+        pygame.draw.rect(surface, Color.DIALOGUE_BOX, text_rect)
+        pygame.draw.polygon(surface, Color.DIALOGUE_BOX, polygon)
         font.render(
             surface,
             text,
             pygame.Vector2(text_rect.topleft) + pygame.Vector2(Box.PADDING, Box.PADDING),
-            Color.BLACK,
+            Color.WHITE,
             text_scale,
             box_width=max_text_width
         )

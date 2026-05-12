@@ -176,7 +176,7 @@ class SortieSelectionMenu:
             background_styling={
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
-                "opacity": 128
+                "opacity": 160
             }
         )
 
@@ -336,4 +336,4 @@ class SortieSelectionMenu:
                 if reward in DataFiles.sprites["entity"]:
                     surface.blit(DataFiles.sprites["entity"][reward], rect)
                 else:
-                    font.render(surface, reward, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                    font.render(surface, reward, rect.center, Color.WHITE, 1, style="center")

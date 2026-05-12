@@ -34,14 +34,30 @@ class QuestManager:
                 left=Box.PADDING,
                 top=Box.PADDING + (Box.HEIGHT + Box.PADDING) * i
             )
-            pygame.draw.rect(surface, Color.WHITE, rect, Box.OUTLINE_WIDTH)
             surface.blit(DataFiles.sprites["user_interface"]["TB"], rect)
 
-            textpos = (rect.right + Box.PADDING, rect.centery)
             if not quest.started:
-                font.render(surface, "new", textpos, Color.WHITE, 1, style="centerleft", outline_color=Color.BLACK)
+                banner_text = "new"
+                banner_color = Color.NEW_QUEST_BANNER
             elif quest.completed:
-                font.render(surface, "completed", textpos, Color.WHITE, 1, style="centerleft", outline_color=Color.BLACK)
+                banner_text = "completed"
+                banner_color = Color.COMPLETED_QUEST_BANNER
+            else:
+                banner_text = None
+            if banner_text is not None:
+                font_size = 1
+                quest_status_banner = pygame.Surface((
+                    2*Box.PADDING + len(banner_text)*font.font_width,
+                    2*Box.PADDING + font.font_height
+                ))
+                quest_status_banner.fill(banner_color)
+                # quest_status_banner.set_alpha(160)
+                banner_rect = quest_status_banner.get_rect()
+                banner_rect.left = rect.right
+                banner_rect.centery = rect.centery
+                surface.blit(quest_status_banner, banner_rect)
+                textpos = (rect.right + Box.PADDING, rect.centery)
+                font.render(surface, banner_text, textpos, Color.WHITE, font_size, style="centerleft")
         
         if self.selected_quest is not None:
             self.selected_quest.draw(surface, font)
@@ -188,15 +204,15 @@ class Quest:
             text = self.pre_quest_dialogue[self.pre_quest_dialogue_index]
             show_reward = False
         
-        pygame.draw.rect(surface, Color.GREY, overlay)
-        pygame.draw.rect(surface, Color.BLACK, box)
+        pygame.draw.rect(surface, Color.DIALOGUE_OVERLAY, overlay)
+        pygame.draw.rect(surface, Color.DIALOGUE_BOX, box)
         middleleft = pygame.Vector2(box.left, box.centery)
         polygon = [
-            middleleft + pygame.Vector2(0, 2*Box.PADDING),
-            middleleft + pygame.Vector2(0, -2*Box.PADDING),
-            middleleft + pygame.Vector2(-5*Box.PADDING, 0)
+            middleleft + pygame.Vector2(0, Box.PADDING),
+            middleleft + pygame.Vector2(0, -Box.PADDING),
+            middleleft + pygame.Vector2(-Box.WIDTH/2, 0)
         ]
-        pygame.draw.polygon(surface, Color.BLACK, polygon)
+        pygame.draw.polygon(surface, Color.DIALOGUE_BOX, polygon)
         tb_sprite = DataFiles.sprites["user_interface"]["TB"]
         rect = tb_sprite.get_rect()
         rect.right = polygon[-1].x
@@ -213,14 +229,13 @@ class Quest:
             box_width=text_width
         )
 
+        pygame.draw.rect(surface, Color.DIALOGUE_BUTTON, button)
         if button_text == "next":
-            pygame.draw.rect(surface, Color.BLACK, button)
             next_sprite = DataFiles.sprites["user_interface"]["next"]
             next_sprite_rect = next_sprite.get_rect()
             next_sprite_rect.center = button.center
             surface.blit(next_sprite, next_sprite_rect)
         else:
-            pygame.draw.rect(surface, Color.BLACK, button)
             font.render(surface, button_text, button.center, Color.WHITE, 1, style="center")
 
         if show_reward:
@@ -228,7 +243,7 @@ class Quest:
                 if reward in DataFiles.sprites["entity"]:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                     surface.blit(DataFiles.sprites["entity"][reward], rect)
-                    font.render(surface, str(amt), rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                    font.render(surface, str(amt), rect.center, Color.WHITE, 1, style="center")
                 else:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                    font.render(surface, f"{reward} ({amt})", rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                    font.render(surface, f"{reward} ({amt})", rect.center, Color.WHITE, 1, style="center")

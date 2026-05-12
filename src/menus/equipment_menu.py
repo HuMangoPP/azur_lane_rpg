@@ -123,7 +123,7 @@ class EquipmentMenu:
             background_styling={
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
-                "opacity": 128
+                "opacity": 160
             }
         )
 
@@ -233,7 +233,7 @@ class EquipmentMenu:
                 left=self.exp_bar_bg.left,
                 top=self.exp_bar_bg.top
             )
-            pygame.draw.rect(surface, Color.GREY, self.exp_bar_bg)
+            pygame.draw.rect(surface, Color.EXP_BAR_BG, self.exp_bar_bg)
             pygame.draw.rect(surface, Color.EXP_BAR_FILL, exp_bar)
 
             level = Stats.level(self.selected_shipgirl.battle_component.exp) + 1
@@ -284,7 +284,7 @@ class EquipmentMenu:
                     if equipment in DataFiles.sprites["entity"]:
                         surface.blit(DataFiles.sprites["entity"][equipment], rect)
                     else:
-                        font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                        font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center")
             
             if self.selected_equipment == Equipment.WEAPON:
                 equippable = [
@@ -306,6 +306,6 @@ class EquipmentMenu:
                 if equipment in DataFiles.sprites["entity"]:
                     surface.blit(DataFiles.sprites["entity"][equipment], rect)
                 else:
-                    font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                    font.render(surface, equipment, rect.center, Color.WHITE, 1, style="center")
         
         self.exit_equipment_menu_button.draw(surface, font)

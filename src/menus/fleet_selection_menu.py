@@ -35,7 +35,7 @@ class FleetSelectionMenu:
             start_sortie,
             active=False,
             background_styling={
-                "background_color": Color.BLACK,
+                "background_color": Color.START_SORTIE_BUTTON,
                 "background_img": DataFiles.sprites["user_interface"]["start_sortie"],
                 "background_img_align": (1/4, 1/2)
             },
@@ -58,7 +58,7 @@ class FleetSelectionMenu:
             background_styling={
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
-                "opacity": 128
+                "opacity": 160
             }
         )
 
@@ -169,7 +169,7 @@ class FleetSelectionMenu:
                 portrait_rect.center = rect.center
                 surface.blit(portrait, portrait_rect)
             else:
-                font.render(surface, shipgirl.name, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                font.render(surface, shipgirl.name, rect.center, Color.WHITE, 1, style="center")
 
         for slot, shipgirl in zip(self.fleet_slots, self.menu_manager.player_fleet.shipgirls):
             if shipgirl is None:

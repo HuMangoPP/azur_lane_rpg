@@ -31,7 +31,7 @@ class Drop:
         else:
             rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=self.pos.x, centery=self.pos.y)
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            font.render(surface, self.item, rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            font.render(surface, self.item, rect.center, Color.WHITE, 1, style="center")
 
 class EncounterMenu:
     def __init__(self, menu_manager):
@@ -61,7 +61,7 @@ class EncounterMenu:
             background_styling={
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
-                "opacity": 128
+                "opacity": 160
             }
         )
 
@@ -116,7 +116,7 @@ class EncounterMenu:
             background_styling={
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
-                "opacity": 128
+                "opacity": 160
             }
         )
 
@@ -133,7 +133,7 @@ class EncounterMenu:
             background_styling={
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
-                "opacity": 128
+                "opacity": 160
             }
         )
 
@@ -347,23 +347,44 @@ class EncounterMenu:
                 width=bar_width * min(1, research_progress/exp_req),
                 height=bar_height, left=bar_background.left, top=bar_background.top 
             )
-            pygame.draw.rect(surface, Color.GREY, bar_background)
+            pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
             pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
+            banner_text = "shipgirl research progress"
+            banner_surf = pygame.Surface((
+                len(banner_text)*font.font_width + 2*Box.PADDING,
+                font.font_height + 2*Box.PADDING
+            ))
+            banner_surf.fill(Color.BLACK)
+            banner_surf.set_alpha(160)
+            banner_rect = banner_surf.get_rect()
+            banner_rect.centerx = bar_background.centerx
+            banner_rect.bottom = bar_background.top - Box.PADDING
+            surface.blit(banner_surf, banner_rect)
             font.render(
                 surface,
-                "shipgirl research progress",
-                (bar_background.centerx, bar_background.top - bar_height),
+                banner_text,
+                banner_rect.center,
                 Color.WHITE,
                 1,
-                style="center",
-                outline_color=Color.BLACK
+                style="center"
             )
         
         if self.next_encounter_button.active:
+            font_size = 2
             if not self.menu_manager.player_fleet.afloat:
-                font.render(surface, "you lose", self.end_sortie_text_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                end_text = "you lose"
             elif not self.menu_manager.siren_fleet.afloat:
-                font.render(surface, "you win", self.end_sortie_text_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                end_text = "you win"
+            banner_surf = pygame.Surface((
+                len(end_text)*font_size*font.font_width + 2*Box.PADDING, 
+                font_size*font.font_height + 2*Box.PADDING
+            ))
+            banner_surf.fill(Color.BLACK)
+            banner_surf.set_alpha(160)
+            banner_rect = banner_surf.get_rect()
+            banner_rect.center = self.end_sortie_text_pos
+            surface.blit(banner_surf, banner_rect)
+            font.render(surface, end_text, self.end_sortie_text_pos, Color.WHITE, font_size, style="center")
 
         mpos = pygame.mouse.get_pos()
         if self.mouse_start_drag is not None:

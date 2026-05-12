@@ -57,7 +57,17 @@ class Color:
     OCEAN_BLUE = (21, 53, 122)
     OCEAN_SHADOW = (0, 16, 71)
 
-    EXP_BAR_FILL = (100,100,150)
+    EXP_BAR_BG = (64, 64, 64)
+    EXP_BAR_FILL = (255, 200, 0)
+
+    DIALOGUE_OVERLAY = (0, 104, 214)
+    DIALOGUE_BOX = (82, 166, 255)
+    DIALOGUE_BUTTON = (82, 166, 255)
+
+    START_SORTIE_BUTTON = (204, 61, 61)
+
+    NEW_QUEST_BANNER = (43, 173, 0)
+    COMPLETED_QUEST_BANNER = (191, 156, 0)
 
 class Equipment:
     NUM_EQUIPS = 3

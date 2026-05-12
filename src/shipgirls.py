@@ -170,13 +170,13 @@ class ShipgirlBattleComponent:
                 width=bar_width*Stats.level_progress(exp_animation), height=bar_background.height,
                 left=bar_background.left, top=bar_background.top
             )
-            pygame.draw.rect(surface, Color.GREY, bar_background)
+            pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
             pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
 
         if self.level_timer > 0:
             t = 1 - self.level_timer
             y = rect.top - rect.height * t
-            font.render(surface, "level up!", (rect.centerx, y), Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            font.render(surface, "level up!", (rect.centerx, y), Color.WHITE, 1, style="center")
 
         if not self.active:
             return
@@ -209,7 +209,7 @@ class ShipgirlBattleComponent:
             width=bar_width*self.hp/self.max_hp(), height=bar_background.height,
             left=bar_background.left, top=bar_background.top
         )
-        pygame.draw.rect(surface, Color.GREY, bar_background)
+        pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
         pygame.draw.rect(surface, Color.WHITE, bar_fill)
 
         if not self.is_player:
@@ -290,7 +290,7 @@ class Shipgirl:
             self.sprite.draw(surface, self.rect.centerx, self.rect.centery, not self.facing_left)
         else:
             pygame.draw.rect(surface, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
-            font.render(surface, self.name, self.rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            font.render(surface, self.name, self.rect.center, Color.WHITE, 1, style="center")
 
 class PlayerFleet:
     def __init__(self):
