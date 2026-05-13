@@ -163,13 +163,10 @@ class FleetSelectionMenu:
 
         for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.menu_manager.available_shipgirl_rects):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            if shipgirl.name in DataFiles.sprites["entity"]:
-                portrait = DataFiles.sprites["entity"][shipgirl.name]
-                portrait_rect = portrait.get_rect()
-                portrait_rect.center = rect.center
-                surface.blit(portrait, portrait_rect)
-            else:
-                font.render(surface, shipgirl.name, rect.center, Color.WHITE, 1, style="center")
+            portrait = DataFiles.get_entity_sprite(shipgirl.name)
+            portrait_rect = portrait.get_rect()
+            portrait_rect.center = rect.center
+            surface.blit(portrait, portrait_rect)
 
         for slot, shipgirl in zip(self.fleet_slots, self.menu_manager.player_fleet.shipgirls):
             if shipgirl is None:

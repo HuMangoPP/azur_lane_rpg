@@ -345,11 +345,8 @@ class PortMenu:
             top = self.depot_overlay.top + Box.PADDING + (item_index//num_items_in_row)*(Box.HEIGHT+padding)
             rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
-            if item in DataFiles.sprites["entity"]:
-                surface.blit(DataFiles.sprites["entity"][item], rect)
-                font.render(surface, str(count), rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-            else:
-                font.render(surface, f"{item} ({count})", rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            surface.blit(DataFiles.get_entity_sprite(item), rect)
+            font.render(surface, str(count), rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
             item_index += 1
 
     def exit_overlay(self, mouseup_event):
@@ -421,21 +418,17 @@ class PortMenu:
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
 
         for entity, rect in zip(entities, self.dossier_icons):
-            if entity in DataFiles.sprites["entity"]:
-                image = DataFiles.sprites["entity"][entity]
-                image_rect = image.get_rect()
-                image_rect.center = rect.center
-                surface.blit(image, image_rect)
-            else:
-                font.render(surface, entity, rect.center, Color.BLACK, 1, style="center")
+            image = DataFiles.get_entity_sprite(entity)
+            image_rect = image.get_rect()
+            image_rect.center = rect.center
+            surface.blit(image, image_rect)
             pygame.draw.rect(surface, Color.BLACK, rect, width=Box.OUTLINE_WIDTH)
         
         if self.overlay_selected_entity:
             pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
             surface.blit(DataFiles.sprites["user_interface"]["port_menu_blueprint"], self.blueprint_page)
             font.render(surface, self.overlay_selected_entity, self.blueprint_name, Color.WHITE, 1, style="center")
-            if self.overlay_selected_entity in DataFiles.sprites["entity"]:
-                surface.blit(DataFiles.sprites["entity"][self.overlay_selected_entity], self.blueprint_icon)
+            surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), self.blueprint_icon)
             pygame.draw.rect(surface, Color.WHITE, self.blueprint_icon, width=Box.OUTLINE_WIDTH)
 
             icon_size = 32 # TODO
@@ -480,13 +473,8 @@ class PortMenu:
                     y += icon_size
 
             for (icon_name, icon_text), rect in zip(icons, self.blueprint_icons):
-                if icon_name in DataFiles.sprites["entity"]:
-                    surface.blit(DataFiles.sprites["entity"][icon_name], rect)
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                else:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                    xy = (rect.centerx, rect.top+0.33*rect.height) # TODO
-                    font.render(surface, icon_name, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                surface.blit(DataFiles.get_entity_sprite(icon_name), rect)
+                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 xy = (rect.centerx, rect.top+0.67*rect.height)
                 font.render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 

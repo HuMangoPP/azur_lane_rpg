@@ -23,15 +23,10 @@ class Drop:
             self.vel = self.vel + pygame.Vector2(0, 200) * dt
     
     def draw(self, surface, font):
-        if self.item in DataFiles.sprites["entity"]:
-            image = DataFiles.sprites["entity"][self.item]
-            rect = image.get_rect()
-            rect.center = self.pos
-            surface.blit(image, rect)
-        else:
-            rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, centerx=self.pos.x, centery=self.pos.y)
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            font.render(surface, self.item, rect.center, Color.WHITE, 1, style="center")
+        image = DataFiles.get_entity_sprite(self.item)
+        rect = image.get_rect()
+        rect.center = self.pos
+        surface.blit(image, rect)
 
 class EncounterMenu:
     def __init__(self, menu_manager):

@@ -133,6 +133,12 @@ class DataFiles:
         sprite.set_colorkey((255,0,0))
         return colored_sprite
 
+    @classmethod
+    def get_entity_sprite(cls, sprite_key):
+        if sprite_key in cls.sprites["entity"]:
+            return cls.sprites["entity"][sprite_key]
+        else:
+            return cls.sprites["entity"]["placeholder"]
 
 def create_shell_sprite(shell_key, color):
     alphas = [10, 20, 50, 100, 200, 250]

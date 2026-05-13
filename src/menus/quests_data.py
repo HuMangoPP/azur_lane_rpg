@@ -83,6 +83,9 @@ def choose_faction_completion_criteria(menu_manager):
                 continue
             choose_faction_quest.rewards[shipgirl_info["unique_item"]] = 1
 
+        choose_faction_quest.rewards.pop("placeholder_DD")
+        choose_faction_quest.rewards.pop("placeholder_BB")
+
     return completed
 
 def choose_faction_tutorial_draw(menu_manager, surface, font):
@@ -160,6 +163,8 @@ choose_faction_rewards = {
     "DD_blueprint": 1,
     "BB_blueprint": 1,
     "wisdom_cube": 2,
+    "placeholder_DD": 1,
+    "placeholder_BB": 1
 }
 
 choose_faction_quest = Quest(
@@ -171,7 +176,7 @@ choose_faction_quest = Quest(
     choose_faction_tutorial_draw,
     choose_faction_on_start,
     choose_faction_on_complete,
-    rewards=choose_faction_rewards
+    choose_faction_rewards
 )
 
 construct_shipgirls_pre_quest_dialogue = [
@@ -253,6 +258,10 @@ def construct_shipgirls_on_complete(menu_manager):
     if quest_name not in DataFiles.save_file["quests"]:
         DataFiles.save_file["quests"][quest_name] = "new"
 
+decoration_voucher_reward = {
+    "decoration_coin": 1
+}
+
 construct_shipgirls_quest = Quest(
     "construct_shipgirls",
     construct_shipgirls_pre_quest_dialogue,
@@ -261,7 +270,8 @@ construct_shipgirls_quest = Quest(
     None,
     None,
     construct_shipgirls_on_start,
-    construct_shipgirls_on_complete
+    construct_shipgirls_on_complete,
+    decoration_voucher_reward
 )
 
 first_sortie_pre_quest_dialogue = [
@@ -384,7 +394,8 @@ first_sortie_quest = Quest(
     first_sortie_completion_criteria,
     None,
     first_sortie_on_start,
-    first_sortie_on_complete
+    first_sortie_on_complete,
+    decoration_voucher_reward
 )
 
 inventory_pre_quest_dialogue = [
@@ -439,7 +450,8 @@ inventory_quest = Quest(
     inventory_completion_criteria,
     inventory_tutorial_draw,
     inventory_on_start,
-    inventory_on_complete
+    inventory_on_complete,
+    decoration_voucher_reward
 )
 
 intel_center_pre_quest_dialogue = [
@@ -506,7 +518,8 @@ intel_center_quest = Quest(
     intel_center_completion_criteria,
     intel_center_tutorial_draw,
     intel_center_on_start,
-    intel_center_on_complete
+    intel_center_on_complete,
+    decoration_voucher_reward
 )
 
 research_shipgirl_pre_quest_dialogue = [
@@ -537,7 +550,8 @@ research_shipgirl_quest = Quest(
     None,
     None,
     research_shipgirl_on_start,
-    research_shipgirl_on_complete
+    research_shipgirl_on_complete,
+    decoration_voucher_reward
 )
 
 construct_shipgirl_pre_quest_dialogue = [
@@ -563,7 +577,8 @@ construct_shipgirl_quest = Quest(
     None,
     None,
     construct_shipgirl_on_start,
-    construct_shipgirl_on_complete
+    construct_shipgirl_on_complete,
+    decoration_voucher_reward
 )
 
 craft_weapon_pre_quest_dialogue = [
@@ -630,7 +645,8 @@ craft_weapon_quest = Quest(
     craft_weapon_completion_criteria,
     craft_weapon_tutorial_draw,
     craft_weapon_on_start,
-    craft_weapon_on_complete
+    craft_weapon_on_complete,
+    decoration_voucher_reward
 )
 
 equip_weapon_pre_quest_dialogue = [
@@ -695,7 +711,8 @@ equip_weapon_quest = Quest(
     None,
     None,
     equip_weapon_on_start,
-    equip_weapon_on_complete
+    equip_weapon_on_complete,
+    decoration_voucher_reward
 )
 
 quests = [

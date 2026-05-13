@@ -33,7 +33,10 @@
 		"huggy_pillow": { "left": 0, "top": 384, "width": 64, "height": 64 },
 		"dragon_cannon": { "left": 64, "top": 384, "width": 64, "height": 64 },
 		"battle_mech": { "left": 128, "top": 384, "width": 64, "height": 64 },
-		"star_blaster": { "left": 192, "top": 384, "width": 64, "height": 64 }
+		"star_blaster": { "left": 192, "top": 384, "width": 64, "height": 64 },
+
+		"placeholder": { "left": 256, "top": 0, "width": 64, "height": 64 },
+		"decoration_coin": { "left": 256, "top": 64, "width": 64, "height": 64 }
 	},
 	"user_interface": {
 		"TB_point_up": { "left": 0, "top": 0, "width": 64, "height": 64 },

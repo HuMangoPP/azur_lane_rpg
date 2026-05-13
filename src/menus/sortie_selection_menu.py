@@ -333,7 +333,4 @@ class SortieSelectionMenu:
                     top=title_card_rect.bottom + 2*Box.PADDING + font.font_height + (i//3)*(Box.HEIGHT+Box.PADDING)
                 )
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                if reward in DataFiles.sprites["entity"]:
-                    surface.blit(DataFiles.sprites["entity"][reward], rect)
-                else:
-                    font.render(surface, reward, rect.center, Color.WHITE, 1, style="center")
+                surface.blit(DataFiles.get_entity_sprite(reward), rect)

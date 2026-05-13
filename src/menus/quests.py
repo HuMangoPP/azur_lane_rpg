@@ -108,7 +108,7 @@ class Quest:
         tutorial_draw,
         on_start,
         on_complete,
-        rewards={}
+        rewards
     ):
         self.quest_id = quest_id
 
@@ -240,10 +240,8 @@ class Quest:
 
         if show_reward:
             for rect, (reward, amt) in zip(self.reward_rects, self.rewards.items()):
-                if reward in DataFiles.sprites["entity"]:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                    surface.blit(DataFiles.sprites["entity"][reward], rect)
-                    font.render(surface, str(amt), rect.center, Color.WHITE, 1, style="center")
-                else:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                    font.render(surface, f"{reward} ({amt})", rect.center, Color.WHITE, 1, style="center")
+                if reward.startswith("placeholder"):
+                    reward = "placeholder"
+                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                surface.blit(DataFiles.get_entity_sprite(reward), rect)
+                font.render(surface, str(amt), rect.center, Color.WHITE, 1, style="center")

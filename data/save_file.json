@@ -1,34 +1,13 @@
 {
-	"unlocked_factions": ["USS"],
-	"shipgirls": {
-		"laffey": {
-			"equipment": [null, null, null],
-			"exp": 3
-		},
-		"new_jersey": {
-			"equipment": [null, null, null],
-			"exp": 3
-		}
-	},
+	"unlocked_factions": [],
+	"shipgirls": {},
 	"equipment": {},
-	"inventory": {
-		"DD_blueprint": 0,
-		"BB_blueprint": 0,
-		"wisdom_cube": 0,
-		"huggy_pillow": 0,
-		"dragon_cannon": 0,
-		"CA_blueprint": 1
-	},
-	"research_target": "guam",
+	"inventory": {},
+	"research_target": null,
 	"research_progress": 0,
-	"sortie_progress": 1,
+	"sortie_progress": 0,
 	"chapter_progress": 0,
 	"quests": {
-		"choose_faction": "completed",
-		"construct_shipgirls": "completed",
-		"first_sortie": "completed",
-		"inventory": "completed",
-		"intel_center": "completed",
-		"research_shipgirl": "completed"
+		"choose_faction": "new"
 	}
 }
