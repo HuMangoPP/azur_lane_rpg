@@ -13,6 +13,7 @@ class PortMenu:
     SHIPYARD = 1
     GEAR_LAB = 2
     INTEL_CENTER = 3
+    DECORATION_STORE = 4
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -47,21 +48,23 @@ class PortMenu:
         self.visited_inventory = False
         self.visited_intel_center = False
 
+        num_overlay_buttons = 6
+
         def open_overlay_factory(overlay_enum):
             def open_overlay():
                 self.current_overlay = overlay_enum
 
                 if overlay_enum == self.SHIPYARD:
                     if DataFiles.save_file["research_target"] is not None:
-                        self.overlay_selected_entity = DataFiles.save_file["research_target"]
-                        self.overlay_confirm_button.active = True
-                        unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
+                        self.blueprint_selected_item = DataFiles.save_file["research_target"]
+                        self.blueprint_confirm_button.active = True
+                        unique_item = DataFiles.shipgirl_data[self.blueprint_selected_item]["unique_item"]
                         if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                            self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
-                            self.overlay_confirm_button.text = "construct"
+                            self.blueprint_confirm_button.sprite = DataFiles.sprites["user_interface"]["gear_lab"]
+                            self.blueprint_confirm_button.text = "construct"
                         else:
-                            self.overlay_confirm_button.sprite = DataFiles.sprites["user_interface"]["research"]
-                            self.overlay_confirm_button.text = "research"
+                            self.blueprint_confirm_button.sprite = DataFiles.sprites["user_interface"]["research"]
+                            self.blueprint_confirm_button.text = "research"
                     
                     for i, faction in enumerate(self.shipgirl_filters):
                         if DataFiles.save_file["unlocked_factions"][0] == faction:
@@ -73,7 +76,7 @@ class PortMenu:
         self.open_depot_overlay_button = Button(
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(1/6),
+                centerx=screen_x(1/(num_overlay_buttons+1)),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             open_overlay_factory(self.DEPOT),
@@ -87,7 +90,7 @@ class PortMenu:
         self.open_intel_center_overlay_button = Button(
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(2/6),
+                centerx=screen_x(2/(num_overlay_buttons+1)),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             open_overlay_factory(self.INTEL_CENTER),
@@ -101,7 +104,7 @@ class PortMenu:
         self.open_shipyard_overlay_button = Button(
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(3/6),
+                centerx=screen_x(3/(num_overlay_buttons+1)),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             open_overlay_factory(self.SHIPYARD),
@@ -116,7 +119,7 @@ class PortMenu:
         self.open_gear_lab_overlay_button = Button(
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(4/6),
+                centerx=screen_x(4/(num_overlay_buttons+1)),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             open_overlay_factory(self.GEAR_LAB),
@@ -124,6 +127,21 @@ class PortMenu:
             background_styling={
                 "background_color": Color.BLACK,
                 "background_img": DataFiles.sprites["user_interface"]["gear_lab"],
+                "opacity": 160,
+            }
+        )
+
+        self.open_decoration_store_overlay_button = Button(
+            get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=screen_x(5/(num_overlay_buttons+1)),
+                bottom=Box.BOTTOM_OF_SCREEN
+            ),
+            open_overlay_factory(self.DECORATION_STORE),
+            active=True,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["port"],
                 "opacity": 160,
             }
         )
@@ -214,9 +232,9 @@ class PortMenu:
             ) for i in range(2*num_icons_per_row)
         ]
 
-        def overlay_confirm():
+        def blueprint_confirm():
             if self.current_overlay == self.SHIPYARD:
-                selected_entity_info = DataFiles.shipgirl_data[self.overlay_selected_entity]
+                selected_entity_info = DataFiles.shipgirl_data[self.blueprint_selected_item]
                 hull_type = selected_entity_info["hull_type"]
                 unique_item = selected_entity_info["unique_item"]
                 selected_entity_reqs = {
@@ -226,33 +244,33 @@ class PortMenu:
                 }
                 if all(DataFiles.save_file["inventory"].get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items()):
                     num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
-                    DataFiles.save_file["shipgirls"][self.overlay_selected_entity] = {
+                    DataFiles.save_file["shipgirls"][self.blueprint_selected_item] = {
                         "equipment": [None, None, None],
                         "exp": Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
                     }
-                    shipgirl = Shipgirl(self.overlay_selected_entity, True)
+                    shipgirl = Shipgirl(self.blueprint_selected_item, True)
                     self.menu_manager.available_shipgirls.append(shipgirl)
                     for ingredient, req in selected_entity_reqs.items():
                         DataFiles.save_file["inventory"][ingredient] -= req
                     DataFiles.save_file["research_target"] = None
-                    self.overlay_selected_entity = None
-                    self.overlay_confirm_button.active = False
+                    self.blueprint_selected_item = None
+                    self.blueprint_confirm_button.active = False
                 else:
-                    DataFiles.save_file["research_target"] = self.overlay_selected_entity
+                    DataFiles.save_file["research_target"] = self.blueprint_selected_item
             elif self.current_overlay == self.GEAR_LAB:
-                selected_entity_reqs = DataFiles.equipment_data[self.overlay_selected_entity]["craft_reqs"]
+                selected_entity_reqs = DataFiles.equipment_data[self.blueprint_selected_item]["craft_reqs"]
                 if all(DataFiles.save_file["inventory"].get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items()):
-                    DataFiles.save_file["equipment"][self.overlay_selected_entity] = DataFiles.save_file["equipment"].get(self.overlay_selected_entity, 0) + 1
+                    DataFiles.save_file["equipment"][self.blueprint_selected_item] = DataFiles.save_file["equipment"].get(self.blueprint_selected_item, 0) + 1
                     for ingredient, req in selected_entity_reqs.items():
                         DataFiles.save_file["inventory"][ingredient] -= req
 
-        self.overlay_confirm_button = Button(
+        self.blueprint_confirm_button = Button(
             get_rect(
                 width=2*Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx,
                 bottom=self.blueprint_page.bottom-Box.PADDING
             ),
-            overlay_confirm,
+            blueprint_confirm,
             active=False,
             background_styling={
                 "background_img": None,
@@ -266,7 +284,7 @@ class PortMenu:
                 "text_color": Color.WHITE
             }
         )
-        self.overlay_selected_entity = None
+        self.blueprint_selected_item = None
 
         self.depot_overlay = get_rect(
             width=6*(Box.WIDTH+Box.PADDING) + Box.PADDING,
@@ -274,13 +292,47 @@ class PortMenu:
             center=(screen_x(0.5), screen_y(0.5))
         )
 
+        self.store_overlay = get_rect(
+            width=5*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+            height=4*(Box.HEIGHT+Box.PADDING) + Box.PADDING,
+            right=screen_x(0.5),
+            centery=screen_y(0.5)
+        )
+        self.store_checkout_overlay = get_rect(
+            width=3*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+            height=self.store_overlay.height,
+            left=screen_x(0.5) + Box.PADDING,
+            centery=screen_y(0.5)
+        )
+
+        def store_confirm():
+            ...
+
+        self.store_confirm_button = Button(
+            get_rect(
+                width=2*Box.WIDTH, height=Box.HEIGHT,
+                centerx=self.store_checkout_overlay.centerx,
+                bottom=self.store_checkout_overlay.bottom-Box.PADDING
+            ),
+            store_confirm,
+            active=True,
+            background_styling={
+                "background_color": Color.CARGO_BOX,
+            },
+            text_styling={
+                "text": "buy decoration",
+                "text_color": Color.WHITE
+            }
+        )
+        self.store_selected_item = None
+
         def open_select_sortie_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
 
         self.open_select_sortie_menu_button = Button(
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(5/6),
+                centerx=screen_x(6/(num_overlay_buttons+1)),
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             open_select_sortie_menu,
@@ -328,6 +380,7 @@ class PortMenu:
                 self.open_shipyard_overlay_button.click(event.pos)
                 self.open_gear_lab_overlay_button.click(event.pos)
                 self.open_intel_center_overlay_button.click(event.pos)
+                self.open_decoration_store_overlay_button.click(event.pos)
 
                 for choose_faction_button in self.choose_faction_buttons:
                     choose_faction_button.click(event.pos)
@@ -353,39 +406,48 @@ class PortMenu:
         if self.current_overlay == self.DEPOT:
             if not self.depot_overlay.collidepoint(mouseup_event.pos):
                 self.current_overlay = self.NO_OVERLAY
-                self.overlay_selected_entity = None
-                self.overlay_confirm_button.active = False
+                self.blueprint_selected_item = None
+                self.blueprint_confirm_button.active = False
+                self.selected_overlay_filter = 0
+        elif self.current_overlay == self.DECORATION_STORE:
+            if (
+                not self.store_overlay.collidepoint(mouseup_event.pos)
+                and not self.store_checkout_overlay.collidepoint(mouseup_event.pos)
+            ):
+                self.current_overlay = self.NO_OVERLAY
+                self.blueprint_selected_item = None
+                self.blueprint_confirm_button.active = False
                 self.selected_overlay_filter = 0
         else:
             if (
                 not self.dossier_overlay.collidepoint(mouseup_event.pos)
                 and (
-                    self.overlay_selected_entity is None
+                    self.blueprint_selected_item is None
                     or not self.blueprint_page.collidepoint(mouseup_event.pos)
                 )
             ):
                 self.current_overlay = self.NO_OVERLAY
-                self.overlay_selected_entity = None
-                self.overlay_confirm_button.active = False
+                self.blueprint_selected_item = None
+                self.blueprint_confirm_button.active = False
                 self.selected_overlay_filter = 0
 
     def overlay_mouseup_logic(self, mouseup_event, entities, entity_filters, activate_confirm_button):
         for entity, rect in zip(entities, self.dossier_icons):
             if rect.collidepoint(mouseup_event.pos):
-                self.overlay_selected_entity = entity
-                self.overlay_confirm_button.active = activate_confirm_button
+                self.blueprint_selected_item = entity
+                self.blueprint_confirm_button.active = activate_confirm_button
 
                 if self.current_overlay == self.SHIPYARD:
-                    unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
+                    unique_item = DataFiles.shipgirl_data[self.blueprint_selected_item]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                        self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["gear_lab"]
-                        self.overlay_confirm_button.text = "construct"
+                        self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["gear_lab"]
+                        self.blueprint_confirm_button.text = "construct"
                     else:
-                        self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["research"]
-                        self.overlay_confirm_button.text = "research"
+                        self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["research"]
+                        self.blueprint_confirm_button.text = "research"
                 else:
-                    self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["gear_lab"]
-                    self.overlay_confirm_button.text = "construct"
+                    self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["gear_lab"]
+                    self.blueprint_confirm_button.text = "construct"
         
         for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
             if rect.collidepoint(mouseup_event.pos):
@@ -424,11 +486,11 @@ class PortMenu:
             surface.blit(image, image_rect)
             pygame.draw.rect(surface, Color.BLACK, rect, width=Box.OUTLINE_WIDTH)
         
-        if self.overlay_selected_entity:
+        if self.blueprint_selected_item:
             pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
             surface.blit(DataFiles.sprites["user_interface"]["port_menu_blueprint"], self.blueprint_page)
-            font.render(surface, self.overlay_selected_entity, self.blueprint_name, Color.WHITE, 1, style="center")
-            surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), self.blueprint_icon)
+            font.render(surface, self.blueprint_selected_item, self.blueprint_name, Color.WHITE, 1, style="center")
+            surface.blit(DataFiles.get_entity_sprite(self.blueprint_selected_item), self.blueprint_icon)
             pygame.draw.rect(surface, Color.WHITE, self.blueprint_icon, width=Box.OUTLINE_WIDTH)
 
             icon_size = 32 # TODO
@@ -478,6 +540,8 @@ class PortMenu:
                 xy = (rect.centerx, rect.top+0.67*rect.height)
                 font.render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
+        self.blueprint_confirm_button.draw(surface, font)
+
     def update_shipyard_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
@@ -490,7 +554,7 @@ class PortMenu:
                     and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
                 ]
                 self.overlay_mouseup_logic(event, shipgirls, self.shipgirl_filters, True)
-                self.overlay_confirm_button.click(event.pos)
+                self.blueprint_confirm_button.click(event.pos)
 
     def draw_shipyard_overlay(self, surface, font):
         shipgirls = [
@@ -499,8 +563,8 @@ class PortMenu:
             and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
             and shipgirl_info["faction"] == self.shipgirl_filters[self.selected_overlay_filter]
         ]
-        if self.overlay_selected_entity:
-            selected_entity_info = DataFiles.shipgirl_data.get(self.overlay_selected_entity, {})
+        if self.blueprint_selected_item:
+            selected_entity_info = DataFiles.shipgirl_data.get(self.blueprint_selected_item, {})
             hull_type = selected_entity_info["hull_type"]
             unique_item = selected_entity_info["unique_item"]
             inventory = DataFiles.save_file["inventory"]
@@ -549,7 +613,7 @@ class PortMenu:
                         and equip_data["equippable_by"] == self.equipment_filters[self.selected_overlay_filter]
                     ]
                 self.overlay_mouseup_logic(event, equipment, self.equipment_filters, True)
-                self.overlay_confirm_button.click(event.pos)
+                self.blueprint_confirm_button.click(event.pos)
 
     def draw_gear_lab_overlay(self, surface, font):
         if self.selected_overlay_filter == 4: # TODO
@@ -563,8 +627,8 @@ class PortMenu:
                 if equip_data["type"] == "weapon"
                 and equip_data["equippable_by"] == self.equipment_filters[self.selected_overlay_filter]
             ]
-        if self.overlay_selected_entity:
-            selected_entity_info = DataFiles.equipment_data.get(self.overlay_selected_entity)
+        if self.blueprint_selected_item:
+            selected_entity_info = DataFiles.equipment_data.get(self.blueprint_selected_item)
             crafting_reqs = selected_entity_info.get("craft_reqs")
             inventory = DataFiles.save_file["inventory"]
             crafting_icons = [
@@ -593,7 +657,7 @@ class PortMenu:
     def update_intel_center_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                if self.overlay_selected_entity is not None:
+                if self.blueprint_selected_item is not None:
                     self.visited_intel_center = True
 
                 self.exit_overlay(event)
@@ -608,8 +672,8 @@ class PortMenu:
             siren for siren in self.encountered_sirens
             if siren.startswith(self.siren_filters[self.selected_overlay_filter])
         ]
-        if self.overlay_selected_entity:
-            selected_entity_info = DataFiles.siren_data.get(self.overlay_selected_entity)
+        if self.blueprint_selected_item:
+            selected_entity_info = DataFiles.siren_data.get(self.blueprint_selected_item)
             drop_rates = selected_entity_info["drops"]
             drop_icons = [
                 (drop, str(drop_rate))
@@ -635,6 +699,51 @@ class PortMenu:
             drop_icons
         )
 
+    def update_decoration_store_overlay(self, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                self.exit_overlay(event)
+
+                num_items_in_row = (self.store_overlay.width - Box.PADDING) // (Box.WIDTH+Box.PADDING)
+                padding = (self.store_overlay.width - 2*Box.PADDING - num_items_in_row*Box.WIDTH) / (num_items_in_row-1)
+                for i, item in enumerate(DataFiles.decoration_store):
+                    left = self.store_overlay.left + Box.PADDING + (i%num_items_in_row)*(Box.WIDTH + padding)
+                    top = self.store_overlay.top + Box.PADDING + (i//num_items_in_row)*(Box.HEIGHT+padding)
+                    rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
+                    if rect.collidepoint(event.pos):
+                        self.store_selected_item = item
+
+    def draw_decoration_store_overlay(self, surface, font):
+        pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.store_overlay)
+
+        num_items_in_row = (self.store_overlay.width - Box.PADDING) // (Box.WIDTH+Box.PADDING)
+        padding = (self.store_overlay.width - 2*Box.PADDING - num_items_in_row*Box.WIDTH) / (num_items_in_row-1)
+        for i, item in enumerate(DataFiles.decoration_store):
+            left = self.store_overlay.left + Box.PADDING + (i%num_items_in_row)*(Box.WIDTH + padding)
+            top = self.store_overlay.top + Box.PADDING + (i//num_items_in_row)*(Box.HEIGHT+padding)
+            rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
+            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
+            surface.blit(DataFiles.get_entity_sprite(item), rect)
+        
+        if self.store_selected_item is not None:
+            pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.store_checkout_overlay)
+            font.render(
+                surface,
+                self.store_selected_item,
+                (self.store_checkout_overlay.centerx, self.store_checkout_overlay.top + Box.PADDING + font.font_height/2),
+                Color.WHITE,
+                1,
+                style="center"
+            )
+            rect = get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=self.store_checkout_overlay.centerx,
+                top=self.store_checkout_overlay.top + 2*Box.PADDING + font.font_height
+            )
+            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
+            surface.blit(DataFiles.get_entity_sprite(item), rect)
+            self.store_confirm_button.draw(surface, font)
+
     def update(self, dt, events):
         if self.current_overlay == self.NO_OVERLAY:
             self.update_no_overlay(events)
@@ -649,7 +758,9 @@ class PortMenu:
             self.update_gear_lab_overlay(events)
         elif self.current_overlay == self.INTEL_CENTER:
             self.update_intel_center_overlay(events)
-        
+        elif self.current_overlay == self.DECORATION_STORE:
+            self.update_decoration_store_overlay(events)
+
         for shipgirl in self.menu_manager.available_shipgirls:
             shipgirl.update(dt)
 
@@ -662,18 +773,18 @@ class PortMenu:
         self.open_shipyard_overlay_button.draw(surface, font)
         self.open_gear_lab_overlay_button.draw(surface, font)
         self.open_intel_center_overlay_button.draw(surface, font)
+        self.open_decoration_store_overlay_button.draw(surface, font)
 
-        if self.current_overlay != self.NO_OVERLAY:
-            if self.current_overlay == self.DEPOT:
-                self.draw_inventory_overlay(surface, font)
-            if self.current_overlay == self.SHIPYARD: 
-                self.draw_shipyard_overlay(surface, font)
-            elif self.current_overlay == self.GEAR_LAB:
-                self.draw_gear_lab_overlay(surface, font)
-            elif self.current_overlay == self.INTEL_CENTER:
-                self.draw_intel_center_overlay(surface, font)
-
-            self.overlay_confirm_button.draw(surface, font)
+        if self.current_overlay == self.DEPOT:
+            self.draw_inventory_overlay(surface, font)
+        if self.current_overlay == self.SHIPYARD: 
+            self.draw_shipyard_overlay(surface, font)
+        elif self.current_overlay == self.GEAR_LAB:
+            self.draw_gear_lab_overlay(surface, font)
+        elif self.current_overlay == self.INTEL_CENTER:
+            self.draw_intel_center_overlay(surface, font)
+        elif self.current_overlay == self.DECORATION_STORE:
+            self.draw_decoration_store_overlay(surface, font)
     
         self.menu_manager.quest_manager.draw(surface, font)
         for choose_faction_button in self.choose_faction_buttons:

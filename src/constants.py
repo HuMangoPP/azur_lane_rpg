@@ -119,6 +119,9 @@ class DataFiles:
 
     with open("data/equipment.json") as f:
         equipment_data = json.load(f)
+
+    with open("data/decoration_store.json") as f:
+        decoration_store = json.load(f)
     
     sprites = load_sprites()
 
