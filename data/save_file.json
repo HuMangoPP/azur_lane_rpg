@@ -3,9 +3,14 @@
     "shipgirls": {},
     "equipment": {},
     "inventory": {
-        "decoration_coin": 10
+        "decoration_coin": 0
     },
-    "decorations": {},
+    "decoration_depot": {
+        "bed": 4,
+        "couch": 3,
+        "coffee_table": 3
+    },
+	"decorations": [],
     "research_target": null,
     "research_progress": 0,
     "sortie_progress": 0,

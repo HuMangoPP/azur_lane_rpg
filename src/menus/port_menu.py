@@ -306,13 +306,13 @@ class PortMenu:
         )
 
         def store_confirm():
-            DataFiles.save_file["decorations"][self.store_selected_item] = (
-                DataFiles.save_file["decorations"].get(self.store_selected_item, 0) + 1
+            DataFiles.save_file["decoration_depot"][self.store_selected_item] = (
+                DataFiles.save_file["decoration_depot"].get(self.store_selected_item, 0) + 1
             )
             DataFiles.save_file["inventory"]["decoration_coin"] = (
                 DataFiles.save_file["inventory"].get("decoration_coin", 0) - 1
             )
-            if DataFiles.save_file["inventory"].get("decoration_coin", 0) <= 0:
+            if DataFiles.save_file["inventory"]["decoration_coin"] <= 0:
                 self.store_confirm_button.active = False
 
         self.store_confirm_button = Button(
@@ -332,6 +332,29 @@ class PortMenu:
             }
         )
         self.store_selected_item = None
+
+        def open_close_decoration_menu():
+            self.decorating_port_menu = not self.decorating_port_menu
+
+        self.open_close_decoration_menu_button = Button(
+            rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
+            callback=open_close_decoration_menu,
+            active=True,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["port"],
+                "opacity": 160,
+            }
+        )
+        self.decorating_port_menu = False
+
+        self.decoration_depot_overlay = get_rect(
+            width=3*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+            height=3*(Box.HEIGHT+Box.PADDING) + Box.PADDING,
+            left=Box.LEFT_OF_SCREEN,
+            top=Box.TOP_OF_SCREEN
+        )
+        self.selected_decoration_in_depot = None
 
         def open_select_sortie_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
@@ -388,6 +411,7 @@ class PortMenu:
                 self.open_gear_lab_overlay_button.click(event.pos)
                 self.open_intel_center_overlay_button.click(event.pos)
                 self.open_decoration_store_overlay_button.click(event.pos)
+                self.open_close_decoration_menu_button.click(event.pos)
 
                 for choose_faction_button in self.choose_faction_buttons:
                     choose_faction_button.click(event.pos)
@@ -753,8 +777,40 @@ class PortMenu:
             surface.blit(DataFiles.get_entity_sprite(item), rect)
             self.store_confirm_button.draw(surface, font)
 
+    def update_decorate_port_menu_overlay(self, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                self.open_close_decoration_menu_button.click(event.pos)
+            
+                if self.decoration_depot_overlay.collidepoint(event.pos):
+                    decoration_index = 0
+                    for decoration, amt in DataFiles.save_file["decoration_depot"].items():
+                        if amt <= 0:
+                            continue
+                        rect = get_rect(
+                            width=Box.WIDTH, height=Box.HEIGHT,
+                            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+                            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+                        )
+                        if rect.collidepoint(event.pos):
+                            if self.selected_decoration_in_depot == decoration:
+                                self.selected_decoration_in_depot = None
+                            else:
+                                self.selected_decoration_in_depot = decoration
+                        decoration_index += 1
+                elif self.selected_decoration_in_depot is not None:
+                    DataFiles.save_file["decorations"].append((
+                        self.selected_decoration_in_depot,
+                        event.pos
+                    ))
+                    DataFiles.save_file["decoration_depot"][self.selected_decoration_in_depot] -= 1
+                    if DataFiles.save_file["decoration_depot"][self.selected_decoration_in_depot] <= 0:
+                        self.selected_decoration_in_depot = None
+
     def update(self, dt, events):
-        if self.current_overlay == self.NO_OVERLAY:
+        if self.decorating_port_menu:
+            self.update_decorate_port_menu_overlay(events)
+        elif self.current_overlay == self.NO_OVERLAY:
             self.update_no_overlay(events)
         elif self.current_overlay == self.DEPOT:
             for event in events:
@@ -776,8 +832,36 @@ class PortMenu:
     def draw(self, surface, font):
         for shipgirl in self.menu_manager.available_shipgirls:
             shipgirl.draw(surface, font)
-        self.open_select_sortie_menu_button.draw(surface, font)
+        
+        for decoration, pos in DataFiles.save_file["decorations"]:
+            sprite = DataFiles.get_entity_sprite(decoration)
+            rect = sprite.get_rect()
+            rect.center = pos
+            surface.blit(sprite, rect)
+            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
 
+        self.open_close_decoration_menu_button.draw(surface, font)
+        if self.decorating_port_menu:
+            pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.decoration_depot_overlay)
+            decoration_index = 0
+            for decoration, amt in DataFiles.save_file["decoration_depot"].items():
+                if amt <= 0:
+                    continue
+                rect = get_rect(
+                    width=Box.WIDTH, height=Box.HEIGHT,
+                    left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+                    top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+                )
+                sprite = DataFiles.get_entity_sprite(decoration)
+                pygame.draw.rect(surface, Color.CARGO_BOX, rect)
+                surface.blit(sprite, rect)
+                font.render(surface,str(amt),rect.center,Color.WHITE,1,style="center",outline_color=Color.BLACK)
+                if self.selected_decoration_in_depot == decoration:
+                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                decoration_index += 1
+            return
+        
+        self.open_select_sortie_menu_button.draw(surface, font)
         self.open_depot_overlay_button.draw(surface, font)
         self.open_shipyard_overlay_button.draw(surface, font)
         self.open_gear_lab_overlay_button.draw(surface, font)
