@@ -1,13 +1,16 @@
 {
-	"unlocked_factions": [],
-	"shipgirls": {},
-	"equipment": {},
-	"inventory": {},
-	"research_target": null,
-	"research_progress": 0,
-	"sortie_progress": 0,
-	"chapter_progress": 0,
-	"quests": {
-		"choose_faction": "new"
-	}
+    "unlocked_factions": [],
+    "shipgirls": {},
+    "equipment": {},
+    "inventory": {
+        "decoration_coin": 10
+    },
+    "decorations": {},
+    "research_target": null,
+    "research_progress": 0,
+    "sortie_progress": 0,
+    "chapter_progress": 0,
+    "quests": {
+        "choose_faction": "new"
+    }
 }

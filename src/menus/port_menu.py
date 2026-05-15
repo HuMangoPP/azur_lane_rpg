@@ -306,7 +306,14 @@ class PortMenu:
         )
 
         def store_confirm():
-            ...
+            DataFiles.save_file["decorations"][self.store_selected_item] = (
+                DataFiles.save_file["decorations"].get(self.store_selected_item, 0) + 1
+            )
+            DataFiles.save_file["inventory"]["decoration_coin"] = (
+                DataFiles.save_file["inventory"].get("decoration_coin", 0) - 1
+            )
+            if DataFiles.save_file["inventory"].get("decoration_coin", 0) <= 0:
+                self.store_confirm_button.active = False
 
         self.store_confirm_button = Button(
             get_rect(
@@ -315,7 +322,7 @@ class PortMenu:
                 bottom=self.store_checkout_overlay.bottom-Box.PADDING
             ),
             store_confirm,
-            active=True,
+            active=False,
             background_styling={
                 "background_color": Color.CARGO_BOX,
             },
@@ -406,18 +413,17 @@ class PortMenu:
         if self.current_overlay == self.DEPOT:
             if not self.depot_overlay.collidepoint(mouseup_event.pos):
                 self.current_overlay = self.NO_OVERLAY
-                self.blueprint_selected_item = None
-                self.blueprint_confirm_button.active = False
-                self.selected_overlay_filter = 0
         elif self.current_overlay == self.DECORATION_STORE:
             if (
                 not self.store_overlay.collidepoint(mouseup_event.pos)
-                and not self.store_checkout_overlay.collidepoint(mouseup_event.pos)
+                and (
+                    self.store_selected_item is None
+                    or not self.store_checkout_overlay.collidepoint(mouseup_event.pos)
+                )
             ):
                 self.current_overlay = self.NO_OVERLAY
-                self.blueprint_selected_item = None
-                self.blueprint_confirm_button.active = False
-                self.selected_overlay_filter = 0
+                self.store_selected_item = None
+                self.store_confirm_button.active = False
         else:
             if (
                 not self.dossier_overlay.collidepoint(mouseup_event.pos)
@@ -540,7 +546,7 @@ class PortMenu:
                 xy = (rect.centerx, rect.top+0.67*rect.height)
                 font.render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        self.blueprint_confirm_button.draw(surface, font)
+            self.blueprint_confirm_button.draw(surface, font)
 
     def update_shipyard_overlay(self, events):
         for event in events:
@@ -712,6 +718,9 @@ class PortMenu:
                     rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
                     if rect.collidepoint(event.pos):
                         self.store_selected_item = item
+                        self.store_confirm_button.active = DataFiles.save_file["inventory"].get("decoration_coin", 0) > 0
+
+                self.store_confirm_button.click(event.pos)
 
     def draw_decoration_store_overlay(self, surface, font):
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.store_overlay)
