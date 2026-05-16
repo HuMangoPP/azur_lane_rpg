@@ -834,9 +834,14 @@ class PortMenu:
             shipgirl.draw(surface, font)
         
         for decoration, pos in DataFiles.save_file["decorations"]:
-            sprite = DataFiles.get_entity_sprite(decoration)
-            rect = sprite.get_rect()
-            rect.center = pos
+            if decoration in DataFiles.sprites["decorations"]:
+                sprite = DataFiles.sprites["decorations"][decoration]
+                rect = sprite.get_rect() # TODO
+                rect.center = pos
+            else:
+                sprite = DataFiles.get_entity_sprite(decoration)
+                rect = sprite.get_rect()
+                rect.center = pos
             surface.blit(sprite, rect)
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
 

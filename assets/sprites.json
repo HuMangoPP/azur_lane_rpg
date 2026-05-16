@@ -36,7 +36,10 @@
 		"star_blaster": { "left": 192, "top": 384, "width": 64, "height": 64 },
 
 		"placeholder": { "left": 256, "top": 0, "width": 64, "height": 64 },
-		"decoration_coin": { "left": 256, "top": 64, "width": 64, "height": 64 }
+		"decoration_coin": { "left": 256, "top": 64, "width": 64, "height": 64 },
+		"chair": { "left": 256, "top": 128, "width": 64, "height": 64 },
+		"table": { "left": 256, "top": 192, "width": 64, "height": 64 },
+		"bed": { "left": 256, "top": 256, "width": 64, "height": 64 }
 	},
 	"user_interface": {
 		"TB_point_up": { "left": 0, "top": 0, "width": 64, "height": 64 },
@@ -110,5 +113,10 @@
 	},
 	"sortie_selection": {
 		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 }
+	},
+	"decorations": {
+		"bed": { "left": 0, "top": 0, "width": 64, "height": 96 },
+		"chair": { "left": 64, "top": 0, "width": 32, "height": 64 },
+		"table": { "left": 96, "top": 0, "width": 64, "height": 64 }
 	}
 }
