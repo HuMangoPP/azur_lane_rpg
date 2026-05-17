@@ -7,8 +7,8 @@
     },
     "decoration_depot": {
         "bed": 4,
-        "chair": 3,
-        "table": 3
+        "chair": 4,
+        "table": 2
     },
 	"decorations": [],
     "research_target": null,

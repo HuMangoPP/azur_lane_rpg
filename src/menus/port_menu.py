@@ -799,10 +799,9 @@ class PortMenu:
                                 self.selected_decoration_in_depot = decoration
                         decoration_index += 1
                 elif self.selected_decoration_in_depot is not None:
-                    DataFiles.save_file["decorations"].append((
-                        self.selected_decoration_in_depot,
-                        event.pos
-                    ))
+                    tilesize = 32 # TODO
+                    tilepos = (event.pos[0] // tilesize,event.pos[1] // tilesize)
+                    DataFiles.save_file["decorations"].append((self.selected_decoration_in_depot,tilepos))
                     DataFiles.save_file["decoration_depot"][self.selected_decoration_in_depot] -= 1
                     if DataFiles.save_file["decoration_depot"][self.selected_decoration_in_depot] <= 0:
                         self.selected_decoration_in_depot = None
@@ -833,16 +832,45 @@ class PortMenu:
         for shipgirl in self.menu_manager.available_shipgirls:
             shipgirl.draw(surface, font)
         
-        for decoration, pos in DataFiles.save_file["decorations"]:
+        for decoration, tilepos in DataFiles.save_file["decorations"]:
+            tilesize = 32 # TODO
+            rect = get_rect(
+                width=DataFiles.decoration_store[decoration]["width"] * tilesize,
+                height=DataFiles.decoration_store[decoration]["height"] * tilesize,
+                left=tilepos[0] * tilesize,
+                top=tilepos[1] * tilesize
+            )
             if decoration in DataFiles.sprites["decorations"]:
                 sprite = DataFiles.sprites["decorations"][decoration]
-                rect = sprite.get_rect() # TODO
-                rect.center = pos
+                sprite_rect = sprite.get_rect() # TODO
+                sprite_rect.bottomleft = rect.bottomleft
             else:
                 sprite = DataFiles.get_entity_sprite(decoration)
-                rect = sprite.get_rect()
-                rect.center = pos
-            surface.blit(sprite, rect)
+                sprite_rect = sprite.get_rect()
+                sprite_rect.bottomleft = rect.bottomleft
+            surface.blit(sprite, sprite_rect)
+            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+
+        if self.selected_decoration_in_depot:
+            decoration = self.selected_decoration_in_depot
+            mpos = pygame.mouse.get_pos()
+            tilesize = 32 # TODO
+            tilepos = (mpos[0] // tilesize,mpos[1] // tilesize)
+            rect = get_rect(
+                width=DataFiles.decoration_store[decoration]["width"] * tilesize,
+                height=DataFiles.decoration_store[decoration]["height"] * tilesize,
+                left=tilepos[0] * tilesize,
+                top=tilepos[1] * tilesize
+            )
+            if decoration in DataFiles.sprites["decorations"]:
+                sprite = DataFiles.sprites["decorations"][decoration]
+                sprite_rect = sprite.get_rect() # TODO
+                sprite_rect.bottomleft = rect.bottomleft
+            else:
+                sprite = DataFiles.get_entity_sprite(decoration)
+                sprite_rect = sprite.get_rect()
+                sprite_rect.bottomleft = rect.bottomleft
+            surface.blit(sprite, sprite_rect)
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
 
         self.open_close_decoration_menu_button.draw(surface, font)

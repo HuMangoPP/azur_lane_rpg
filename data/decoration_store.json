@@ -1,5 +1,5 @@
 {
-    "bed": {},
-    "chair": {},
-    "table": {}
+	"bed": { "width": 2, "height": 2 },
+	"chair": { "width": 1, "height": 1 },
+	"table": { "width": 2, "height": 1 }
 }

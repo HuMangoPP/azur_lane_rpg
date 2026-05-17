@@ -237,8 +237,8 @@ def construct_shipgirls_tutorial_draw_factory(shipgirls):
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
                 draw_tb(surface, font, None, rect.bottomleft, False, True)
             
-            if menu_manager.port_menu.overlay_selected_entity in shipgirls:
-                button_rect = menu_manager.port_menu.overlay_confirm_button.rect
+            if menu_manager.port_menu.blueprint_selected_item in shipgirls:
+                button_rect = menu_manager.port_menu.blueprint_confirm_button.rect
                 rect = get_rect(
                     width=button_rect.width + 2*Box.PADDING,
                     height=button_rect.height + 2*Box.PADDING,
@@ -483,7 +483,7 @@ def intel_center_tutorial_draw(menu_manager, surface, font):
 
         draw_tb(surface, font, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.INTEL_CENTER:
-        if menu_manager.port_menu.overlay_selected_entity is None:
+        if menu_manager.port_menu.blueprint_selected_item is None:
             siren_rect = menu_manager.port_menu.dossier_icons[0]
             rect = get_rect(
                 width=siren_rect.width + 2*Box.PADDING,
@@ -607,8 +607,8 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font):
 
         draw_tb(surface, font, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.GEAR_LAB:
-        if menu_manager.port_menu.overlay_selected_entity == "twin_120":
-            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
+        if menu_manager.port_menu.blueprint_selected_item == "twin_120":
+            button_rect = menu_manager.port_menu.blueprint_confirm_button.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,
