@@ -847,7 +847,12 @@ class PortMenu:
         for shipgirl in self.menu_manager.available_shipgirls:
             shipgirl.draw(surface, font)
         
-        for decoration, tilepos in DataFiles.save_file["decorations"]:
+        decorations = sorted(
+            DataFiles.save_file["decorations"],
+            key=lambda decoration_data : decoration_data[1][1]
+        )
+
+        for decoration, tilepos in decorations:
             tilesize = 32 # TODO
             rect = get_rect(
                 width=DataFiles.decoration_store[decoration]["width"] * tilesize,
