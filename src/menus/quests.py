@@ -23,9 +23,10 @@ class QuestManager:
             )
             if rect.collidepoint(mpos):
                 self.selected_quest = quest
-                break
+                return True
         else:
             self.selected_quest = None
+        return False
 
     def draw(self, surface, font):
         for i, quest in enumerate(self.quests.values()):

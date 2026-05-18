@@ -23,12 +23,13 @@ class Button:
     
     def click(self, mpos):
         if not self.active:
-            return
+            return False
         
         if not self.rect.collidepoint(mpos):
-            return
+            return False
         
         self.callback()
+        return True
 
     def draw(self, surface, font):
         if not self.active:

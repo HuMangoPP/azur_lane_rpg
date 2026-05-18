@@ -355,6 +355,7 @@ class PortMenu:
             top=Box.TOP_OF_SCREEN
         )
         self.selected_decoration_in_depot = None
+        self.deleting_decoration = False
 
         def open_select_sortie_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
@@ -387,6 +388,8 @@ class PortMenu:
     def update_no_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
+                clicked = False
+
                 selected_quest = self.menu_manager.quest_manager.selected_quest
                 if selected_quest is not None:
                     selected_quest = self.menu_manager.quest_manager.selected_quest
@@ -397,24 +400,30 @@ class PortMenu:
                         elif selected_quest.started:
                             DataFiles.save_file["quests"][selected_quest.quest_id] = "in_progress"
                         self.menu_manager.quest_manager.selected_quest = None
-                    break
+                    continue
+                
+                clicked = (
+                    clicked
+                    or self.menu_manager.quest_manager.select_quest(event.pos)
+                    or self.open_select_sortie_menu_button.click(event.pos)
+                    or self.open_depot_overlay_button.click(event.pos)
+                    or self.open_shipyard_overlay_button.click(event.pos)
+                    or self.open_gear_lab_overlay_button.click(event.pos)
+                    or self.open_intel_center_overlay_button.click(event.pos)
+                    or self.open_decoration_store_overlay_button.click(event.pos)
+                    or self.open_close_decoration_menu_button.click(event.pos)
+                )
+
+                for choose_faction_button in self.choose_faction_buttons:
+                    clicked = clicked or choose_faction_button.click(event.pos)
+
+                if clicked:
+                    continue
 
                 for shipgirl in self.menu_manager.available_shipgirls:
                     if shipgirl.rect.collidepoint(event.pos):
                         self.menu_manager.equipment_menu.selected_shipgirl = shipgirl
                         self.menu_manager.current_menu = self.menu_manager.equipment_menu
-                
-                self.menu_manager.quest_manager.select_quest(event.pos)
-                self.open_select_sortie_menu_button.click(event.pos)
-                self.open_depot_overlay_button.click(event.pos)
-                self.open_shipyard_overlay_button.click(event.pos)
-                self.open_gear_lab_overlay_button.click(event.pos)
-                self.open_intel_center_overlay_button.click(event.pos)
-                self.open_decoration_store_overlay_button.click(event.pos)
-                self.open_close_decoration_menu_button.click(event.pos)
-
-                for choose_faction_button in self.choose_faction_buttons:
-                    choose_faction_button.click(event.pos)
 
     def draw_inventory_overlay(self, surface, font):
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.depot_overlay)
@@ -780,7 +789,10 @@ class PortMenu:
     def update_decorate_port_menu_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                self.open_close_decoration_menu_button.click(event.pos)
+                if self.open_close_decoration_menu_button.click(event.pos):
+                    self.selected_decoration_in_depot = None
+                    self.deleting_decoration = False
+                    continue
             
                 if self.decoration_depot_overlay.collidepoint(event.pos):
                     decoration_index = 0
@@ -797,7 +809,30 @@ class PortMenu:
                                 self.selected_decoration_in_depot = None
                             else:
                                 self.selected_decoration_in_depot = decoration
+                                self.deleting_decoration = False
                         decoration_index += 1
+                    delete_rect = get_rect(
+                        width=Box.WIDTH, height=Box.HEIGHT,
+                        left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+                        top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+                    )
+                    if delete_rect.collidepoint(event.pos):
+                        self.deleting_decoration = not self.deleting_decoration
+                        self.selected_decoration_in_depot = None
+                elif self.deleting_decoration:
+                    tilesize = 32 # TODO
+                    clicked_tilepos = (event.pos[0] // tilesize, event.pos[1] // tilesize)
+                    for decoration_index, (decoration, tilepos_anchor) in enumerate(DataFiles.save_file["decorations"]):
+                        decoration_info = DataFiles.decoration_store[decoration]
+                        if (
+                            tilepos_anchor[0] <= clicked_tilepos[0] < tilepos_anchor[0] + decoration_info["width"]
+                            and tilepos_anchor[1] <= clicked_tilepos[1] < tilepos_anchor[1] + decoration_info["height"]
+                        ):
+                            DataFiles.save_file["decorations"].pop(decoration_index)
+                            DataFiles.save_file["decoration_depot"][decoration] = (
+                                DataFiles.save_file["decoration_depot"].get(decoration, 0) + 1
+                            )
+                            break
                 elif self.selected_decoration_in_depot is not None:
                     occupied_tiles = set() # TODO code optimization
                     for decoration, tilepos_anchor in DataFiles.save_file["decorations"]:
@@ -869,7 +904,28 @@ class PortMenu:
                 sprite_rect = sprite.get_rect()
                 sprite_rect.bottomleft = rect.bottomleft
             surface.blit(sprite, sprite_rect)
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+
+        if self.deleting_decoration:
+            tilesize = 32 # TODO
+            mpos = pygame.mouse.get_pos()
+            hovered_tilepos = (mpos[0] // tilesize, mpos[1] // tilesize)
+            for decoration, tilepos_anchor in DataFiles.save_file["decorations"]:
+                decoration_info = DataFiles.decoration_store[decoration]
+                hovered_decoration_tiles = set()
+                for x in range(decoration_info["width"]):
+                    for y in range(decoration_info["height"]):
+                        tilepos = (tilepos_anchor[0]+x, tilepos_anchor[1]+y)
+                        hovered_decoration_tiles.add(tilepos)
+
+                if hovered_tilepos in hovered_decoration_tiles:
+                    rect = get_rect(
+                        width=decoration_info["width"] * tilesize,
+                        height=decoration_info["height"] * tilesize,
+                        left=tilepos_anchor[0] * tilesize,
+                        top=tilepos_anchor[1] * tilesize
+                    )
+                    pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+                    break
 
         if self.selected_decoration_in_depot:
             occupied_tiles = set() # TODO code optimization
@@ -928,6 +984,16 @@ class PortMenu:
                 if self.selected_decoration_in_depot == decoration:
                     pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 decoration_index += 1
+            delete_rect = get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+                top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+            )
+            pygame.draw.rect(surface, Color.CARGO_BOX, delete_rect)
+            pygame.draw.line(surface, Color.RED, delete_rect.topleft, delete_rect.bottomright, width=Box.OUTLINE_WIDTH)
+            pygame.draw.line(surface, Color.RED, delete_rect.topright, delete_rect.bottomleft, width=Box.OUTLINE_WIDTH)
+            if self.deleting_decoration:
+                pygame.draw.rect(surface, Color.WHITE, delete_rect, width=Box.OUTLINE_WIDTH)
             return
         
         self.open_select_sortie_menu_button.draw(surface, font)
