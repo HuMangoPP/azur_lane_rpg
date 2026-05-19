@@ -258,3 +258,18 @@ warship_polygon = [
 ]
 pygame.draw.lines(blueprint_surf_scaled, Color.WHITE, False, warship_polygon, width=2)
 DataFiles.sprites["user_interface"]["equipment_menu_blueprint"] = blueprint_surf_scaled
+
+tilesize = 32
+num_tiles_in_row = 40
+num_tiles_in_col = 20
+floor_surf = pygame.Surface((num_tiles_in_row*tilesize, num_tiles_in_col*tilesize))
+for i in range(num_tiles_in_row):
+    x = i * tilesize
+    for j in range(num_tiles_in_col):
+        y = j * tilesize
+        if (i + j) % 2:
+            tile = DataFiles.sprites["decorations"]["tile_dark"]
+        else:
+            tile = DataFiles.sprites["decorations"]["tile_light"]
+        floor_surf.blit(tile, (x,y))
+DataFiles.sprites["decorations"]["floor"] = floor_surf

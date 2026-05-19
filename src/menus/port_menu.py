@@ -879,9 +879,7 @@ class PortMenu:
             shipgirl.update(dt)
 
     def draw(self, surface, font):
-        for shipgirl in self.menu_manager.available_shipgirls:
-            shipgirl.draw(surface, font)
-        
+        surface.blit(DataFiles.sprites["decorations"]["floor"], (0,0))
         decorations = sorted(
             DataFiles.save_file["decorations"],
             key=lambda decoration_data : decoration_data[1][1]
@@ -964,6 +962,9 @@ class PortMenu:
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             else:
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        for shipgirl in self.menu_manager.available_shipgirls:
+            shipgirl.draw(surface, font)
 
         self.open_close_decoration_menu_button.draw(surface, font)
         if self.decorating_port_menu:
