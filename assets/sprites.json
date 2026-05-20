@@ -51,6 +51,9 @@
 		"gear_lab": { "left": 64, "top": 128, "width": 64, "height": 64 },
 		"sortie": { "left": 64, "top": 192, "width": 64, "height": 64 },
 		"intel_center": { "left": 64, "top": 256, "width": 64, "height": 64 },
+		"decoration_store": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"decorate_toggle": { "left": 192, "top": 192, "width": 64, "height": 64 },
+		"remove_decoration": { "left": 192, "top": 256, "width": 64, "height": 64 },
 
 		"start_sortie": { "left": 0, "top": 192, "width": 64, "height": 64 },
 		"research": { "left": 0, "top": 256, "width": 64, "height": 64 },

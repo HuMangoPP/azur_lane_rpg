@@ -131,21 +131,6 @@ class PortMenu:
             }
         )
 
-        self.open_decoration_store_overlay_button = Button(
-            get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(5/(num_overlay_buttons+1)),
-                bottom=Box.BOTTOM_OF_SCREEN
-            ),
-            open_overlay_factory(self.DECORATION_STORE),
-            active=True,
-            background_styling={
-                "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["port"],
-                "opacity": 160,
-            }
-        )
-
         self.dossier_overlay = get_rect(
             width=5*(Box.WIDTH+Box.PADDING)+Box.PADDING + 2*Box.PADDING,
             height=3*(Box.HEIGHT+Box.PADDING)+Box.PADDING + 2*Box.PADDING + Box.HEIGHT,
@@ -292,6 +277,21 @@ class PortMenu:
             center=(screen_x(0.5), screen_y(0.5))
         )
 
+        self.open_decoration_store_overlay_button = Button(
+            get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=screen_x(5/(num_overlay_buttons+1)),
+                bottom=Box.BOTTOM_OF_SCREEN
+            ),
+            open_overlay_factory(self.DECORATION_STORE),
+            active=True,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["decoration_store"],
+                "opacity": 160,
+            }
+        )
+
         self.store_overlay = get_rect(
             width=5*(Box.WIDTH+Box.PADDING) + Box.PADDING,
             height=4*(Box.HEIGHT+Box.PADDING) + Box.PADDING,
@@ -342,7 +342,7 @@ class PortMenu:
             active=True,
             background_styling={
                 "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["port"],
+                "background_img": DataFiles.sprites["user_interface"]["decorate_toggle"],
                 "opacity": 160,
             }
         )
@@ -991,8 +991,7 @@ class PortMenu:
                 top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
             )
             pygame.draw.rect(surface, Color.CARGO_BOX, delete_rect)
-            pygame.draw.line(surface, Color.RED, delete_rect.topleft, delete_rect.bottomright, width=Box.OUTLINE_WIDTH)
-            pygame.draw.line(surface, Color.RED, delete_rect.topright, delete_rect.bottomleft, width=Box.OUTLINE_WIDTH)
+            surface.blit(DataFiles.sprites["user_interface"]["remove_decoration"], delete_rect)
             if self.deleting_decoration:
                 pygame.draw.rect(surface, Color.WHITE, delete_rect, width=Box.OUTLINE_WIDTH)
             return
