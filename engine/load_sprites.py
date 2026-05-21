@@ -16,9 +16,9 @@ def load_sprites(directory="assets", master_sprite_file="sprites.json", colorkey
         
         sprite_atlas = pygame.image.load(sprite_atlas_file).convert()
         sprite_atlas.set_colorkey(colorkey)
-        for sprite_name, crop_info in sprite_group_info.items():
-            crop = pygame.Rect(crop_info["left"], crop_info["top"], crop_info["width"], crop_info["height"])
-            sprite = sprite_atlas.subsurface(crop)
+        for sprite_name, load_info in sprite_group_info.items():
+            crop = pygame.Rect(load_info["left"], load_info["top"], load_info["width"], load_info["height"])
+            sprite = pygame.transform.scale_by(sprite_atlas.subsurface(crop), load_info.get("scale", 1))
             group_sprites[sprite_name] = sprite
         sprites[sprite_group] = group_sprites
 

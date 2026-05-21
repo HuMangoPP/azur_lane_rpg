@@ -4,7 +4,7 @@ import pygame
 from engine.util import get_rect, get_vec
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
+from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, DECORATION_TILESIZE
 from src.shipgirls import Shipgirl
 
 class PortMenu:
@@ -820,8 +820,7 @@ class PortMenu:
                         self.deleting_decoration = not self.deleting_decoration
                         self.selected_decoration_in_depot = None
                 elif self.deleting_decoration:
-                    tilesize = 32 # TODO
-                    clicked_tilepos = (event.pos[0] // tilesize, event.pos[1] // tilesize)
+                    clicked_tilepos = (event.pos[0] // DECORATION_TILESIZE, event.pos[1] // DECORATION_TILESIZE)
                     for decoration_index, (decoration, tilepos_anchor) in enumerate(DataFiles.save_file["decorations"]):
                         decoration_info = DataFiles.decoration_store[decoration]
                         if (
@@ -842,8 +841,7 @@ class PortMenu:
                                 occupied_tiles.add(tilepos)
 
                     decoration = self.selected_decoration_in_depot
-                    tilesize = 32 # TODO
-                    tilepos_anchor = (event.pos[0] // tilesize,event.pos[1] // tilesize)
+                    tilepos_anchor = (event.pos[0] // DECORATION_TILESIZE,event.pos[1] // DECORATION_TILESIZE)
                     place_tiles = set()
                     for x in range(DataFiles.decoration_store[decoration]["width"]):
                         for y in range(DataFiles.decoration_store[decoration]["height"]):
@@ -886,12 +884,11 @@ class PortMenu:
         )
 
         for decoration, tilepos in decorations:
-            tilesize = 32 # TODO
             rect = get_rect(
-                width=DataFiles.decoration_store[decoration]["width"] * tilesize,
-                height=DataFiles.decoration_store[decoration]["height"] * tilesize,
-                left=tilepos[0] * tilesize,
-                top=tilepos[1] * tilesize
+                width=DataFiles.decoration_store[decoration]["width"] * DECORATION_TILESIZE,
+                height=DataFiles.decoration_store[decoration]["height"] * DECORATION_TILESIZE,
+                left=tilepos[0] * DECORATION_TILESIZE,
+                top=tilepos[1] * DECORATION_TILESIZE
             )
             if decoration in DataFiles.sprites["decorations"]:
                 sprite = DataFiles.sprites["decorations"][decoration]
@@ -904,9 +901,8 @@ class PortMenu:
             surface.blit(sprite, sprite_rect)
 
         if self.deleting_decoration:
-            tilesize = 32 # TODO
             mpos = pygame.mouse.get_pos()
-            hovered_tilepos = (mpos[0] // tilesize, mpos[1] // tilesize)
+            hovered_tilepos = (mpos[0] // DECORATION_TILESIZE, mpos[1] // DECORATION_TILESIZE)
             for decoration, tilepos_anchor in DataFiles.save_file["decorations"]:
                 decoration_info = DataFiles.decoration_store[decoration]
                 hovered_decoration_tiles = set()
@@ -917,10 +913,10 @@ class PortMenu:
 
                 if hovered_tilepos in hovered_decoration_tiles:
                     rect = get_rect(
-                        width=decoration_info["width"] * tilesize,
-                        height=decoration_info["height"] * tilesize,
-                        left=tilepos_anchor[0] * tilesize,
-                        top=tilepos_anchor[1] * tilesize
+                        width=decoration_info["width"] * DECORATION_TILESIZE,
+                        height=decoration_info["height"] * DECORATION_TILESIZE,
+                        left=tilepos_anchor[0] * DECORATION_TILESIZE,
+                        top=tilepos_anchor[1] * DECORATION_TILESIZE
                     )
                     pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
                     break
@@ -935,8 +931,7 @@ class PortMenu:
 
             decoration = self.selected_decoration_in_depot
             mpos = pygame.mouse.get_pos()
-            tilesize = 32 # TODO
-            tilepos_anchor = (mpos[0] // tilesize,mpos[1] // tilesize)
+            tilepos_anchor = (mpos[0] // DECORATION_TILESIZE,mpos[1] // DECORATION_TILESIZE)
             place_tiles = set()
             for x in range(DataFiles.decoration_store[decoration]["width"]):
                 for y in range(DataFiles.decoration_store[decoration]["height"]):
@@ -944,10 +939,10 @@ class PortMenu:
                     place_tiles.add(tilepos)
 
             rect = get_rect(
-                width=DataFiles.decoration_store[decoration]["width"] * tilesize,
-                height=DataFiles.decoration_store[decoration]["height"] * tilesize,
-                left=tilepos_anchor[0] * tilesize,
-                top=tilepos_anchor[1] * tilesize
+                width=DataFiles.decoration_store[decoration]["width"] * DECORATION_TILESIZE,
+                height=DataFiles.decoration_store[decoration]["height"] * DECORATION_TILESIZE,
+                left=tilepos_anchor[0] * DECORATION_TILESIZE,
+                top=tilepos_anchor[1] * DECORATION_TILESIZE
             )
             if decoration in DataFiles.sprites["decorations"]:
                 sprite = DataFiles.sprites["decorations"][decoration]
