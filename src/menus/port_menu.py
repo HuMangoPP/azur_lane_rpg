@@ -16,6 +16,14 @@ def get_decoration_tiles(decoration, direction, tilepos_anchor):
             decoration_tiles.add(tilepos)
     return decoration_tiles
 
+def in_tileable_area(tiles):
+    return (
+        min(tile[0] for tile in tiles) >= 0
+        and max(tile[0] for tile in tiles) < Decorations.NUM_TILES_IN_ROW
+        and min(tile[1] for tile in tiles) >= 0
+        and max(tile[1] for tile in tiles) <= Decorations.NUM_TILES_IN_COL
+    )
+
 class PortMenu:
     NO_OVERLAY = -1
     DEPOT = 0
@@ -870,11 +878,14 @@ class PortMenu:
                         (event.pos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
                     )
                     place_tiles = get_decoration_tiles(decoration, direction, clicked_tilepos)
-                    if not place_tiles.intersection(occupied_tiles):
-                        DataFiles.save_file["decorations"].append((decoration,clicked_tilepos,direction))
-                        DataFiles.save_file["decoration_depot"][decoration] -= 1
-                        if DataFiles.save_file["decoration_depot"][decoration] <= 0:
-                            self.selected_decoration_in_depot = None
+                    if place_tiles.intersection(occupied_tiles):
+                        continue
+                    if not in_tileable_area(place_tiles):
+                        continue
+                    DataFiles.save_file["decorations"].append((decoration,clicked_tilepos,direction))
+                    DataFiles.save_file["decoration_depot"][decoration] -= 1
+                    if DataFiles.save_file["decoration_depot"][decoration] <= 0:
+                        self.selected_decoration_in_depot = None
 
     def update(self, dt, events):
         if self.decorating_port_menu:
@@ -961,7 +972,7 @@ class PortMenu:
             sprite_rect = sprite.get_rect()
             sprite_rect.bottomleft = rect.bottomleft
             surface.blit(sprite, sprite_rect)
-            if not place_tiles.intersection(occupied_tiles):
+            if not place_tiles.intersection(occupied_tiles) and in_tileable_area(place_tiles):
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             else:
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
