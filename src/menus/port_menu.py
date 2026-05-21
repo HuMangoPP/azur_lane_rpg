@@ -375,6 +375,7 @@ class PortMenu:
         self.selected_decoration_in_depot = None
         self.decoration_direction_index = 0
         self.deleting_decoration = False
+        self.decoration_depot_drag_offset = None
 
         def open_select_sortie_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
@@ -810,6 +811,15 @@ class PortMenu:
 
     def update_decorate_port_menu_overlay(self, events):
         for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button != 1:
+                    continue
+
+                if self.decoration_depot_overlay.collidepoint(event.pos):
+                    self.decoration_depot_drag_offset = pygame.Vector2(self.decoration_depot_overlay.topleft) - pygame.Vector2(event.pos)
+            if event.type == pygame.MOUSEMOTION:
+                if self.decoration_depot_drag_offset is not None:
+                    self.decoration_depot_overlay.topleft = pygame.Vector2(event.pos) + self.decoration_depot_drag_offset
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 3 and self.selected_decoration_in_depot is not None:
                     self.rotate_decoration_direction()
@@ -817,6 +827,8 @@ class PortMenu:
 
                 if event.button != 1:
                     continue
+
+                self.decoration_depot_drag_offset = None
 
                 if self.open_close_decoration_menu_button.click(event.pos):
                     self.selected_decoration_in_depot = None
@@ -840,6 +852,7 @@ class PortMenu:
                                 self.selected_decoration_in_depot = decoration
                                 self.deleting_decoration = False
                         decoration_index += 1
+
                     delete_rect = get_rect(
                         width=Box.WIDTH, height=Box.HEIGHT,
                         left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
@@ -848,6 +861,7 @@ class PortMenu:
                     if delete_rect.collidepoint(event.pos):
                         self.deleting_decoration = not self.deleting_decoration
                         self.selected_decoration_in_depot = None
+                        continue
                 elif self.deleting_decoration:
                     clicked_tilepos = (
                         (event.pos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
@@ -959,14 +973,17 @@ class PortMenu:
             decoration = self.selected_decoration_in_depot
             direction = direction = self.DECORATION_DIRECTIONS[self.decoration_direction_index]
             mpos = pygame.mouse.get_pos()
-            tilepos_anchor = (mpos[0] // Decorations.TILESIZE,mpos[1] // Decorations.TILESIZE)
+            hovered_tilepos = (
+                (mpos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
+                (mpos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
+            )
             decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
-            place_tiles = get_decoration_tiles(decoration, direction, tilepos_anchor)
+            place_tiles = get_decoration_tiles(decoration, direction, hovered_tilepos)
             rect = get_rect(
                 width=decoration_info["width"] * Decorations.TILESIZE,
                 height=decoration_info["height"] * Decorations.TILESIZE,
-                left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
-                top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
+                left=Decorations.floor_rect.left + hovered_tilepos[0] * Decorations.TILESIZE,
+                top=Decorations.floor_rect.top + hovered_tilepos[1] * Decorations.TILESIZE
             )
             sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
             sprite_rect = sprite.get_rect()
