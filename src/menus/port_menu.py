@@ -4,7 +4,7 @@ import pygame
 from engine.util import get_rect, get_vec
 from engine.button import Button
 
-from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, DECORATION_TILESIZE
+from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, Decorations
 from src.shipgirls import Shipgirl
 
 def get_decoration_tiles(decoration, direction, tilepos_anchor):
@@ -841,7 +841,10 @@ class PortMenu:
                         self.deleting_decoration = not self.deleting_decoration
                         self.selected_decoration_in_depot = None
                 elif self.deleting_decoration:
-                    clicked_tilepos = (event.pos[0] // DECORATION_TILESIZE, event.pos[1] // DECORATION_TILESIZE)
+                    clicked_tilepos = (
+                        (event.pos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
+                        (event.pos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
+                    )
                     for decoration_index, decoration_data in enumerate(DataFiles.save_file["decorations"]):
                         decoration, tilepos_anchor, direction = decoration_data
                         decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
@@ -862,10 +865,13 @@ class PortMenu:
 
                     decoration = self.selected_decoration_in_depot
                     direction = self.DECORATION_DIRECTIONS[self.decoration_direction_index]
-                    tilepos_anchor = (event.pos[0] // DECORATION_TILESIZE,event.pos[1] // DECORATION_TILESIZE)
-                    place_tiles = get_decoration_tiles(decoration, direction, tilepos_anchor)
+                    clicked_tilepos = (
+                        (event.pos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
+                        (event.pos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
+                    )
+                    place_tiles = get_decoration_tiles(decoration, direction, clicked_tilepos)
                     if not place_tiles.intersection(occupied_tiles):
-                        DataFiles.save_file["decorations"].append((decoration,tilepos_anchor,direction))
+                        DataFiles.save_file["decorations"].append((decoration,clicked_tilepos,direction))
                         DataFiles.save_file["decoration_depot"][decoration] -= 1
                         if DataFiles.save_file["decoration_depot"][decoration] <= 0:
                             self.selected_decoration_in_depot = None
@@ -893,20 +899,20 @@ class PortMenu:
             shipgirl.update(dt)
 
     def draw(self, surface, font):
-        surface.blit(DataFiles.sprites["decorations"]["floor"], (0,0))
+        surface.blit(Decorations.floor_surf, Decorations.floor_rect)
+
         decorations = sorted(
             DataFiles.save_file["decorations"],
             key=lambda decoration_data : decoration_data[1][1]
         )
-
         for decoration_data in decorations:
-            decoration, tilepos, direction = decoration_data
+            decoration, tilepos_anchor, direction = decoration_data
             decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
             rect = get_rect(
-                width=decoration_info["width"] * DECORATION_TILESIZE,
-                height=decoration_info["height"] * DECORATION_TILESIZE,
-                left=tilepos[0] * DECORATION_TILESIZE,
-                top=tilepos[1] * DECORATION_TILESIZE
+                width=decoration_info["width"] * Decorations.TILESIZE,
+                height=decoration_info["height"] * Decorations.TILESIZE,
+                left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
+                top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
             )
             sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
             sprite_rect = sprite.get_rect()
@@ -915,17 +921,20 @@ class PortMenu:
 
         if self.deleting_decoration:
             mpos = pygame.mouse.get_pos()
-            hovered_tilepos = (mpos[0] // DECORATION_TILESIZE, mpos[1] // DECORATION_TILESIZE)
+            hovered_tilepos = (
+                (mpos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
+                (mpos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
+            )
             for decoration_data in DataFiles.save_file["decorations"]:
                 decoration, tilepos_anchor, direction = decoration_data
                 decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
                 hovered_decoration_tiles = get_decoration_tiles(decoration, direction, tilepos_anchor)
                 if hovered_tilepos in hovered_decoration_tiles:
                     rect = get_rect(
-                        width=decoration_info["width"] * DECORATION_TILESIZE,
-                        height=decoration_info["height"] * DECORATION_TILESIZE,
-                        left=tilepos_anchor[0] * DECORATION_TILESIZE,
-                        top=tilepos_anchor[1] * DECORATION_TILESIZE
+                        width=decoration_info["width"] * Decorations.TILESIZE,
+                        height=decoration_info["height"] * Decorations.TILESIZE,
+                        left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
+                        top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
                     )
                     pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
                     break
@@ -939,14 +948,14 @@ class PortMenu:
             decoration = self.selected_decoration_in_depot
             direction = direction = self.DECORATION_DIRECTIONS[self.decoration_direction_index]
             mpos = pygame.mouse.get_pos()
-            tilepos_anchor = (mpos[0] // DECORATION_TILESIZE,mpos[1] // DECORATION_TILESIZE)
+            tilepos_anchor = (mpos[0] // Decorations.TILESIZE,mpos[1] // Decorations.TILESIZE)
             decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
             place_tiles = get_decoration_tiles(decoration, direction, tilepos_anchor)
             rect = get_rect(
-                width=decoration_info["width"] * DECORATION_TILESIZE,
-                height=decoration_info["height"] * DECORATION_TILESIZE,
-                left=tilepos_anchor[0] * DECORATION_TILESIZE,
-                top=tilepos_anchor[1] * DECORATION_TILESIZE
+                width=decoration_info["width"] * Decorations.TILESIZE,
+                height=decoration_info["height"] * Decorations.TILESIZE,
+                left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
+                top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
             )
             sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
             sprite_rect = sprite.get_rect()

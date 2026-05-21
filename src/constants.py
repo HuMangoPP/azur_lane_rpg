@@ -24,8 +24,6 @@ class Box:
     TOP_OF_SCREEN = screen_y(0) + EDGE_PADDING
     BOTTOM_OF_SCREEN = screen_y(1) - EDGE_PADDING
 
-DECORATION_TILESIZE = 64
-
 class Color:
     WHITE = (255,255,255)
     BLACK = (10,10,10)
@@ -261,16 +259,25 @@ warship_polygon = [
 pygame.draw.lines(blueprint_surf_scaled, Color.WHITE, False, warship_polygon, width=2)
 DataFiles.sprites["user_interface"]["equipment_menu_blueprint"] = blueprint_surf_scaled
 
-num_tiles_in_row = int(TEMP_SCREEN_SIZE[0] // DECORATION_TILESIZE + 1)
-num_tiles_in_col = int(TEMP_SCREEN_SIZE[1] // DECORATION_TILESIZE + 1)
-floor_surf = pygame.Surface((num_tiles_in_row*DECORATION_TILESIZE, num_tiles_in_col*DECORATION_TILESIZE))
-for i in range(num_tiles_in_row):
-    x = i * DECORATION_TILESIZE
-    for j in range(num_tiles_in_col):
-        y = j * DECORATION_TILESIZE
-        if (i + j) % 2:
-            tile = DataFiles.sprites["decorations"]["tile_dark"]
-        else:
-            tile = DataFiles.sprites["decorations"]["tile_light"]
-        floor_surf.blit(tile, (x,y))
-DataFiles.sprites["decorations"]["floor"] = floor_surf
+class Decorations:
+    TILESIZE = 64
+    NUM_TILES_IN_ROW = int(TEMP_SCREEN_SIZE[0] // TILESIZE)
+    NUM_TILES_IN_COL = int(TEMP_SCREEN_SIZE[1] // TILESIZE)
+
+    @classmethod
+    def create_floor_surf(cls):
+        cls.floor_surf = pygame.Surface((cls.NUM_TILES_IN_ROW*cls.TILESIZE, cls.NUM_TILES_IN_COL*cls.TILESIZE))
+        for i in range(cls.NUM_TILES_IN_ROW):
+            x = i * cls.TILESIZE
+            for j in range(cls.NUM_TILES_IN_COL):
+                y = j * cls.TILESIZE
+                if (i + j) % 2:
+                    tile = DataFiles.sprites["decorations"]["tile_dark"]
+                else:
+                    tile = DataFiles.sprites["decorations"]["tile_light"]
+                cls.floor_surf.blit(tile, (x,y))
+        
+        cls.floor_rect = cls.floor_surf.get_rect()
+        cls.floor_rect.center = (screen_x(0.5), screen_y(0.5))
+
+Decorations.create_floor_surf()
