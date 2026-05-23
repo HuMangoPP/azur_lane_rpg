@@ -142,6 +142,18 @@ class DataFiles:
             return cls.sprites["entity"][sprite_key]
         else:
             return cls.sprites["entity"]["placeholder"]
+        
+    @classmethod
+    def get_faction_shipgirls(cls):
+        if len(cls.save_file["unlocked_factions"]) == 0:
+            return {}
+        faction_shipgirls = {}
+        chosen_faction = cls.save_file["unlocked_factions"][0]
+        for shipgirl, shipgirl_info in cls.shipgirl_data.items():
+            if shipgirl_info["faction"] != chosen_faction:
+                continue
+            faction_shipgirls[shipgirl_info["hull_type"]] = shipgirl
+        return faction_shipgirls
 
 def create_shell_sprite(shell_key, color):
     alphas = [10, 20, 50, 100, 200, 250]

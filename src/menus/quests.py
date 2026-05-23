@@ -170,8 +170,10 @@ class Quest:
             if self.pre_quest_dialogue_index == len(self.pre_quest_dialogue):
                 self.pre_quest_finished = True
         return False
-    
+
     def draw(self, surface, font):
+        shipgirls = DataFiles.get_faction_shipgirls()
+
         if self.rewards_collected:
             overlay = self.DIALOGUE_OVERLAY
             box = self.DIALOGUE_BOX
@@ -223,7 +225,10 @@ class Quest:
         text_width = box.width - 2*Box.PADDING
         font.render(
             surface,
-            text,
+            text.format(**{
+                f"{hull_type}_shipgirl": " ".join(shipgirl.split("_"))
+                for hull_type, shipgirl in shipgirls.items()
+            }),
             pygame.Vector2(box.topleft) + pygame.Vector2(Box.PADDING, Box.PADDING),
             Color.WHITE,
             1, 
