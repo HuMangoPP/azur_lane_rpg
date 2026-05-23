@@ -357,7 +357,7 @@ class PortMenu:
         self.open_close_decoration_menu_button = Button(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
             callback=open_close_decoration_menu,
-            active=True,
+            active=False,
             background_styling={
                 "background_color": Color.BLACK,
                 "background_img": DataFiles.sprites["user_interface"]["decorate_toggle"],
@@ -376,6 +376,10 @@ class PortMenu:
         self.decoration_direction_index = 0
         self.deleting_decoration = False
         self.decoration_depot_drag_offset = None
+        self.moved_decoration_depot_overlay = False
+        self.rotated_decoration = False
+        self.placed_decoration = False
+        self.removed_decoration = False
 
         def open_select_sortie_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
@@ -818,18 +822,40 @@ class PortMenu:
                     continue
 
                 if self.decoration_depot_overlay.collidepoint(event.pos):
-                    self.decoration_depot_drag_offset = pygame.Vector2(self.decoration_depot_overlay.topleft) - pygame.Vector2(event.pos)
+                    decoration_index = 0
+                    for decoration, amt in DataFiles.save_file["decoration_depot"].items():
+                        if amt <= 0:
+                            continue
+                        rect = get_rect(
+                            width=Box.WIDTH, height=Box.HEIGHT,
+                            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+                            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+                        )
+                        if rect.collidepoint(event.pos):
+                            break
+                        decoration_index += 1
+                    else:
+                        delete_rect = get_rect(
+                            width=Box.WIDTH, height=Box.HEIGHT,
+                            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+                            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+                        )
+                        if not delete_rect.collidepoint(event.pos):
+                            self.decoration_depot_drag_offset = pygame.Vector2(self.decoration_depot_overlay.topleft) - pygame.Vector2(event.pos)
             if event.type == pygame.MOUSEMOTION:
                 if self.decoration_depot_drag_offset is not None:
                     self.decoration_depot_overlay.topleft = pygame.Vector2(event.pos) + self.decoration_depot_drag_offset
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 3 and self.selected_decoration_in_depot is not None:
                     self.rotate_decoration_direction()
+                    self.rotated_decoration = True
                     continue
 
                 if event.button != 1:
                     continue
 
+                if self.decoration_depot_drag_offset is not None:
+                    self.moved_decoration_depot_overlay = True
                 self.decoration_depot_drag_offset = None
 
                 if self.open_close_decoration_menu_button.click(event.pos):
@@ -880,6 +906,7 @@ class PortMenu:
                             DataFiles.save_file["decoration_depot"][decoration] = (
                                 DataFiles.save_file["decoration_depot"].get(decoration, 0) + 1
                             )
+                            self.removed_decoration = True
                             break
                 elif self.selected_decoration_in_depot is not None:
                     occupied_tiles = set() # TODO code optimization
@@ -900,6 +927,7 @@ class PortMenu:
                         continue
                     DataFiles.save_file["decorations"].append((decoration,clicked_tilepos,direction))
                     DataFiles.save_file["decoration_depot"][decoration] -= 1
+                    self.placed_decoration = True
                     if DataFiles.save_file["decoration_depot"][decoration] <= 0:
                         self.selected_decoration_in_depot = None
 
