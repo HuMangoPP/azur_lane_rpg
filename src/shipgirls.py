@@ -35,7 +35,7 @@ class ShipgirlBattleComponent:
         self.active = False
         self.is_player = is_player
 
-        if name in DataFiles.shipgirl_data:
+        if self.is_player:
             info = DataFiles.shipgirl_data[name]
             save = DataFiles.save_file["shipgirls"][name]
             stats = DataFiles.stats_data[info["hull_type"]]
@@ -231,7 +231,7 @@ class Shipgirl:
     SPRITE_SIZE = 96 # TODO
 
     def __init__(self, name, is_player):
-        self.name = name
+        self.name = name.split(":")[0]
     
         self.pos = pygame.Vector2(
             screen_x(random.random()),

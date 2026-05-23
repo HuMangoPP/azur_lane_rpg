@@ -1,5 +1,5 @@
 {
-	"spritesheet": "live2d/CA_siren.png",
+	"spritesheet": "live2d/oceana.png",
 	"colorkey": [255, 0, 0],
 	"back_torso": {
 		"pivot": [34, 42],

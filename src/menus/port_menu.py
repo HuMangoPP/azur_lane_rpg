@@ -205,7 +205,7 @@ class PortMenu:
         self.selected_overlay_filter = 0
         self.shipgirl_filters = ["USS", "HMS", "IJN", "KMS"]
         self.equipment_filters = ["DD", "CL", "CA", "BB", "AUX"]
-        self.siren_filters = ["DD", "CA", "BB"]
+        self.siren_filters = ["DD", "CL", "CA", "BB"]
 
         num_icons_per_row = (self.dossier_page.width-Box.PADDING) // (Box.WIDTH+Box.PADDING)
         icon_padding = (self.dossier_page.width - 2*Box.PADDING - num_icons_per_row*Box.WIDTH) / (num_icons_per_row-1)
@@ -406,7 +406,10 @@ class PortMenu:
         for i in range(DataFiles.save_file["sortie_progress"]):
             encounters = DataFiles.sortie_data[i]["encounters"]
             for encounter in encounters:
-                self.encountered_sirens = self.encountered_sirens.union(encounter["front"] + encounter["back"])
+                self.encountered_sirens = self.encountered_sirens.union(
+                    [siren_name.split(":")[0] for siren_name in encounter["front"]]
+                    + [siren_name.split(":")[0] for siren_name in encounter["back"]]
+                )
         self.encountered_sirens = list(self.encountered_sirens)
 
     def update_no_overlay(self, events):
@@ -726,14 +729,14 @@ class PortMenu:
                 self.exit_overlay(event)
                 encountered_sirens = [
                     siren for siren in self.encountered_sirens
-                    if siren.startswith(self.siren_filters[self.selected_overlay_filter])
+                    if DataFiles.siren_data[siren]["hull_type"] == self.siren_filters[self.selected_overlay_filter]
                 ]
                 self.overlay_mouseup_logic(event, encountered_sirens, self.siren_filters, False)
 
     def draw_intel_center_overlay(self, surface, font):
         encountered_sirens = [
             siren for siren in self.encountered_sirens
-            if siren.startswith(self.siren_filters[self.selected_overlay_filter])
+            if DataFiles.siren_data[siren]["hull_type"] == self.siren_filters[self.selected_overlay_filter]
         ]
         if self.blueprint_selected_item:
             selected_entity_info = DataFiles.siren_data.get(self.blueprint_selected_item)

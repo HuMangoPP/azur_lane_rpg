@@ -1,9 +1,9 @@
 {
-	"DD_siren": {
+	"explorer": {
 		"hull_type": "DD",
-		"max_hp": [10, 0],
+		"max_hp": [20, 0],
 		"evasion": [0, 0],
-		"reload": [125, 0],
+		"reload": [100, 0],
 		"firepower": [2, 0],
 		"target_pref": "front",
 		"exp": 1,
@@ -16,12 +16,12 @@
 		},
 		"equipment": [null, null, null]
 	},
-	"CA_siren": {
+	"oceana": {
 		"hull_type": "CA",
-		"max_hp": [20, 0],
+		"max_hp": [40, 0],
 		"evasion": [0, 0],
-		"reload": [100, 0],
-		"firepower": [4, 0],
+		"reload": [75, 0],
+		"firepower": [3, 0],
 		"target_pref": "front",
 		"exp": 1,
 		"drops": {
@@ -33,12 +33,12 @@
 		},
 		"equipment": [null, null, null]
 	},
-	"BB_siren": {
+	"breaker": {
 		"hull_type": "BB",
-		"max_hp": [50, 0],
+		"max_hp": [100, 0],
 		"evasion": [0, 0],
 		"reload": [50, 0],
-		"firepower": [6, 0],
+		"firepower": [5, 0],
 		"target_pref": "front",
 		"exp": 1,
 		"drops": {

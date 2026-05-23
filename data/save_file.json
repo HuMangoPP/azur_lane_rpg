@@ -1,15 +1,79 @@
 {
-    "unlocked_factions": [],
-    "shipgirls": {},
-    "equipment": {},
-    "inventory": {},
-    "decoration_depot": {},
-    "decorations": [],
+    "unlocked_factions": [
+        "USS"
+    ],
+    "shipgirls": {
+        "laffey": {
+            "equipment": [
+                "twin_120",
+                null,
+                null
+            ],
+            "exp": 31
+        },
+        "new_jersey": {
+            "equipment": [
+                null,
+                null,
+                null
+            ],
+            "exp": 31
+        },
+        "guam": {
+            "equipment": [
+                null,
+                null,
+                null
+            ],
+            "exp": 28
+        }
+    },
+    "equipment": {
+        "twin_120": 0
+    },
+    "inventory": {
+        "DD_blueprint": 0,
+        "BB_blueprint": 1,
+        "wisdom_cube": 0,
+        "huggy_pillow": 0,
+        "dragon_cannon": 0,
+        "decoration_coin": 9,
+        "CA_blueprint": 0,
+        "battle_mech": 0,
+        "star_blaster": 1,
+        "metals": 0,
+        "gunpowder": 0,
+        "plastics": 1,
+        "electronics": 1
+    },
+    "decoration_depot": {
+        "bed": 0
+    },
+    "decorations": [
+        [
+            "bed",
+            [
+                4,
+                2
+            ],
+            "north"
+        ]
+    ],
     "research_target": null,
     "research_progress": 0,
-    "sortie_progress": 0,
-    "chapter_progress": 0,
+    "sortie_progress": 4,
+    "chapter_progress": 1,
     "quests": {
-        "choose_faction": "new"
+        "choose_faction": "completed",
+        "construct_shipgirls": "completed",
+        "first_sortie": "completed",
+        "inventory": "completed",
+        "intel_center": "completed",
+        "research_shipgirl": "completed",
+        "construct_shipgirl": "completed",
+        "craft_weapon": "completed",
+        "equip_weapon": "completed",
+        "buy_decoration": "completed",
+        "decorate_port": "completed"
     }
 }

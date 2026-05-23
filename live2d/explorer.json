@@ -1,5 +1,5 @@
 {
-	"spritesheet": "live2d/DD_siren.png",
+	"spritesheet": "live2d/explorer.png",
 	"colorkey": [255, 0, 0],
 	"back_torso": {
 		"pivot": [34, 42],

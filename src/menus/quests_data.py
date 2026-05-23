@@ -537,7 +537,7 @@ construct_shipgirl_post_quest_dialogue = [
 ]
 
 def construct_shipgirl_completion_criteria(menu_manager):
-    return DataFiles.get_faction_shipgirls["CA"] in DataFiles.save_file["shipgirls"]
+    return DataFiles.get_faction_shipgirls()["CA"] in DataFiles.save_file["shipgirls"]
 
 def construct_shipgirl_on_start(menu_manager):
     pass
@@ -550,7 +550,7 @@ construct_shipgirl_quest = Quest(
     construct_shipgirl_pre_quest_dialogue,
     construct_shipgirl_quest_line,
     construct_shipgirl_post_quest_dialogue,
-    None,
+    construct_shipgirl_completion_criteria,
     shipyard_tutorial_draw_factory(["CA"]),
     construct_shipgirl_on_start,
     construct_shipgirl_on_complete,
@@ -642,7 +642,7 @@ equip_weapon_post_quest_dialogue = [
 ]
 
 def equip_weapon_completion_criteria(menu_manager):
-    return DataFiles.save_file["shipgirls"][DataFiles.get_faction_shipgirls["DD"]]["equipment"][Equipment.WEAPON] == "twin_120"
+    return DataFiles.save_file["shipgirls"][DataFiles.get_faction_shipgirls()["DD"]]["equipment"][Equipment.WEAPON] == "twin_120"
 
 def equip_weapon_tutorial_draw(menu_manager, surface, font):
     if menu_manager.current_menu == menu_manager.port_menu:
@@ -652,7 +652,7 @@ def equip_weapon_tutorial_draw(menu_manager, surface, font):
         draw_tb(surface, font, None, rect.bottomright, False, False)
     elif (
         menu_manager.current_menu == menu_manager.equipment_menu
-        and menu_manager.equipment_menu.selected_shipgirl.name == DataFiles.get_faction_shipgirls["DD"]
+        and menu_manager.equipment_menu.selected_shipgirl.name == DataFiles.get_faction_shipgirls()["DD"]
     ):
         if menu_manager.equipment_menu.selected_equipment == Equipment.WEAPON:
             button_rect = menu_manager.equipment_menu.equippable_rects[0]
@@ -686,8 +686,8 @@ equip_weapon_quest = Quest(
     equip_weapon_pre_quest_dialogue,
     equip_weapon_quest_line,
     equip_weapon_post_quest_dialogue,
-    None,
-    None,
+    equip_weapon_completion_criteria,
+    equip_weapon_tutorial_draw,
     equip_weapon_on_start,
     equip_weapon_on_complete,
     decoration_voucher_reward

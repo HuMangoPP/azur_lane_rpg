@@ -91,8 +91,10 @@ class EncounterMenu:
                 DataFiles.save_file["sortie_progress"] = new_sortie_progress
                 if new_sortie_progress == 3:
                     self.menu_manager.quest_manager.quests[craft_weapon_quest.quest_id] = craft_weapon_quest
+                    DataFiles.save_file["quests"][craft_weapon_quest.quest_id] = "new"
                 if new_sortie_progress == 4:
-                    self.menu_manager.quest_manage.quests[buy_decoration_quest.quest_id] = buy_decoration_quest
+                    self.menu_manager.quest_manager.quests[buy_decoration_quest.quest_id] = buy_decoration_quest
+                    DataFiles.save_file["quests"][buy_decoration_quest.quest_id] = "new"
 
             new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
             if DataFiles.save_file["chapter_progress"] < new_chapter_progress:

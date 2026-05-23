@@ -4,15 +4,15 @@
 		"craft_reqs": { "DD_blueprint": 1, "gunpowder": 1, "metals": 1 },
 		"equippable_by": "DD",
 		"firepower": 1,
-		"reload": 100,
+		"reload": 75,
 		"shell_type": "normal"
 	},
 	"twin_150": {
 		"type": "weapon",
 		"craft_reqs": { "CL_blueprint": 1, "gunpowder": 1, "plastics": 1 },
 		"equippable_by": "CL",
-		"firepower": 1,
-		"reload": 100,
+		"firepower": 2,
+		"reload": 50,
 		"shell_type": "normal"
 	},
 	"twin_203": {

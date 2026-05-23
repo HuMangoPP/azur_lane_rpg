@@ -2,11 +2,11 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD_siren"],
+				"front": ["explorer:1"],
 				"back": []
 			},
 			{
-				"front": ["DD_siren", "DD_siren"],
+				"front": ["explorer:1", "explorer:1"],
 				"back": []
 			}
 		],
@@ -19,12 +19,12 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD_siren", "DD_siren"],
+				"front": ["explorer:1", "explorer:1"],
 				"back": []
 			},
 			{
-				"front": ["DD_siren", "DD_siren"],
-				"back": ["CA_siren"]
+				"front": ["explorer:1", "explorer:1"],
+				"back": ["oceana:1"]
 			}
 		],
 		"rewards": {
@@ -36,16 +36,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD_siren", "DD_siren", "DD_siren"],
+				"front": ["explorer:1", "explorer:1", "explorer:1"],
 				"back": []
 			},
 			{
-				"front": ["DD_siren", "DD_siren", "DD_siren"],
-				"back": ["CA_siren"]
+				"front": ["explorer:1", "explorer:1", "explorer:1"],
+				"back": ["oceana:1"]
 			},
 			{
-				"front": ["DD_siren", "DD_siren"],
-				"back": ["CA_siren", "CA_siren"]
+				"front": ["explorer:1", "explorer:1"],
+				"back": ["oceana:1", "oceana:1"]
 			}
 		],
 		"rewards": {
@@ -59,16 +59,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD_siren", "DD_siren", "DD_siren"],
-				"back": ["DD_siren"]
+				"front": ["explorer:1", "explorer:1", "explorer:1"],
+				"back": ["explorer:1"]
 			},
 			{
-				"front": ["DD_siren", "DD_siren", "DD_siren"],
-				"back": ["CA_siren", "CA_siren"]
+				"front": ["explorer:1", "explorer:1", "explorer:1"],
+				"back": ["oceana:1", "oceana:1"]
 			},
 			{
-				"front": ["DD_siren", "DD_siren"],
-				"back": ["BB_siren"]
+				"front": ["explorer:1", "explorer:1"],
+				"back": ["breaker:1"]
 			}
 		],
 		"rewards": {
@@ -88,20 +88,20 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD_siren", "DD2"],
+				"front": ["explorer:1", "explorer:2"],
 				"back": []
 			},
 			{
-				"front": ["CA_siren", "CA2"],
+				"front": ["oceana:1", "oceana:2"],
 				"back": []
 			},
 			{
-				"front": ["DD2"],
-				"back": ["CA2"]
+				"front": ["explorer:2"],
+				"back": ["oceana:2"]
 			},
 			{
-				"front": ["DD_siren", "DD2"],
-				"back": ["CA2"]
+				"front": ["explorer:1", "explorer:2"],
+				"back": ["oceana:2"]
 			}
 		],
 		"rewards": {
@@ -115,23 +115,23 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD_siren", "DD2", "DD_siren"],
+				"front": ["explorer:1", "explorer:2", "explorer:1"],
 				"back": []
 			},
 			{
-				"front": ["DD_siren", "DD2"],
-				"back": ["DD2"]
+				"front": ["explorer:1", "explorer:2"],
+				"back": ["explorer:2"]
 			},
 			{
-				"front": ["DD2"],
-				"back": ["CA2", "CA2"]
+				"front": ["explorer:2"],
+				"back": ["oceana:2", "oceana:2"]
 			},
 			{
-				"front": ["DD_siren", "DD2"],
-				"back": ["CA2", "CA2"]
+				"front": ["explorer:1", "explorer:2"],
+				"back": ["oceana:2", "oceana:2"]
 			},
 			{
-				"front": ["CL2"],
+				"front": ["tracer:2"],
 				"back": []
 			}
 		],
@@ -145,20 +145,20 @@
 	{
 		"encounters": [
 			{
-				"front": ["DD2", "DD2"],
-				"back": ["CA2"]
+				"front": ["explorer:2", "explorer:2"],
+				"back": ["oceana:2"]
 			},
 			{
-				"front": ["CA2"],
-				"back": ["CA2", "CA2"]
+				"front": ["oceana:2"],
+				"back": ["oceana:2", "oceana:2"]
 			},
 			{
-				"front": ["DD2"],
-				"back": ["CA2", "CA2"]
+				"front": ["explorer:2"],
+				"back": ["oceana:2", "oceana:2"]
 			},
 			{
-				"front": ["CA2", "CA2"],
-				"back": ["CA2"]
+				"front": ["oceana:2", "oceana:2"],
+				"back": ["oceana:2"]
 			}
 		],
 		"rewards": {
@@ -172,19 +172,19 @@
 	{
 		"encounters": [
 			{
-				"front": ["CL2"],
-				"back": ["CA2"]
+				"front": ["tracer:2"],
+				"back": ["oceana:2"]
 			},
 			{
-				"front": ["DD2", "DD2"],
-				"back": ["CA2"]
+				"front": ["explorer:2", "explorer:2"],
+				"back": ["oceana:2"]
 			},
 			{
-				"front": ["CL2"],
-				"back": ["CA2", "CA2"]
+				"front": ["tracer:2"],
+				"back": ["oceana:2", "oceana:2"]
 			},
 			{
-				"front": ["BB2"],
+				"front": ["breaker:2"],
 				"back": []
 			}
 		],
