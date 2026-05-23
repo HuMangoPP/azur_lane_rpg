@@ -63,13 +63,19 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
         )
 
 choose_faction_pre_quest_dialogue = [
-    "Hello commander, welcome to the Azur Lane port.",
-    "I am your virtual assistant. You may call me TB.",
-    "First things first, we will need to choose our faction.",
+    "Welcome to the Azur Lane port, Commander.",
+    "My name is TB. I will be assisting you from now on.",
+    "Before we begin, you will need to choose a faction.",
+    "Each faction has its own shipgirls and style.",
+    "Your choice will change which shipgirls are available at your port.",
+    "Take your time and choose the faction you like best."
 ]
 choose_faction_quest_line = "Choose a faction."
 choose_faction_post_quest_dialogue = [
-    "You've successfully chosen a faction!"
+    "Faction selection complete.",
+    "Your port has been registered successfully.",
+    "A fine choice, Commander.",
+    "Everything is ready for your first mission."
 ]
 
 def choose_faction_completion_criteria(menu_manager):
@@ -180,11 +186,21 @@ choose_faction_quest = Quest(
 )
 
 construct_shipgirls_pre_quest_dialogue = [
-    "We should construct some shipgirls to join our fleet."
+    "Now that your faction has been selected, we can begin building your fleet.",
+    "I have prepared enough materials to construct two shipgirls for your port.",
+    "The Shipyard is where new ships are constructed and added to your fleet.",
+    "Your first construction will be a destroyer.",
+    "Destroyers are fast ships that are good at avoiding enemy attacks.",
+    "After that, we will construct a battleship.",
+    "Battleships are slower, but they can deal heavy damage from long range.",
+    "Navigate to the shipyard and construct both shipgirls."
 ]
-construct_shipgirls_quest_line = "Construct DD_shipgirl and BB_shipgirl."
+construct_shipgirls_quest_line = "Construct DD_shipgirl and BB_shipgirl in the shipyard."
 construct_shipgirls_post_quest_dialogue = [
-    "DD_shipgirl and BB_shipgirl have joined our fleet!"
+    "Construction complete.",
+    "DD_shipgirl and BB_shipgirl have joined our port.",
+    "Your fleet is still small, but this is only the beginning.",
+    "Continue strengthening your fleet and prepare for future operations."
 ]
 
 def construct_shipgirls_completion_criteria_factory(shipgirls):
@@ -275,11 +291,17 @@ construct_shipgirls_quest = Quest(
 )
 
 first_sortie_pre_quest_dialogue = [
-    "Now it's time to go on a sortie."
+    "Your fleet is ready for deployment, Commander.",
+    "It is time to begin your first sortie.",
+    "Sorties are combat operations where your fleet engages enemy forces and secures resources.",
+    "Defeat all enemies, collect the rewards, and return safely to the port."
 ]
 first_sortie_quest_line = "Sortie into zone 1."
 first_sortie_post_quest_dialogue = [
-    "We've successfully controlled zone 1!"
+    "Sortie complete.",
+    "Your fleet performed well in combat, Commander.",
+    "The rewards from this operation have been added to the depot.",
+    "More missions are becoming available. Continue preparing your fleet for future battles."
 ]
 
 def first_sortie_completion_criteria(menu_manager):
@@ -399,12 +421,16 @@ first_sortie_quest = Quest(
 )
 
 inventory_pre_quest_dialogue = [
-    "We found some rewards in a hidden siren cache from our sortie.",
-    "Let me show you were our items are stored."
+    "The rewards from your sortie have been delivered to the depot, Commander.",
+    "The Depot stores all materials, equipment, and items collected during operations.",
+    "You can check the depot at any time to review your inventory.",
+    "Open the depot menu and take a look at the items you currently have."
 ]
 inventory_quest_line = "Visit the depot."
 inventory_post_quest_dialogue = [
-    "Now you know how to access the depot!"
+    "Depot access confirmed.",
+    "Keeping track of your supplies is important for managing the port.",
+    "As your fleet grows, the depot will continue to fill with new materials and equipment."
 ]
 
 def inventory_completion_criteria(menu_manager):
@@ -455,14 +481,18 @@ inventory_quest = Quest(
 )
 
 intel_center_pre_quest_dialogue = [
-    "During our sortie, we encounter some enemy sirens.",
-    "By successfully completing sorties, we can collect data about the enemies.",
-    "Let me show you were you can read more about our enemies."
+    "Combat data from your recent sortie has been recorded, Commander.",
+    "You can review this information in the Intel Center.",
+    "The Intel Center stores records on enemies your fleet has encountered.",
+    "Different enemies have different strengths and weaknesses.",
+    "Studying enemy data will help you prepare better fleets and strategies for future sorties.",
+    "Open the Intel Center and review the available records."
 ]
 intel_center_quest_line = "Visit the intel center."
 intel_center_post_quest_dialogue = [
-    "Now you know how to access the intel center!",
-    "This information can help you get an advantage when fighting sirens."
+    "Intel Center access confirmed.",
+    "Enemy data will continue to update as your fleet encounters new threats.",
+    "Use this information carefully, Commander. Good preparation can decide the outcome of battle."
 ]
 
 def intel_center_completion_criteria(menu_manager):
@@ -523,12 +553,21 @@ intel_center_quest = Quest(
 )
 
 research_shipgirl_pre_quest_dialogue = [
-    "We can research a new shipgirl."
+    "Your fleet is growing steadily, Commander.",
+    "To construct more advanced shipgirls, you will first need to research them.",
+    "Each shipgirl has a unique item required for construction.",
+    "You can obtain these items by starting a research project and collecting combat EXP during sorties.",
+    "Once enough EXP has been collected, the shipgirl's unique item will be unlocked.",
+    "After that, if you have the required materials, the shipgirl can be constructed in the Shipyard.",
+    "For now, let us begin researching a cruiser from your chosen faction.",
+    "Open the Shipyard and start the research project."
 ]
-research_shipgirl_quest_line = "Go to the research and start researching CA_shipgirl."
+research_shipgirl_quest_line = "Begin researching a cruiser in the Shipyard."
 research_shipgirl_post_quest_dialogue = [
-    "Let's sortie into zone 2 to collect combat data.",
-    "Collecting combat data contributes towards obtaining the shipgirl's unique item."
+    "Research project started.",
+    "Your fleet can now collect combat EXP for this shipgirl during sorties.",
+    "The second operation zone is now available.",
+    "Continue battling enemy fleets to progress the research, Commander."
 ]
 
 def research_shipgirl_completion_criteria_factory(shipgirl):
@@ -555,12 +594,17 @@ research_shipgirl_quest = Quest(
 )
 
 construct_shipgirl_pre_quest_dialogue = [
-    "We've collected enough combat data and obtained CA_shipgirl's unique item!"
+    "Research is complete, Commander.",
+    "The cruiser's unique item has been successfully recovered.",
+    "You now have everything needed to construct the new shipgirl.",
+    "Return to the Shipyard and begin construction."
 ]
-construct_shipgirl_quest_line = "Go to the shipyard and construct CA_shipgirl."
+construct_shipgirl_quest_line = "Construct the researched cruiser in the Shipyard."
 construct_shipgirl_post_quest_dialogue = [
-    "CA_shipgirl has joined our port!",
-    "Let's add her to our fleet and sortie into zone 3."
+    "Construction complete.",
+    "The new cruiser has joined your fleet, Commander.",
+    "Cruisers provide balanced firepower and durability in combat.",
+    "Continue expanding your fleet and preparing for stronger enemies ahead."
 ]
 
 def construct_shipgirl_on_start(menu_manager):
@@ -582,11 +626,19 @@ construct_shipgirl_quest = Quest(
 )
 
 craft_weapon_pre_quest_dialogue = [
-    "We've collected enough materials to craft a new gun!"
+    "Zone 3 has been cleared, Commander.",
+    "The rewards include materials for crafting new equipment.",
+    "The Gear Lab is now available.",
+    "You can use the Gear Lab to craft weapons for your shipgirls.",
+    "For now, let us craft a new naval gun for your destroyer.",
+    "Open the Gear Lab and begin crafting."
 ]
-craft_weapon_quest_line = "Go to the gear lab and craft a new DD gun."
+craft_weapon_quest_line = "Craft a destroyer naval gun in the Gear Lab."
 craft_weapon_post_quest_dialogue = [
-    "We've crafted a new gun!"
+    "Crafting complete.",
+    "The new naval gun has been added to your depot, Commander.",
+    "Equipment can make your shipgirls stronger in battle.",
+    "Next, we should prepare the destroyer to use this new weapon."
 ]
 
 def craft_weapon_completion_criteria(menu_manager):
@@ -650,12 +702,17 @@ craft_weapon_quest = Quest(
 )
 
 equip_weapon_pre_quest_dialogue = [
-    "Since we just crafted a new gun, we should equip it."
+    "Your new naval gun is ready for use, Commander.",
+    "Before equipment can be used in battle, it must be assigned to a shipgirl.",
+    "Open the destroyer's loadout page to manage her equipment.",
+    "Once there, equip the new naval gun to improve her combat performance."
 ]
-equip_weapon_quest_line = "Equip the new gun onto DD_shipgirl."
+equip_weapon_quest_line = "Equip the new naval gun onto your destroyer."
 equip_weapon_post_quest_dialogue = [
-    "Now DD_shipgirl is stronger!",
-    "Let's sortie into the new zone!"
+    "Equipment change complete.",
+    "The destroyer's firepower has increased, Commander.",
+    "Upgrading equipment is an important part of strengthening your fleet.",
+    "Your fleet is now ready for the next operation."
 ]
 
 def equip_weapon_completion_criteria_factory(shipgirl):
