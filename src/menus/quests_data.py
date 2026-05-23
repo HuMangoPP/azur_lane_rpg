@@ -290,274 +290,6 @@ construct_shipgirls_quest = Quest(
     decoration_voucher_reward
 )
 
-buy_decoration_pre_quest_dialogue = [
-    "You have received decoration tokens, Commander.",
-    "These tokens can be used in the Decoration Shop.",
-    "Decorations let you customize the port menu.",
-    "You can choose the style you like best.",
-    "Open the Decoration Shop and purchase one decoration."
-]
-buy_decoration_quest_line = "Purchase a decoration from the Decoration Shop."
-buy_decoration_post_quest_dialogue = [
-    "Purchase complete.",
-    "The new decoration has been added to your collection, Commander.",
-    "You can use decorations to make the port feel more personal.",
-    "Try placing it in the port when you are ready."
-]
-
-def buy_decoration_completion_criteria(menu_manager):
-    return any(
-        decoration_count > 0
-        for decoration_count in DataFiles.save_file["decoration_depot"].values()
-    )
-
-def buy_decoration_tutorial_draw(menu_manager, surface, font):
-    if menu_manager.current_menu != menu_manager.port_menu:
-        return
-
-    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
-        button_rect = menu_manager.port_menu.open_decoration_store_overlay_button.rect
-        rect = get_rect(
-            width=button_rect.width + 2*Box.PADDING,
-            height=button_rect.height + 2*Box.PADDING,
-            center=button_rect.center
-        )
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-        draw_tb(surface, font, None, rect.topright, True, False)
-    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DECORATION_STORE:
-        if menu_manager.port_menu.store_selected_item is None:
-            rect = menu_manager.port_menu.store_overlay
-            draw_tb(
-                surface, font,
-                "Pick any decoration to buy.",
-                rect.center,
-                False, False
-            )
-        elif menu_manager.port_menu.store_confirm_button.active:
-            button_rect = menu_manager.port_menu.store_confirm_button.rect
-            rect = get_rect(
-                width=button_rect.width + 2*Box.PADDING,
-                height=button_rect.height + 2*Box.PADDING,
-                center=button_rect.center
-            )
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-            draw_tb(surface, font, None, rect.bottomright, False, False)
-
-def buy_decoration_on_start(menu_manager):
-    menu_manager.port_menu.open_decoration_store_overlay_button.active = True
-
-def buy_decoration_on_complete(menu_manager):
-    quest_name = decorate_port_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = decorate_port_quest
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
-
-buy_decoration_quest = Quest(
-    "buy_decoration",
-    buy_decoration_pre_quest_dialogue,
-    buy_decoration_quest_line,
-    buy_decoration_post_quest_dialogue,
-    buy_decoration_completion_criteria,
-    buy_decoration_tutorial_draw,
-    buy_decoration_on_start,
-    buy_decoration_on_complete,
-    decoration_voucher_reward
-)
-
-decorate_port_pre_quest_dialogue = [
-    "Your new decoration is ready to be placed, Commander.",
-    "You can customize the port by placing decorations wherever you like.",
-    "Open the port edit menu to begin decorating.",
-    "While editing, you can place, rotate, and remove decorations.",
-    "Try arranging the new decoration however you want."
-]
-decorate_port_quest_line = "Place a decoration in the port."
-decorate_port_post_quest_dialogue = [
-    "Decoration setup complete.",
-    "The port is starting to feel more lively, Commander.",
-    "You can return to the edit menu at any time to change the layout.",
-    "Collect more decorations to further customize the port."
-]
-
-def decorate_port_completion_criteria(menu_manager):
-    port_menu = menu_manager.port_menu
-    return (
-        port_menu.moved_decoration_depot_overlay
-        and port_menu.rotated_decoration
-        and port_menu.placed_decoration
-        and port_menu.removed_decoration
-        and len(DataFiles.save_file["decorations"]) > 0
-        and not port_menu.decorating_port_menu
-    )
-
-def decorate_port_get_depot_decoration_rects(port_menu):
-    rects = []
-    decoration_index = 0
-    for decoration, amt in DataFiles.save_file["decoration_depot"].items():
-        if amt <= 0:
-            continue
-        rect = get_rect(
-            width=Box.WIDTH, height=Box.HEIGHT,
-            left=port_menu.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-            top=port_menu.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-        )
-        rects.append(rect)
-        decoration_index += 1
-    return rects
-
-def decorate_port_get_delete_rect(port_menu):
-    decoration_index = sum(
-        1 for amt in DataFiles.save_file["decoration_depot"].values()
-        if amt > 0
-    )
-    return get_rect(
-        width=Box.WIDTH, height=Box.HEIGHT,
-        left=port_menu.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-        top=port_menu.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-    )
-
-def decorate_port_get_placed_decoration_rect():
-    if len(DataFiles.save_file["decorations"]) <= 0:
-        return None
-
-    decoration, tilepos_anchor, direction = DataFiles.save_file["decorations"][0]
-    decoration_info = DataFiles.decoration_store[decoration][direction]
-    return get_rect(
-        width=decoration_info["width"] * Decorations.TILESIZE,
-        height=decoration_info["height"] * Decorations.TILESIZE,
-        left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
-        top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
-    )
-
-def decorate_port_draw_depot_items(menu_manager, surface, font, text):
-    for rect in decorate_port_get_depot_decoration_rects(menu_manager.port_menu):
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-    draw_tb(
-        surface, font,
-        text,
-        rect.bottomright,
-        False, False
-    )
-
-def decorate_port_tutorial_draw(menu_manager, surface, font):
-    if menu_manager.current_menu != menu_manager.port_menu:
-        return
-
-    port_menu = menu_manager.port_menu
-    if not port_menu.decorating_port_menu:
-        if port_menu.current_overlay != port_menu.NO_OVERLAY:
-            return
-
-        button_rect = port_menu.open_close_decoration_menu_button.rect
-        rect = get_rect(
-            width=button_rect.width + 2*Box.PADDING,
-            height=button_rect.height + 2*Box.PADDING,
-            center=button_rect.center
-        )
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-        draw_tb(surface, font, None, rect.bottomleft, False, True)
-        return
-
-    if not port_menu.moved_decoration_depot_overlay:
-        rect = port_menu.decoration_depot_overlay
-        draw_tb(
-            surface, font,
-            "Drag the depot overlay if it is in the way.",
-            (rect.right, rect.centery),
-            False, False
-        )
-        return
-
-    if not port_menu.placed_decoration:
-        if port_menu.selected_decoration_in_depot is None:
-            decorate_port_draw_depot_items(
-                menu_manager, surface, font,
-                "Pick one decoration from your depot."
-            )
-        elif not port_menu.rotated_decoration:
-            draw_tb(
-                surface, font,
-                "Right click to rotate the decoration.",
-                pygame.mouse.get_pos(),
-                False, False
-            )
-        else:
-            draw_tb(
-                surface, font,
-                "Left click an open tile to place it.",
-                pygame.mouse.get_pos(),
-                False, False
-            )
-        return
-
-    if not port_menu.removed_decoration:
-        if not port_menu.deleting_decoration:
-            rect = decorate_port_get_delete_rect(port_menu)
-            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-            draw_tb(
-                surface, font,
-                "Use this to remove a placed decoration.",
-                rect.bottomright,
-                False, False
-            )
-        else:
-            rect = decorate_port_get_placed_decoration_rect()
-            if rect is not None:
-                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-                draw_tb(
-                    surface, font,
-                    "Click the placed decoration to return it to the depot.",
-                    rect.bottomright,
-                    False, False
-                )
-        return
-
-    if len(DataFiles.save_file["decorations"]) <= 0:
-        draw_tb(
-            surface, font,
-            "Place the decoration again.",
-            pygame.mouse.get_pos(),
-            False, False
-        )
-        return
-
-    button_rect = port_menu.open_close_decoration_menu_button.rect
-    rect = get_rect(
-        width=button_rect.width + 2*Box.PADDING,
-        height=button_rect.height + 2*Box.PADDING,
-        center=button_rect.center
-    )
-    pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-
-    draw_tb(surface, font, "Exit edit mode.", rect.bottomleft, False, True)
-
-def decorate_port_on_start(menu_manager):
-    port_menu = menu_manager.port_menu
-    port_menu.open_close_decoration_menu_button.active = True
-    port_menu.moved_decoration_depot_overlay = False
-    port_menu.rotated_decoration = False
-    port_menu.placed_decoration = False
-    port_menu.removed_decoration = False
-
-def decorate_port_on_complete(menu_manager):
-    pass
-
-decorate_port_quest = Quest(
-    "decorate_port",
-    decorate_port_pre_quest_dialogue,
-    decorate_port_quest_line,
-    decorate_port_post_quest_dialogue,
-    decorate_port_completion_criteria,
-    decorate_port_tutorial_draw,
-    decorate_port_on_start,
-    decorate_port_on_complete,
-    decoration_voucher_reward
-)
-
 first_sortie_pre_quest_dialogue = [
     "Your fleet is ready for deployment, Commander.",
     "It is time to begin your first sortie.",
@@ -1040,16 +772,284 @@ equip_weapon_quest = Quest(
     decoration_voucher_reward
 )
 
+buy_decoration_pre_quest_dialogue = [
+    "You have received decoration tokens, Commander.",
+    "These tokens can be used in the Decoration Shop.",
+    "Decorations let you customize the port menu.",
+    "You can choose the style you like best.",
+    "Open the Decoration Shop and purchase one decoration."
+]
+buy_decoration_quest_line = "Purchase a decoration from the Decoration Shop."
+buy_decoration_post_quest_dialogue = [
+    "Purchase complete.",
+    "The new decoration has been added to your collection, Commander.",
+    "You can use decorations to make the port feel more personal.",
+    "Try placing it in the port when you are ready."
+]
+
+def buy_decoration_completion_criteria(menu_manager):
+    return any(
+        decoration_count > 0
+        for decoration_count in DataFiles.save_file["decoration_depot"].values()
+    )
+
+def buy_decoration_tutorial_draw(menu_manager, surface, font):
+    if menu_manager.current_menu != menu_manager.port_menu:
+        return
+
+    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        button_rect = menu_manager.port_menu.open_decoration_store_overlay_button.rect
+        rect = get_rect(
+            width=button_rect.width + 2*Box.PADDING,
+            height=button_rect.height + 2*Box.PADDING,
+            center=button_rect.center
+        )
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        draw_tb(surface, font, None, rect.topright, True, False)
+    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DECORATION_STORE:
+        if menu_manager.port_menu.store_selected_item is None:
+            rect = menu_manager.port_menu.store_overlay
+            draw_tb(
+                surface, font,
+                "Pick any decoration to buy.",
+                rect.center,
+                False, False
+            )
+        elif menu_manager.port_menu.store_confirm_button.active:
+            button_rect = menu_manager.port_menu.store_confirm_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomright, False, False)
+
+def buy_decoration_on_start(menu_manager):
+    menu_manager.port_menu.open_decoration_store_overlay_button.active = True
+
+def buy_decoration_on_complete(menu_manager):
+    quest_name = decorate_port_quest.quest_id
+    menu_manager.quest_manager.quests[quest_name] = decorate_port_quest
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
+
+buy_decoration_quest = Quest(
+    "buy_decoration",
+    buy_decoration_pre_quest_dialogue,
+    buy_decoration_quest_line,
+    buy_decoration_post_quest_dialogue,
+    buy_decoration_completion_criteria,
+    buy_decoration_tutorial_draw,
+    buy_decoration_on_start,
+    buy_decoration_on_complete,
+    decoration_voucher_reward
+)
+
+decorate_port_pre_quest_dialogue = [
+    "Your new decoration is ready to be placed, Commander.",
+    "You can customize the port by placing decorations wherever you like.",
+    "Open the port edit menu to begin decorating.",
+    "While editing, you can place, rotate, and remove decorations.",
+    "Try arranging the new decoration however you want."
+]
+decorate_port_quest_line = "Place a decoration in the port."
+decorate_port_post_quest_dialogue = [
+    "Decoration setup complete.",
+    "The port is starting to feel more lively, Commander.",
+    "You can return to the edit menu at any time to change the layout.",
+    "Collect more decorations to further customize the port."
+]
+
+def decorate_port_completion_criteria(menu_manager):
+    port_menu = menu_manager.port_menu
+    return (
+        port_menu.moved_decoration_depot_overlay
+        and port_menu.rotated_decoration
+        and port_menu.placed_decoration
+        and port_menu.removed_decoration
+        and len(DataFiles.save_file["decorations"]) > 0
+        and not port_menu.decorating_port_menu
+    )
+
+def _decorate_port_get_depot_decoration_rects(port_menu):
+    rects = []
+    decoration_index = 0
+    for decoration, amt in DataFiles.save_file["decoration_depot"].items():
+        if amt <= 0:
+            continue
+        rect = get_rect(
+            width=Box.WIDTH, height=Box.HEIGHT,
+            left=port_menu.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+            top=port_menu.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+        )
+        rects.append(rect)
+        decoration_index += 1
+    return rects
+
+def _decorate_port_get_delete_rect(port_menu):
+    decoration_index = sum(
+        1 for amt in DataFiles.save_file["decoration_depot"].values()
+        if amt > 0
+    )
+    return get_rect(
+        width=Box.WIDTH, height=Box.HEIGHT,
+        left=port_menu.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+        top=port_menu.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+    )
+
+def _decorate_port_get_placed_decoration_rect():
+    if len(DataFiles.save_file["decorations"]) <= 0:
+        return None
+
+    decoration, tilepos_anchor, direction = DataFiles.save_file["decorations"][0]
+    decoration_info = DataFiles.decoration_store[decoration][direction]
+    return get_rect(
+        width=decoration_info["width"] * Decorations.TILESIZE,
+        height=decoration_info["height"] * Decorations.TILESIZE,
+        left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
+        top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
+    )
+
+def _decorate_port_draw_depot_items(menu_manager, surface, font, text):
+    for rect in _decorate_port_get_depot_decoration_rects(menu_manager.port_menu):
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+    draw_tb(
+        surface, font,
+        text,
+        rect.bottomright,
+        False, False
+    )
+
+def decorate_port_tutorial_draw(menu_manager, surface, font):
+    if menu_manager.current_menu != menu_manager.port_menu:
+        return
+
+    port_menu = menu_manager.port_menu
+    if not port_menu.decorating_port_menu:
+        if port_menu.current_overlay != port_menu.NO_OVERLAY:
+            return
+
+        button_rect = port_menu.open_close_decoration_menu_button.rect
+        rect = get_rect(
+            width=button_rect.width + 2*Box.PADDING,
+            height=button_rect.height + 2*Box.PADDING,
+            center=button_rect.center
+        )
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        draw_tb(surface, font, None, rect.bottomleft, False, True)
+        return
+
+    if not port_menu.moved_decoration_depot_overlay:
+        rect = port_menu.decoration_depot_overlay
+        draw_tb(
+            surface, font,
+            "Drag the depot overlay if it is in the way.",
+            (rect.right, rect.centery),
+            False, False
+        )
+        return
+
+    if not port_menu.placed_decoration:
+        if port_menu.selected_decoration_in_depot is None:
+            _decorate_port_draw_depot_items(
+                menu_manager, surface, font,
+                "Pick one decoration from your depot."
+            )
+        elif not port_menu.rotated_decoration:
+            draw_tb(
+                surface, font,
+                "Right click to rotate the decoration.",
+                pygame.mouse.get_pos(),
+                False, False
+            )
+        else:
+            draw_tb(
+                surface, font,
+                "Left click an open tile to place it.",
+                pygame.mouse.get_pos(),
+                False, False
+            )
+        return
+
+    if not port_menu.removed_decoration:
+        if not port_menu.deleting_decoration:
+            rect = _decorate_port_get_delete_rect(port_menu)
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+            draw_tb(
+                surface, font,
+                "Use this to remove a placed decoration.",
+                rect.bottomright,
+                False, False
+            )
+        else:
+            rect = _decorate_port_get_placed_decoration_rect()
+            if rect is not None:
+                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+                draw_tb(
+                    surface, font,
+                    "Click the placed decoration to return it to the depot.",
+                    rect.bottomright,
+                    False, False
+                )
+        return
+
+    if len(DataFiles.save_file["decorations"]) <= 0:
+        draw_tb(
+            surface, font,
+            "Place the decoration again.",
+            pygame.mouse.get_pos(),
+            False, False
+        )
+        return
+
+    button_rect = port_menu.open_close_decoration_menu_button.rect
+    rect = get_rect(
+        width=button_rect.width + 2*Box.PADDING,
+        height=button_rect.height + 2*Box.PADDING,
+        center=button_rect.center
+    )
+    pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+    draw_tb(surface, font, "Exit edit mode.", rect.bottomleft, False, True)
+
+def decorate_port_on_start(menu_manager):
+    port_menu = menu_manager.port_menu
+    port_menu.open_close_decoration_menu_button.active = True
+    port_menu.moved_decoration_depot_overlay = False
+    port_menu.rotated_decoration = False
+    port_menu.placed_decoration = False
+    port_menu.removed_decoration = False
+
+def decorate_port_on_complete(menu_manager):
+    pass
+
+decorate_port_quest = Quest(
+    "decorate_port",
+    decorate_port_pre_quest_dialogue,
+    decorate_port_quest_line,
+    decorate_port_post_quest_dialogue,
+    decorate_port_completion_criteria,
+    decorate_port_tutorial_draw,
+    decorate_port_on_start,
+    decorate_port_on_complete,
+    decoration_voucher_reward
+)
+
 quests = [
     choose_faction_quest,
     construct_shipgirls_quest,
     first_sortie_quest,
     inventory_quest,
-    buy_decoration_quest,
-    decorate_port_quest,
     intel_center_quest,
     research_shipgirl_quest,
     construct_shipgirl_quest,
     craft_weapon_quest,
-    equip_weapon_quest
+    equip_weapon_quest,
+    buy_decoration_quest,
+    decorate_port_quest,
 ]

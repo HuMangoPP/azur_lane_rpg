@@ -2,20 +2,14 @@
     "unlocked_factions": [],
     "shipgirls": {},
     "equipment": {},
-    "inventory": {
-        "decoration_coin": 1
-    },
-    "decoration_depot": {
-        "bed": 1
-    },
+    "inventory": {},
+    "decoration_depot": {},
     "decorations": [],
     "research_target": null,
     "research_progress": 0,
     "sortie_progress": 0,
     "chapter_progress": 0,
     "quests": {
-        "choose_faction": "new",
-        "buy_decoration": "completed",
-        "decorate_port": "in_progress"
+        "choose_faction": "new"
     }
 }
