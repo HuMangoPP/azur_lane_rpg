@@ -813,6 +813,17 @@ class PortMenu:
             )
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
             surface.blit(DataFiles.get_entity_sprite(self.store_selected_item), rect)
+
+            rect = get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=self.store_checkout_overlay.centerx,
+                bottom=self.store_confirm_button.rect.top - Box.PADDING
+            )
+            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
+            surface.blit(DataFiles.get_entity_sprite("decoration_coin"), rect)
+            num_coins = DataFiles.save_file["inventory"]["decoration_coin"]
+            font.render(surface, str(num_coins),rect.center,Color.WHITE,1,style="center",outline_color=Color.BLACK)
+
             self.store_confirm_button.draw(surface, font)
 
     def rotate_decoration_direction(self):
