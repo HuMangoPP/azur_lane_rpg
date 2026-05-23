@@ -290,6 +290,82 @@ construct_shipgirls_quest = Quest(
     decoration_voucher_reward
 )
 
+buy_decoration_pre_quest_dialogue = [
+    "You have received decoration tokens, Commander.",
+    "These tokens can be used in the Decoration Shop.",
+    "Decorations let you customize the port menu.",
+    "You can choose the style you like best.",
+    "Open the Decoration Shop and purchase one decoration."
+]
+buy_decoration_quest_line = "Purchase a decoration from the Decoration Shop."
+buy_decoration_post_quest_dialogue = [
+    "Purchase complete.",
+    "The new decoration has been added to your collection, Commander.",
+    "You can use decorations to make the port feel more personal.",
+    "Try placing it in the port when you are ready."
+]
+
+def buy_decoration_completion_criteria(menu_manager):
+    return any(
+        decoration_count > 0
+        for decoration_count in DataFiles.save_file["decoration_depot"].values()
+    )
+
+def buy_decoration_tutorial_draw(menu_manager, surface, font):
+    if menu_manager.current_menu != menu_manager.port_menu:
+        return
+
+    if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        button_rect = menu_manager.port_menu.open_decoration_store_overlay_button.rect
+        rect = get_rect(
+            width=button_rect.width + 2*Box.PADDING,
+            height=button_rect.height + 2*Box.PADDING,
+            center=button_rect.center
+        )
+        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+        draw_tb(surface, font, None, rect.topright, True, False)
+    elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DECORATION_STORE:
+        if menu_manager.port_menu.store_selected_item is None:
+            rect = menu_manager.port_menu.store_overlay
+            draw_tb(
+                surface, font,
+                "Pick any decoration to buy.",
+                rect.center,
+                False, False
+            )
+        elif menu_manager.port_menu.store_confirm_button.active:
+            button_rect = menu_manager.port_menu.store_confirm_button.rect
+            rect = get_rect(
+                width=button_rect.width + 2*Box.PADDING,
+                height=button_rect.height + 2*Box.PADDING,
+                center=button_rect.center
+            )
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font, None, rect.bottomright, False, False)
+
+def buy_decoration_on_start(menu_manager):
+    menu_manager.port_menu.open_decoration_store_overlay_button.active = True
+
+def buy_decoration_on_complete(menu_manager):
+    quest_name = decorate_port_quest.quest_id
+    menu_manager.quest_manager.quests[quest_name] = decorate_port_quest
+    if quest_name not in DataFiles.save_file["quests"]:
+        DataFiles.save_file["quests"][quest_name] = "new"
+
+buy_decoration_quest = Quest(
+    "buy_decoration",
+    buy_decoration_pre_quest_dialogue,
+    buy_decoration_quest_line,
+    buy_decoration_post_quest_dialogue,
+    buy_decoration_completion_criteria,
+    buy_decoration_tutorial_draw,
+    buy_decoration_on_start,
+    buy_decoration_on_complete,
+    decoration_voucher_reward
+)
+
 first_sortie_pre_quest_dialogue = [
     "Your fleet is ready for deployment, Commander.",
     "It is time to begin your first sortie.",
@@ -777,6 +853,7 @@ quests = [
     construct_shipgirls_quest,
     first_sortie_quest,
     inventory_quest,
+    buy_decoration_quest,
     intel_center_quest,
     research_shipgirl_quest,
     construct_shipgirl_quest,

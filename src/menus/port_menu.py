@@ -8,7 +8,7 @@ from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, Deco
 from src.shipgirls import Shipgirl
 
 def get_decoration_tiles(decoration, direction, tilepos_anchor):
-    decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
+    decoration_info = DataFiles.decoration_store[decoration][direction]
     decoration_tiles = set()
     for x in range(decoration_info["width"]):
         for y in range(decoration_info["height"]):
@@ -302,7 +302,7 @@ class PortMenu:
                 bottom=Box.BOTTOM_OF_SCREEN
             ),
             open_overlay_factory(self.DECORATION_STORE),
-            active=True,
+            active=False,
             background_styling={
                 "background_color": Color.BLACK,
                 "background_img": DataFiles.sprites["user_interface"]["decoration_store"],
@@ -786,6 +786,8 @@ class PortMenu:
             rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
             surface.blit(DataFiles.get_entity_sprite(item), rect)
+            if self.store_selected_item == item:
+                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
         
         if self.store_selected_item is not None:
             pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.store_checkout_overlay)
@@ -803,7 +805,7 @@ class PortMenu:
                 top=self.store_checkout_overlay.top + 2*Box.PADDING + font.font_height
             )
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
-            surface.blit(DataFiles.get_entity_sprite(item), rect)
+            surface.blit(DataFiles.get_entity_sprite(self.store_selected_item), rect)
             self.store_confirm_button.draw(surface, font)
 
     def rotate_decoration_direction(self):
@@ -869,7 +871,7 @@ class PortMenu:
                     )
                     for decoration_index, decoration_data in enumerate(DataFiles.save_file["decorations"]):
                         decoration, tilepos_anchor, direction = decoration_data
-                        decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
+                        decoration_info = DataFiles.decoration_store[decoration][direction]
                         if (
                             tilepos_anchor[0] <= clicked_tilepos[0] < tilepos_anchor[0] + decoration_info["width"]
                             and tilepos_anchor[1] <= clicked_tilepos[1] < tilepos_anchor[1] + decoration_info["height"]
@@ -932,7 +934,7 @@ class PortMenu:
         )
         for decoration_data in decorations:
             decoration, tilepos_anchor, direction = decoration_data
-            decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
+            decoration_info = DataFiles.decoration_store[decoration][direction]
             rect = get_rect(
                 width=decoration_info["width"] * Decorations.TILESIZE,
                 height=decoration_info["height"] * Decorations.TILESIZE,
@@ -952,7 +954,7 @@ class PortMenu:
             )
             for decoration_data in DataFiles.save_file["decorations"]:
                 decoration, tilepos_anchor, direction = decoration_data
-                decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
+                decoration_info = DataFiles.decoration_store[decoration][direction]
                 hovered_decoration_tiles = get_decoration_tiles(decoration, direction, tilepos_anchor)
                 if hovered_tilepos in hovered_decoration_tiles:
                     rect = get_rect(
@@ -977,7 +979,7 @@ class PortMenu:
                 (mpos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
                 (mpos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
             )
-            decoration_info = DataFiles.decoration_store[f"{decoration}_{direction}"]
+            decoration_info = DataFiles.decoration_store[decoration][direction]
             place_tiles = get_decoration_tiles(decoration, direction, hovered_tilepos)
             rect = get_rect(
                 width=decoration_info["width"] * Decorations.TILESIZE,
