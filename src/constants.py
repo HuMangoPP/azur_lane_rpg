@@ -99,7 +99,7 @@ class Stats:
     def stat(cls, exp, base_stat, stat_per_level):
         return base_stat + stat_per_level * cls.level(exp)
 
-from engine.load_sprites import load_sprites
+from engine.load_assets import load_sprites, load_sfx
 
 class DataFiles:
     with open("data/save_file.json") as f:
@@ -123,7 +123,9 @@ class DataFiles:
     with open("data/decoration_store.json") as f:
         decoration_store = json.load(f)
     
+
     sprites = load_sprites()
+    sfx = load_sfx()
 
     @classmethod
     def recolor_sprite(cls, sprite_group, sprite_key, color):

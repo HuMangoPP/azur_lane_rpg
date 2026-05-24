@@ -456,13 +456,12 @@ class PortMenu:
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.depot_overlay)
 
         num_items_in_row = (self.depot_overlay.width - Box.PADDING) // (Box.WIDTH+Box.PADDING)
-        padding = (self.depot_overlay.width - 2*Box.PADDING - num_items_in_row*Box.WIDTH) / (num_items_in_row-1)
         item_index = 0
         for item, count in DataFiles.save_file["inventory"].items():
             if count <= 0:
                 continue
-            left = self.depot_overlay.left + Box.PADDING + (item_index%num_items_in_row)*(Box.WIDTH + padding)
-            top = self.depot_overlay.top + Box.PADDING + (item_index//num_items_in_row)*(Box.HEIGHT+padding)
+            left = self.depot_overlay.left + Box.PADDING + (item_index%num_items_in_row)*(Box.WIDTH+Box.PADDING)
+            top = self.depot_overlay.top + Box.PADDING + (item_index//num_items_in_row)*(Box.HEIGHT+Box.PADDING)
             rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
             surface.blit(DataFiles.get_entity_sprite(item), rect)

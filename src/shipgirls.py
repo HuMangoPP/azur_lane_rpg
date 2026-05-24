@@ -177,6 +177,7 @@ class ShipgirlBattleComponent:
         if self.target is not None and self.cooldown_timer <= 0:
             self.attack_timer = 1
             self.cooldown_timer = 1
+            DataFiles.sfx["gunfire"].play()
 
     def draw(self, surface, font, rect):
         bar_width = 64
@@ -456,7 +457,7 @@ class SirenFleet:
         if self.dummy_target is None:
             self.dummy_target = DummyTarget(menu_manager)
 
-        for i, siren in enumerate(self._front):
+        for siren in self.fleet:
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
             elif siren.battle_component.target is None:
@@ -466,13 +467,6 @@ class SirenFleet:
                     siren.battle_component.target = self.dummy_target
                 else:
                     siren.battle_component.target = menu_manager.player_fleet.front
-            siren.battle_component.update(dt, siren.rect, menu_manager.player_fleet)
-
-            siren.animate(dt)
-        
-        for i, siren in enumerate(self._back):
-            if siren.battle_component.hp <= 0:
-                siren.battle_component.active = False
             siren.battle_component.update(dt, siren.rect, menu_manager.player_fleet)
 
             siren.animate(dt)

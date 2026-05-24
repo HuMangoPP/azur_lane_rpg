@@ -296,6 +296,8 @@ class EncounterMenu:
                     if (
                         construct_shipgirl_quest.quest_id not in DataFiles.save_file["quests"]
                         and research_shipgirl_quest.completion_criteria(self.menu_manager)
+                        and DataFiles.save_file["inventory"]["wisdom_cube"] >= 1
+                        and DataFiles.save_file["inventory"]["CA_blueprint"] >= 1
                     ):
                         self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
                         DataFiles.save_file["quests"][construct_shipgirl_quest.quest_id] = "new"

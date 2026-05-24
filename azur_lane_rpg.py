@@ -5,6 +5,8 @@ pygame.init()
 SCREEN_SIZE = pygame.Vector2(1120, 630)
 screen = pygame.display.set_mode(SCREEN_SIZE)
 
+pygame.mixer.init()
+
 from engine.font import Font
 
 from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles
