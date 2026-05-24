@@ -158,10 +158,11 @@ class Quest:
                     DataFiles.save_file["inventory"][reward] = DataFiles.save_file["inventory"].get(reward, 0) + amt
             return False
         elif self.pre_quest_finished:
-            if not self.started and self.QUEST_BUTTON.collidepoint(mpos):
-                self.started = True
-                self.on_start(menu_manager)
-                DataFiles.save_file["quests"][self.quest_id] = "in_progress"
+            if self.QUEST_BUTTON.collidepoint(mpos):
+                if not self.started:
+                    self.started = True
+                    self.on_start(menu_manager)
+                    DataFiles.save_file["quests"][self.quest_id] = "in_progress"
                 return True
             return False
         else:

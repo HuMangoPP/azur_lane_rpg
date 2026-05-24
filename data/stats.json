@@ -2,25 +2,25 @@
     "DD": {
         "max_hp": [20, 3],
 		"evasion": [200, 20],
-		"firepower": [3, 1],
-		"reload": [200, 10]
+		"firepower": [2, 1],
+		"reload": [150, 15]
     },
     "CL": {
-        "max_hp": [30, 5],
+        "max_hp": [30, 4],
 		"evasion": [100, 10],
-		"firepower": [4, 1],
-		"reload": [175, 8]
+		"firepower": [3, 1],
+		"reload": [125, 10]
     },
     "CA": {
-        "max_hp": [30, 5],
+        "max_hp": [30, 4],
 		"evasion": [100, 10],
-		"firepower": [4, 1],
-		"reload": [175, 8]
+		"firepower": [3, 1],
+		"reload": [175, 10]
     },
     "BB": {
-        "max_hp": [50, 5],
+        "max_hp": [40, 5],
 		"evasion": [0, 5],
-		"firepower": [5, 1],
-		"reload": [150, 6]
+		"firepower": [4, 1],
+		"reload": [100, 5]
     }
 }

@@ -207,7 +207,6 @@ class SortieSelectionMenu:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.mousedown = True
-                print(event.pos)
             # if event.type == pygame.MOUSEMOTION:
             #     if self.mousedown and self.selected_sortie_node is None:
             #         movement = pygame.Vector2(event.rel)

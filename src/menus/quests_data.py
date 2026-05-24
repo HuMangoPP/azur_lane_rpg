@@ -235,7 +235,7 @@ first_sortie_quest_line = "Sortie into zone 1."
 first_sortie_post_quest_dialogue = [
     "Sortie complete.",
     "Your fleet performed well in combat thanks to your leadership.",
-    "This is the first step towards protecting our seas from the siren invaders."
+    "This is the first step towards protecting our seas from the siren invaders.",
     "More missions are becoming available. Continue preparing your fleet for future battles."
 ]
 

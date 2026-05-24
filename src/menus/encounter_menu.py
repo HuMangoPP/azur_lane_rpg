@@ -149,6 +149,8 @@ class EncounterMenu:
         self.research_exp = 0
         self.exp_timer = 0
 
+        self.fast_forward = False
+
     def begin_sortie(self):
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
@@ -178,9 +180,7 @@ class EncounterMenu:
         self.menu_manager.siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in encounter_data["front"]] # TODO
         self.menu_manager.siren_fleet._back = [Shipgirl(siren_name, False) for siren_name in encounter_data["back"]]
         for siren in self.menu_manager.siren_fleet.fleet:
-            if DataFiles.siren_data[siren.name]["target_pref"] == "front":
-                siren.facing_left = True
-                siren.battle_component.target = self.menu_manager.player_fleet.front
+            siren.facing_left = True
         self.menu_manager.player_fleet.begin_encounter()
         self.menu_manager.siren_fleet.begin_encounter()
 
@@ -253,7 +253,11 @@ class EncounterMenu:
                 self.open_reward_cache_button.click(event.pos)
                 self.return_to_port_button.click(event.pos)
                 self.retreat_button.click(event.pos)
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_f:
+                self.fast_forward = not self.fast_forward
         
+        if self.fast_forward:
+            dt = dt * 2
         if self.encounter_started:
             afloat_sirens_before = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
             self.menu_manager.player_fleet.update(dt)
@@ -294,6 +298,7 @@ class EncounterMenu:
                         and research_shipgirl_quest.completion_criteria(self.menu_manager)
                     ):
                         self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
+                        DataFiles.save_file["quests"][construct_shipgirl_quest.quest_id] = "new"
                     DataFiles.save_file["research_target"] = None
                 self.research_exp = 0
         elif self.exp_timer > 0:

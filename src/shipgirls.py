@@ -9,6 +9,10 @@ from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, scr
 
 from live2d.live2d import Live2D
 
+class DummyTarget:
+    def __init__(self, menu_manager):
+        self.rect = menu_manager.fleet_selection_menu.fleet_slots[1]
+
 class ShipgirlBattleComponent:
     LIGHT_ARMOR = 0
     MEDIUM_ARMOR = 1
@@ -51,6 +55,10 @@ class ShipgirlBattleComponent:
         self.hull_type = info["hull_type"]
         self.equipment = save["equipment"]
         self.exp = save["exp"]
+        if self.is_player:
+            self.target_pref = None
+        else:
+            self.target_pref = info["target_pref"]
 
         self.hp = self.max_hp()
         self.cooldown_timer = 1
@@ -116,7 +124,16 @@ class ShipgirlBattleComponent:
         self.target = None
         self.evasion_gauge = 0
 
-    def update(self, dt, rect):
+    def _deal_damage(self, target):
+        target.battle_component.evasion_gauge += target.battle_component.evasion() / 1000
+        if target.battle_component.evasion_gauge >= 1:
+            target.battle_component.evasion_gauge -= 1
+        else:
+            shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
+            armor_type = self.HULL_TO_ARMOR_MAP[target.battle_component.hull_type]
+            target.battle_component.hp -= self.firepower() * self.DAMAGE_MULTIPLIER[shell_type][armor_type]
+
+    def update(self, dt, rect, fleet):
         if self.last_exp < self.exp:
             self.exp_timer += dt
             exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
@@ -143,16 +160,17 @@ class ShipgirlBattleComponent:
             distance = relpos.length()
             self.attack_timer = max(0, self.attack_timer - self.shell_speed()/distance*dt)
             if self.attack_timer <= 0:
-                self.target.battle_component.evasion_gauge += self.target.battle_component.evasion() / 1000
-                if self.target.battle_component.evasion_gauge >= 1:
-                    self.target.battle_component.evasion_gauge -= 1
+                if self.target_pref == "all":
+                    for shipgirl in fleet.shipgirls:
+                        if shipgirl is None:
+                            continue
+
+                        self._deal_damage(shipgirl)
                 else:
-                    shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
-                    armor_type = self.HULL_TO_ARMOR_MAP[self.target.battle_component.hull_type]
-                    self.target.battle_component.hp -= self.firepower() * self.DAMAGE_MULTIPLIER[shell_type][armor_type]
+                    self._deal_damage(self.target)
             return
 
-        if self.target is not None and self.target.battle_component.hp <= 0:
+        if self.target_pref != "all" and self.target is not None and self.target.battle_component.hp <= 0:
             self.target = None
         
         self.cooldown_timer = max(0, self.cooldown_timer - self.reload()/1000*dt)
@@ -320,6 +338,20 @@ class PlayerFleet:
                 return shipgirl
         return None
 
+    @property
+    def highest_hp(self):
+        shipgirl_with_highest_hp = None
+        for shipgirl in self.shipgirls:
+            if shipgirl is None:
+                continue
+            if shipgirl.battle_component.hp <= 0:
+                continue
+            if shipgirl_with_highest_hp is None:
+                shipgirl_with_highest_hp = shipgirl
+            elif shipgirl.battle_component.max_hp() > shipgirl_with_highest_hp.battle_component.max_hp():
+                shipgirl_with_highest_hp = shipgirl
+        return shipgirl_with_highest_hp
+
     def in_fleet(self, shipgirl):
         return shipgirl in self.shipgirls or shipgirl in self.backups
 
@@ -349,7 +381,7 @@ class PlayerFleet:
             if shipgirl is not None:
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
-                shipgirl.battle_component.update(dt, shipgirl.rect)
+                shipgirl.battle_component.update(dt, shipgirl.rect, None)
 
                 shipgirl.animate(dt)
 
@@ -375,6 +407,8 @@ class SirenFleet:
     def __init__(self):
         self._front = []
         self._back = []
+
+        self.dummy_target = None
     
     @property
     def afloat(self):
@@ -419,20 +453,27 @@ class SirenFleet:
             siren.battle_component.active = False
 
     def update(self, dt, menu_manager):
+        if self.dummy_target is None:
+            self.dummy_target = DummyTarget(menu_manager)
+
         for i, siren in enumerate(self._front):
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
-            if siren.battle_component.active:
-                if siren.battle_component.target is None:
+            elif siren.battle_component.target is None:
+                if siren.battle_component.target_pref == "highest_hp":
+                    siren.battle_component.target = menu_manager.player_fleet.highest_hp
+                elif siren.battle_component.target_pref == "all":
+                    siren.battle_component.target = self.dummy_target
+                else:
                     siren.battle_component.target = menu_manager.player_fleet.front
-            siren.battle_component.update(dt, siren.rect)
+            siren.battle_component.update(dt, siren.rect, menu_manager.player_fleet)
 
             siren.animate(dt)
         
         for i, siren in enumerate(self._back):
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
-            siren.battle_component.update(dt, siren.rect)
+            siren.battle_component.update(dt, siren.rect, menu_manager.player_fleet)
 
             siren.animate(dt)
 
