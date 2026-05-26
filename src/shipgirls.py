@@ -178,7 +178,7 @@ class ShipgirlBattleComponent:
         if self.target is not None and self.cooldown_timer <= 0:
             self.attack_timer = 1
             self.cooldown_timer = 1
-            DataFiles.sfx["gunfire"].play()
+            DataFiles.sfx["boom"].play()
 
     def draw(self, surface, font, rect):
         bar_width = 64
