@@ -139,6 +139,7 @@ class ShipgirlBattleComponent:
             exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
             new_level = Stats.level(exp_animation)
             if self.last_level < new_level:
+                DataFiles.sfx["scale"].play()
                 self.level_timer = 1
                 self.last_level = new_level
             if self.exp_timer > 1:
