@@ -144,6 +144,7 @@ class Quest:
     def go_next(self, menu_manager, mpos):
         if self.rewards_collected:
             if self.NEXT_BUTTON.collidepoint(mpos):
+                DataFiles.sfx["boop"].play()
                 self.post_quest_dialogue_index += 1
             if self.post_quest_dialogue_index == len(self.post_quest_dialogue):
                 self.on_complete(menu_manager)
@@ -153,12 +154,14 @@ class Quest:
             return False
         elif self.completed:
             if not self.rewards_collected and self.QUEST_BUTTON.collidepoint(mpos):
+                DataFiles.sfx["jingle"].play()
                 self.rewards_collected = True
                 for reward, amt in self.rewards.items():
                     DataFiles.save_file["inventory"][reward] = DataFiles.save_file["inventory"].get(reward, 0) + amt
             return False
         elif self.pre_quest_finished:
             if self.QUEST_BUTTON.collidepoint(mpos):
+                DataFiles.sfx["boop"].play()
                 if not self.started:
                     self.started = True
                     self.on_start(menu_manager)
@@ -167,6 +170,7 @@ class Quest:
             return False
         else:
             if self.NEXT_BUTTON.collidepoint(mpos):
+                DataFiles.sfx["boop"].play()
                 self.pre_quest_dialogue_index += 1
             if self.pre_quest_dialogue_index == len(self.pre_quest_dialogue):
                 self.pre_quest_finished = True

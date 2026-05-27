@@ -625,7 +625,10 @@ class PortMenu:
                 ]
                 self.overlay_mouseup_logic(event, shipgirls, self.shipgirl_filters, True)
                 if self.blueprint_confirm_button.click(event.pos):
-                    DataFiles.sfx["boop"].play()
+                    if self.blueprint_confirm_button.text == "research":
+                        DataFiles.sfx["frequency"].play()
+                    else:
+                        DataFiles.sfx["knock"].play()
 
     def draw_shipyard_overlay(self, surface, font):
         shipgirls = [
@@ -684,7 +687,8 @@ class PortMenu:
                         and equip_data["equippable_by"] == self.equipment_filters[self.selected_overlay_filter]
                     ]
                 self.overlay_mouseup_logic(event, equipment, self.equipment_filters, True)
-                self.blueprint_confirm_button.click(event.pos)
+                if self.blueprint_confirm_button.click(event.pos):
+                    DataFiles.sfx["knock"].play()
 
     def draw_gear_lab_overlay(self, surface, font):
         if self.selected_overlay_filter == 4: # TODO
