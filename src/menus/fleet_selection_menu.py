@@ -103,10 +103,12 @@ class FleetSelectionMenu:
                         self.selected_shipgirl = shipgirl
                         self.selected_shipgirl_index_from_backup = i
             if event.type == pygame.MOUSEBUTTONUP:
+                click = False
                 if self.selected_shipgirl is not None:
                     for i, slot in enumerate(self.fleet_slots):
                         if not slot.collidepoint(event.pos):
                             continue
+                        click = True
                         if self.selected_shipgirl_index_from_fleet is not None:
                             self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = self.menu_manager.player_fleet.shipgirls[i]
                             if self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] is not None:
@@ -125,6 +127,7 @@ class FleetSelectionMenu:
                     for i, slot in enumerate(self.backup_fleet_slots):
                         if not slot.collidepoint(event.pos):
                             continue
+                        click = True
                         if self.selected_shipgirl_index_from_fleet is not None:
                             self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = self.menu_manager.player_fleet.backups[i]
                             if self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] is not None:
@@ -141,8 +144,14 @@ class FleetSelectionMenu:
                         self.selected_shipgirl = None
 
                 self.mouse_start_drag = None
-                self.start_sortie_button.click(event.pos)
-                self.exit_fleet_selection_menu_button.click(event.pos)
+                click = (
+                    click
+                    or self.start_sortie_button.click(event.pos)
+                    or self.exit_fleet_selection_menu_button.click(event.pos)
+                )
+
+                if click:
+                    DataFiles.sfx["click"].play()
 
         if first_sortie_quest.quest_id in self.menu_manager.quest_manager.started_quests:
             self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 1

@@ -218,13 +218,17 @@ class SortieSelectionMenu:
             #         SortieNode.center += movement
             if event.type == pygame.MOUSEBUTTONUP:
                 self.mousedown = False
-                self.exit_sortie_selection_menu_button.click(event.pos)
-                self.start_sortie_button.click(event.pos)
+
+                click = (
+                    self.exit_sortie_selection_menu_button.click(event.pos)
+                    or self.start_sortie_button.click(event.pos)
+                )
 
                 if self.selected_sortie_node is None:
                     for sortie_node in self.sortie_nodes:
                         if not sortie_node.select(event.pos):
                             continue
+                        click = True
                         self.selected_sortie_node = sortie_node
 
                         rx = -100 # get x value of rightmost hex
@@ -253,6 +257,9 @@ class SortieSelectionMenu:
                     if not self.selected_sortie_info_panel.collidepoint(event.pos):
                         self.selected_sortie_node = None
                         self.start_sortie_button.active = False
+
+                if click:
+                    DataFiles.sfx["click"].play()
 
             if event.type == pygame.MOUSEMOTION:
                 for sortie_node in self.sortie_nodes:

@@ -212,10 +212,12 @@ class EncounterMenu:
                         self.selected_shipgirl.battle_component.target = None
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
+                click = False
                 if self.selected_shipgirl is not None:
                     for siren in self.menu_manager.siren_fleet.fleet:
                         if not siren.rect.collidepoint(mouse_end_drag):
                             continue
+                        click = True
                         if self.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
                             if siren in self.menu_manager.siren_fleet.front:
                                 self.selected_shipgirl.battle_component.target = siren
@@ -229,7 +231,7 @@ class EncounterMenu:
                             continue
                         if not backup_shipgirl.rect.collidepoint(mouse_end_drag):
                             continue
-
+                        click = True
                         (
                             self.selected_shipgirl.rect.center,
                             backup_shipgirl.rect.center
@@ -247,16 +249,22 @@ class EncounterMenu:
                                 siren.battle_component.attack_timer <= 0
                                 and siren.battle_component.target == self.selected_shipgirl
                             ):
-                                siren.battle_component.target = backup_shipgirl
+                                siren.battle_component.target = backup_shipgirl # TODO
 
                         self.selected_shipgirl = None
                         self.selected_shipgirl_index = None
                 self.mouse_start_drag = None
 
-                self.next_encounter_button.click(event.pos)
-                self.open_reward_cache_button.click(event.pos)
-                self.return_to_port_button.click(event.pos)
-                self.retreat_button.click(event.pos)
+                click = (
+                    click
+                    or self.next_encounter_button.click(event.pos)
+                    or self.open_reward_cache_button.click(event.pos)
+                    or self.return_to_port_button.click(event.pos)
+                    or self.retreat_button.click(event.pos)
+                )
+
+                if click:
+                    DataFiles.sfx["click"].play()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_f:
                 self.fast_forward = not self.fast_forward
         

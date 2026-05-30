@@ -1,15 +1,43 @@
 {
-	"unlocked_factions": [],
-	"shipgirls": {},
-	"equipment": {},
-	"inventory": {},
-	"decoration_depot": {},
-	"decorations": [],
-	"research_target": null,
-	"research_progress": 0,
-	"sortie_progress": 0,
-	"chapter_progress": 0,
-	"quests": {
-		"choose_faction": "new"
-	}
+    "unlocked_factions": [
+        "USS"
+    ],
+    "shipgirls": {
+        "laffey": {
+            "equipment": [
+                null,
+                null,
+                null
+            ],
+            "exp": 0
+        },
+        "new_jersey": {
+            "equipment": [
+                null,
+                null,
+                null
+            ],
+            "exp": 0
+        }
+    },
+    "equipment": {},
+    "inventory": {
+        "DD_blueprint": 0,
+        "BB_blueprint": 0,
+        "wisdom_cube": 0,
+        "huggy_pillow": 0,
+        "dragon_cannon": 0,
+        "decoration_coin": 1
+    },
+    "decoration_depot": {},
+    "decorations": [],
+    "research_target": null,
+    "research_progress": 0,
+    "sortie_progress": 0,
+    "chapter_progress": 0,
+    "quests": {
+        "choose_faction": "completed",
+        "construct_shipgirls": "completed",
+        "first_sortie": "in_progress"
+    }
 }

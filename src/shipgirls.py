@@ -186,6 +186,11 @@ class ShipgirlBattleComponent:
             self.cooldown_timer = 1
             DataFiles.sfx["boom"].play()
 
+            zip = DataFiles.sfx["zip"]
+            zip.play(fade_ms=1000)
+            zip.fadeout(1000)
+
+
     def draw(self, surface, font, rect):
         bar_width = 64
         bar_height = 8
