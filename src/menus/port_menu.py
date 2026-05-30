@@ -417,7 +417,7 @@ class PortMenu:
     def update_no_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                clicked = False
+                click = False
 
                 selected_quest = self.menu_manager.quest_manager.selected_quest
                 if selected_quest is not None:
@@ -431,8 +431,8 @@ class PortMenu:
                         self.menu_manager.quest_manager.selected_quest = None
                     continue
                 
-                clicked = (
-                    clicked
+                click = (
+                    click
                     or self.menu_manager.quest_manager.select_quest(event.pos)
                     or self.open_select_sortie_menu_button.click(event.pos)
                     or self.open_depot_overlay_button.click(event.pos)
@@ -444,9 +444,9 @@ class PortMenu:
                 )
 
                 for choose_faction_button in self.choose_faction_buttons:
-                    clicked = clicked or choose_faction_button.click(event.pos)
+                    click = click or choose_faction_button.click(event.pos)
 
-                if clicked:
+                if click:
                     DataFiles.sfx["click"].play()
                     continue
 
@@ -501,9 +501,10 @@ class PortMenu:
                 self.selected_overlay_filter = 0
 
     def overlay_mouseup_logic(self, mouseup_event, entities, entity_filters, activate_confirm_button):
+        click = False
         for entity, rect in zip(entities, self.dossier_icons):
             if rect.collidepoint(mouseup_event.pos):
-                DataFiles.sfx["click"].play()
+                click = True
                 self.blueprint_selected_item = entity
                 self.blueprint_confirm_button.active = activate_confirm_button
 
@@ -521,8 +522,11 @@ class PortMenu:
         
         for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
             if rect.collidepoint(mouseup_event.pos):
-                DataFiles.sfx["click"].play()
+                click = True
                 self.selected_overlay_filter = i
+
+        if click:
+            DataFiles.sfx["click"].play()
 
     def draw_dual_panel_overlay(self, surface, font, entities, entity_filters, info, icons):
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
