@@ -1,1 +1,12 @@
-["coins", "scale", "boop", "boom", "knock", "jingle", "frequency"]
+{
+	"coins": 1.0,
+	"scale": 1.0,
+	"click": 1.0,
+	"boom": 1.0,
+	"knock": 1.0,
+	"frequency": 1.0,
+	"open": 1.0,
+    "waves": 0.3,
+    "wind": 1.0,
+    "zip": 1.0
+}

@@ -29,7 +29,9 @@ def load_sfx(directory="assets", master_sfx_file="sfx.json"):
         master_sfx_dict = json.load(f)
     
     sfx = {}
-    for sfx_key in master_sfx_dict:
-        sfx[sfx_key] = pygame.mixer.Sound(f"{directory}/{sfx_key}.wav")
+    for sfx_key, sfx_volume in master_sfx_dict.items():
+        sound = pygame.mixer.Sound(f"{directory}/{sfx_key}.wav")
+        sound.set_volume(sfx_volume)
+        sfx[sfx_key] = sound
     
     return sfx

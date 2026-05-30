@@ -384,6 +384,7 @@ class PortMenu:
 
         def open_select_sortie_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
+            DataFiles.sfx["waves"].play(loops=-1)
 
         self.open_select_sortie_menu_button = Button(
             get_rect(
@@ -446,12 +447,12 @@ class PortMenu:
                     clicked = clicked or choose_faction_button.click(event.pos)
 
                 if clicked:
-                    DataFiles.sfx["boop"].play()
+                    DataFiles.sfx["click"].play()
                     continue
 
                 for shipgirl in self.menu_manager.available_shipgirls:
                     if shipgirl.rect.collidepoint(event.pos):
-                        DataFiles.sfx["boop"].play()
+                        DataFiles.sfx["click"].play()
                         self.menu_manager.equipment_menu.selected_shipgirl = shipgirl
                         self.menu_manager.current_menu = self.menu_manager.equipment_menu
 
@@ -502,7 +503,7 @@ class PortMenu:
     def overlay_mouseup_logic(self, mouseup_event, entities, entity_filters, activate_confirm_button):
         for entity, rect in zip(entities, self.dossier_icons):
             if rect.collidepoint(mouseup_event.pos):
-                DataFiles.sfx["boop"].play()
+                DataFiles.sfx["click"].play()
                 self.blueprint_selected_item = entity
                 self.blueprint_confirm_button.active = activate_confirm_button
 
@@ -520,7 +521,7 @@ class PortMenu:
         
         for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
             if rect.collidepoint(mouseup_event.pos):
-                DataFiles.sfx["boop"].play()
+                DataFiles.sfx["click"].play()
                 self.selected_overlay_filter = i
 
     def draw_dual_panel_overlay(self, surface, font, entities, entity_filters, info, icons):
@@ -786,7 +787,7 @@ class PortMenu:
                     top = self.store_overlay.top + Box.PADDING + (i//num_items_in_row)*(Box.HEIGHT+padding)
                     rect = get_rect(width=Box.WIDTH, height=Box.HEIGHT, left=left, top=top)
                     if rect.collidepoint(event.pos):
-                        DataFiles.sfx["boop"].play()
+                        DataFiles.sfx["click"].play()
                         self.store_selected_item = item
                         self.store_confirm_button.active = DataFiles.save_file["inventory"].get("decoration_coin", 0) > 0
 
@@ -871,7 +872,7 @@ class PortMenu:
                     self.decoration_depot_overlay.topleft = pygame.Vector2(event.pos) + self.decoration_depot_drag_offset
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 3 and self.selected_decoration_in_depot is not None:
-                    DataFiles.sfx["boop"].play()
+                    DataFiles.sfx["click"].play()
                     self.rotate_decoration_direction()
                     self.rotated_decoration = True
                     continue
@@ -885,7 +886,7 @@ class PortMenu:
                     continue
 
                 if self.open_close_decoration_menu_button.click(event.pos):
-                    DataFiles.sfx["boop"].play()
+                    DataFiles.sfx["click"].play()
                     self.selected_decoration_in_depot = None
                     self.deleting_decoration = False
                     continue
@@ -901,7 +902,7 @@ class PortMenu:
                             top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
                         )
                         if rect.collidepoint(event.pos):
-                            DataFiles.sfx["boop"].play()
+                            DataFiles.sfx["click"].play()
                             if self.selected_decoration_in_depot == decoration:
                                 self.selected_decoration_in_depot = None
                             else:
@@ -915,7 +916,7 @@ class PortMenu:
                         top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
                     )
                     if delete_rect.collidepoint(event.pos):
-                        DataFiles.sfx["boop"].play()
+                        DataFiles.sfx["click"].play()
                         self.deleting_decoration = not self.deleting_decoration
                         self.selected_decoration_in_depot = None
                 elif self.deleting_decoration:
@@ -930,7 +931,7 @@ class PortMenu:
                             tilepos_anchor[0] <= clicked_tilepos[0] < tilepos_anchor[0] + decoration_info["width"]
                             and tilepos_anchor[1] <= clicked_tilepos[1] < tilepos_anchor[1] + decoration_info["height"]
                         ):
-                            DataFiles.sfx["boop"].play()
+                            DataFiles.sfx["click"].play()
                             DataFiles.save_file["decorations"].pop(decoration_index)
                             DataFiles.save_file["decoration_depot"][decoration] = (
                                 DataFiles.save_file["decoration_depot"].get(decoration, 0) + 1
@@ -954,7 +955,7 @@ class PortMenu:
                         continue
                     if not in_tileable_area(place_tiles):
                         continue
-                    DataFiles.sfx["boop"].play()
+                    DataFiles.sfx["click"].play()
                     DataFiles.save_file["decorations"].append((decoration,clicked_tilepos,direction))
                     DataFiles.save_file["decoration_depot"][decoration] -= 1
                     self.placed_decoration = True

@@ -97,6 +97,10 @@ class Fog:
             for cloud_timer in self.cloud_timers
         ]
         if self.disperse:
+            if self.disperse_timer == 1:
+                wind_sfx = DataFiles.sfx["wind"]
+                wind_sfx.play()
+                wind_sfx.fadeout(3000)
             self.disperse_timer = max(0, self.disperse_timer - 0.33*dt)
 
     def draw(self, surface):
@@ -167,6 +171,7 @@ class SortieSelectionMenu:
 
         def exit_sortie_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
+            DataFiles.sfx["waves"].fadeout(3000)
 
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)

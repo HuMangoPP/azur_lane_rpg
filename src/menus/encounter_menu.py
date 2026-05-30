@@ -74,6 +74,8 @@ class EncounterMenu:
 
             self.open_reward_cache_button.active = False
             self.return_to_port_button.active = True
+
+            DataFiles.sfx["open"].play()
         
         button_sprite = DataFiles.sprites["user_interface"]["cache"]
         button_rect = button_sprite.get_rect()
@@ -109,6 +111,7 @@ class EncounterMenu:
                 DataFiles.save_file["inventory"][drop.item] = DataFiles.save_file["inventory"].get(drop.item, 0) + 1
 
             self.menu_manager.current_menu = self.menu_manager.port_menu
+            DataFiles.sfx["waves"].fadeout(3000)
 
             self.menu_manager.encounter_menu.return_to_port_button.active = False
 
@@ -127,6 +130,7 @@ class EncounterMenu:
 
         def retreat():
             self.menu_manager.current_menu = self.menu_manager.port_menu
+            DataFiles.sfx["waves"].fadeout(3000)
 
             self.menu_manager.player_fleet.end_encounter()        
         

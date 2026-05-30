@@ -128,10 +128,12 @@ class ShipgirlBattleComponent:
         target.battle_component.evasion_gauge += target.battle_component.evasion() / 1000
         if target.battle_component.evasion_gauge >= 1:
             target.battle_component.evasion_gauge -= 1
+            return False
         else:
             shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
             armor_type = self.HULL_TO_ARMOR_MAP[target.battle_component.hull_type]
             target.battle_component.hp -= self.firepower() * self.DAMAGE_MULTIPLIER[shell_type][armor_type]
+            return True
 
     def update(self, dt, rect, fleet):
         if self.last_exp < self.exp:
@@ -161,14 +163,18 @@ class ShipgirlBattleComponent:
             distance = relpos.length()
             self.attack_timer = max(0, self.attack_timer - self.shell_speed()/distance*dt)
             if self.attack_timer <= 0:
+                hit = False
                 if self.target_pref == "all":
                     for shipgirl in fleet.shipgirls:
                         if shipgirl is None:
                             continue
 
-                        self._deal_damage(shipgirl)
+                        hit = self._deal_damage(shipgirl) or hit
                 else:
-                    self._deal_damage(self.target)
+                    hit = self._deal_damage(self.target) or hit
+                
+                if hit:
+                    DataFiles.sfx["boom"].play()
             return
 
         if self.target_pref != "all" and self.target is not None and self.target.battle_component.hp <= 0:
