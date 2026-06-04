@@ -24,14 +24,12 @@ def load_sprites(directory="assets", master_sprite_file="sprites.json", colorkey
 
     return sprites
 
-def load_sfx(directory="assets", master_sfx_file="sfx.json"):
-    with open(f"{directory}/{master_sfx_file}") as f:
-        master_sfx_dict = json.load(f)
-    
-    sfx = {}
-    for sfx_key, sfx_volume in master_sfx_dict.items():
-        sound = pygame.mixer.Sound(f"{directory}/{sfx_key}.wav")
-        sound.set_volume(sfx_volume)
-        sfx[sfx_key] = sound
-    
-    return sfx
+def load_sound(directory="assets", master_file="sfx.json", file_ext="wav"):
+    with open(f"{directory}/{master_file}") as f:
+        master_dict = json.load(f)
+    sounds = {}
+    for sound_key, sound_volume in master_dict.items():
+        sound = pygame.mixer.Sound(f"{directory}/{sound_key}.{file_ext}")
+        sound.set_volume(sound_volume)
+        sounds[sound_key] = sound
+    return sounds

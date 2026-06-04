@@ -18,6 +18,7 @@ font = Font(font_path="engine/big_font.png")
 
 menu_manager = MenuManager()
 
+DataFiles.bgm["swedenesque"].play(loops=-1, fade_ms=10000)
 running = True
 while running:
     clock.tick(FPS)
@@ -44,6 +45,7 @@ while running:
     screen.blit(pygame.transform.scale(temp_screen, screen.get_size()), (0,0))
     pygame.display.flip()
 
+DataFiles.bgm["swedenesque"].stop()
 pygame.quit()
 
 for shipgirl in menu_manager.available_shipgirls:

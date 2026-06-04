@@ -99,7 +99,7 @@ class Stats:
     def stat(cls, exp, base_stat, stat_per_level):
         return base_stat + stat_per_level * cls.level(exp)
 
-from engine.load_assets import load_sprites, load_sfx
+from engine.load_assets import load_sprites, load_sound
 
 class DataFiles:
     with open("data/save_file.json") as f:
@@ -125,7 +125,8 @@ class DataFiles:
     
 
     sprites = load_sprites()
-    sfx = load_sfx()
+    sfx = load_sound(master_file="sfx.json", file_ext="wav")
+    bgm = load_sound(master_file="bgm.json", file_ext="ogg")
 
     @classmethod
     def recolor_sprite(cls, sprite_group, sprite_key, color):
