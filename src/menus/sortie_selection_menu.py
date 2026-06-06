@@ -115,7 +115,7 @@ class Fog:
             center = centroid + pygame.Vector2(32*math.sin(cloud_timer), 8*math.sin(2*cloud_timer))
             if not self.disperse:
                 cloud_shadow_rect.center = center + pygame.Vector2(8, 8)
-                surface.blit(cloud_shadow, cloud_shadow_rect, special_flags=pygame.BLEND_RGB_SUB)
+                surface.blit(cloud_shadow, cloud_shadow_rect, special_flags=pygame.BLEND_RGBA_SUB)
             cloud_rect.center = center
             surface.blit(cloud, cloud_rect)
 

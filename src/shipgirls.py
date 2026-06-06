@@ -191,8 +191,14 @@ class ShipgirlBattleComponent:
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)
             shell_type = self.shell_type()
-            vfx_manager.spawn_muzzle_flash(start_pos, shell_type, self.hull_type)
+            relpos = target_pos - start_pos
+            distance = relpos.length()
+            scale = distance * SHELL_SCALE
+            shell_angle = math.atan2(relpos.y, relpos.x)
+            shell_incline = math.atan(-relpos.x / abs(relpos.x) * scale)
+            shell_render_angle = shell_angle + shell_incline
             vfx_manager.spawn_tracer(start_pos, target_pos, shell_type, self.shell_speed())
+            vfx_manager.spawn_muzzle_flash(start_pos, shell_render_angle, shell_type, self.hull_type)
 
             self.attack_timer = 1
             self.cooldown_timer = 1
@@ -228,13 +234,12 @@ class ShipgirlBattleComponent:
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)
             relpos = target_pos - start_pos
-            direction = relpos.normalize()
             distance = relpos.length()
             t = 1 - self.attack_timer
             scale = distance * SHELL_SCALE
             shell_pos = shell_position(start_pos, target_pos, t)
-            shell_incline = math.degrees(math.atan(direction.x / abs(direction.x) * scale * (2*t - 1)))
-            shell_angle = math.degrees(math.atan2(direction.y, direction.x))
+            shell_incline = math.degrees(math.atan(relpos.x / abs(relpos.x) * scale * (2*t - 1)))
+            shell_angle = math.degrees(math.atan2(relpos.y, relpos.x))
             render_angle = shell_angle + shell_incline
 
             shell_type = self.shell_type()

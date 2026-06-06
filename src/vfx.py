@@ -7,18 +7,21 @@ from engine.util import get_vec
 
 SHELL_COLORS = {
     "normal": {
+        "plume": (115, 109, 45),
         "core": (255, 248, 180),
         "hot": (255, 206, 72),
         "edge": (255, 128, 32),
         "smoke": (100, 96, 86),
     },
     "HE": {
+        "plume": (112, 0, 28),
         "core": (255, 238, 170),
         "hot": (255, 80, 28),
         "edge": (220, 20, 44),
         "smoke": (112, 78, 64),
     },
     "AP": {
+        "plume": (0, 110, 110),
         "core": (225, 255, 255),
         "hot": (75, 234, 255),
         "edge": (46, 132, 255),
@@ -28,10 +31,10 @@ SHELL_COLORS = {
 
 
 HULL_FLASH_SCALE = {
-    "DD": 0.8,
-    "CL": 1.0,
-    "CA": 1.1,
-    "BB": 1.3,
+    "DD": 1.00,
+    "CL": 1.05,
+    "CA": 1.10,
+    "BB": 1.20,
 }
 
 SHELL_SCALE = 1/1000
@@ -47,27 +50,46 @@ def shell_position(start_pos, target_pos, t):
 class MuzzleFlashEffect:
     DURATION = 0.2
 
-    def __init__(self, start_pos, shell_type, hull_type):
-        self.pos = pygame.Vector2(start_pos)
+    def __init__(self, start_pos, shell_render_angle, shell_type, hull_type):
+        self.start_pos = pygame.Vector2(start_pos)
         self.palette = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
         self.scale = HULL_FLASH_SCALE.get(hull_type, 1)
-        self.age = 0
+        self.lifetime = 0
+
+        num_sparks = 3
+        self.sparks = []
+        for _ in range(num_sparks):
+            t = random.random()
+            spark_angle = shell_render_angle + math.radians((2*t-1) * 15)
+            spark_scale = (
+                t + 1/2 if t <= 1/2
+                else 3/2 - t
+            )
+            self.sparks.append((spark_angle, spark_scale))
 
     @property
     def expired(self):
-        return self.age >= self.DURATION
+        return self.lifetime >= self.DURATION
 
     def update(self, dt):
-        self.age += dt
+        self.lifetime += dt
 
     def draw(self, surface):
-        t = min(1, self.age / self.DURATION)
-        fade = 1 - t
-        radius = (32 + 24 * t) * self.scale
-        core_radius = max(2, radius * 0.5)
-        width = int(2 + 5 * fade)
-        pygame.draw.circle(surface, (*self.palette["hot"], int(150 * fade)), self.pos, radius, width=width)
-        pygame.draw.circle(surface, (*self.palette["core"], int(230 * fade)), self.pos, core_radius)
+        t = min(1, self.lifetime / self.DURATION)
+        s = 1 - (2*t - 1)**2
+        for spark_angle, spark_scale in self.sparks:
+            spark_dir = get_vec(1, spark_angle)
+            spark_perp = pygame.Vector2(-spark_dir.y, spark_dir.x)
+            spark_length = 100 * s * spark_scale
+            spark_width = 20 * s * spark_scale
+            spark_pos = self.start_pos + spark_dir * 150 * t
+            spark_polygon = [
+                spark_pos + spark_dir * spark_length*0.66,
+                spark_pos + spark_perp * spark_width*0.5,
+                spark_pos - spark_dir * spark_length*0.33,
+                spark_pos - spark_perp * spark_width*0.5
+            ]
+            pygame.draw.polygon(surface, self.palette["core"], spark_polygon)
 
 
 class TracerEffect:
@@ -143,11 +165,11 @@ class GunFireVFXManager:
     def clear(self):
         self.effects = []
 
-    def spawn_muzzle_flash(self, start_pos, shell_type, hull_type):
-        self.effects.append(MuzzleFlashEffect(start_pos, shell_type, hull_type))
+    def spawn_muzzle_flash(self, start_pos, target_pos, shell_type, hull_type):
+        self.effects.append(MuzzleFlashEffect(start_pos, target_pos, shell_type, hull_type))
 
-    def spawn_tracer(self, start_pos, target_pos, shell_type, shell_speed):
-        self.effects.append(TracerEffect(start_pos, target_pos, shell_type, shell_speed))
+    def spawn_tracer(self, start_pos, shell_render_angle, shell_type, shell_speed):
+        self.effects.append(TracerEffect(start_pos, shell_render_angle, shell_type, shell_speed))
 
     def spawn_impact(self, pos, shell_type, hit):
         self.effects.append(ImpactEffect(pos, shell_type, hit))

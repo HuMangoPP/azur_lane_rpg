@@ -160,6 +160,7 @@ class EncounterMenu:
         self.exp_timer = 0
 
         self.fast_forward = False
+        self.slow_down = False
 
     def begin_sortie(self):
         self.open_reward_cache_button.active = False
@@ -273,11 +274,16 @@ class EncounterMenu:
 
                 if click:
                     DataFiles.sfx["click"].play()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_f:
-                self.fast_forward = not self.fast_forward
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_f:
+                    self.fast_forward = not self.fast_forward
+                if event.key == pygame.K_d:
+                    self.slow_down = not self.slow_down
         
         if self.fast_forward:
             dt = dt * 2
+        if self.slow_down:
+            dt = dt / 2
         if self.encounter_started:
             afloat_sirens_before = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
             self.menu_manager.player_fleet.update(dt, self.vfx_manager)
