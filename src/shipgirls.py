@@ -6,7 +6,7 @@ import pygame
 from engine.util import get_rect, draw_annulus
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y
-
+from src.vfx import shell_position, SHELL_SCALE
 from live2d.live2d import Live2D
 
 class DummyTarget:
@@ -32,7 +32,6 @@ class ShipgirlBattleComponent:
     }
 
     SHELL_SPEED = 800
-    SHELL_SCALE = 1/1000
 
     def __init__(self, name, is_player):
         self.name = name
@@ -118,6 +117,9 @@ class ShipgirlBattleComponent:
     def shell_speed(self):
         return self.SHELL_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
 
+    def shell_type(self):
+        return DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
+
     def reset(self):
         self.hp = self.max_hp()
         self.cooldown_timer = 1
@@ -130,12 +132,12 @@ class ShipgirlBattleComponent:
             target.battle_component.evasion_gauge -= 1
             return False
         else:
-            shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
+            shell_type = self.shell_type()
             armor_type = self.HULL_TO_ARMOR_MAP[target.battle_component.hull_type]
             target.battle_component.hp -= self.firepower() * self.DAMAGE_MULTIPLIER[shell_type][armor_type]
             return True
 
-    def update(self, dt, rect, fleet):
+    def update(self, dt, rect, fleet, vfx_manager):
         if self.last_exp < self.exp:
             self.exp_timer += dt
             exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
@@ -164,14 +166,18 @@ class ShipgirlBattleComponent:
             self.attack_timer = max(0, self.attack_timer - self.shell_speed()/distance*dt)
             if self.attack_timer <= 0:
                 hit = False
+                shell_type = self.shell_type()
                 if self.target_pref == "all":
                     for shipgirl in fleet.shipgirls:
                         if shipgirl is None:
                             continue
 
-                        hit = self._deal_damage(shipgirl) or hit
+                        target_hit = self._deal_damage(shipgirl)
+                        hit = target_hit or hit
+                        vfx_manager.spawn_impact(shipgirl.rect.center, shell_type, target_hit)
                 else:
-                    hit = self._deal_damage(self.target) or hit
+                    hit = self._deal_damage(self.target)
+                    vfx_manager.spawn_impact(self.target.rect.center, shell_type, hit)
                 
                 if hit:
                     DataFiles.sfx["boom2"].play()
@@ -182,6 +188,12 @@ class ShipgirlBattleComponent:
         
         self.cooldown_timer = max(0, self.cooldown_timer - self.reload()/1000*dt)
         if self.target is not None and self.cooldown_timer <= 0:
+            start_pos = pygame.Vector2(rect.center)
+            target_pos = pygame.Vector2(self.target.rect.center)
+            shell_type = self.shell_type()
+            vfx_manager.spawn_muzzle_flash(start_pos, target_pos, shell_type, self.hull_type)
+            vfx_manager.spawn_tracer(start_pos, target_pos, shell_type, self.shell_speed())
+
             self.attack_timer = 1
             self.cooldown_timer = 1
             DataFiles.sfx["boom"].play()
@@ -219,14 +231,13 @@ class ShipgirlBattleComponent:
             direction = relpos.normalize()
             distance = relpos.length()
             t = 1 - self.attack_timer
-            scale = distance * self.SHELL_SCALE
-            shell_y = scale * distance * t * (t-1)
-            shell_pos = start_pos + relpos * t + pygame.Vector2(0, shell_y)
+            scale = distance * SHELL_SCALE
+            shell_pos = shell_position(start_pos, target_pos, t)
             shell_incline = math.degrees(math.atan(direction.x / abs(direction.x) * scale * (2*t - 1)))
             shell_angle = math.degrees(math.atan2(direction.y, direction.x))
             render_angle = shell_angle + shell_incline
 
-            shell_type = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
+            shell_type = self.shell_type()
             shell_sprite = pygame.transform.flip(
                 pygame.transform.rotate(DataFiles.sprites["encounter"][f"{shell_type}_shell"], render_angle),
                 False, True
@@ -389,12 +400,12 @@ class PlayerFleet:
                 shipgirl.battle_component.attack_timer = 0
                 shipgirl.battle_component.active = False
 
-    def update(self, dt):
+    def update(self, dt, vfx_manager):
         for shipgirl in self.fleet:
             if shipgirl is not None:
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
-                shipgirl.battle_component.update(dt, shipgirl.rect, None)
+                shipgirl.battle_component.update(dt, shipgirl.rect, None, vfx_manager)
 
                 shipgirl.animate(dt)
 
@@ -465,7 +476,7 @@ class SirenFleet:
             siren.battle_component.target = None
             siren.battle_component.active = False
 
-    def update(self, dt, menu_manager):
+    def update(self, dt, menu_manager, vfx_manager):
         if self.dummy_target is None:
             self.dummy_target = DummyTarget(menu_manager)
 
@@ -479,7 +490,7 @@ class SirenFleet:
                     siren.battle_component.target = self.dummy_target
                 else:
                     siren.battle_component.target = menu_manager.player_fleet.front
-            siren.battle_component.update(dt, siren.rect, menu_manager.player_fleet)
+            siren.battle_component.update(dt, siren.rect, menu_manager.player_fleet, vfx_manager)
 
             siren.animate(dt)
 

@@ -7,7 +7,7 @@
 	"knock": 1.0,
 	"frequency": 1.0,
 	"open": 1.0,
-    "waves": 0.3,
-    "wind": 1.0,
+    "waves": 0.1,
+    "wind": 0.3,
     "zip": 0.5
 }

@@ -7,6 +7,7 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
 from src.shipgirls import Shipgirl
+from src.vfx import GunFireVFXManager
 from src.menus.quests_data import (
     first_sortie_quest,
     research_shipgirl_quest,
@@ -45,6 +46,7 @@ class EncounterMenu:
         self.selected_shipgirl = None
         self.selected_shipgirl_index = None
         self.encounter_started = False
+        self.vfx_manager = GunFireVFXManager()
 
         def next_encounter():
             for drop in self.drops:
@@ -112,6 +114,7 @@ class EncounterMenu:
 
             self.menu_manager.current_menu = self.menu_manager.port_menu
             DataFiles.sfx["waves"].fadeout(3000)
+            self.vfx_manager.clear()
 
             self.menu_manager.encounter_menu.return_to_port_button.active = False
 
@@ -133,6 +136,9 @@ class EncounterMenu:
             DataFiles.sfx["waves"].fadeout(3000)
 
             self.menu_manager.player_fleet.end_encounter()        
+            self.menu_manager.siren_fleet.end_encounter()
+            self.vfx_manager.clear()
+
         
         button_sprite = DataFiles.sprites["user_interface"]["port"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
@@ -164,6 +170,7 @@ class EncounterMenu:
     def begin_encounter(self):
         self.drops = []
         self.next_encounter_button.active = False
+        self.vfx_manager.clear()
 
         sortie_data = DataFiles.sortie_data[self.current_sortie]
         num_encounters = len(sortie_data["encounters"])
@@ -175,6 +182,7 @@ class EncounterMenu:
 
             self.menu_manager.siren_fleet._front = []
             self.menu_manager.siren_fleet._back = []
+            self.vfx_manager.clear()
             return
         
         self.encounter_end_flag = True
@@ -272,7 +280,7 @@ class EncounterMenu:
             dt = dt * 2
         if self.encounter_started:
             afloat_sirens_before = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
-            self.menu_manager.player_fleet.update(dt)
+            self.menu_manager.player_fleet.update(dt, self.vfx_manager)
             afloat_sirens_after = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
             if self.current_sortie < DataFiles.save_file["sortie_progress"]:
                 defeated_sirens = [siren for siren in afloat_sirens_before if siren not in afloat_sirens_after]
@@ -282,7 +290,7 @@ class EncounterMenu:
                         drop_roll = random.random() * 100
                         if drop_roll < drop_rate:
                             self.drops.append(Drop(drop, pygame.Vector2(siren.rect.center)))
-            self.menu_manager.siren_fleet.update(dt, self.menu_manager)
+            self.menu_manager.siren_fleet.update(dt, self.menu_manager, self.vfx_manager)
 
             for drop in self.drops:
                 drop.update(dt)
@@ -325,6 +333,7 @@ class EncounterMenu:
                 self.encounter_end_flag = False
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()
+                self.vfx_manager.clear()
                 self.return_to_port_button.active = True
                 self.retreat_button.active = False
 
@@ -339,20 +348,24 @@ class EncounterMenu:
 
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()
+                self.vfx_manager.clear()
                 self.next_encounter_button.active = True
                 self.retreat_button.active = False
 
+        self.vfx_manager.update(dt)
         self.menu_manager.background.update(dt)
 
     def draw(self, surface, font):
         self.menu_manager.background.draw(surface, font, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
 
+        self.menu_manager.player_fleet.draw_battle_component(surface, font)
+        self.menu_manager.siren_fleet.draw_battle_component(surface, font)
+        self.vfx_manager.draw(surface)
+
         self.next_encounter_button.draw(surface, font)
         self.open_reward_cache_button.draw(surface, font)
         self.return_to_port_button.draw(surface, font)
         self.retreat_button.draw(surface, font)
-        self.menu_manager.player_fleet.draw_battle_component(surface, font)
-        self.menu_manager.siren_fleet.draw_battle_component(surface, font)
 
         for drop in self.drops:
             drop.draw(surface, font)
