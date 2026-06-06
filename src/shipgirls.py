@@ -167,6 +167,15 @@ class ShipgirlBattleComponent:
             if self.attack_timer <= 0:
                 hit = False
                 shell_type = self.shell_type()
+                start_pos = pygame.Vector2(rect.center)
+                target_pos = pygame.Vector2(self.target.rect.center)
+                relpos = target_pos - start_pos
+                distance = relpos.length()
+                scale = distance * SHELL_SCALE
+                shell_angle = math.atan2(relpos.y, relpos.x)
+                shell_incline = math.atan(relpos.x / abs(relpos.x) * scale)
+                shell_render_angle = shell_angle + shell_incline
+
                 if self.target_pref == "all":
                     for shipgirl in fleet.shipgirls:
                         if shipgirl is None:
@@ -174,10 +183,12 @@ class ShipgirlBattleComponent:
 
                         target_hit = self._deal_damage(shipgirl)
                         hit = target_hit or hit
-                        vfx_manager.spawn_impact(shipgirl.rect.center, shell_type, target_hit)
+                        if target_hit:
+                            vfx_manager.spawn_impact(shipgirl.rect.center, shell_render_angle, shell_type)
                 else:
                     hit = self._deal_damage(self.target)
-                    vfx_manager.spawn_impact(self.target.rect.center, shell_type, hit)
+                    if hit: 
+                        vfx_manager.spawn_impact(self.target.rect.center, shell_render_angle, shell_type)
                 
                 if hit:
                     DataFiles.sfx["boom2"].play()

@@ -183,7 +183,6 @@ class EncounterMenu:
 
             self.menu_manager.siren_fleet._front = []
             self.menu_manager.siren_fleet._back = []
-            self.vfx_manager.clear()
             return
         
         self.encounter_end_flag = True
@@ -339,7 +338,6 @@ class EncounterMenu:
                 self.encounter_end_flag = False
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()
-                self.vfx_manager.clear()
                 self.return_to_port_button.active = True
                 self.retreat_button.active = False
 
@@ -354,7 +352,6 @@ class EncounterMenu:
 
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()
-                self.vfx_manager.clear()
                 self.next_encounter_button.active = True
                 self.retreat_button.active = False
 
