@@ -191,7 +191,7 @@ class ShipgirlBattleComponent:
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)
             shell_type = self.shell_type()
-            vfx_manager.spawn_muzzle_flash(start_pos, target_pos, shell_type, self.hull_type)
+            vfx_manager.spawn_muzzle_flash(start_pos, shell_type, self.hull_type)
             vfx_manager.spawn_tracer(start_pos, target_pos, shell_type, self.shell_speed())
 
             self.attack_timer = 1
