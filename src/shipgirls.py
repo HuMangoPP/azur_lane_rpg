@@ -70,6 +70,11 @@ class ShipgirlBattleComponent:
         self.last_level = Stats.level(self.last_exp)
         self.level_timer = 0
 
+        self.shake_time = 0
+
+    def shake(self):
+        self.shake_time = 0.5
+
     def max_hp(self, equipment_override=None):
         equipment = self.equipment.copy()
         if equipment_override is not None:
@@ -125,6 +130,7 @@ class ShipgirlBattleComponent:
         self.cooldown_timer = 1
         self.target = None
         self.evasion_gauge = 0
+        self.shake_time = 0
 
     def _deal_damage(self, target):
         target.battle_component.evasion_gauge += target.battle_component.evasion() / 1000
@@ -135,9 +141,12 @@ class ShipgirlBattleComponent:
             shell_type = self.shell_type()
             armor_type = self.HULL_TO_ARMOR_MAP[target.battle_component.hull_type]
             target.battle_component.hp -= self.firepower() * self.DAMAGE_MULTIPLIER[shell_type][armor_type]
+            target.battle_component.shake()
             return True
 
     def update(self, dt, rect, fleet, vfx_manager):
+        self.shake_time = max(0, self.shake_time - dt)
+
         if self.last_exp < self.exp:
             self.exp_timer += dt
             exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
@@ -344,7 +353,8 @@ class Shipgirl:
 
     def draw(self, surface, font):
         if self.sprite is not None:
-            self.sprite.draw(surface, self.rect.centerx, self.rect.centery, not self.facing_left)
+            shake_offset = 8 * math.sin(4*math.radians(360)*self.battle_component.shake_time)
+            self.sprite.draw(surface, self.rect.centerx + shake_offset, self.rect.centery, not self.facing_left)
         else:
             pygame.draw.rect(surface, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
             font.render(surface, self.name, self.rect.center, Color.WHITE, 1, style="center")
