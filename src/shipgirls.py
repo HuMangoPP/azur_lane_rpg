@@ -353,7 +353,8 @@ class Shipgirl:
 
     def draw(self, surface, font):
         if self.sprite is not None:
-            shake_offset = 8 * math.sin(4*math.radians(360)*self.battle_component.shake_time)
+            shake_amt = 4
+            shake_offset = shake_amt * math.sin(4*math.radians(360)*self.battle_component.shake_time)
             self.sprite.draw(surface, self.rect.centerx + shake_offset, self.rect.centery, not self.facing_left)
         else:
             pygame.draw.rect(surface, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
