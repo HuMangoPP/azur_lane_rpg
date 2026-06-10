@@ -222,6 +222,7 @@ class ShipgirlBattleComponent:
             shell_incline = math.atan(-relpos.x / abs(relpos.x) * scale)
             shell_render_angle = shell_angle + shell_incline
             vfx_manager.spawn_muzzle_flash(start_pos, shell_render_angle, shell_type)
+            self.shake()
 
             self.attack_timer = 1
             self.cooldown_timer = 1

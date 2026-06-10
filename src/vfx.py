@@ -7,7 +7,7 @@ from src.constants import Color
 
 
 SHELL_COLORS = {
-    "normal": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
+    "normal": [(255, 249, 181), (209, 119, 0), (26, 8, 0), (222, 180, 11), (247, 77, 111)],
     "HE": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
     "AP": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
 }
@@ -43,41 +43,36 @@ class VFX:
         self.lifetime += dt
 
 
-class Sparks(VFX):
-    def __init__(self, pos, angle, color, duration=0.3, num_sparks=(4,6), angle_span=180, fly_distance=64, size=(12,4)):
+class Spark(VFX):
+    def __init__(self, pos, angle, color, duration=0.3, fly_distance=64, size=(12,4)):
         super().__init__(duration)
 
         self.pos = pygame.Vector2(pos)
         self.color = color
         self.size = size
         self.fly_distance = fly_distance
-
-        self.sparks = []
-        for _ in range(random.randint(*num_sparks)):
-            spark_angle = angle + math.radians(random.randint(-angle_span, angle_span))
-            spark_scale = random.uniform(0.8, 1.2)
-            self.sparks.append((spark_angle, spark_scale))
+        self.spark_angle = angle
+        self.spark_scale = random.uniform(0.8, 1.2)
 
     def draw(self, surface):
         t = min(1, self.lifetime / self.duration)
         quadratic_ease = 1 - (t-1)**2
         linear_decay = 1 - t
-        for spark_angle, spark_scale in self.sparks:
-            spark_dir = get_vec(1, spark_angle)
-            spark_perp = pygame.Vector2(-spark_dir.y, spark_dir.x)
-            spark_length = self.size[0] * linear_decay * spark_scale
-            spark_width = self.size[1] * linear_decay * spark_scale
-            spark_pos = self.pos + spark_dir * self.fly_distance * quadratic_ease * spark_scale
-            spark_polygon = [
-                spark_pos + 2*spark_dir * spark_length,
-                spark_pos + spark_perp * spark_width,
-                spark_pos - spark_dir * spark_length,
-                spark_pos - spark_perp * spark_width
-            ]
-            pygame.draw.polygon(surface, self.color, spark_polygon)
+        spark_dir = get_vec(1, self.spark_angle)
+        spark_perp = pygame.Vector2(-spark_dir.y, spark_dir.x)
+        spark_length = self.size[0] * linear_decay * self.spark_scale
+        spark_width = self.size[1] * linear_decay * self.spark_scale
+        spark_pos = self.pos + spark_dir * self.fly_distance * quadratic_ease * self.spark_scale
+        spark_polygon = [
+            spark_pos + spark_dir * spark_length,
+            spark_pos + spark_perp * spark_width,
+            spark_pos - spark_dir * spark_length,
+            spark_pos - spark_perp * spark_width
+        ]
+        pygame.draw.polygon(surface, self.color, spark_polygon)
 
 
-class Boom(VFX):
+class Ring(VFX):
     def __init__(self, pos, color, duration=0.3, radius=64):
         super().__init__(duration)
 
@@ -94,7 +89,7 @@ class Boom(VFX):
         pygame.draw.circle(surface, self.color, self.pos, boom_radius, width=boom_width)
 
 
-class Impact(VFX):
+class Slash(VFX):
     def __init__(self, pos, angle, color, duration=0.2):
         super().__init__(duration)
 
@@ -163,16 +158,28 @@ class VFXManager:
         pos = pygame.Vector2(pos) + get_vec(20, shell_render_angle)
         colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
         for i in range(3):
-            self.effects.append(Boom(pos, colors[i], duration=0.3+0.1*i, radius=32*(i+1)))
-        for i in range(3):
-            spark_size = (random.randint(12, 18), random.randint(4, 6))
-            self.effects.append(Sparks(pos, shell_render_angle, colors[i], duration=0.3+0.1*i, size=spark_size))
+            self.effects.append(Ring(pos, colors[i], duration=0.5-0.1*i, radius=32*(i+1)))
+        for _ in range(random.randint(18,22)):
+            spark_angle = math.radians(random.randint(0, 359))
+            spark_color = random.choice(colors)
+            spark_duration = random.uniform(0.3, 0.5)
+            spark_distance = random.randint(64, 128)
+            spark_size = (random.randint(16, 27), random.randint(4, 9))
+            self.effects.append(Spark(
+                pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
+            ))
 
     def spawn_impact(self, pos, shell_render_angle, shell_type):
-        color = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])[-1]
-        self.effects.append(Boom(pos, color))
-        self.effects.append(Sparks(pos, shell_render_angle + math.radians(180), color, angle_span=30, size=(24,8), fly_distance=100, num_sparks=(3,5)))
-        self.effects.append(Impact(pos, shell_render_angle, color))
+        color = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])[0]
+        for _ in range(random.randint(2,4)):
+            spark_angle = shell_render_angle + math.radians(180 + random.randint(-30, 30))
+            spark_duration = random.uniform(0.2, 0.4)
+            spark_distance = random.randint(80, 110)
+            spark_size = (random.randint(30, 40), random.randint(6, 10))
+            self.effects.append(Spark(
+                pos, spark_angle, color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
+            ))
+        self.effects.append(Slash(pos, shell_render_angle, color))
 
     def spawn_miss(self, pos):
         pos = pygame.Vector2(pos) + pygame.Vector2(0, 32)

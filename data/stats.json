@@ -2,7 +2,7 @@
     "DD": {
         "max_hp": [20, 3],
 		"evasion": [200, 20],
-		"firepower": [2, 1],
+		"firepower": [0, 1],
 		"reload": [150, 15]
     },
     "CL": {
@@ -20,7 +20,7 @@
     "BB": {
         "max_hp": [40, 5],
 		"evasion": [0, 5],
-		"firepower": [4, 1],
+		"firepower": [0, 1],
 		"reload": [100, 5]
     }
 }
