@@ -47,7 +47,7 @@ class Sparks(VFX):
     def __init__(self, pos, angle, color, duration=0.3, num_sparks=(4,6), angle_span=180, fly_distance=64, size=(12,4)):
         super().__init__(duration)
 
-        self.pos = pos
+        self.pos = pygame.Vector2(pos)
         self.color = color
         self.size = size
         self.fly_distance = fly_distance
@@ -81,7 +81,7 @@ class Boom(VFX):
     def __init__(self, pos, color, duration=0.3, radius=64):
         super().__init__(duration)
 
-        self.pos = pos
+        self.pos = pygame.Vector2(pos)
         self.radius = radius
         self.color = color
     
@@ -126,7 +126,7 @@ class Drops(VFX):
         (14, 81, 176),
     ]
 
-    def __init__(self, pos, duration=1, num_drops=(6,8)):
+    def __init__(self, pos, duration=1, num_drops=(8,10)):
         super().__init__(duration)
 
         self.pos = pygame.Vector2(pos)
@@ -141,13 +141,15 @@ class Drops(VFX):
     def draw(self, surface):
         t = min(1, self.lifetime / self.duration)
         linear_decay = 1 - t
+        quadratic_decay = 1 - t**2
+        drop_alpha = int(255 * quadratic_decay)
         drop_radius = 16 * linear_decay + 2
         for traj_width, traj_height, drop_color in self.drops:
             drop_pos = self.pos + pygame.Vector2(
                 traj_width * t,
                 -traj_height * 4 * t * linear_decay
             )
-            pygame.draw.circle(surface, drop_color, drop_pos, drop_radius)
+            pygame.draw.circle(surface, (*drop_color, drop_alpha), drop_pos, drop_radius)
 
 
 class VFXManager:
@@ -173,6 +175,7 @@ class VFXManager:
         self.effects.append(Impact(pos, shell_render_angle, color))
 
     def spawn_miss(self, pos):
+        pos = pygame.Vector2(pos) + pygame.Vector2(0, 32)
         self.effects.append(Drops(pos))
 
     def update(self, dt):

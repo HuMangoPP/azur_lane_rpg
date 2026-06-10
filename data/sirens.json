@@ -2,7 +2,7 @@
 	"explorer": {
 		"hull_type": "DD",
 		"max_hp": [20, 0],
-		"evasion": [0, 0],
+		"evasion": [1000, 0],
 		"reload": [100, 0],
 		"firepower": [1, 0],
 		"target_pref": "front",
