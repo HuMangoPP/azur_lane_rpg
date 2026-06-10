@@ -194,10 +194,14 @@ class ShipgirlBattleComponent:
                         hit = target_hit or hit
                         if target_hit:
                             vfx_manager.spawn_impact(shipgirl.rect.center, shell_render_angle, shell_type)
+                        else:
+                            vfx_manager.spawn_miss(shipgirl.rect.center)
                 else:
                     hit = self._deal_damage(self.target)
                     if hit: 
                         vfx_manager.spawn_impact(self.target.rect.center, shell_render_angle, shell_type)
+                    else:
+                        vfx_manager.spawn_miss(self.target.rect.center)
                 
                 if hit:
                     DataFiles.sfx["boom2"].play()

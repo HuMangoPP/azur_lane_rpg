@@ -53,7 +53,7 @@ class Sparks(VFX):
         self.sparks = []
         for _ in range(random.randint(*num_sparks)):
             spark_angle = angle + math.radians(random.randint(-45, 45))
-            spark_scale = random.uniform(0.66, 1.33)
+            spark_scale = random.uniform(0.8, 1.2)
             self.sparks.append((spark_angle, spark_scale))
 
     def draw(self, surface):
@@ -69,8 +69,8 @@ class Sparks(VFX):
             for spark_angle, spark_scale in self.sparks:
                 spark_dir = get_vec(1, spark_angle)
                 spark_perp = pygame.Vector2(-spark_dir.y, spark_dir.x)
-                spark_length = 24 * linear_decay * spark_scale
-                spark_width = 8 * linear_decay * spark_scale
+                spark_width = 6 * linear_decay * spark_scale
+                spark_length = 3 * spark_width
                 spark_pos = self.pos + spark_dir * 150 * quadratic_ease * spark_scale
                 spark_polygon = [
                     spark_pos + 2*spark_dir * spark_length,
@@ -128,7 +128,38 @@ class Impact(VFX):
         pygame.draw.polygon(surface, Color.WHITE, hit_polygon)
 
 
-class GunFireVFXManager:
+class Drops(VFX):
+    COLORS = [
+        (81, 149, 245),
+        (36, 115, 227),
+        (14, 81, 176),
+    ]
+
+    def __init__(self, pos, duration=1, num_drops=(6,8)):
+        super().__init__(duration)
+
+        self.pos = pygame.Vector2(pos)
+
+        self.drops = []
+        for _ in range(random.randint(*num_drops)):
+            width = 64 * random.uniform(-1, 1)
+            height = random.uniform(32, 64)
+            color = random.choice(self.COLORS)
+            self.drops.append((width, height, color))
+
+    def draw(self, surface):
+        t = min(1, self.lifetime / self.duration)
+        linear_decay = 1 - t
+        drop_radius = 16 * linear_decay + 2
+        for traj_width, traj_height, drop_color in self.drops:
+            drop_pos = self.pos + pygame.Vector2(
+                traj_width * t,
+                -traj_height * 4 * t * linear_decay
+            )
+            pygame.draw.circle(surface, drop_color, drop_pos, drop_radius)
+
+
+class VFXManager:
     def __init__(self):
         self.effects = []
 
@@ -144,6 +175,9 @@ class GunFireVFXManager:
         self.effects.append(Sparks(pos, shell_render_angle, shell_type, num_sparks=(2,3)))
         self.effects.append(Boom(pos, shell_type))
         self.effects.append(Impact(pos, shell_render_angle, shell_type))
+
+    def spawn_miss(self, pos):
+        self.effects.append(Drops(pos))
 
     def update(self, dt):
         for effect in self.effects:

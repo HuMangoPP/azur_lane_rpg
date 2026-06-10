@@ -7,7 +7,7 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
 from src.shipgirls import Shipgirl
-from src.vfx import GunFireVFXManager
+from src.vfx import VFXManager
 from src.menus.quests_data import (
     first_sortie_quest,
     research_shipgirl_quest,
@@ -46,7 +46,7 @@ class EncounterMenu:
         self.selected_shipgirl = None
         self.selected_shipgirl_index = None
         self.encounter_started = False
-        self.vfx_manager = GunFireVFXManager()
+        self.vfx_manager = VFXManager()
 
         def next_encounter():
             for drop in self.drops:

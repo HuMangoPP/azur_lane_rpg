@@ -9,10 +9,10 @@ pygame.mixer.init()
 
 from engine.font import Font
 
-from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles
+from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles, Color
 from src.menus.menu_manager import MenuManager
 
-display = pygame.Surface(TEMP_SCREEN_SIZE)
+display = screen
 clock = pygame.Clock()
 font = Font(font_path="engine/big_font.png")
 
@@ -42,7 +42,7 @@ running = True
 while running:
     clock.tick(FPS)
     dt = clock.get_time() / 1000
-    pygame.display.set_caption(f"{clock.get_fps()}")
+    fps = int(clock.get_fps())
 
     events = pygame.event.get()
     for event in events:
@@ -61,7 +61,16 @@ while running:
     for quest in menu_manager.quest_manager.started_quests.values():
         if quest.started and not quest.completed:
             quest.tutorial_draw(menu_manager, display, font)
-    screen.blit(pygame.transform.scale(display, screen.get_size()), (0,0))
+    font.render(
+        display,
+        str(fps),
+        (32, TEMP_SCREEN_SIZE[1]-32),
+        Color.WHITE,
+        2,
+        style="center",
+        outline_color=Color.BLACK
+    )
+    # screen.blit(pygame.transform.scale(display, screen.get_size()), (0,0))
     pygame.display.flip()
 
 DataFiles.bgm["lofi_loop"].stop()
