@@ -7,9 +7,9 @@ from src.constants import Color
 
 
 SHELL_COLORS = {
-    "normal": (255, 242, 97),
-    "HE": (255, 0, 64),
-    "AP": (0, 255, 255)
+    "normal": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
+    "HE": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
+    "AP": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
 }
 
 
@@ -44,88 +44,79 @@ class VFX:
 
 
 class Sparks(VFX):
-    def __init__(self, pos, angle, shell_type, duration=0.5, num_sparks=(3,5)):
+    def __init__(self, pos, angle, color, duration=0.3, num_sparks=(4,6), angle_span=180, fly_distance=64, size=(12,4)):
         super().__init__(duration)
 
-        self.pos = pygame.Vector2(pos)
-        self.color = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
+        self.pos = pos
+        self.color = color
+        self.size = size
+        self.fly_distance = fly_distance
 
         self.sparks = []
         for _ in range(random.randint(*num_sparks)):
-            spark_angle = angle + math.radians(random.randint(-45, 45))
+            spark_angle = angle + math.radians(random.randint(-angle_span, angle_span))
             spark_scale = random.uniform(0.8, 1.2)
             self.sparks.append((spark_angle, spark_scale))
 
     def draw(self, surface):
-        num_delays = 5
-        for delay_index in range(num_delays):
-            t_delay = delay_index / (num_delays-1)
-            t = min(1, self.lifetime / self.duration) - (1-t_delay) / 10
-            if t < 0:
-                continue
-            quadratic_ease = 1 - (t-1)**2
-            linear_decay = 1 - t
-            alpha = int(255 * t_delay)
-            for spark_angle, spark_scale in self.sparks:
-                spark_dir = get_vec(1, spark_angle)
-                spark_perp = pygame.Vector2(-spark_dir.y, spark_dir.x)
-                spark_width = 6 * linear_decay * spark_scale
-                spark_length = 3 * spark_width
-                spark_pos = self.pos + spark_dir * 150 * quadratic_ease * spark_scale
-                spark_polygon = [
-                    spark_pos + 2*spark_dir * spark_length,
-                    spark_pos + spark_perp * spark_width,
-                    spark_pos - spark_dir * spark_length,
-                    spark_pos - spark_perp * spark_width
-                ]
-                pygame.draw.polygon(surface, (*Color.WHITE, alpha), spark_polygon)
+        t = min(1, self.lifetime / self.duration)
+        quadratic_ease = 1 - (t-1)**2
+        linear_decay = 1 - t
+        for spark_angle, spark_scale in self.sparks:
+            spark_dir = get_vec(1, spark_angle)
+            spark_perp = pygame.Vector2(-spark_dir.y, spark_dir.x)
+            spark_length = self.size[0] * linear_decay * spark_scale
+            spark_width = self.size[1] * linear_decay * spark_scale
+            spark_pos = self.pos + spark_dir * self.fly_distance * quadratic_ease * spark_scale
+            spark_polygon = [
+                spark_pos + 2*spark_dir * spark_length,
+                spark_pos + spark_perp * spark_width,
+                spark_pos - spark_dir * spark_length,
+                spark_pos - spark_perp * spark_width
+            ]
+            pygame.draw.polygon(surface, self.color, spark_polygon)
 
 
 class Boom(VFX):
-    def __init__(self, pos, shell_type, duration=0.3):
+    def __init__(self, pos, color, duration=0.3, radius=64):
         super().__init__(duration)
 
         self.pos = pos
-        self.color = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
+        self.radius = radius
+        self.color = color
     
     def draw(self, surface):
-        num_delays = 5
-        for delay_index in range(num_delays):
-            t_delay = delay_index / (num_delays-1)
-            t = min(1, self.lifetime / self.duration) - (1-t_delay) / 7
-            if t < 0:
-                continue
-            alpha = int(255 * t_delay)
-            quadratic_ease = 1 - (t-1)**2
-            boom_radius = 96 * quadratic_ease
-            boom_width = 2 + 16 * (1 - quadratic_ease)
-            boom_width = int(min(boom_radius, boom_width))
-            pygame.draw.circle(surface, (*Color.WHITE, alpha), self.pos, boom_radius, width=boom_width)
+        t = min(1, self.lifetime / self.duration)
+        quadratic_ease = 1 - (t-1)**2
+        boom_radius = self.radius * quadratic_ease
+        boom_width = 2 + 16 * (1 - quadratic_ease)
+        boom_width = int(min(boom_radius, boom_width))
+        pygame.draw.circle(surface, self.color, self.pos, boom_radius, width=boom_width)
 
 
 class Impact(VFX):
-    def __init__(self, pos, angle, shell_type, duration=0.5):
+    def __init__(self, pos, angle, color, duration=0.2):
         super().__init__(duration)
 
         self.pos = pygame.Vector2(pos)
         self.direction = get_vec(1, angle)
         self.perpendicular = pygame.Vector2(-self.direction.y, self.direction.x)
-        self.color = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
+        self.color = color
 
     def draw(self, surface):
         t = min(1, self.lifetime / self.duration)
         linear_decay = 1 - t
         steep_rise = 2*t - 1
-        hit_pos = self.pos + 200 * steep_rise * self.direction
-        hit_length = 150 * linear_decay
-        hit_width = 10 * linear_decay
+        hit_pos = self.pos + 100 * steep_rise * self.direction
+        hit_length = 100 + 50 * linear_decay
+        hit_width = 5 + 2 * linear_decay
         hit_polygon = [
             hit_pos + self.direction * hit_length,
             hit_pos + self.perpendicular * hit_width,
             hit_pos - self.direction * hit_length,
             hit_pos - self.perpendicular * hit_width
         ]
-        pygame.draw.polygon(surface, Color.WHITE, hit_polygon)
+        pygame.draw.polygon(surface, self.color, hit_polygon)
 
 
 class Drops(VFX):
@@ -167,14 +158,19 @@ class VFXManager:
         self.effects = []
 
     def spawn_muzzle_flash(self, pos, shell_render_angle, shell_type):
-        self.effects.append(Sparks(pos, shell_render_angle, shell_type))
-        self.effects.append(Boom(pos, shell_type))
+        pos = pygame.Vector2(pos) + get_vec(20, shell_render_angle)
+        colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
+        for i in range(3):
+            self.effects.append(Boom(pos, colors[i], duration=0.3+0.1*i, radius=32*(i+1)))
+        for i in range(3):
+            spark_size = (random.randint(12, 18), random.randint(4, 6))
+            self.effects.append(Sparks(pos, shell_render_angle, colors[i], duration=0.3+0.1*i, size=spark_size))
 
     def spawn_impact(self, pos, shell_render_angle, shell_type):
-        self.effects.append(Sparks(pos, shell_render_angle + math.radians(180), shell_type))
-        self.effects.append(Sparks(pos, shell_render_angle, shell_type, num_sparks=(2,3)))
-        self.effects.append(Boom(pos, shell_type))
-        self.effects.append(Impact(pos, shell_render_angle, shell_type))
+        color = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])[-1]
+        self.effects.append(Boom(pos, color))
+        self.effects.append(Sparks(pos, shell_render_angle + math.radians(180), color, angle_span=30, size=(24,8), fly_distance=100, num_sparks=(3,5)))
+        self.effects.append(Impact(pos, shell_render_angle, color))
 
     def spawn_miss(self, pos):
         self.effects.append(Drops(pos))
