@@ -31,38 +31,45 @@ def shell_position(start_pos, target_pos, t):
 
 
 class VFX:
-    def __init__(self, duration):
+    def __init__(self, duration, delay):
         self.lifetime = 0
         self.duration = duration
+        self.delay = delay
     
     @property
     def expired(self):
         return self.lifetime >= self.duration
 
     def update(self, dt):
-        self.lifetime += dt
+        if self.delay > 0:
+            self.delay -= dt
+            return
+        self.lifetime += (dt + abs(self.delay))
+        self.delay = 0
 
 
 class Spark(VFX):
-    def __init__(self, pos, angle, color, duration=0.3, fly_distance=64, size=(12,4)):
-        super().__init__(duration)
+    def __init__(self, pos, angle, color, duration=0.3, delay=0, fly_distance=64, size=(12,4)):
+        super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
         self.color = color
         self.size = size
         self.fly_distance = fly_distance
         self.spark_angle = angle
-        self.spark_scale = random.uniform(0.8, 1.2)
 
     def draw(self, surface):
+        if self.delay > 0:
+            return
+        
         t = min(1, self.lifetime / self.duration)
         quadratic_ease = 1 - (t-1)**2
         linear_decay = 1 - t
         spark_dir = get_vec(1, self.spark_angle)
         spark_perp = pygame.Vector2(-spark_dir.y, spark_dir.x)
-        spark_length = self.size[0] * linear_decay * self.spark_scale
-        spark_width = self.size[1] * linear_decay * self.spark_scale
-        spark_pos = self.pos + spark_dir * self.fly_distance * quadratic_ease * self.spark_scale
+        spark_length = self.size[0] * linear_decay
+        spark_width = self.size[1] * linear_decay
+        spark_pos = self.pos + spark_dir * self.fly_distance * quadratic_ease
         spark_polygon = [
             spark_pos + spark_dir * spark_length,
             spark_pos + spark_perp * spark_width,
@@ -73,14 +80,17 @@ class Spark(VFX):
 
 
 class Ring(VFX):
-    def __init__(self, pos, color, duration=0.3, radius=64):
-        super().__init__(duration)
+    def __init__(self, pos, color, duration=0.3, delay=0, radius=64):
+        super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
         self.radius = radius
         self.color = color
     
     def draw(self, surface):
+        if self.delay > 0:
+            return
+        
         t = min(1, self.lifetime / self.duration)
         quadratic_ease = 1 - (t-1)**2
         boom_radius = self.radius * quadratic_ease
@@ -90,8 +100,8 @@ class Ring(VFX):
 
 
 class Slash(VFX):
-    def __init__(self, pos, angle, color, duration=0.2):
-        super().__init__(duration)
+    def __init__(self, pos, angle, color, delay=0, duration=0.2):
+        super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
         self.direction = get_vec(1, angle)
@@ -99,6 +109,9 @@ class Slash(VFX):
         self.color = color
 
     def draw(self, surface):
+        if self.delay > 0:
+            return
+        
         t = min(1, self.lifetime / self.duration)
         linear_decay = 1 - t
         steep_rise = 2*t - 1
@@ -114,6 +127,35 @@ class Slash(VFX):
         pygame.draw.polygon(surface, self.color, hit_polygon)
 
 
+class Smoke(VFX):
+    def __init__(self, pos, angle, color, duration=0.3, delay=0, size=50, drift_distance=70):
+        super().__init__(duration, delay)
+
+        self.pos = pygame.Vector2(pos)
+        self.angle = angle
+        self.color = color
+        self.size = size
+        self.drift_distance = drift_distance
+
+    def draw(self, surface):
+        if self.delay > 0:
+            return
+        
+        smoke_surf = pygame.Surface((self.size, self.size))
+        smoke_surf.set_colorkey((0, 0, 0))
+        rect = smoke_surf.get_rect()
+        pygame.draw.circle(smoke_surf, self.color, rect.center, self.size/2)
+
+        t = min(1, self.lifetime / self.duration)
+        offset_circle_pos = pygame.Vector2(rect.center) + get_vec(-self.size/2 + self.size/2*t, self.angle)
+        offset_circle_size = self.size/1.5 * t
+        pygame.draw.circle(smoke_surf, (0, 0, 0), offset_circle_pos, offset_circle_size)
+
+        smoke_pos = self.pos + get_vec(self.drift_distance * t, self.angle)
+        rect.center = smoke_pos
+        surface.blit(smoke_surf, rect)
+
+
 class Drops(VFX):
     COLORS = [
         (81, 149, 245),
@@ -121,8 +163,8 @@ class Drops(VFX):
         (14, 81, 176),
     ]
 
-    def __init__(self, pos, duration=1, num_drops=(8,10)):
-        super().__init__(duration)
+    def __init__(self, pos, duration=1, delay=0, num_drops=(8,10)):
+        super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
 
@@ -134,6 +176,9 @@ class Drops(VFX):
             self.drops.append((width, height, color))
 
     def draw(self, surface):
+        if self.delay > 0:
+            return
+        
         t = min(1, self.lifetime / self.duration)
         linear_decay = 1 - t
         quadratic_decay = 1 - t**2
@@ -170,16 +215,27 @@ class VFXManager:
             ))
 
     def spawn_impact(self, pos, shell_render_angle, shell_type):
-        color = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])[0]
+        colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
         for _ in range(random.randint(2,4)):
             spark_angle = shell_render_angle + math.radians(180 + random.randint(-30, 30))
-            spark_duration = random.uniform(0.2, 0.4)
-            spark_distance = random.randint(80, 110)
-            spark_size = (random.randint(30, 40), random.randint(6, 10))
+            spark_color = random.choice([colors[0], colors[2]])
+            spark_duration = random.uniform(0.3, 0.5)
+            spark_distance = random.randint(80, 100)
+            spark_size = (random.randint(40, 50), random.randint(8, 12))
             self.effects.append(Spark(
-                pos, spark_angle, color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
+                pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
             ))
-        self.effects.append(Slash(pos, shell_render_angle, color))
+        for _ in range(random.randint(3,5)):
+            smoke_angle = math.radians(random.randint(180, 360))
+            smoke_color = random.choice([colors[0], colors[2]])
+            smoke_delay = random.uniform(0, 0.1)
+            smoke_duration = random.uniform(0.3, 0.5)
+            smoke_distance = random.uniform(40, 60)
+            smoke_size = random.uniform(40, 60)
+            self.effects.append(Smoke(
+                pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, drift_distance=smoke_distance, size=smoke_size
+            ))
+        self.effects.append(Slash(pos, shell_render_angle, colors[0]))
 
     def spawn_miss(self, pos):
         pos = pygame.Vector2(pos) + pygame.Vector2(0, 32)

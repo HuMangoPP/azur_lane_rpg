@@ -282,7 +282,7 @@ class EncounterMenu:
         if self.fast_forward:
             dt = dt * 2
         if self.slow_down:
-            dt = dt / 2
+            dt = dt / 5
         if self.encounter_started:
             afloat_sirens_before = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
             self.menu_manager.player_fleet.update(dt, self.vfx_manager)
