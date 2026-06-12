@@ -7,7 +7,7 @@ from src.constants import Color
 
 
 SHELL_COLORS = {
-    "normal": [(255, 249, 181), (209, 119, 0), (26, 8, 0), (222, 180, 11), (247, 77, 111)],
+    "normal": [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
     "HE": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
     "AP": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
 }
@@ -156,42 +156,6 @@ class Smoke(VFX):
         surface.blit(smoke_surf, rect)
 
 
-class Drops(VFX):
-    COLORS = [
-        (81, 149, 245),
-        (36, 115, 227),
-        (14, 81, 176),
-    ]
-
-    def __init__(self, pos, duration=1, delay=0, num_drops=(8,10)):
-        super().__init__(duration, delay)
-
-        self.pos = pygame.Vector2(pos)
-
-        self.drops = []
-        for _ in range(random.randint(*num_drops)):
-            width = 64 * random.uniform(-1, 1)
-            height = random.uniform(32, 64)
-            color = random.choice(self.COLORS)
-            self.drops.append((width, height, color))
-
-    def draw(self, surface):
-        if self.delay > 0:
-            return
-        
-        t = min(1, self.lifetime / self.duration)
-        linear_decay = 1 - t
-        quadratic_decay = 1 - t**2
-        drop_alpha = int(255 * quadratic_decay)
-        drop_radius = 16 * linear_decay + 2
-        for traj_width, traj_height, drop_color in self.drops:
-            drop_pos = self.pos + pygame.Vector2(
-                traj_width * t,
-                -traj_height * 4 * t * linear_decay
-            )
-            pygame.draw.circle(surface, (*drop_color, drop_alpha), drop_pos, drop_radius)
-
-
 class VFXManager:
     def __init__(self):
         self.effects = []
@@ -226,7 +190,7 @@ class VFXManager:
                 pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
             ))
         for _ in range(random.randint(3,5)):
-            smoke_angle = math.radians(random.randint(180, 360))
+            smoke_angle = math.radians(random.randint(210, 330))
             smoke_color = random.choice([colors[0], colors[2]])
             smoke_delay = random.uniform(0, 0.1)
             smoke_duration = random.uniform(0.3, 0.5)
@@ -238,8 +202,48 @@ class VFXManager:
         self.effects.append(Slash(pos, shell_render_angle, colors[0]))
 
     def spawn_miss(self, pos):
+        colors = [(191, 224, 255), (158, 208, 255), (107, 183, 255)]
         pos = pygame.Vector2(pos) + pygame.Vector2(0, 32)
-        self.effects.append(Drops(pos))
+        spark_pos = pos + pygame.Vector2(16, 0)
+        for _ in range(random.randint(4,6)):
+            spark_angle = math.radians(random.randint(300, 330))
+            spark_color = random.choice(colors)
+            spark_duration = random.uniform(0.4, 0.6)
+            spark_distance = random.randint(60, 80)
+            spark_size = (random.randint(24, 30), random.randint(6, 10))
+            self.effects.append(Spark(
+                spark_pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
+            ))
+        spark_pos = pos - pygame.Vector2(16, 0)
+        for _ in range(random.randint(4,6)):
+            spark_angle = math.radians(random.randint(210, 240))
+            spark_color = random.choice(colors)
+            spark_duration = random.uniform(0.4, 0.6)
+            spark_distance = random.randint(60, 80)
+            spark_size = (random.randint(24, 30), random.randint(6, 10))
+            self.effects.append(Spark(
+                spark_pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
+            ))
+        for _ in range(random.randint(8,12)):
+            t = random.randint(-32, 32)
+            spark_pos = pos + pygame.Vector2(t, 0)
+            spark_color = random.choice(colors)
+            spark_duration = random.uniform(0.4, 0.6)
+            spark_distance = 120 - abs(t)
+            spark_size = (random.randint(30, 40), random.randint(6, 10))
+            self.effects.append(Spark(
+                spark_pos, math.radians(270), spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
+            ))
+        for _ in range(random.randint(4, 6)):
+            smoke_angle = math.radians(random.uniform(210, 330))
+            smoke_color = random.choice(colors)
+            smoke_duration = random.uniform(0.4, 0.6)
+            smoke_delay = random.uniform(0, 0.1)
+            smoke_size = random.randint(40, 60)
+            smoke_distance = random.randint(70, 90)
+            self.effects.append(Smoke(
+                pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, size=smoke_size, drift_distance=smoke_distance
+            ))
 
     def update(self, dt):
         for effect in self.effects:
