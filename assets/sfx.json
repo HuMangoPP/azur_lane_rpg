@@ -4,11 +4,11 @@
 	"click": 0.6,
 	"boom": 0.8,
 	"boom2": 0.8,
+	"boom3": 0.8,
 	"knock": 0.7,
 	"frequency": 0.7,
 	"open": 0.7,
     "waves": 0.1,
     "wind": 0.3,
-    "zip": 0.3,
-	"splash2": 0.8
+    "zip": 0.3
 }

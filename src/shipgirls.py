@@ -206,7 +206,7 @@ class ShipgirlBattleComponent:
                 if hit:
                     DataFiles.sfx["boom2"].play()
                 else:
-                    DataFiles.sfx["splash2"].play()
+                    DataFiles.sfx["boom3"].play()
             return
 
         if self.target_pref != "all" and self.target is not None and self.target.battle_component.hp <= 0:
