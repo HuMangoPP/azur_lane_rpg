@@ -15,9 +15,11 @@ class EquipmentMenu:
 
         self.selected_shipgirl = None
 
-        self.blueprint_page = DataFiles.sprites["user_interface"]["equipment_menu_blueprint"].get_rect()
-        self.blueprint_page.right = screen_x(0.75) - Box.PADDING
-        self.blueprint_page.centery = screen_y(0.5)
+        blueprint_surf = DataFiles.sprites["equipment_menu"]["blueprint"]
+        self.blueprint_page_color = blueprint_surf.get_at((0,0))
+        self.blueprint_page = blueprint_surf.get_rect()
+        self.blueprint_page.left = screen_x(0.5)
+        self.blueprint_page.bottom = screen_y(0.5) + Box.HEIGHT
         blueprint_page_center = pygame.Vector2(self.blueprint_page.center)
         rotated_angle = 5
         page_horizontal = get_vec(self.blueprint_page.width/2, math.radians(rotated_angle))
@@ -32,28 +34,28 @@ class EquipmentMenu:
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx,
-                bottom=screen_y(0.5) - Box.PADDING
+                centery=self.blueprint_page.top + Box.HEIGHT
             ),
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                right=self.blueprint_page.centerx - Box.PADDING,
-                top=screen_y(0.5) + Box.PADDING
+                centerx=self.blueprint_page.centerx - Box.WIDTH,
+                centery=self.blueprint_page.bottom - Box.HEIGHT
             ),
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.blueprint_page.centerx + Box.PADDING,
-                top=screen_y(0.5) + Box.PADDING
-            )
+                centerx=self.blueprint_page.centerx + Box.WIDTH,
+                centery=self.blueprint_page.bottom - Box.HEIGHT
+            ),
         ]
         self.selected_equipment = Equipment.WEAPON
 
-        num_equipment_per_row = 3
+        num_equipment_per_row = 5
         num_equipment_rows = 2
         self.equipment_depot = get_rect(
             width=num_equipment_per_row*(Box.WIDTH+Box.PADDING)+Box.PADDING,
             height=num_equipment_rows*(Box.HEIGHT+Box.PADDING)+Box.PADDING,
-            left=self.blueprint_page.right + Box.PADDING,
-            centery=screen_y(0.5)
+            centerx=self.blueprint_page.centerx,
+            top=self.blueprint_page.bottom + Box.PADDING,
         )
         self.equippable_rects = [
             get_rect(
@@ -69,7 +71,7 @@ class EquipmentMenu:
             width=2.5*Box.WIDTH + 2*Box.PADDING,
             height=2*Box.PADDING + 9+16+2*Box.PADDING + 2*Box.HEIGHT+3*Box.PADDING,
             centerx=screen_x(0.25),
-            centery=screen_y(0.5)
+            top=screen_y(0.5)
         )
         dossier_page_center = pygame.Vector2(self.dossier_page.center)
         rotated_angle = 5
@@ -192,6 +194,7 @@ class EquipmentMenu:
                 for i, rect in enumerate(self.equipped_rects):
                     if rect.collidepoint(event.pos):
                         self.selected_equipment = i
+                        DataFiles.sfx["click"].play()
 
                 for new_equipment, rect in zip(equippable, self.equippable_rects):
                     if rect.collidepoint(event.pos):
@@ -200,8 +203,10 @@ class EquipmentMenu:
                             DataFiles.save_file["equipment"][current_equipment] = DataFiles.save_file["equipment"].get(current_equipment, 0) + 1
                         self.selected_shipgirl.battle_component.equipment[self.selected_equipment] = new_equipment
                         DataFiles.save_file["equipment"][new_equipment] -= 1
+                        DataFiles.sfx["click"].play()
             
-                self.exit_equipment_menu_button.click(event.pos)
+                if self.exit_equipment_menu_button.click(event.pos):
+                    DataFiles.sfx["click"].play()
             if event.type == pygame.MOUSEMOTION:
                 for equipment, rect in zip(equippable, self.equippable_rects):
                     if rect.collidepoint(event.pos):
@@ -211,8 +216,8 @@ class EquipmentMenu:
                     self.hovered_equipment = None
         
         if self.selected_shipgirl is not None:
-            self.selected_shipgirl.rect.right = screen_x(0.5)
-            self.selected_shipgirl.rect.centery = screen_y(0.5)
+            self.selected_shipgirl.rect.centerx = screen_x(0.25)
+            self.selected_shipgirl.rect.bottom = screen_y(0.5) - Box.HEIGHT
             if self.selected_shipgirl.sprite is not None:
                 self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
             self.selected_shipgirl.animate(dt)
@@ -274,12 +279,11 @@ class EquipmentMenu:
                     ])
             
             pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
-            surface.blit(DataFiles.sprites["user_interface"]["equipment_menu_blueprint"], self.blueprint_page)
+            surface.blit(DataFiles.sprites["equipment_menu"]["blueprint"], self.blueprint_page)
             for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
-                if self.selected_equipment == i:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=2*Box.OUTLINE_WIDTH)
-                else:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+                outline_width = Box.OUTLINE_WIDTH + int(self.selected_equipment == i)
+                pygame.draw.rect(surface, self.blueprint_page_color, rect)
+                pygame.draw.rect(surface, Color.WHITE, rect, width=outline_width)
                 if equipment is not None:
                     surface.blit(DataFiles.get_entity_sprite(equipment), rect)
             

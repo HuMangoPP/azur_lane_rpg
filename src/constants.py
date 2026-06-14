@@ -2,7 +2,7 @@ import json
 import colorsys
 import pygame
 
-TEMP_SCREEN_SIZE = pygame.Vector2(1120, 630)
+TEMP_SCREEN_SIZE = pygame.Vector2(960, 540) # TODO
 FPS = 60
 
 def screen_x(t):
@@ -235,44 +235,6 @@ for wave_index in range(DataFiles.sprites["sortie_selection"]["num_waves"]):
     r, g, b = colorsys.hsv_to_rgb(base_hue, saturation, value)
     wave_color = (int(r*255), int(g*255), int(b*255))
     create_sortie_selection_wave_sprite(wave_index, wave_color)
-
-blueprint_surf = pygame.Surface((3,3))
-blueprint_surf.fill((0, 65, 186))
-blueprint_surf.set_at((1,1), (128, 159, 255))
-
-blueprint_page_size = (
-    4*(Box.WIDTH + Box.PADDING) + Box.PADDING,
-    5*(Box.HEIGHT + Box.PADDING) + Box.PADDING,
-)
-blueprint_surf_scaled = pygame.transform.smoothscale(blueprint_surf, blueprint_page_size)
-DataFiles.sprites["user_interface"]["port_menu_blueprint"] = blueprint_surf_scaled
-
-blueprint_page_size = (
-    3*(Box.WIDTH + Box.PADDING)+Box.PADDING,
-    4*(Box.HEIGHT+Box.PADDING)+Box.PADDING
-)
-blueprint_surf_scaled = pygame.transform.smoothscale(blueprint_surf, blueprint_page_size)
-blueprint_rect = blueprint_surf_scaled.get_rect()
-warship_polygon = [
-    (blueprint_rect.centerx + 0.7*Box.WIDTH, blueprint_rect.centery + Box.PADDING),
-    (blueprint_rect.centerx + 0.7*Box.WIDTH, blueprint_rect.centery - 0.8*Box.HEIGHT),
-    (blueprint_rect.centerx + 0.5*Box.WIDTH, blueprint_rect.centery - 1.4*Box.HEIGHT),
-    (blueprint_rect.centerx + 0.2*Box.WIDTH, blueprint_rect.centery - 1.8*Box.HEIGHT),
-    (blueprint_rect.centerx, blueprint_rect.centery - 2.0*Box.HEIGHT),
-    (blueprint_rect.centerx - 0.2*Box.WIDTH, blueprint_rect.centery - 1.8*Box.HEIGHT),
-    (blueprint_rect.centerx - 0.5*Box.WIDTH, blueprint_rect.centery - 1.4*Box.HEIGHT),
-    (blueprint_rect.centerx - 0.7*Box.WIDTH, blueprint_rect.centery - 0.8*Box.HEIGHT),
-    (blueprint_rect.centerx - 0.7*Box.WIDTH, blueprint_rect.centery + Box.PADDING),
-]
-pygame.draw.lines(blueprint_surf_scaled, Color.WHITE, False, warship_polygon, width=2)
-warship_polygon = [
-    (blueprint_rect.centerx + 0.7*Box.WIDTH, blueprint_rect.centery + Box.PADDING + Box.HEIGHT),
-    (blueprint_rect.centerx + 0.7*Box.WIDTH, blueprint_rect.centery + 2.0*Box.HEIGHT),
-    (blueprint_rect.centerx - 0.7*Box.WIDTH, blueprint_rect.centery + 2.0*Box.HEIGHT),
-    (blueprint_rect.centerx - 0.7*Box.WIDTH, blueprint_rect.centery + Box.PADDING + Box.HEIGHT),
-]
-pygame.draw.lines(blueprint_surf_scaled, Color.WHITE, False, warship_polygon, width=2)
-DataFiles.sprites["user_interface"]["equipment_menu_blueprint"] = blueprint_surf_scaled
 
 class Decorations:
     TILESIZE = 64

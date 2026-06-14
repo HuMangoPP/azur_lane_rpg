@@ -137,6 +137,9 @@
 	"sortie_selection": {
 		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 }
 	},
+	"equipment_menu": {
+		"blueprint": { "left": 0, "top": 0, "width": 384, "height": 256 }
+	},
 	"decorations": {
 		"bed_north": {
 			"left": 0,

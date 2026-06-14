@@ -2,7 +2,7 @@ import pygame
 import json
 
 pygame.init()
-SCREEN_SIZE = pygame.Vector2(1120, 630)
+SCREEN_SIZE = pygame.Vector2(960, 540)
 screen = pygame.display.set_mode(SCREEN_SIZE)
 
 pygame.mixer.init()

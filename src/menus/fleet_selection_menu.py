@@ -76,7 +76,7 @@ class FleetSelectionMenu:
         self.backup_fleet_slots = [
             get_rect(
                 width=self.SLOT_SIZE, height=self.SLOT_SIZE,
-                centerx=-slot_index*self.SLOT_SIZE+self.fleet_slots[-1].centerx,
+                centerx=-slot_index*self.SLOT_SIZE+self.fleet_slots[1].centerx,
                 bottom=self.fleet_slots[0].top-2*Box.PADDING
             ) for slot_index in range(num_fleet_slots)
         ]
