@@ -115,6 +115,8 @@ class EncounterMenu:
             self.menu_manager.current_menu = self.menu_manager.port_menu
             DataFiles.sfx["waves"].fadeout(3000)
             self.vfx_manager.clear()
+            self.fast_forward = False
+            self.slow_down = False
 
             self.menu_manager.encounter_menu.return_to_port_button.active = False
 
@@ -138,6 +140,8 @@ class EncounterMenu:
             self.menu_manager.player_fleet.end_encounter()        
             self.menu_manager.siren_fleet.end_encounter()
             self.vfx_manager.clear()
+            self.fast_forward = False
+            self.slow_down = False
 
         
         button_sprite = DataFiles.sprites["user_interface"]["port"]
@@ -252,12 +256,9 @@ class EncounterMenu:
                         backup_shipgirl.battle_component.active = True
                         self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index] = backup_shipgirl
 
-                        for siren in self.menu_manager.siren_fleet.fleet:
-                            if (
-                                siren.battle_component.attack_timer <= 0
-                                and siren.battle_component.target == self.selected_shipgirl
-                            ):
-                                siren.battle_component.target = backup_shipgirl # TODO
+                    for siren in self.menu_manager.siren_fleet.fleet:
+                        if siren.battle_component.target == self.selected_shipgirl:
+                            siren.battle_component.target = None
 
                         self.selected_shipgirl = None
                         self.selected_shipgirl_index = None

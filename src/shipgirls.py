@@ -417,7 +417,7 @@ class PlayerFleet:
         self.backups = [None, None, None]
 
     def begin_sortie(self):
-        for shipgirl in self.shipgirls:
+        for shipgirl in self.shipgirls + self.backups:
             if shipgirl is not None:
                 shipgirl.battle_component.reset()
 

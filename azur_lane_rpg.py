@@ -18,28 +18,28 @@ font = Font(font_path="engine/big_font.png")
 
 menu_manager = MenuManager()
 
-# setup encounter immediately for testing
-menu_manager.encounter_menu.current_sortie = 0
-menu_manager.encounter_menu.current_encounter = 0
-menu_manager.player_fleet.clear_fleet()
-menu_manager.siren_fleet.clear_fleet()
+# # setup encounter immediately for testing
+# menu_manager.encounter_menu.current_sortie = 0
+# menu_manager.encounter_menu.current_encounter = 0
+# menu_manager.player_fleet.clear_fleet()
+# menu_manager.siren_fleet.clear_fleet()
 
-menu_manager.current_menu = menu_manager.encounter_menu
-menu_manager.player_fleet.shipgirls = [
-    menu_manager.available_shipgirls[0],
-    None,
-    menu_manager.available_shipgirls[1]
-]
-for i, shipgirl in enumerate(menu_manager.player_fleet.shipgirls):
-    if shipgirl is None:
-        continue
-    shipgirl.rect.center = menu_manager.fleet_selection_menu.fleet_slots[i].center
-menu_manager.player_fleet.begin_sortie()
-menu_manager.encounter_menu.begin_sortie()
-for i, shipgirl in enumerate(menu_manager.player_fleet.shipgirls):
-    if shipgirl is None:
-        continue
-    shipgirl.battle_component.target = menu_manager.siren_fleet.front[0]
+# menu_manager.current_menu = menu_manager.encounter_menu
+# menu_manager.player_fleet.shipgirls = [
+#     menu_manager.available_shipgirls[0],
+#     None,
+#     menu_manager.available_shipgirls[1]
+# ]
+# for i, shipgirl in enumerate(menu_manager.player_fleet.shipgirls):
+#     if shipgirl is None:
+#         continue
+#     shipgirl.rect.center = menu_manager.fleet_selection_menu.fleet_slots[i].center
+# menu_manager.player_fleet.begin_sortie()
+# menu_manager.encounter_menu.begin_sortie()
+# for i, shipgirl in enumerate(menu_manager.player_fleet.shipgirls):
+#     if shipgirl is None:
+#         continue
+#     shipgirl.battle_component.target = menu_manager.siren_fleet.front[0]
 
 DataFiles.bgm["lofi_loop"].play(loops=-1, fade_ms=10000)
 running = True
