@@ -67,9 +67,15 @@ class EquipmentMenu:
         ]
         self.hovered_equipment = None
 
+        font_height = 12
         self.dossier_page = get_rect(
             width=2.5*Box.WIDTH + 2*Box.PADDING,
-            height=2*Box.PADDING + 9+16+2*Box.PADDING + 2*Box.HEIGHT+3*Box.PADDING,
+            height=(
+                2*Box.PADDING # padding
+                + font_height+Box.PADDING # name
+                + Box.HEIGHT # exp
+                + 2*Box.HEIGHT # stats
+            ),
             centerx=screen_x(0.25),
             top=screen_y(0.5)
         )
@@ -96,25 +102,25 @@ class EquipmentMenu:
             dossier_bg_topleft + pygame.Vector2(0, -Box.HEIGHT/2)
         ]
 
+        self.exp_bar_bg = get_rect(
+            width=2*Box.WIDTH, height=Box.HEIGHT/4,
+            left=self.dossier_page.left+Box.PADDING+Box.WIDTH/2,
+            centery=self.dossier_page.top+2*Box.PADDING+font_height+Box.HEIGHT/4
+        )
+
         stats = ["max_hp", "evasion", "firepower", "reload"]
         stat_rect_size = 32
         self.stat_rects = {
             stat: get_rect(
                 width=stat_rect_size, height=stat_rect_size,
                 left=self.dossier_page.left+3*Box.PADDING,
-                bottom=self.dossier_page.bottom-Box.PADDING - (len(stats)-1-i)*(stat_rect_size+Box.PADDING)
+                top=self.exp_bar_bg.centery + Box.HEIGHT/4 + i*stat_rect_size
             )
             for i, stat in enumerate(stats)
         }
-        self.exp_bar_bg = get_rect(
-            width=128, height=16,
-            left=self.dossier_page.left+Box.PADDING,
-            top=self.dossier_page.top+Box.PADDING+9+Box.PADDING
-        )
 
         def exit_equipment_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
-
             self.selected_shipgirl = None
 
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
@@ -176,6 +182,12 @@ class EquipmentMenu:
             )
 
     def update(self, dt, events):
+        self.selected_shipgirl.rect.centerx = screen_x(0.25)
+        self.selected_shipgirl.rect.bottom = screen_y(0.5) - Box.HEIGHT
+        if self.selected_shipgirl.sprite is not None:
+            self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+        self.selected_shipgirl.animate(dt)
+        
         if self.selected_equipment == Equipment.WEAPON:
             equippable = [
                 weapon_name for weapon_name, weapon_info in DataFiles.equipment_data.items()
@@ -214,96 +226,102 @@ class EquipmentMenu:
                         break
                 else:
                     self.hovered_equipment = None
-        
-        if self.selected_shipgirl is not None:
-            self.selected_shipgirl.rect.centerx = screen_x(0.25)
-            self.selected_shipgirl.rect.bottom = screen_y(0.5) - Box.HEIGHT
-            if self.selected_shipgirl.sprite is not None:
-                self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-            self.selected_shipgirl.animate(dt)
 
     def draw(self, surface, font):
-        if self.selected_shipgirl is not None:
-            self.selected_shipgirl.draw(surface, font)
+        self.selected_shipgirl.draw(surface, font)
 
-            pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
-            pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
-            pygame.draw.polygon(surface, Color.DOSSIER_PAGE, self.misaligned_dossier_page)
-            pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
+        pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
+        pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
+        pygame.draw.polygon(surface, Color.DOSSIER_PAGE, self.misaligned_dossier_page)
+        pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
 
-            level_progress = Stats.level_progress(self.selected_shipgirl.battle_component.exp)
-            exp_bar = get_rect(
-                width=level_progress*self.exp_bar_bg.width,
-                height=self.exp_bar_bg.height,
-                left=self.exp_bar_bg.left,
-                top=self.exp_bar_bg.top
-            )
-            pygame.draw.rect(surface, Color.EXP_BAR_BG, self.exp_bar_bg)
-            pygame.draw.rect(surface, Color.EXP_BAR_FILL, exp_bar)
+        faction = DataFiles.shipgirl_data[self.selected_shipgirl.name]["faction"]
+        font.render(
+            surface,
+            f"{faction} {self.selected_shipgirl.name}",
+            (self.dossier_page.left+Box.PADDING, self.dossier_page.top+Box.PADDING),
+            Color.BLACK,
+            1,
+            style="topleft"
+        )
+        level = Stats.level(self.selected_shipgirl.battle_component.exp) + 1
+        medal_icon = DataFiles.sprites["user_interface"]["medal"]
+        medal_rect = medal_icon.get_rect()
+        medal_rect.left = self.dossier_page.left + Box.PADDING
+        medal_rect.centery = self.exp_bar_bg.centery
+        surface.blit(medal_icon, medal_rect)
+        font.render(
+            surface,
+            str(level),
+            medal_rect.center,
+            Color.WHITE,
+            1,
+            style="center",
+            outline_color=Color.BLACK
+        )
+        level_progress = Stats.level_progress(self.selected_shipgirl.battle_component.exp)
+        exp_bar = get_rect(
+            width=level_progress*self.exp_bar_bg.width,
+            height=self.exp_bar_bg.height,
+            left=self.exp_bar_bg.left,
+            top=self.exp_bar_bg.top
+        )
+        pygame.draw.rect(surface, Color.EXP_BAR_BG, self.exp_bar_bg)
+        pygame.draw.rect(surface, Color.EXP_BAR_FILL, exp_bar)
 
-            level = Stats.level(self.selected_shipgirl.battle_component.exp) + 1
+        for stat, rect in self.stat_rects.items():
+            stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.BLACK)
+            surface.blit(stat_icon, rect)
             font.render(
                 surface,
-                f"level {level}",
-                (self.exp_bar_bg.left, self.dossier_page.top+Box.PADDING),
+                str(self.get_stat(self.selected_shipgirl, stat)),
+                (rect.right + Box.PADDING, rect.centery),
                 Color.BLACK,
                 1,
-                style="topleft"
+                style="centerleft"
             )
-
-            for stat, rect in self.stat_rects.items():
-                stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.BLACK)
-                surface.blit(stat_icon, rect)
-                font.render(
-                    surface,
-                    str(self.get_stat(self.selected_shipgirl, stat)),
-                    (rect.right + Box.PADDING, rect.centery),
-                    Color.BLACK,
-                    2,
-                    style="centerleft"
-                )
-                stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
-                if stat_delta > 0:
-                    center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
-                    pygame.draw.polygon(surface, (0,255,0),[
-                        center+get_vec(length=Box.PADDING, angle=math.radians(30)),
-                        center+get_vec(length=Box.PADDING, angle=math.radians(150)),
-                        center+get_vec(length=Box.PADDING, angle=math.radians(270))
-                    ])
-                elif stat_delta < 0:
-                    center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
-                    pygame.draw.polygon(surface, (255,0,0),[
-                        center+get_vec(length=Box.PADDING, angle=math.radians(90)),
-                        center+get_vec(length=Box.PADDING, angle=math.radians(210)),
-                        center+get_vec(length=Box.PADDING, angle=math.radians(330))
-                    ])
-            
-            pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
-            surface.blit(DataFiles.sprites["equipment_menu"]["blueprint"], self.blueprint_page)
-            for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
-                outline_width = Box.OUTLINE_WIDTH + int(self.selected_equipment == i)
-                pygame.draw.rect(surface, self.blueprint_page_color, rect)
-                pygame.draw.rect(surface, Color.WHITE, rect, width=outline_width)
-                if equipment is not None:
-                    surface.blit(DataFiles.get_entity_sprite(equipment), rect)
-            
-            if self.selected_equipment == Equipment.WEAPON:
-                equippable = [
-                    weapon_name for weapon_name, weapon_info in DataFiles.equipment_data.items()
-                    if DataFiles.save_file["equipment"].get(weapon_name, 0) > 0
-                    and weapon_info["type"] == "weapon"
-                    and weapon_info["equippable_by"] == self.selected_shipgirl.battle_component.hull_type
-                ]
-            else:
-                equippable = [
-                    aux_name for aux_name, aux_info in DataFiles.equipment_data.items()
-                    if DataFiles.save_file["equipment"].get(aux_name, 0) > 0
-                    and aux_info["type"] == "aux"
-                ]
-            
-            pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.equipment_depot)
-            for equipment, rect in zip(equippable, self.equippable_rects):
-                pygame.draw.rect(surface, Color.CARGO_BOX, rect)
+            stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
+            if stat_delta > 0:
+                center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
+                pygame.draw.polygon(surface, (0,255,0),[
+                    center+get_vec(length=Box.PADDING, angle=math.radians(30)),
+                    center+get_vec(length=Box.PADDING, angle=math.radians(150)),
+                    center+get_vec(length=Box.PADDING, angle=math.radians(270))
+                ])
+            elif stat_delta < 0:
+                center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
+                pygame.draw.polygon(surface, (255,0,0),[
+                    center+get_vec(length=Box.PADDING, angle=math.radians(90)),
+                    center+get_vec(length=Box.PADDING, angle=math.radians(210)),
+                    center+get_vec(length=Box.PADDING, angle=math.radians(330))
+                ])
+        
+        pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
+        surface.blit(DataFiles.sprites["equipment_menu"]["blueprint"], self.blueprint_page)
+        for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
+            outline_width = Box.OUTLINE_WIDTH + int(self.selected_equipment == i)
+            pygame.draw.rect(surface, self.blueprint_page_color, rect)
+            pygame.draw.rect(surface, Color.WHITE, rect, width=outline_width)
+            if equipment is not None:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+        
+        if self.selected_equipment == Equipment.WEAPON:
+            equippable = [
+                weapon_name for weapon_name, weapon_info in DataFiles.equipment_data.items()
+                if DataFiles.save_file["equipment"].get(weapon_name, 0) > 0
+                and weapon_info["type"] == "weapon"
+                and weapon_info["equippable_by"] == self.selected_shipgirl.battle_component.hull_type
+            ]
+        else:
+            equippable = [
+                aux_name for aux_name, aux_info in DataFiles.equipment_data.items()
+                if DataFiles.save_file["equipment"].get(aux_name, 0) > 0
+                and aux_info["type"] == "aux"
+            ]
+        
+        pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.equipment_depot)
+        for equipment, rect in zip(equippable, self.equippable_rects):
+            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
+            surface.blit(DataFiles.get_entity_sprite(equipment), rect)
         
         self.exit_equipment_menu_button.draw(surface, font)
