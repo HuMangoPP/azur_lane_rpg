@@ -10,6 +10,8 @@ from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x, scr
 from live2d.live2d import Live2D
 
 class EquipmentMenu:
+    UNEQUIP_ITEM = "__unequip_item__"
+
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
@@ -180,6 +182,28 @@ class EquipmentMenu:
                 - shipgirl.battle_component.reload()
             )
 
+    def get_equippable_inventory(self):
+        if self.selected_equipment == Equipment.WEAPON:
+            return [
+                weapon_name for weapon_name, weapon_info in DataFiles.equipment_data.items()
+                if DataFiles.save_file["equipment"].get(weapon_name, 0) > 0
+                and weapon_info["type"] == "weapon"
+                and weapon_info["equippable_by"] == self.selected_shipgirl.battle_component.hull_type
+            ]
+        else:
+            return [
+                aux_name for aux_name, aux_info in DataFiles.equipment_data.items()
+                if DataFiles.save_file["equipment"].get(aux_name, 0) > 0
+                and aux_info["type"] == "aux"
+            ]
+
+    def get_equippable_options(self):
+        options = self.get_equippable_inventory()
+        current_equipment = self.selected_shipgirl.battle_component.equipment[self.selected_equipment]
+        if current_equipment is not None:
+            options = [self.UNEQUIP_ITEM] + options
+        return options
+
     def update(self, dt, events):
         self.selected_shipgirl.rect.centerx = screen_x(0.25)
         self.selected_shipgirl.rect.bottom = screen_y(0.5) - Box.HEIGHT
@@ -187,19 +211,7 @@ class EquipmentMenu:
             self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
         self.selected_shipgirl.animate(dt)
         
-        if self.selected_equipment == Equipment.WEAPON:
-            equippable = [
-                weapon_name for weapon_name, weapon_info in DataFiles.equipment_data.items()
-                if DataFiles.save_file["equipment"].get(weapon_name, 0) > 0
-                and weapon_info["type"] == "weapon"
-                and weapon_info["equippable_by"] == self.selected_shipgirl.battle_component.hull_type
-            ]
-        else:
-            equippable = [
-                aux_name for aux_name, aux_info in DataFiles.equipment_data.items()
-                if DataFiles.save_file["equipment"].get(aux_name, 0) > 0
-                and aux_info["type"] == "aux"
-            ]
+        equippable = self.get_equippable_options()
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
                 for i, rect in enumerate(self.equipped_rects):
@@ -212,8 +224,11 @@ class EquipmentMenu:
                         current_equipment = self.selected_shipgirl.battle_component.equipment[self.selected_equipment]
                         if current_equipment is not None:
                             DataFiles.save_file["equipment"][current_equipment] = DataFiles.save_file["equipment"].get(current_equipment, 0) + 1
-                        self.selected_shipgirl.battle_component.equipment[self.selected_equipment] = new_equipment
-                        DataFiles.save_file["equipment"][new_equipment] -= 1
+                        if new_equipment == self.UNEQUIP_ITEM:
+                            self.selected_shipgirl.battle_component.equipment[self.selected_equipment] = None
+                        else:
+                            self.selected_shipgirl.battle_component.equipment[self.selected_equipment] = new_equipment
+                            DataFiles.save_file["equipment"][new_equipment] -= 1
                         DataFiles.sfx["click"].play()
             
                 if self.exit_equipment_menu_button.click(event.pos):
@@ -309,23 +324,13 @@ class EquipmentMenu:
             if equipment is not None:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
         
-        if self.selected_equipment == Equipment.WEAPON:
-            equippable = [
-                weapon_name for weapon_name, weapon_info in DataFiles.equipment_data.items()
-                if DataFiles.save_file["equipment"].get(weapon_name, 0) > 0
-                and weapon_info["type"] == "weapon"
-                and weapon_info["equippable_by"] == self.selected_shipgirl.battle_component.hull_type
-            ]
-        else:
-            equippable = [
-                aux_name for aux_name, aux_info in DataFiles.equipment_data.items()
-                if DataFiles.save_file["equipment"].get(aux_name, 0) > 0
-                and aux_info["type"] == "aux"
-            ]
-        
+        equippable = self.get_equippable_options()
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.equipment_depot)
         for equipment, rect in zip(equippable, self.equippable_rects):
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
-            surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+            if equipment == self.UNEQUIP_ITEM:
+                surface.blit(DataFiles.sprites["user_interface"]["unequip_item"], rect)
+            else:
+                surface.blit(DataFiles.get_entity_sprite(equipment), rect)
         
         self.exit_equipment_menu_button.draw(surface, font)

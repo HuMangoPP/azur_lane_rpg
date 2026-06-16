@@ -75,6 +75,13 @@
 			"height": 64
 		},
 
+		"unequip_item": {
+			"left": 192,
+			"top": 256,
+			"width": 64,
+			"height": 64
+		},
+
 		"start_sortie": { "left": 0, "top": 192, "width": 64, "height": 64 },
 		"research": { "left": 0, "top": 256, "width": 64, "height": 64 },
 		"cache": { "left": 0, "top": 384, "width": 64, "height": 64 },
