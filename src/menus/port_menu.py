@@ -567,7 +567,7 @@ class PortMenu:
         
         if self.blueprint_selected_item:
             pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
-            pygame.draw.rect(surface, (0, 65, 186), self.blueprint_page)
+            pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
             font.render(surface, self.blueprint_selected_item, self.blueprint_name, Color.WHITE, 1, style="center")
             surface.blit(DataFiles.get_entity_sprite(self.blueprint_selected_item), self.blueprint_icon)
             pygame.draw.rect(surface, Color.WHITE, self.blueprint_icon, width=Box.OUTLINE_WIDTH)

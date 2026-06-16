@@ -16,10 +16,9 @@ class EquipmentMenu:
         self.selected_shipgirl = None
 
         blueprint_surf = DataFiles.sprites["equipment_menu"]["blueprint"]
-        self.blueprint_page_color = blueprint_surf.get_at((0,0))
         self.blueprint_page = blueprint_surf.get_rect()
-        self.blueprint_page.left = screen_x(0.5)
-        self.blueprint_page.bottom = screen_y(0.5) + Box.HEIGHT
+        self.blueprint_page.left = screen_x(0.5) - Box.WIDTH
+        self.blueprint_page.bottom = screen_y(0.5) + 1.25*Box.HEIGHT
         blueprint_page_center = pygame.Vector2(self.blueprint_page.center)
         rotated_angle = 5
         page_horizontal = get_vec(self.blueprint_page.width/2, math.radians(rotated_angle))
@@ -34,17 +33,17 @@ class EquipmentMenu:
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx,
-                centery=self.blueprint_page.top + Box.HEIGHT
+                centery=self.blueprint_page.centery - Box.HEIGHT
             ),
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx - Box.WIDTH,
-                centery=self.blueprint_page.bottom - Box.HEIGHT
+                centery=self.blueprint_page.centery + Box.HEIGHT
             ),
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx + Box.WIDTH,
-                centery=self.blueprint_page.bottom - Box.HEIGHT
+                centery=self.blueprint_page.centery + Box.HEIGHT
             ),
         ]
         self.selected_equipment = Equipment.WEAPON
@@ -73,7 +72,7 @@ class EquipmentMenu:
             height=(
                 2*Box.PADDING # padding
                 + font_height+Box.PADDING # name
-                + Box.HEIGHT # exp
+                + Box.HEIGHT/2 # exp
                 + 2*Box.HEIGHT # stats
             ),
             centerx=screen_x(0.25),
@@ -298,9 +297,14 @@ class EquipmentMenu:
         
         pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
         surface.blit(DataFiles.sprites["equipment_menu"]["blueprint"], self.blueprint_page)
+        faction_icon = DataFiles.sprites["user_interface"][f"{faction}_big"]
+        faction_icon_rect = faction_icon.get_rect()
+        faction_icon_rect.left = self.blueprint_page.left + Box.PADDING
+        faction_icon_rect.top = self.blueprint_page.top + Box.PADDING
+        surface.blit(DataFiles.sprites["user_interface"][f"{faction}_big"], faction_icon_rect)
         for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
             outline_width = Box.OUTLINE_WIDTH + int(self.selected_equipment == i)
-            pygame.draw.rect(surface, self.blueprint_page_color, rect)
+            pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_BACK, rect)
             pygame.draw.rect(surface, Color.WHITE, rect, width=outline_width)
             if equipment is not None:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)

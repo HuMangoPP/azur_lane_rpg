@@ -139,7 +139,7 @@
 		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 }
 	},
 	"equipment_menu": {
-		"blueprint": { "left": 0, "top": 0, "width": 384, "height": 256 }
+		"blueprint": { "left": 0, "top": 0, "width": 448, "height": 320 }
 	},
 	"decorations": {
 		"bed_north": {
