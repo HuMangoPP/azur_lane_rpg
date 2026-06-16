@@ -2,81 +2,97 @@
 	"laffey": {
 		"unique_item": "huggy_pillow",
 		"faction": "USS",
-		"hull_type": "DD"
+		"hull_type": "DD",
+		"class": "allen m. sumner"
 	},
 	"san_diego": {
 		"unique_item": "star_blaster",
 		"faction": "USS",
-		"hull_type": "CL"
+		"hull_type": "CL",
+		"class": "atlanta"
 	},
 	"guam": {
 		"unique_item": "battle_mech",
 		"faction": "USS",
-		"hull_type": "CA"
+		"hull_type": "CA",
+		"class": "alaska"
 	},
 	"new_jersey": {
 		"unique_item": "dragon_cannon",
 		"faction": "USS",
-		"hull_type": "BB"
+		"hull_type": "BB",
+		"class": "iowa"
 	},
 	"ayanami": {
 		"unique_item": "demon_blade",
 		"faction": "IJN",
-		"hull_type": "DD"
+		"hull_type": "DD",
+		"class": "fubuki"
 	},
 	"shimanto": {
 		"unique_item": "white_dragon_scale",
 		"faction": "IJN",
-		"hull_type": "CL"
+		"hull_type": "CL",
+		"class": "shimanto"
 	},
 	"unzen": {
 		"unique_item": "butterfly_wings",
 		"faction": "IJN",
-		"hull_type": "CA"
+		"hull_type": "CA",
+		"class": "unzen"
 	},
 	"musashi": {
 		"unique_item": "shogun",
 		"faction": "IJN",
-		"hull_type": "BB"
+		"hull_type": "BB",
+		"class": "yamato"
 	},
 	"javelin": {
 		"unique_item": "full_burst_javelin",
 		"faction": "HMS",
-		"hull_type": "DD"
+		"hull_type": "DD",
+		"class": "J"
 	},
 	"plymouth": {
 		"unique_item": "dove_feather",
 		"faction": "HMS",
-		"hull_type": "CL"
+		"hull_type": "CL",
+		"class": "plymouth"
 	},
 	"drake": {
 		"unique_item": "flintlock",
 		"faction": "HMS",
-		"hull_type": "CA"
+		"hull_type": "CA",
+		"class": "drake"
 	},
 	"lion": {
 		"unique_item": "lionflame",
 		"faction": "HMS",
-		"hull_type": "BB"
+		"hull_type": "BB",
+		"class": "lion"
 	},
 	"z23": {
 		"unique_item": "raubtier",
 		"faction": "KMS",
-		"hull_type": "DD"
+		"hull_type": "DD",
+		"class": "type 1936a"
 	},
 	"emden": {
 		"unique_item": "twin_dragons",
 		"faction": "KMS",
-		"hull_type": "CL"
+		"hull_type": "CL",
+		"class": "dresden"
 	},
 	"hindenburg": {
 		"unique_item": "devil_horns",
 		"faction": "KMS",
-		"hull_type": "CA"
+		"hull_type": "CA",
+		"class": "hindenburg"
 	},
 	"bismarck": {
 		"unique_item": "flagship_banner",
 		"faction": "KMS",
-		"hull_type": "BB"
+		"hull_type": "BB",
+		"class": "bismarck"
 	}
 }
