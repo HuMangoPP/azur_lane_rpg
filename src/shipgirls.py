@@ -322,13 +322,14 @@ class Shipgirl:
             
         self.rect = get_rect(width=self.SPRITE_SIZE, height=self.SPRITE_SIZE, centerx=self.pos.x, centery=self.pos.y)
         self.dragged = False
+        self.interacting_decoration = None
         self.battle_component = ShipgirlBattleComponent(self.name, is_player)
 
     def __repr__(self):
         return self.name
 
     def update(self, dt):
-        if self.dragged:
+        if self.dragged or self.interacting_decoration is not None:
             if self.sprite is not None:
                 self.sprite.set_animation(Live2D.IDLE_ANIMATION)
             return

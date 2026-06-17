@@ -24,7 +24,7 @@
 		"wisdom_cube": 0,
 		"huggy_pillow": 0,
 		"dragon_cannon": 0,
-		"decoration_coin": 9,
+		"decoration_coin": 7,
 		"battle_mech": 0,
 		"CA_blueprint": 0,
 		"metals": 0,
@@ -35,7 +35,11 @@
 	"decoration_depot": {
 		"bed": 0
 	},
-	"decorations": [["bed", [9, 1], "north"]],
+	"decorations": [
+		["bed", [5, 1], "north"],
+		["bed", [7, 1], "north"],
+		["bed", [9, 1], "north"]
+	],
 	"research_target": null,
 	"research_progress": 0,
 	"sortie_progress": 4,

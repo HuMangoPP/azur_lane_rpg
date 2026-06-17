@@ -17,6 +17,19 @@ def get_decoration_tiles(decoration, direction, tilepos_anchor):
             decoration_tiles.add(tilepos)
     return decoration_tiles
 
+def get_decoration_sprite_rect(decoration, direction, tilepos_anchor):
+    decoration_info = DataFiles.decoration_store[decoration][direction]
+    tile_rect = get_rect(
+        width=decoration_info["width"] * Decorations.TILESIZE,
+        height=decoration_info["height"] * Decorations.TILESIZE,
+        left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
+        top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
+    )
+    sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
+    sprite_rect = sprite.get_rect()
+    sprite_rect.bottomleft = tile_rect.bottomleft
+    return sprite_rect
+
 def in_tileable_area(tiles):
     return (
         min(tile[0] for tile in tiles) >= 0
@@ -851,6 +864,52 @@ class PortMenu:
     def rotate_decoration_direction(self):
         self.decoration_direction_index = (self.decoration_direction_index + 1) % len(self.DECORATION_DIRECTIONS)
 
+    def release_shipgirl_from_interaction(self, shipgirl):
+        shipgirl.interacting_decoration = None
+        shipgirl.wander_target = pygame.Vector2(
+            screen_x(random.random()),
+            screen_y(random.random())
+        )
+        shipgirl.pause_time = random.uniform(1, 3) # TODO
+
+    def decoration_has_interacting_shipgirl(self, tilepos_anchor):
+        tilepos_anchor = tuple(tilepos_anchor)
+        return any(
+            shipgirl.interacting_decoration == tilepos_anchor
+            for shipgirl in self.menu_manager.available_shipgirls
+        )
+
+    def snap_shipgirl_to_interactable_decoration(self, shipgirl):
+        for decoration, tilepos_anchor, direction in DataFiles.save_file["decorations"]:
+            decoration_store_info = DataFiles.decoration_store[decoration]
+            if not decoration_store_info["interactable"]:
+                continue
+
+            sprite_rect = get_decoration_sprite_rect(decoration, direction, tilepos_anchor)
+            if not sprite_rect.collidepoint(shipgirl.rect.center):
+                continue
+
+            if self.decoration_has_interacting_shipgirl(tilepos_anchor):
+                continue
+
+            snap_x, snap_y = decoration_store_info[direction]["snap"]
+            shipgirl.pos = pygame.Vector2(
+                sprite_rect.left + sprite_rect.width * snap_x,
+                sprite_rect.top + sprite_rect.height * snap_y
+            )
+            shipgirl.rect.center = shipgirl.pos
+            shipgirl.interacting_decoration = tuple(tilepos_anchor)
+            return True
+
+        shipgirl.interacting_decoration = None
+        return False
+
+    def release_shipgirls_from_deleted_decoration(self, decoration_data):
+        deleted_decoration = tuple(decoration_data[1])
+        for shipgirl in self.menu_manager.available_shipgirls:
+            if shipgirl.interacting_decoration == deleted_decoration:
+                self.release_shipgirl_from_interaction(shipgirl)
+
     def update_decorate_port_menu_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -897,6 +956,7 @@ class PortMenu:
                             self.dragged_shipgirl = shipgirl
                             self.dragged_shipgirl_offset = shipgirl.pos - pygame.Vector2(event.pos)
                             shipgirl.dragged = True
+                            shipgirl.interacting_decoration = None
                             break
             if event.type == pygame.MOUSEMOTION:
                 if self.dragged_shipgirl is not None:
@@ -918,11 +978,8 @@ class PortMenu:
 
                 if self.dragged_shipgirl is not None:
                     self.dragged_shipgirl.dragged = False
-                    self.dragged_shipgirl.wander_target = pygame.Vector2(
-                        screen_x(random.random()),
-                        screen_y(random.random())
-                    )
-                    self.dragged_shipgirl.pause_time = random.uniform(1, 3) # TODO
+                    if not self.snap_shipgirl_to_interactable_decoration(self.dragged_shipgirl):
+                        self.release_shipgirl_from_interaction(self.dragged_shipgirl)
 
                     self.dragged_shipgirl = None
                     self.dragged_shipgirl_offset = None
@@ -981,6 +1038,7 @@ class PortMenu:
                             and tilepos_anchor[1] <= clicked_tilepos[1] < tilepos_anchor[1] + decoration_info["height"]
                         ):
                             DataFiles.sfx["click"].play()
+                            self.release_shipgirls_from_deleted_decoration(decoration_data)
                             DataFiles.save_file["decorations"].pop(decoration_index)
                             DataFiles.save_file["decoration_depot"][decoration] = (
                                 DataFiles.save_file["decoration_depot"].get(decoration, 0) + 1
@@ -1043,16 +1101,8 @@ class PortMenu:
         )
         for decoration_data in decorations:
             decoration, tilepos_anchor, direction = decoration_data
-            decoration_info = DataFiles.decoration_store[decoration][direction]
-            rect = get_rect(
-                width=decoration_info["width"] * Decorations.TILESIZE,
-                height=decoration_info["height"] * Decorations.TILESIZE,
-                left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
-                top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
-            )
             sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
-            sprite_rect = sprite.get_rect()
-            sprite_rect.bottomleft = rect.bottomleft
+            sprite_rect = get_decoration_sprite_rect(decoration, direction, tilepos_anchor)
             surface.blit(sprite, sprite_rect)
 
         if self.deleting_decoration:

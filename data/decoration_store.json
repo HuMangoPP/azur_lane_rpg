@@ -1,16 +1,16 @@
 {
 	"bed": {
-		"north": { "width": 2, "height": 2 },
-		"east": { "width": 2, "height": 2 },
-		"south": { "width": 2, "height": 2 },
-		"west": { "width": 2, "height": 2 },
+		"north": { "width": 2, "height": 2, "snap": [0.5, 0.25] },
+		"east": { "width": 2, "height": 2, "snap": [0.7, 0.4] },
+		"south": { "width": 2, "height": 2, "snap": [0.5, 0.35] },
+		"west": { "width": 2, "height": 2, "snap": [0.3, 0.4] },
 		"interactable": true
 	},
 	"chair": {
-		"north": { "width": 1, "height": 1 },
-		"east": { "width": 1, "height": 1 },
-		"south": { "width": 1, "height": 1 },
-		"west": { "width": 1, "height": 1 },
+		"north": { "width": 1, "height": 1, "snap": [0.5, 0.35] },
+		"east": { "width": 1, "height": 1, "snap": [0.3, 0.4] },
+		"south": { "width": 1, "height": 1, "snap": [0.5, 0.2] },
+		"west": { "width": 1, "height": 1, "snap": [0.7, 0.35] },
 		"interactable": true
 	},
 	"table": {
@@ -18,6 +18,6 @@
 		"east": { "width": 1, "height": 2 },
 		"south": { "width": 2, "height": 1 },
 		"west": { "width": 1, "height": 2 },
-		"interactable": true
+		"interactable": false
 	}
 }
