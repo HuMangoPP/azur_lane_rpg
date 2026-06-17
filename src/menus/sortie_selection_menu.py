@@ -197,15 +197,15 @@ class SortieSelectionMenu:
 
         self.fogs = [
             Fog([
-                pygame.Vector2(180, 471),
-                pygame.Vector2(306, 492),
-                pygame.Vector2(309, 415),
+                pygame.Vector2(180, 381),
+                pygame.Vector2(306, 402),
+                pygame.Vector2(309, 325),
             ], disperse=DataFiles.save_file["chapter_progress"] >= 0),
             Fog([
-                pygame.Vector2(484, 316),
-                pygame.Vector2(430, 369),
-                pygame.Vector2(498, 229),
-                pygame.Vector2(571, 284),
+                pygame.Vector2(484, 226),
+                pygame.Vector2(430, 279),
+                pygame.Vector2(498, 139),
+                pygame.Vector2(571, 194),
             ], disperse=DataFiles.save_file["chapter_progress"] >= 1)
         ]
     def update(self, dt, events):

@@ -10,7 +10,6 @@ from src.shipgirls import Shipgirl
 from src.vfx import VFXManager
 from src.menus.quests_data import (
     first_sortie_quest,
-    research_shipgirl_quest,
     construct_shipgirl_quest,
     craft_weapon_quest,
     buy_decoration_quest
@@ -315,18 +314,13 @@ class EncounterMenu:
                 num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
                 exp_req = Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
                 if DataFiles.save_file["research_progress"] >= exp_req:
+                    if DataFiles.save_file["research_target"] == DataFiles.get_faction_shipgirls()["CA"]:
+                        self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
+                        DataFiles.save_file["quests"][construct_shipgirl_quest.quest_id] = "new"
+
                     unique_item = DataFiles.shipgirl_data[DataFiles.save_file["research_target"]]["unique_item"]
                     DataFiles.save_file["research_progress"] = 0
                     self.drops.append(Drop(unique_item, pygame.Vector2(screen_x(0.5), screen_y(0.5))))
-
-                    if (
-                        construct_shipgirl_quest.quest_id not in DataFiles.save_file["quests"]
-                        and research_shipgirl_quest.completion_criteria(self.menu_manager)
-                        and DataFiles.save_file["inventory"]["wisdom_cube"] >= 1
-                        and DataFiles.save_file["inventory"]["CA_blueprint"] >= 1
-                    ):
-                        self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
-                        DataFiles.save_file["quests"][construct_shipgirl_quest.quest_id] = "new"
                     DataFiles.save_file["research_target"] = None
                 self.research_exp = 0
         elif self.exp_timer > 0:

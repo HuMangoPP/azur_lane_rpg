@@ -80,10 +80,10 @@ while running:
 DataFiles.bgm["lofi_loop"].stop()
 pygame.quit()
 
-# for shipgirl in menu_manager.available_shipgirls:
-#     DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
+for shipgirl in menu_manager.available_shipgirls:
+    DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
 
-# save_file = input("Save file? ")
-# if save_file == "y":
-#     with open("data/save_file.json", "w") as f:
-#         json.dump(DataFiles.save_file, f, indent=4)
+save_file = input("Save file? ")
+if save_file == "y":
+    with open("data/save_file.json", "w") as f:
+        json.dump(DataFiles.save_file, f, indent=4)
