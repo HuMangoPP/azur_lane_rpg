@@ -1,4 +1,5 @@
 import math
+import random
 import pygame
 
 from engine.util import get_rect, get_vec
@@ -381,6 +382,8 @@ class PortMenu:
         self.decoration_direction_index = 0
         self.deleting_decoration = False
         self.decoration_depot_drag_offset = None
+        self.dragged_shipgirl = None
+        self.dragged_shipgirl_offset = None
         self.moved_decoration_depot_overlay = False
         self.rotated_decoration = False
         self.placed_decoration = False
@@ -865,6 +868,12 @@ class PortMenu:
                             top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
                         )
                         if rect.collidepoint(event.pos):
+                            DataFiles.sfx["click"].play()
+                            if self.selected_decoration_in_depot == decoration:
+                                self.selected_decoration_in_depot = None
+                            else:
+                                self.selected_decoration_in_depot = decoration
+                                self.deleting_decoration = False
                             break
                         decoration_index += 1
                     else:
@@ -873,9 +882,28 @@ class PortMenu:
                             left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
                             top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
                         )
-                        if not delete_rect.collidepoint(event.pos):
-                            self.decoration_depot_drag_offset = pygame.Vector2(self.decoration_depot_overlay.topleft) - pygame.Vector2(event.pos)
+                        if delete_rect.collidepoint(event.pos):
+                            continue
+                    self.decoration_depot_drag_offset = pygame.Vector2(self.decoration_depot_overlay.topleft) - pygame.Vector2(event.pos)
+                    continue
+
+                if (
+                    self.selected_decoration_in_depot is None
+                    and not self.deleting_decoration
+                    and not self.open_close_decoration_menu_button.rect.collidepoint(event.pos)
+                ):
+                    for shipgirl in self.menu_manager.available_shipgirls:
+                        if shipgirl.rect.collidepoint(event.pos):
+                            self.dragged_shipgirl = shipgirl
+                            self.dragged_shipgirl_offset = shipgirl.pos - pygame.Vector2(event.pos)
+                            shipgirl.dragged = True
+                            break
             if event.type == pygame.MOUSEMOTION:
+                if self.dragged_shipgirl is not None:
+                    self.dragged_shipgirl.pos = pygame.Vector2(event.pos) + self.dragged_shipgirl_offset
+                    self.dragged_shipgirl.rect.center = self.dragged_shipgirl.pos
+                    continue
+
                 if self.decoration_depot_drag_offset is not None:
                     self.decoration_depot_overlay.topleft = pygame.Vector2(event.pos) + self.decoration_depot_drag_offset
             if event.type == pygame.MOUSEBUTTONUP:
@@ -886,6 +914,18 @@ class PortMenu:
                     continue
 
                 if event.button != 1:
+                    continue
+
+                if self.dragged_shipgirl is not None:
+                    self.dragged_shipgirl.dragged = False
+                    self.dragged_shipgirl.wander_target = pygame.Vector2(
+                        screen_x(random.random()),
+                        screen_y(random.random())
+                    )
+                    self.dragged_shipgirl.pause_time = random.uniform(1, 3) # TODO
+
+                    self.dragged_shipgirl = None
+                    self.dragged_shipgirl_offset = None
                     continue
 
                 if self.decoration_depot_drag_offset is not None:
@@ -916,17 +956,18 @@ class PortMenu:
                             else:
                                 self.selected_decoration_in_depot = decoration
                                 self.deleting_decoration = False
+                            break
                         decoration_index += 1
-
-                    delete_rect = get_rect(
-                        width=Box.WIDTH, height=Box.HEIGHT,
-                        left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-                        top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-                    )
-                    if delete_rect.collidepoint(event.pos):
-                        DataFiles.sfx["click"].play()
-                        self.deleting_decoration = not self.deleting_decoration
-                        self.selected_decoration_in_depot = None
+                    else:
+                        delete_rect = get_rect(
+                            width=Box.WIDTH, height=Box.HEIGHT,
+                            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+                            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+                        )
+                        if delete_rect.collidepoint(event.pos):
+                            DataFiles.sfx["click"].play()
+                            self.deleting_decoration = not self.deleting_decoration
+                            self.selected_decoration_in_depot = None
                 elif self.deleting_decoration:
                     clicked_tilepos = (
                         (event.pos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
@@ -991,6 +1032,7 @@ class PortMenu:
 
         for shipgirl in self.menu_manager.available_shipgirls:
             shipgirl.update(dt)
+            shipgirl.animate(dt)
 
     def draw(self, surface, font):
         surface.blit(Decorations.floor_surf, Decorations.floor_rect)

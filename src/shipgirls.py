@@ -321,13 +321,18 @@ class Shipgirl:
         self.facing_left = False
             
         self.rect = get_rect(width=self.SPRITE_SIZE, height=self.SPRITE_SIZE, centerx=self.pos.x, centery=self.pos.y)
-
+        self.dragged = False
         self.battle_component = ShipgirlBattleComponent(self.name, is_player)
 
     def __repr__(self):
         return self.name
 
     def update(self, dt):
+        if self.dragged:
+            if self.sprite is not None:
+                self.sprite.set_animation(Live2D.IDLE_ANIMATION)
+            return
+        
         if self.pause_time > 0:
             self.pause_time -= dt
             if self.sprite is not None:
@@ -351,8 +356,6 @@ class Shipgirl:
             if self.sprite is not None:
                 self.sprite.set_animation(Live2D.WALK_ANIMATION)
         self.rect.center = self.pos
-
-        self.animate(dt)
 
     def animate(self, dt):
         if self.sprite is not None:

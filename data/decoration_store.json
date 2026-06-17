@@ -3,18 +3,21 @@
 		"north": { "width": 2, "height": 2 },
 		"east": { "width": 2, "height": 2 },
 		"south": { "width": 2, "height": 2 },
-		"west": { "width": 2, "height": 2 }
+		"west": { "width": 2, "height": 2 },
+		"interactable": true
 	},
 	"chair": {
 		"north": { "width": 1, "height": 1 },
 		"east": { "width": 1, "height": 1 },
 		"south": { "width": 1, "height": 1 },
-		"west": { "width": 1, "height": 1 }
+		"west": { "width": 1, "height": 1 },
+		"interactable": true
 	},
 	"table": {
 		"north": { "width": 2, "height": 1 },
 		"east": { "width": 1, "height": 2 },
 		"south": { "width": 2, "height": 1 },
-		"west": { "width": 1, "height": 2 }
+		"west": { "width": 1, "height": 2 },
+		"interactable": true
 	}
 }
