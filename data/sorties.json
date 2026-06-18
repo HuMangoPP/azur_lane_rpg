@@ -2,11 +2,11 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:1"],
+				"front": ["explorer:0"],
 				"back": []
 			},
 			{
-				"front": ["explorer:1", "explorer:1"],
+				"front": ["explorer:0", "explorer:0"],
 				"back": []
 			}
 		],
@@ -19,12 +19,12 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:1", "explorer:1"],
+				"front": ["explorer:0", "explorer:0"],
 				"back": []
 			},
 			{
-				"front": ["explorer:1", "explorer:1"],
-				"back": ["oceana:1"]
+				"front": ["explorer:0", "explorer:0"],
+				"back": ["oceana:0"]
 			}
 		],
 		"rewards": {
@@ -36,16 +36,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:1", "explorer:1", "explorer:1"],
+				"front": ["explorer:0", "explorer:0", "explorer:0"],
 				"back": []
 			},
 			{
-				"front": ["explorer:1", "explorer:1", "explorer:1"],
-				"back": ["oceana:1"]
+				"front": ["explorer:0", "explorer:0", "explorer:0"],
+				"back": ["oceana:0"]
 			},
 			{
-				"front": ["explorer:1", "explorer:1"],
-				"back": ["oceana:1", "oceana:1"]
+				"front": ["explorer:0", "explorer:0"],
+				"back": ["oceana:0", "oceana:0"]
 			}
 		],
 		"rewards": {
@@ -59,16 +59,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:1", "explorer:1", "explorer:1"],
-				"back": ["explorer:1"]
+				"front": ["explorer:0", "explorer:0", "explorer:0"],
+				"back": ["explorer:0"]
 			},
 			{
-				"front": ["explorer:1", "explorer:1", "explorer:1"],
-				"back": ["oceana:1", "oceana:1"]
+				"front": ["explorer:0", "explorer:0", "explorer:0"],
+				"back": ["oceana:0", "oceana:0"]
 			},
 			{
-				"front": ["explorer:1", "explorer:1"],
-				"back": ["breaker:1"]
+				"front": ["explorer:0", "explorer:0"],
+				"back": ["breaker:0"]
 			}
 		],
 		"rewards": {
@@ -83,118 +83,5 @@
 			[4, -1]
 		],
 		"chapter": 0
-	},
-
-	{
-		"encounters": [
-			{
-				"front": ["explorer:1", "explorer:2"],
-				"back": []
-			},
-			{
-				"front": ["oceana:1", "oceana:2"],
-				"back": []
-			},
-			{
-				"front": ["explorer:2"],
-				"back": ["oceana:2"]
-			},
-			{
-				"front": ["explorer:1", "explorer:2"],
-				"back": ["oceana:2"]
-			}
-		],
-		"rewards": {
-			"CA_blueprint": 1,
-			"metals": 1,
-			"electronics": 1
-		},
-		"coordinates": [[5, -2]],
-		"chapter": 1
-	},
-	{
-		"encounters": [
-			{
-				"front": ["explorer:1", "explorer:2", "explorer:1"],
-				"back": []
-			},
-			{
-				"front": ["explorer:1", "explorer:2"],
-				"back": ["explorer:2"]
-			},
-			{
-				"front": ["explorer:2"],
-				"back": ["oceana:2", "oceana:2"]
-			},
-			{
-				"front": ["explorer:1", "explorer:2"],
-				"back": ["oceana:2", "oceana:2"]
-			},
-			{
-				"front": ["tracer:2"],
-				"back": []
-			}
-		],
-		"rewards": {
-			"CL_blueprint": 1,
-			"wisdom_cube": 1
-		},
-		"coordinates": [[6, -2]],
-		"chapter": 1
-	},
-	{
-		"encounters": [
-			{
-				"front": ["explorer:2", "explorer:2"],
-				"back": ["oceana:2"]
-			},
-			{
-				"front": ["oceana:2"],
-				"back": ["oceana:2", "oceana:2"]
-			},
-			{
-				"front": ["explorer:2"],
-				"back": ["oceana:2", "oceana:2"]
-			},
-			{
-				"front": ["oceana:2", "oceana:2"],
-				"back": ["oceana:2"]
-			}
-		],
-		"rewards": {
-			"CL_blueprint": 1,
-			"plastics": 1,
-			"gunpowder": 1
-		},
-		"coordinates": [[7, -3]],
-		"chapter": 1
-	},
-	{
-		"encounters": [
-			{
-				"front": ["tracer:2"],
-				"back": ["oceana:2"]
-			},
-			{
-				"front": ["explorer:2", "explorer:2"],
-				"back": ["oceana:2"]
-			},
-			{
-				"front": ["tracer:2"],
-				"back": ["oceana:2", "oceana:2"]
-			},
-			{
-				"front": ["breaker:2"],
-				"back": []
-			}
-		],
-		"rewards": {},
-		"coordinates": [
-			[8, -4],
-			[9, -4],
-			[8, -5],
-			[9, -5]
-		],
-		"chapter": 1
 	}
 ]

@@ -1,52 +1,84 @@
 {
 	"explorer": {
 		"hull_type": "DD",
-		"max_hp": [20, 0],
-		"evasion": [0, 0],
-		"reload": [100, 0],
-		"firepower": [1, 0],
+		"max_hp": [18, 3],
+		"evasion": [140, 14],
+		"reload": [115, 11],
+		"firepower": [1, 0.5],
 		"target_pref": "front",
-		"exp": 1,
+		"reward_exp": [1, 0.25],
 		"drops": {
-			"DD_blueprint": 50,
-			"plastics": 10,
-			"metals": 10,
-			"electronics": 10,
-			"gunpowder": 10
+			"DD_blueprint": 10,
+			"wisdom_cube": 1
 		},
 		"equipment": [null, null, null]
 	},
+	"tracer": {
+		"hull_type": "CL",
+		"max_hp": [24, 4],
+		"evasion": [100, 10],
+		"reload": [100, 10],
+		"firepower": [1.25, 0.5],
+		"target_pref": "highest_hp",
+		"reward_exp": [2, 0.5],
+		"drops": {
+			"CL_blueprint": 10,
+			"wisdom_cube": 1
+		}
+	},
 	"oceana": {
 		"hull_type": "CA",
-		"max_hp": [40, 0],
-		"evasion": [0, 0],
-		"reload": [75, 0],
-		"firepower": [2, 0],
+		"max_hp": [30, 5],
+		"evasion": [60, 6],
+		"reload": [85, 8],
+		"firepower": [1.75, 0.5],
 		"target_pref": "highest_hp",
-		"exp": 1,
+		"reward_exp": [3, 0.75],
 		"drops": {
-			"CA_blueprint": 50,
-			"plastics": 10,
-			"metals": 10,
-			"electronics": 10,
-			"gunpowder": 10
+			"CA_blueprint": 10,
+			"wisdom_cube": 1
 		},
 		"equipment": [null, null, null]
 	},
 	"breaker": {
 		"hull_type": "BB",
-		"max_hp": [100, 0],
-		"evasion": [0, 0],
-		"reload": [50, 0],
-		"firepower": [4, 0],
+		"max_hp": [44, 7],
+		"evasion": [20, 2],
+		"reload": [65, 6],
+		"firepower": [2.25, 0.5],
 		"target_pref": "all",
-		"exp": 1,
+		"reward_exp": [5, 1],
 		"drops": {
-			"BB_blueprint": 50,
-			"plastics": 10,
-			"metals": 10,
-			"electronics": 10,
-			"gunpowder": 10
+			"BB_blueprint": 10,
+			"wisdom_cube": 1
+		},
+		"equipment": [null, null, null]
+	},
+	"strategist": {
+		"hull_type": "CV",
+		"max_hp": [38, 6],
+		"evasion": [35, 3],
+		"reload": [50, 5],
+		"firepower": [2.5, 0.75],
+		"target_pref": "all",
+		"reward_exp": [5, 1],
+		"drops": {
+			"CV_blueprint": 10,
+			"wisdom_cube": 1
+		},
+		"equipment": [null, null, null]
+	},
+	"lurker": {
+		"hull_type": "SS",
+		"max_hp": [14, 2],
+		"evasion": [180, 18],
+		"reload": [60, 6],
+		"firepower": [2.25, 0.5],
+		"target_pref": "front",
+		"reward_exp": [4, 0.75],
+		"drops": {
+			"SS_blueprint": 10,
+			"wisdom_cube": 1
 		},
 		"equipment": [null, null, null]
 	}
