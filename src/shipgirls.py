@@ -34,7 +34,7 @@ class ShipgirlBattleComponent:
         else:
             name, level = name.split(":")
             info = DataFiles.siren_data[name]
-            info["exp"] = sum(Stats.EXP_BREAKPOINTS[:int(level)])
+            info["exp"] = int(Stats.EXP_BASE * (1 - Stats.EXP_GROWTH**int(level)) / (1 - Stats.EXP_GROWTH))
 
         stat_keys = ["max_hp", "evasion", "firepower", "reload"]
         self.base_stats = {
@@ -167,7 +167,7 @@ class ShipgirlBattleComponent:
         if self.target_pref != "all" and self.target is not None and self.target.battle_component.hp <= 0:
             self.target = None
         
-        self.cooldown_timer = max(0, self.cooldown_timer - self.reload()/1000*dt)
+        self.cooldown_timer = max(0, self.cooldown_timer - self.stat("reload")/1000*dt)
         if self.target is not None and self.cooldown_timer <= 0:
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)

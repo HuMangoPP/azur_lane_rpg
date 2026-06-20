@@ -77,23 +77,28 @@ class Equipment:
 
 class Stats:
     RESEARCH_EXP_REQUIREMENTS = [0, 0, 5, 8]
-    EXP_BREAKPOINTS = [3, 5, 8, 13, 21]
+    EXP_BASE = 12
+    EXP_GROWTH = 2
+
+    @classmethod
+    def exp_amount_at_level(cls, level):
+        return cls.EXP_BASE * (cls.EXP_GROWTH ** level)
 
     @classmethod
     def level(cls, exp):
-        level_index = 0
-        while exp >= cls.EXP_BREAKPOINTS[level_index]:
-            exp -= cls.EXP_BREAKPOINTS[level_index]
-            level_index += 1
-        return level_index
+        level = 0
+        while exp >= cls.exp_amount_at_level(level):
+            exp -= cls.exp_amount_at_level(level)
+            level += 1
+        return level
 
     @classmethod
     def level_progress(cls, exp):
-        level_index = 0
-        while exp >= cls.EXP_BREAKPOINTS[level_index]:
-            exp -= cls.EXP_BREAKPOINTS[level_index]
-            level_index += 1
-        return exp / cls.EXP_BREAKPOINTS[level_index]
+        level = 0
+        while exp >= cls.exp_amount_at_level(level):
+            exp -= cls.exp_amount_at_level(level)
+            level += 1
+        return exp / cls.exp_amount_at_level(level)
 
     @classmethod
     def stat(cls, exp, base_stat, stat_per_level):

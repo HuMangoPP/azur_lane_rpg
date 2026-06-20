@@ -3,15 +3,19 @@
 	"shipgirls": {
 		"laffey": {
 			"equipment": ["twin_120", null, null],
-			"exp": 31
+			"exp": 124
 		},
 		"new_jersey": {
 			"equipment": ["tri_406", null, null],
-			"exp": 31
+			"exp": 124
 		},
 		"guam": {
 			"equipment": [null, null, null],
-			"exp": 28
+			"exp": 112
+		},
+		"albacore": {
+			"equipment": [null, null, null],
+			"exp": 112
 		}
 	},
 	"equipment": {

@@ -6,7 +6,7 @@
 		"reload": [115, 11],
 		"firepower": [4, 2],
 		"target_pref": "front",
-		"reward_exp": [1, 0.25],
+		"reward_exp": [4, 1],
 		"drops": {
 			"DD_blueprint": 10,
 			"wisdom_cube": 1
@@ -20,11 +20,12 @@
 		"reload": [100, 10],
 		"firepower": [5, 2],
 		"target_pref": "highest_hp",
-		"reward_exp": [2, 0.5],
+		"reward_exp": [8, 2],
 		"drops": {
 			"CL_blueprint": 10,
 			"wisdom_cube": 1
-		}
+		},
+		"equipment": [null, null, null]
 	},
 	"oceana": {
 		"hull_type": "CA",
@@ -33,7 +34,7 @@
 		"reload": [85, 8],
 		"firepower": [7, 2],
 		"target_pref": "highest_hp",
-		"reward_exp": [3, 0.75],
+		"reward_exp": [12, 3],
 		"drops": {
 			"CA_blueprint": 10,
 			"wisdom_cube": 1
@@ -47,7 +48,7 @@
 		"reload": [65, 6],
 		"firepower": [9, 2],
 		"target_pref": "all",
-		"reward_exp": [5, 1],
+		"reward_exp": [20, 4],
 		"drops": {
 			"BB_blueprint": 10,
 			"wisdom_cube": 1
@@ -61,7 +62,7 @@
 		"reload": [50, 5],
 		"firepower": [10, 3],
 		"target_pref": "all",
-		"reward_exp": [5, 1],
+		"reward_exp": [20, 4],
 		"drops": {
 			"CV_blueprint": 10,
 			"wisdom_cube": 1
@@ -75,7 +76,7 @@
 		"reload": [60, 6],
 		"firepower": [9, 2],
 		"target_pref": "front",
-		"reward_exp": [4, 0.75],
+		"reward_exp": [16, 3],
 		"drops": {
 			"SS_blueprint": 10,
 			"wisdom_cube": 1
@@ -89,7 +90,7 @@
 		"reload": [95, 8],
 		"firepower": [56, 4],
 		"target_pref": "all",
-		"reward_exp": [40, 5],
+		"reward_exp": [160, 20],
 		"drops": {},
 		"equipment": [null, null, null]
 	}

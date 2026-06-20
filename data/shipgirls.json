@@ -23,6 +23,18 @@
 		"hull_type": "BB",
 		"class": "iowa"
 	},
+	"enterprise": {
+		"unique_item": "20_battle_stars",
+		"faction": "USS",
+		"hull_type": "CV",
+		"class": "yorktown"
+	},
+	"albacore": {
+		"unique_item": "prank_of_the_day",
+		"faction": "USS",
+		"hull_type": "SS",
+		"class": "gato"
+	},
 	"ayanami": {
 		"unique_item": "demon_blade",
 		"faction": "IJN",
@@ -46,6 +58,18 @@
 		"faction": "IJN",
 		"hull_type": "BB",
 		"class": "yamato"
+	},
+	"shinano": {
+		"unique_item": "dreamweaver_butterfly",
+		"faction": "IJN",
+		"hull_type": "CV",
+		"class": "yamato"
+	},
+	"i-404": {
+		"unique_item": "placeholder",
+		"faction": "IJN",
+		"hull_type": "SS",
+		"class": "i-400"
 	},
 	"javelin": {
 		"unique_item": "full_burst_javelin",
@@ -71,6 +95,18 @@
 		"hull_type": "BB",
 		"class": "lion"
 	},
+	"implacable": {
+		"unique_item": "cross",
+		"faction": "HMS",
+		"hull_type": "CV",
+		"class": "implacable"
+	},
+	"HMS_submarine": {
+		"unique_item": "placeholder",
+		"faction": "HMS",
+		"hull_type": "SS",
+		"class": "placeholder"
+	},
 	"z23": {
 		"unique_item": "raubtier",
 		"faction": "KMS",
@@ -94,5 +130,17 @@
 		"faction": "KMS",
 		"hull_type": "BB",
 		"class": "bismarck"
+	},
+	"fritz_rumey": {
+		"unique_item": "dragon",
+		"faction": "KMS",
+		"hull_type": "CV",
+		"class": "fritz_rumey"
+	},
+	"u-556": {
+		"unique_item": "promise",
+		"faction": "KMS",
+		"hull_type": "SS",
+		"class": "type_vii"
 	}
 }
