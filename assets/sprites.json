@@ -90,7 +90,7 @@
 		"next": { "left": 96, "top": 320, "width": 32, "height": 32 },
 		"prev": { "left": 96, "top": 352, "width": 32, "height": 32 },
 
-		"medal": {"left": 160, "top": 352, "width": 32, "height": 32},
+		"medal": { "left": 160, "top": 352, "width": 32, "height": 32 },
 		"hull_type": { "left": 64, "top": 384, "width": 32, "height": 32 },
 		"max_hp": { "left": 96, "top": 384, "width": 32, "height": 32 },
 		"evasion": { "left": 128, "top": 384, "width": 32, "height": 32 },
@@ -121,7 +121,9 @@
 
 		"attack": { "left": 160, "top": 384, "width": 32, "height": 32 }
 	},
-	"encounter": {},
+	"encounter": {
+		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 }
+	},
 	"background": {
 		"wave0": { "left": 0, "top": 0, "width": 256, "height": 128 },
 		"wave1": { "left": 0, "top": 128, "width": 256, "height": 128 },

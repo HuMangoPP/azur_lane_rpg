@@ -35,6 +35,8 @@ class Drop:
         surface.blit(image, rect)
 
 class EncounterMenu:
+    MELEE_SHIPS = ["DD", "CL", "SS"]
+
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
@@ -224,18 +226,20 @@ class EncounterMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
                 click = False
+                # drag shipgirl onto siren target
                 if self.selected_shipgirl is not None:
                     for siren in self.menu_manager.siren_fleet.fleet:
                         if not siren.rect.collidepoint(mouse_end_drag):
                             continue
                         click = True
-                        if self.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
+                        if self.selected_shipgirl.battle_component.hull_type in self.MELEE_SHIPS:
                             if siren in self.menu_manager.siren_fleet.front:
                                 self.selected_shipgirl.battle_component.target = siren
                         else:
                             self.selected_shipgirl.battle_component.target = siren
                         self.selected_shipgirl = None
                         self.selected_shipgirl_index = None
+                # drag shipgirl onto backup shipgirl
                 if self.selected_shipgirl is not None:
                     for i, backup_shipgirl in enumerate(self.menu_manager.player_fleet.backups):
                         if backup_shipgirl is None:
@@ -259,8 +263,8 @@ class EncounterMenu:
                         if siren.battle_component.target == self.selected_shipgirl:
                             siren.battle_component.target = None
 
-                        self.selected_shipgirl = None
-                        self.selected_shipgirl_index = None
+                    self.selected_shipgirl = None
+                    self.selected_shipgirl_index = None
                 self.mouse_start_drag = None
 
                 click = (
@@ -428,8 +432,10 @@ class EncounterMenu:
         if self.mouse_start_drag is not None:
             pygame.draw.line(surface, Color.WHITE, self.mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)
             for siren in self.menu_manager.siren_fleet.fleet:
+                if siren.battle_component.hp <= 0:
+                    continue
                 if siren.rect.collidepoint(mpos):
-                    if self.selected_shipgirl.battle_component.hull_type in ["DD", "CL"]:
+                    if self.selected_shipgirl.battle_component.hull_type in self.MELEE_SHIPS:
                         if siren in self.menu_manager.siren_fleet.front: # TODO
                             color = (50,200,50)
                         else:

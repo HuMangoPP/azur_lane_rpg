@@ -14,11 +14,8 @@ class DummyTarget:
         self.rect = menu_manager.fleet_selection_menu.fleet_slots[1]
 
 class ShipgirlBattleComponent:
-    LIGHT_ARMOR = 0
-    MEDIUM_ARMOR = 1
-    HEAVY_ARMOR = 2
-
     SHELL_SPEED = 800
+    TORPEDO_SPEED = 200
 
     def __init__(self, name, is_player):
         self.active = False
@@ -75,7 +72,11 @@ class ShipgirlBattleComponent:
             )
         )
 
-    def shell_speed(self):
+    def attack_speed(self):
+        if self.hull_type == "CV":
+            return 0
+        if self.hull_type == "SS":
+            return self.TORPEDO_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("torpedo_speed", 0)
         return self.SHELL_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
 
     def shell_type(self):
@@ -98,6 +99,50 @@ class ShipgirlBattleComponent:
             target.battle_component.hp -= self.stat("firepower")
             target.battle_component.shake()
             return True
+
+    def _spawn_attacking_effects(self, rect, vfx_manager):
+        if self.hull_type == "CV":
+            return
+
+        if self.hull_type == "SS":
+            return
+
+        start_pos = pygame.Vector2(rect.center)
+        target_pos = pygame.Vector2(self.target.rect.center)
+        shell_type = self.shell_type()
+        relpos = target_pos - start_pos
+        distance = relpos.length()
+        scale = distance * SHELL_SCALE
+        shell_angle = math.atan2(relpos.y, relpos.x)
+        shell_incline = math.atan(-relpos.x / abs(relpos.x) * scale)
+        shell_render_angle = shell_angle + shell_incline
+        vfx_manager.spawn_muzzle_flash(start_pos, shell_render_angle, shell_type)
+
+    def _spawn_impact_effects(self, hit, rect, target, vfx_manager):
+        if self.hull_type == "CV":
+            return False, False
+
+        if self.hull_type == "SS":
+            if hit:
+                vfx_manager.spawn_splash_impact(target.rect.center)
+                return False, True
+            return False, False
+    
+        shell_type = self.shell_type()
+        start_pos = pygame.Vector2(rect.center)
+        target_pos = pygame.Vector2(self.target.rect.center)
+        relpos = target_pos - start_pos
+        distance = relpos.length()
+        scale = distance * SHELL_SCALE
+        shell_angle = math.atan2(relpos.y, relpos.x)
+        shell_incline = math.atan(relpos.x / abs(relpos.x) * scale)
+        shell_render_angle = shell_angle + shell_incline
+        if hit:
+            vfx_manager.spawn_shell_impact(target.rect.center, shell_render_angle, shell_type)
+            return True, False
+        else:
+            vfx_manager.spawn_splash_impact(target.rect.center)
+            return False, True
 
     def update(self, dt, rect, fleet, vfx_manager):
         self.shake_time = max(0, self.shake_time - dt)
@@ -127,40 +172,22 @@ class ShipgirlBattleComponent:
             target_pos = pygame.Vector2(self.target.rect.center)
             relpos = target_pos - start_pos
             distance = relpos.length()
-            self.attack_timer = max(0, self.attack_timer - self.shell_speed()/distance*dt)
+            self.attack_timer = max(0, self.attack_timer - self.attack_speed()/distance*dt)
             if self.attack_timer <= 0:
-                hit = False
-                shell_type = self.shell_type()
-                start_pos = pygame.Vector2(rect.center)
-                target_pos = pygame.Vector2(self.target.rect.center)
-                relpos = target_pos - start_pos
-                distance = relpos.length()
-                scale = distance * SHELL_SCALE
-                shell_angle = math.atan2(relpos.y, relpos.x)
-                shell_incline = math.atan(relpos.x / abs(relpos.x) * scale)
-                shell_render_angle = shell_angle + shell_incline
-
                 if self.target_pref == "all":
                     for shipgirl in fleet.shipgirls:
                         if shipgirl is None:
                             continue
 
-                        target_hit = self._deal_damage(shipgirl)
-                        hit = target_hit or hit
-                        if target_hit:
-                            vfx_manager.spawn_impact(shipgirl.rect.center, shell_render_angle, shell_type)
-                        else:
-                            vfx_manager.spawn_miss(shipgirl.rect.center)
+                        hit = self._deal_damage(shipgirl)
+                        play_shell_impact, play_splash_impact = self._spawn_impact_effects(hit, rect, shipgirl, vfx_manager)
                 else:
                     hit = self._deal_damage(self.target)
-                    if hit: 
-                        vfx_manager.spawn_impact(self.target.rect.center, shell_render_angle, shell_type)
-                    else:
-                        vfx_manager.spawn_miss(self.target.rect.center)
+                    play_shell_impact, play_splash_impact = self._spawn_impact_effects(hit, rect, self.target, vfx_manager)
                 
-                if hit:
+                if play_shell_impact:
                     DataFiles.sfx["boom2"].play()
-                else:
+                if play_splash_impact:
                     DataFiles.sfx["boom3"].play()
             return
 
@@ -169,16 +196,7 @@ class ShipgirlBattleComponent:
         
         self.cooldown_timer = max(0, self.cooldown_timer - self.stat("reload")/1000*dt)
         if self.target is not None and self.cooldown_timer <= 0:
-            start_pos = pygame.Vector2(rect.center)
-            target_pos = pygame.Vector2(self.target.rect.center)
-            shell_type = self.shell_type()
-            relpos = target_pos - start_pos
-            distance = relpos.length()
-            scale = distance * SHELL_SCALE
-            shell_angle = math.atan2(relpos.y, relpos.x)
-            shell_incline = math.atan(-relpos.x / abs(relpos.x) * scale)
-            shell_render_angle = shell_angle + shell_incline
-            vfx_manager.spawn_muzzle_flash(start_pos, shell_render_angle, shell_type)
+            self._spawn_attacking_effects(rect, vfx_manager)
             self.shake()
 
             self.attack_timer = 1
@@ -189,6 +207,40 @@ class ShipgirlBattleComponent:
             zip.play(fade_ms=1000)
             zip.fadeout(1000)
 
+    def _draw_attack(self, surface, rect):
+        t = 1 - self.attack_timer
+
+        if self.hull_type == "CV":
+            return
+        if self.hull_type == "SS":
+            start_pos = pygame.Vector2((rect.centerx, rect.bottom))
+            target_pos = pygame.Vector2((self.target.rect.centerx, self.target.rect.bottom))
+            relpos = target_pos - start_pos
+            torpedo_angle = math.degrees(math.atan2(relpos.y, relpos.x))
+            torpedo_sprite = pygame.transform.rotate(DataFiles.sprites["encounter"]["torpedo"], -torpedo_angle)
+            torpedo_rect = torpedo_sprite.get_rect()
+            torpedo_rect.center = start_pos + relpos * t
+            surface.blit(torpedo_sprite, torpedo_rect)
+            return
+
+        start_pos = pygame.Vector2(rect.center)
+        target_pos = pygame.Vector2(self.target.rect.center)
+        relpos = target_pos - start_pos
+        distance = relpos.length()
+        scale = distance * SHELL_SCALE
+        shell_pos = shell_position(start_pos, target_pos, t)
+        shell_incline = math.degrees(math.atan(relpos.x / abs(relpos.x) * scale * (2*t - 1)))
+        shell_angle = math.degrees(math.atan2(relpos.y, relpos.x))
+        render_angle = shell_angle + shell_incline
+
+        shell_type = self.shell_type()
+        shell_sprite = pygame.transform.flip(
+            pygame.transform.rotate(DataFiles.sprites["encounter"][f"{shell_type}_shell"], render_angle),
+            False, True
+        )
+        shell_rect = shell_sprite.get_rect()
+        shell_rect.center = shell_pos
+        surface.blit(shell_sprite, shell_rect)
 
     def draw(self, surface, font, rect):
         bar_width = 64
@@ -212,25 +264,7 @@ class ShipgirlBattleComponent:
             return
         
         if self.attack_timer > 0:
-            start_pos = pygame.Vector2(rect.center)
-            target_pos = pygame.Vector2(self.target.rect.center)
-            relpos = target_pos - start_pos
-            distance = relpos.length()
-            t = 1 - self.attack_timer
-            scale = distance * SHELL_SCALE
-            shell_pos = shell_position(start_pos, target_pos, t)
-            shell_incline = math.degrees(math.atan(relpos.x / abs(relpos.x) * scale * (2*t - 1)))
-            shell_angle = math.degrees(math.atan2(relpos.y, relpos.x))
-            render_angle = shell_angle + shell_incline
-
-            shell_type = self.shell_type()
-            shell_sprite = pygame.transform.flip(
-                pygame.transform.rotate(DataFiles.sprites["encounter"][f"{shell_type}_shell"], render_angle),
-                False, True
-            )
-            shell_rect = shell_sprite.get_rect()
-            shell_rect.center = shell_pos
-            surface.blit(shell_sprite, shell_rect)
+            self._draw_attack(surface, rect)
         
         bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, top=rect.bottom+Box.PADDING)
         bar_fill = get_rect(

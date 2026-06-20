@@ -170,7 +170,7 @@ class VFXManager:
                 pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
             ))
 
-    def spawn_impact(self, pos, shell_render_angle, shell_type):
+    def spawn_shell_impact(self, pos, shell_render_angle, shell_type):
         colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
         for _ in range(random.randint(2,4)):
             spark_angle = shell_render_angle + math.radians(180 + random.randint(-30, 30))
@@ -193,7 +193,7 @@ class VFXManager:
             ))
         self.effects.append(Slash(pos, shell_render_angle, colors[0]))
 
-    def spawn_miss(self, pos):
+    def spawn_splash_impact(self, pos):
         colors = [(191, 224, 255), (158, 208, 255), (107, 183, 255)]
         pos = pygame.Vector2(pos) + pygame.Vector2(0, 32)
         spark_pos = pos + pygame.Vector2(16, 0)
