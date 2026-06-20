@@ -1,54 +1,82 @@
 {
 	"twin_120": {
 		"type": "weapon",
-		"craft_reqs": { "DD_blueprint": 1, "gunpowder": 1, "metals": 1 },
+		"craft_reqs": {
+			"DD_blueprint": 1,
+			"gunpowder": 1,
+			"metals": 1
+		},
 		"equippable_by": "DD",
-		"firepower": 1,
+		"firepower": 4,
 		"reload": 40,
 		"shell_type": "normal"
 	},
 	"twin_150": {
 		"type": "weapon",
-		"craft_reqs": { "CL_blueprint": 1, "gunpowder": 1, "plastics": 1 },
+		"craft_reqs": {
+			"CL_blueprint": 1,
+			"gunpowder": 1,
+			"plastics": 1
+		},
 		"equippable_by": "CL",
-		"firepower": 2,
+		"firepower": 8,
 		"reload": 30,
 		"shell_type": "normal"
 	},
 	"twin_203": {
 		"type": "weapon",
-		"craft_reqs": { "CA_blueprint": 1, "electronics": 1, "metals": 1 },
+		"craft_reqs": {
+			"CA_blueprint": 1,
+			"electronics": 1,
+			"metals": 1
+		},
 		"equippable_by": "CA",
-		"firepower": 3,
+		"firepower": 12,
 		"reload": 25,
 		"shell_type": "normal"
 	},
 	"tri_406": {
 		"type": "weapon",
-		"craft_reqs": { "BB_blueprint": 1, "electronics": 1, "plastics": 1 },
+		"craft_reqs": {
+			"BB_blueprint": 1,
+			"electronics": 1,
+			"plastics": 1
+		},
 		"equippable_by": "BB",
-		"firepower": 4,
+		"firepower": 16,
 		"reload": 10,
 		"shell_type": "normal"
 	},
 	"steering_gear": {
 		"type": "aux",
-		"craft_reqs": { "electronics": 1, "plastics": 1 },
+		"craft_reqs": {
+			"electronics": 1,
+			"plastics": 1
+		},
 		"evasion": 50
 	},
 	"repair_toolkit": {
 		"type": "aux",
-		"craft_reqs": { "metals": 1, "plastics": 1 },
-		"max_hp": 12
+		"craft_reqs": {
+			"metals": 1,
+			"plastics": 1
+		},
+		"max_hp": 48
 	},
 	"autoloader": {
 		"type": "aux",
-		"craft_reqs": { "metals": 1, "electronics": 1 },
+		"craft_reqs": {
+			"metals": 1,
+			"electronics": 1
+		},
 		"reload": 35
 	},
 	"ap_shell": {
 		"type": "aux",
-		"craft_reqs": { "metals": 1, "gunpowder": 1 },
-		"firepower": 1.5
+		"craft_reqs": {
+			"metals": 1,
+			"gunpowder": 1
+		},
+		"firepower": 6
 	}
 }
