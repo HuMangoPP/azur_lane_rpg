@@ -341,7 +341,10 @@ class EncounterMenu:
                 for siren in self.menu_manager.siren_fleet.fleet:
                     for shipgirl in self.menu_manager.player_fleet.shipgirls:
                         if shipgirl is not None:
-                            shipgirl.battle_component.exp += siren.battle_component.exp
+                            shipgirl.battle_component.exp += Stats.stat(
+                                siren.battle_component.exp,
+                                *DataFiles.siren_data[siren.name]["reward_exp"]
+                            )
                     if DataFiles.save_file["research_target"] is not None:
                         self.research_exp += siren.battle_component.exp
 

@@ -21,38 +21,42 @@ class ShipgirlBattleComponent:
     SHELL_SPEED = 800
 
     def __init__(self, name, is_player):
-        self.name = name
         self.active = False
         self.is_player = is_player
 
         if self.is_player:
             info = DataFiles.shipgirl_data[name]
-            save = DataFiles.save_file["shipgirls"][name]
-            stats = DataFiles.stats_data[info["hull_type"]]
+            info = {
+                **info,
+                **DataFiles.save_file["shipgirls"][name],
+                **DataFiles.stats_data[info["hull_type"]]
+            }
         else:
+            name, level = name.split(":")
             info = DataFiles.siren_data[name]
-            stats = info
-            save = info
+            info["exp"] = sum(Stats.EXP_BREAKPOINTS[:int(level)])
 
-        self.base_max_hp = stats["max_hp"]
-        self.base_evasion = stats["evasion"]
-        self.base_firepower = stats["firepower"]
-        self.base_reload = stats["reload"]
+        stat_keys = ["max_hp", "evasion", "firepower", "reload"]
+        self.base_stats = {
+            stat_key: info[stat_key]
+            for stat_key in stat_keys
+        }
         self.hull_type = info["hull_type"]
-        self.equipment = save["equipment"]
-        self.exp = save["exp"]
+        self.equipment = info["equipment"]
+        self.exp = info["exp"]
         if self.is_player:
             self.target_pref = None
         else:
             self.target_pref = info["target_pref"]
+            self.reward_exp = info["reward_exp"]
 
-        self.hp = self.max_hp()
+        self.hp = self.stat("max_hp")
         self.cooldown_timer = 1
         self.attack_timer = 0
         self.target = None
         self.evasion_gauge = 0
 
-        self.last_exp = save["exp"]
+        self.last_exp = self.exp
         self.exp_timer = 0
         self.last_level = Stats.level(self.last_exp)
         self.level_timer = 0
@@ -62,48 +66,13 @@ class ShipgirlBattleComponent:
     def shake(self):
         self.shake_time = 0.5
 
-    def max_hp(self, equipment_override=None):
-        equipment = self.equipment.copy()
-        if equipment_override is not None:
-            equipment[equipment_override[0]] = equipment_override[1]
+    def stat(self, stat):
         return (
-            Stats.stat(self.exp, *self.base_max_hp)
-            + DataFiles.equipment_data.get(equipment[Equipment.WEAPON], {}).get("max_hp", 0)
-            + DataFiles.equipment_data.get(equipment[Equipment.AUX1], {}).get("max_hp", 0)
-            + DataFiles.equipment_data.get(equipment[Equipment.AUX2], {}).get("max_hp", 0)
-        )
-
-    def evasion(self, equipment_override=None):
-        equipment = self.equipment.copy()
-        if equipment_override is not None:
-            equipment[equipment_override[0]] = equipment_override[1]
-        return (
-            Stats.stat(self.exp, *self.base_evasion)
-            + DataFiles.equipment_data.get(equipment[Equipment.WEAPON], {}).get("evasion", 0)
-            + DataFiles.equipment_data.get(equipment[Equipment.AUX1], {}).get("evasion", 0)
-            + DataFiles.equipment_data.get(equipment[Equipment.AUX2], {}).get("evasion", 0)
-        )
-
-    def firepower(self, equipment_override=None):
-        equipment = self.equipment.copy()
-        if equipment_override is not None:
-            equipment[equipment_override[0]] = equipment_override[1]
-        return (
-            Stats.stat(self.exp, *self.base_firepower)
-            + DataFiles.equipment_data.get(equipment[Equipment.WEAPON], {}).get("firepower", 0)
-            + DataFiles.equipment_data.get(equipment[Equipment.AUX1], {}).get("firepower", 0)
-            + DataFiles.equipment_data.get(equipment[Equipment.AUX2], {}).get("firepower", 0)
-        )
-
-    def reload(self, equipment_override=None):
-        equipment = self.equipment.copy()
-        if equipment_override is not None:
-            equipment[equipment_override[0]] = equipment_override[1]
-        return (
-            Stats.stat(self.exp, *self.base_reload)
-            + DataFiles.equipment_data.get(equipment[Equipment.WEAPON], {}).get("reload", 0)
-            + DataFiles.equipment_data.get(equipment[Equipment.AUX1], {}).get("reload", 0)
-            + DataFiles.equipment_data.get(equipment[Equipment.AUX2], {}).get("reload", 0)
+            Stats.stat(self.exp, *self.base_stats[stat])
+            + sum(
+                DataFiles.equipment_data.get(equipment, {}).get(stat, 0)
+                for equipment in self.equipment
+            )
         )
 
     def shell_speed(self):
@@ -113,20 +82,20 @@ class ShipgirlBattleComponent:
         return DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
 
     def reset(self):
-        self.hp = self.max_hp()
+        self.hp = self.stat("max_hp")
         self.cooldown_timer = 1
         self.target = None
         self.evasion_gauge = 0
         self.shake_time = 0
 
     def _deal_damage(self, target):
-        target.battle_component.evasion_gauge += target.battle_component.evasion() / 1000
+        target.battle_component.evasion_gauge += target.battle_component.stat("evasion") / 1000
         if target.battle_component.evasion_gauge >= 1:
             target.battle_component.evasion_gauge -= 1
             return False
         else:
             shell_type = self.shell_type()
-            target.battle_component.hp -= self.firepower()
+            target.battle_component.hp -= self.stat("firepower")
             target.battle_component.shake()
             return True
 
@@ -265,7 +234,7 @@ class ShipgirlBattleComponent:
         
         bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, top=rect.bottom+Box.PADDING)
         bar_fill = get_rect(
-            width=bar_width*self.hp/self.max_hp(), height=bar_background.height,
+            width=bar_width*self.hp/self.stat("max_hp"), height=bar_background.height,
             left=bar_background.left, top=bar_background.top
         )
         pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
@@ -290,7 +259,10 @@ class Shipgirl:
     SPRITE_SIZE = 96 # TODO
 
     def __init__(self, name, is_player):
-        self.name = name.split(":")[0]
+        if is_player:
+            self.name = name
+        else:
+            self.name = name.split(":")[0]
     
         self.pos = pygame.Vector2(
             screen_x(random.random()),
@@ -309,7 +281,7 @@ class Shipgirl:
         self.rect = get_rect(width=self.SPRITE_SIZE, height=self.SPRITE_SIZE, centerx=self.pos.x, centery=self.pos.y)
         self.dragged = False
         self.interacting_decoration = None
-        self.battle_component = ShipgirlBattleComponent(self.name, is_player)
+        self.battle_component = ShipgirlBattleComponent(name, is_player)
 
     def __repr__(self):
         return self.name
@@ -395,7 +367,7 @@ class PlayerFleet:
                 continue
             if shipgirl_with_highest_hp is None:
                 shipgirl_with_highest_hp = shipgirl
-            elif shipgirl.battle_component.max_hp() > shipgirl_with_highest_hp.battle_component.max_hp():
+            elif shipgirl.battle_component.stat("max_hp") > shipgirl_with_highest_hp.battle_component.stat("max_hp"):
                 shipgirl_with_highest_hp = shipgirl
         return shipgirl_with_highest_hp
 

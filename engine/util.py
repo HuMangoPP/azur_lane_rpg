@@ -91,6 +91,8 @@ def hex_corners(x, y, size):
 HEX_DIRECTIONS = [(1,0), (0,1), (-1,1), (-1,0), (0,-1), (1,-1)]
 
 def get_cluster_edges(cluster_hexes, size):
+    if not cluster_hexes:
+        return []
 
     cluster_set = set(cluster_hexes)
     edges = {}

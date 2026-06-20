@@ -48,7 +48,7 @@ class EquipmentMenu:
                 centery=self.blueprint_page.bottom - Box.HEIGHT
             ),
         ]
-        self.selected_equipment = Equipment.WEAPON
+        self.selected_slot = Equipment.WEAPON
 
         num_equipment_per_row = 5
         num_equipment_rows = 2
@@ -136,54 +136,17 @@ class EquipmentMenu:
             }
         )
 
-    def get_stat(self, shipgirl, stat):
-        if stat == "max_hp":
-            if self.hovered_equipment is None:
-                return shipgirl.battle_component.max_hp()
-            else:
-                return shipgirl.battle_component.max_hp((self.selected_equipment, self.hovered_equipment))
-        elif stat == "evasion":
-            if self.hovered_equipment is None:
-                return shipgirl.battle_component.evasion()
-            else:
-                return shipgirl.battle_component.evasion((self.selected_equipment, self.hovered_equipment))
-        elif stat == "firepower":
-            if self.hovered_equipment is None:
-                return shipgirl.battle_component.firepower()
-            else:
-                return shipgirl.battle_component.firepower((self.selected_equipment, self.hovered_equipment))
-        elif stat == "reload":
-            if self.hovered_equipment is None:
-                return shipgirl.battle_component.reload()
-            else:
-                return shipgirl.battle_component.reload((self.selected_equipment, self.hovered_equipment))
-
     def get_stat_delta(self, shipgirl, stat):
         if self.hovered_equipment is None:
             return 0
-        if stat == "max_hp":
-            return (
-                shipgirl.battle_component.max_hp((self.selected_equipment, self.hovered_equipment))
-                - shipgirl.battle_component.max_hp()
-            )
-        elif stat == "evasion":
-            return (
-                shipgirl.battle_component.evasion((self.selected_equipment, self.hovered_equipment))
-                - shipgirl.battle_component.evasion()
-            )
-        elif stat == "firepower":
-            return (
-                shipgirl.battle_component.firepower((self.selected_equipment, self.hovered_equipment))
-                - shipgirl.battle_component.firepower()
-            )
-        elif stat == "reload":
-            return (
-                shipgirl.battle_component.reload((self.selected_equipment, self.hovered_equipment))
-                - shipgirl.battle_component.reload()
-            )
+        currently_equipped = shipgirl.battle_component.equipment[self.selected_slot]
+        return (
+            DataFiles.equipment_data.get(self.hovered_equipment, {}).get(stat, 0)
+            - DataFiles.equipment_data.get(currently_equipped, {}).get(stat, 0)
+        )
 
     def get_equippable_inventory(self):
-        if self.selected_equipment == Equipment.WEAPON:
+        if self.selected_slot == Equipment.WEAPON:
             return [
                 weapon_name for weapon_name, weapon_info in DataFiles.equipment_data.items()
                 if DataFiles.save_file["equipment"].get(weapon_name, 0) > 0
@@ -199,7 +162,7 @@ class EquipmentMenu:
 
     def get_equippable_options(self):
         options = self.get_equippable_inventory()
-        current_equipment = self.selected_shipgirl.battle_component.equipment[self.selected_equipment]
+        current_equipment = self.selected_shipgirl.battle_component.equipment[self.selected_slot]
         if current_equipment is not None:
             options = [self.UNEQUIP_ITEM] + options
         return options
@@ -211,23 +174,24 @@ class EquipmentMenu:
             self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
         self.selected_shipgirl.animate(dt)
         
+        equip_slots = [Equipment.WEAPON, Equipment.AUX1, Equipment.AUX2]
         equippable = self.get_equippable_options()
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                for i, rect in enumerate(self.equipped_rects):
+                for equip_slot, rect in zip(equip_slots, self.equipped_rects):
                     if rect.collidepoint(event.pos):
-                        self.selected_equipment = i
+                        self.selected_slot = equip_slot
                         DataFiles.sfx["click"].play()
 
                 for new_equipment, rect in zip(equippable, self.equippable_rects):
                     if rect.collidepoint(event.pos):
-                        current_equipment = self.selected_shipgirl.battle_component.equipment[self.selected_equipment]
+                        current_equipment = self.selected_shipgirl.battle_component.equipment[self.selected_slot]
                         if current_equipment is not None:
                             DataFiles.save_file["equipment"][current_equipment] = DataFiles.save_file["equipment"].get(current_equipment, 0) + 1
                         if new_equipment == self.UNEQUIP_ITEM:
-                            self.selected_shipgirl.battle_component.equipment[self.selected_equipment] = None
+                            self.selected_shipgirl.battle_component.equipment[self.selected_slot] = None
                         else:
-                            self.selected_shipgirl.battle_component.equipment[self.selected_equipment] = new_equipment
+                            self.selected_shipgirl.battle_component.equipment[self.selected_slot] = new_equipment
                             DataFiles.save_file["equipment"][new_equipment] -= 1
                         DataFiles.sfx["click"].play()
             
@@ -281,9 +245,10 @@ class EquipmentMenu:
         for stat, rect in self.stat_rects.items():
             stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.BLACK)
             surface.blit(stat_icon, rect)
+            stat_text = str(self.selected_shipgirl.battle_component.stat(stat))
             font.render(
                 surface,
-                str(self.get_stat(self.selected_shipgirl, stat)),
+                stat_text,
                 (rect.right + Box.PADDING, rect.centery),
                 Color.BLACK,
                 1,
@@ -292,11 +257,19 @@ class EquipmentMenu:
             stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
             if stat_delta > 0:
                 center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
-                pygame.draw.polygon(surface, (34, 178, 34),[
+                pygame.draw.polygon(surface, (34, 178, 34), [
                     center+get_vec(length=Box.PADDING, angle=math.radians(30)),
                     center+get_vec(length=Box.PADDING, angle=math.radians(150)),
                     center+get_vec(length=Box.PADDING, angle=math.radians(270))
                 ])
+                font.render(
+                    surface,
+                    f"+{stat_delta}",
+                    (rect.right + Box.PADDING + font.font_width*len(stat_text), rect.centery),
+                    (34, 178, 34),
+                    1,
+                    style="centerleft"
+                )
             elif stat_delta < 0:
                 center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
                 pygame.draw.polygon(surface, (178, 34, 34),[
@@ -304,6 +277,14 @@ class EquipmentMenu:
                     center+get_vec(length=Box.PADDING, angle=math.radians(210)),
                     center+get_vec(length=Box.PADDING, angle=math.radians(330))
                 ])
+                font.render(
+                    surface,
+                    str(stat_delta),
+                    (rect.right + Box.PADDING + font.font_width*len(stat_text), rect.centery),
+                    (178, 34, 34),
+                    1,
+                    style="centerleft"
+                )
         
         pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
         surface.blit(DataFiles.sprites["equipment_menu"]["blueprint"], self.blueprint_page)
@@ -317,7 +298,7 @@ class EquipmentMenu:
         hull_type = DataFiles.shipgirl_data[self.selected_shipgirl.name]["hull_type"]
         font.render(surface,f"{ship_class}-class {hull_type}",(faction_icon_rect.right, faction_icon_rect.centery+2),Color.WHITE,1)
         for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
-            outline_width = Box.OUTLINE_WIDTH + int(self.selected_equipment == i)
+            outline_width = Box.OUTLINE_WIDTH + int(self.selected_slot == i)
             pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_BACK, rect)
             pygame.draw.rect(surface, Color.WHITE, rect, width=outline_width)
             if equipment is not None:
