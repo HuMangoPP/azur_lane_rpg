@@ -18,19 +18,6 @@ class ShipgirlBattleComponent:
     MEDIUM_ARMOR = 1
     HEAVY_ARMOR = 2
 
-    HULL_TO_ARMOR_MAP = {
-        "DD": LIGHT_ARMOR,
-        "CL": MEDIUM_ARMOR,
-        "CA": MEDIUM_ARMOR,
-        "BB": HEAVY_ARMOR
-    }
-
-    DAMAGE_MULTIPLIER = {
-        "normal": {LIGHT_ARMOR: 1.0, MEDIUM_ARMOR: 1.0, HEAVY_ARMOR: 1.0},
-        "HE": {LIGHT_ARMOR: 1.5, MEDIUM_ARMOR: 1.25, HEAVY_ARMOR: 1.0},
-        "AP": {LIGHT_ARMOR: 1.0, MEDIUM_ARMOR: 1.25, HEAVY_ARMOR: 1.5},
-    }
-
     SHELL_SPEED = 800
 
     def __init__(self, name, is_player):
@@ -139,8 +126,7 @@ class ShipgirlBattleComponent:
             return False
         else:
             shell_type = self.shell_type()
-            armor_type = self.HULL_TO_ARMOR_MAP[target.battle_component.hull_type]
-            target.battle_component.hp -= self.firepower() * self.DAMAGE_MULTIPLIER[shell_type][armor_type]
+            target.battle_component.hp -= self.firepower()
             target.battle_component.shake()
             return True
 

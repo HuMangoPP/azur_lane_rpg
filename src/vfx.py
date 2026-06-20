@@ -12,14 +12,6 @@ SHELL_COLORS = {
     "AP": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
 }
 
-
-HULL_FLASH_SCALE = {
-    "DD": 1.00,
-    "CL": 1.05,
-    "CA": 1.10,
-    "BB": 1.20,
-}
-
 SHELL_SCALE = 1/1000
 
 def shell_position(start_pos, target_pos, t):

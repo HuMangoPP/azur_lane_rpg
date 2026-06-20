@@ -81,5 +81,16 @@
 			"wisdom_cube": 1
 		},
 		"equipment": [null, null, null]
+	},
+	"tester": {
+		"hull_type": "BB",
+		"max_hp": [1200, 120],
+		"evasion": [35, 5],
+		"reload": [95, 8],
+		"firepower": [56, 4],
+		"target_pref": "all",
+		"reward_exp": [40, 5],
+		"drops": {},
+		"equipment": [null, null, null]
 	}
 }

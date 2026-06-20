@@ -146,7 +146,8 @@
 			}
 		],
 		"rewards": {
-			"SS_blueprint": 1
+			"SS_blueprint": 1,
+			"wisdom_cube": 1
 		},
 		"coordinates": [],
 		"chapter": 1
@@ -171,7 +172,8 @@
 			}
 		],
 		"rewards": {
-			"CV_blueprint": 1
+			"CV_blueprint": 1,
+			"wisdom_cube": 1
 		},
 		"coordinates": [],
 		"chapter": 1
@@ -196,7 +198,7 @@
 			}
 		],
 		"rewards": {
-			"wisdom_cube": 1
+			"SS_blueprint": 1
 		},
 		"coordinates": [],
 		"chapter": 1
@@ -221,9 +223,286 @@
 			}
 		],
 		"rewards": {
-			"wisdom_cube": 1
+			"CV_blueprint": 1
 		},
 		"coordinates": [],
 		"chapter": 1
+	},
+	{
+		"encounters": [
+			{
+				"front": ["explorer:4", "tracer:4"],
+				"back": ["oceana:3"]
+			},
+			{
+				"front": ["explorer:4", "tracer:4", "oceana:4"],
+				"back": ["lurker:3"]
+			},
+			{
+				"front": ["tracer:4", "oceana:4", "oceana:4"],
+				"back": ["lurker:4"]
+			}
+		],
+		"rewards": {
+			"electronics": 1,
+			"plastics": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["explorer:4", "tracer:4", "oceana:4"],
+				"back": ["lurker:4"]
+			},
+			{
+				"front": ["tracer:4", "oceana:4", "oceana:4"],
+				"back": ["lurker:4"]
+			},
+			{
+				"front": ["explorer:5", "tracer:4", "oceana:4"],
+				"back": ["oceana:5", "lurker:4"]
+			}
+		],
+		"rewards": {
+			"metals": 1,
+			"plastics": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["tracer:5", "oceana:4", "oceana:4"],
+				"back": ["lurker:4"]
+			},
+			{
+				"front": ["explorer:5", "tracer:5", "oceana:5"],
+				"back": ["lurker:4"]
+			},
+			{
+				"front": ["tracer:5", "oceana:5", "oceana:5"],
+				"back": ["lurker:5"]
+			}
+		],
+		"rewards": {
+			"metals": 1,
+			"electronics": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["explorer:5", "tracer:5", "oceana:5"],
+				"back": ["lurker:5"]
+			},
+			{
+				"front": ["tracer:5", "oceana:5", "oceana:5"],
+				"back": ["breaker:3"]
+			},
+			{
+				"front": ["oceana:5", "breaker:3"],
+				"back": ["tracer:5", "lurker:5"]
+			}
+		],
+		"rewards": {
+			"metals": 1,
+			"gunpowder": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["tracer:5", "oceana:5", "breaker:3"],
+				"back": ["lurker:5"]
+			},
+			{
+				"front": ["explorer:6", "oceana:5", "oceana:5"],
+				"back": ["strategist:3"]
+			},
+			{
+				"front": ["tracer:6", "oceana:6", "breaker:4"],
+				"back": ["lurker:5"]
+			}
+		],
+		"rewards": {
+			"electronics": 1,
+			"plastics": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["explorer:6", "tracer:6", "oceana:6"],
+				"back": ["lurker:5"]
+			},
+			{
+				"front": ["tracer:6", "oceana:6", "breaker:4"],
+				"back": ["strategist:3"]
+			},
+			{
+				"front": ["oceana:6", "breaker:4"],
+				"back": ["strategist:4", "lurker:5"]
+			}
+		],
+		"rewards": {
+			"metals": 1,
+			"plastics": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["explorer:6", "tracer:6", "oceana:6"],
+				"back": ["lurker:6"]
+			},
+			{
+				"front": ["breaker:6"],
+				"back": []
+			}
+		],
+		"rewards": {
+			"metals": 1,
+			"electronics": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["tracer:6", "oceana:6", "oceana:6"],
+				"back": ["lurker:6"]
+			},
+			{
+				"front": ["explorer:7", "oceana:6", "breaker:4"],
+				"back": ["strategist:4"]
+			},
+			{
+				"front": ["tracer:7", "oceana:7", "breaker:4"],
+				"back": ["lurker:6"]
+			}
+		],
+		"rewards": {
+			"metals": 1,
+			"gunpowder": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["explorer:7", "tracer:7", "oceana:7"],
+				"back": ["strategist:4"]
+			},
+			{
+				"front": ["tracer:7", "oceana:7", "breaker:4"],
+				"back": ["lurker:6"]
+			},
+			{
+				"front": ["oceana:7", "breaker:5"],
+				"back": ["strategist:5", "lurker:6"]
+			}
+		],
+		"rewards": {
+			"electronics": 1,
+			"plastics": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["tracer:7", "oceana:7", "oceana:7"],
+				"back": ["lurker:7"]
+			},
+			{
+				"front": ["explorer:7", "oceana:7", "breaker:5"],
+				"back": ["strategist:5"]
+			},
+			{
+				"front": ["tracer:7", "breaker:5"],
+				"back": ["strategist:5", "lurker:7"]
+			}
+		],
+		"rewards": {
+			"metals": 1,
+			"plastics": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["explorer:8", "tracer:7", "oceana:7"],
+				"back": ["lurker:7"]
+			},
+			{
+				"front": ["tracer:8", "oceana:7", "breaker:5"],
+				"back": ["strategist:5"]
+			},
+			{
+				"front": ["oceana:8", "breaker:6"],
+				"back": ["strategist:6", "lurker:7"]
+			}
+		],
+		"rewards": {
+			"metals": 1,
+			"electronics": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["tracer:8", "oceana:8", "oceana:8"],
+				"back": ["lurker:7"]
+			},
+			{
+				"front": ["explorer:8", "oceana:8", "breaker:6"],
+				"back": ["strategist:6"]
+			},
+			{
+				"front": ["oceana:8", "breaker:6", "breaker:6"],
+				"back": ["strategist:6", "lurker:8"]
+			},
+			{
+				"front": ["breaker:7"],
+				"back": ["strategist:7", "lurker:8"]
+			}
+		],
+		"rewards": {
+			"metals": 1,
+			"gunpowder": 1
+		},
+		"coordinates": [],
+		"chapter": 2
+	},
+	{
+		"encounters": [
+			{
+				"front": ["tester:0"],
+				"back": []
+			}
+		],
+		"rewards": {
+			"wisdom_cube": 3
+		},
+		"coordinates": [],
+		"chapter": 2
 	}
 ]
