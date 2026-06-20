@@ -11,23 +11,17 @@ class SortieNode:
     SIZE = 32
     center = pygame.Vector2(screen_x(0.15), screen_y(0.75))
 
-    def __init__(self, index, hexes):
+    def __init__(self, index, sortie_info):
+        self.chapter = sortie_info["chapter"]
         self.index = index
-        self.hexes = [tuple(h) for h in hexes]
+        self.hexes = [tuple(h) for h in sortie_info["coordinates"]]
         self.unlocked = self.index <= DataFiles.save_file["sortie_progress"]
         self.cleared = self.index < DataFiles.save_file["sortie_progress"]
         self.hovered = False
 
         cluster_edges = get_cluster_edges(self.hexes, self.SIZE)
-        self.polygon = [
-            pygame.Vector2(point) + self.center
-            for point in cluster_edges
-        ]
-        self.shadow_polygon = [
-            point + pygame.Vector2(self.SIZE/4,self.SIZE/2)
-            for point in self.polygon
-        ]
-    
+        self.polygon = [pygame.Vector2(point) for point in cluster_edges]
+
     def hover(self, mouse_pos):
         mouse_x, mouse_y = mouse_pos
         hx, hy = pixel_to_hex(mouse_x - self.center.x, mouse_y - self.center.y, self.SIZE)
@@ -45,7 +39,11 @@ class SortieNode:
         return True
 
     def draw_shadow(self, surface):
-        pygame.draw.polygon(surface, Color.OCEAN_SHADOW, self.shadow_polygon)
+        polygon = [
+            point + self.center + pygame.Vector2(self.SIZE/4,self.SIZE/2)
+            for point in self.polygon
+        ]
+        pygame.draw.polygon(surface, Color.OCEAN_SHADOW, polygon)
 
     def draw(self, surface):
         if self.cleared:
@@ -64,12 +62,13 @@ class SortieNode:
             glow = Color.LOCKED_ZONE_GLOW
             icon = DataFiles.sprites["user_interface"]["locked"]
 
-        pygame.draw.polygon(surface, fill, self.polygon)
+        polygon = [point + self.center for point in self.polygon]
+        pygame.draw.polygon(surface, fill, polygon)
         if self.hovered:
-            pygame.draw.polygon(surface, outline, self.polygon, width=2*Box.OUTLINE_WIDTH)
-            pygame.draw.polygon(surface, glow, self.polygon, width=Box.OUTLINE_WIDTH)
+            pygame.draw.polygon(surface, outline, polygon, width=2*Box.OUTLINE_WIDTH)
+            pygame.draw.polygon(surface, glow, polygon, width=Box.OUTLINE_WIDTH)
         else:
-            pygame.draw.polygon(surface, outline, self.polygon, width=Box.OUTLINE_WIDTH)
+            pygame.draw.polygon(surface, outline, polygon, width=Box.OUTLINE_WIDTH)
         
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
@@ -78,8 +77,21 @@ class SortieNode:
             surface.blit(icon, icon_rect)
 
 class Fog:
-    def __init__(self, centroids, disperse=False):
-        self.centroids = centroids
+    def __init__(self, sortie_nodes, disperse=False):
+        self.centroids = []
+        for sortie_node in sortie_nodes:
+            for q, r in sortie_node.hexes:
+                x, y = hex_to_pixel(q, r, sortie_node.SIZE)
+                self.centroids.append(pygame.Vector2(x, y))
+        self.cloud_indices = [random.randint(4, 9) for _ in self.centroids]
+        self.cloud_sprites = {
+            cloud_index: DataFiles.sprites["background"][f"cloud{cloud_index}"].copy()
+            for cloud_index in [4,5,6,7,8,9]
+        }
+        self.cloud_shadow_sprites = {
+            cloud_index: DataFiles.sprites["background"][f"cloud_shadow{cloud_index}"]
+            for cloud_index in [4,5,6,7,8,9]
+        }
         self.disperse = disperse
         self.disperse_timer = 1
 
@@ -101,23 +113,34 @@ class Fog:
                 wind_sfx = DataFiles.sfx["wind"]
                 wind_sfx.play()
                 wind_sfx.fadeout(3000)
-            self.disperse_timer = max(0, self.disperse_timer - 0.33*dt)
+            self.disperse_timer = max(0, self.disperse_timer - 1/3*dt)
 
     def draw(self, surface):
         if self.disperse_timer <= 0:
             return
-        cloud = DataFiles.sprites["background"]["cloud0"].copy()
-        cloud.set_alpha(int(255*self.disperse_timer))
-        cloud_rect = cloud.get_rect()
-        cloud_shadow = DataFiles.sprites["background"]["cloud_shadow0"]
-        cloud_shadow_rect = cloud_shadow.get_rect()
-        for centroid, cloud_timer in zip(self.centroids, self.cloud_timers):
-            center = centroid + pygame.Vector2(32*math.sin(cloud_timer), 8*math.sin(2*cloud_timer))
-            if not self.disperse:
+        
+        if self.disperse_timer < 1:
+            cloud_alpha = int(255*self.disperse_timer)
+            for cloud_sprite in self.cloud_sprites.values():
+                cloud_sprite.set_alpha(cloud_alpha)
+
+        for centroid, cloud_index, cloud_timer in zip(self.centroids, self.cloud_indices, self.cloud_timers):
+            center = (
+                centroid
+                + SortieNode.center
+                + pygame.Vector2(16*math.sin(cloud_timer), 4*math.sin(2*cloud_timer))
+            )
+
+            if self.disperse_timer >= 1:
+                cloud_shadow_sprite = self.cloud_shadow_sprites[cloud_index]
+                cloud_shadow_rect = cloud_shadow_sprite.get_rect()
                 cloud_shadow_rect.center = center + pygame.Vector2(8, 8)
-                surface.blit(cloud_shadow, cloud_shadow_rect, special_flags=pygame.BLEND_RGBA_SUB)
+                surface.blit(cloud_shadow_sprite, cloud_shadow_rect, special_flags=pygame.BLEND_RGB_SUB)
+
+            cloud_sprite = self.cloud_sprites[cloud_index]
+            cloud_rect = cloud_sprite.get_rect()
             cloud_rect.center = center
-            surface.blit(cloud, cloud_rect)
+            surface.blit(cloud_sprite, cloud_rect)
 
 class SortieSelectionMenu:
     def __init__(self, menu_manager):
@@ -127,7 +150,7 @@ class SortieSelectionMenu:
 
         self.selected_sortie_node = None
         self.sortie_nodes = [
-            SortieNode(sortie_index, sortie_info["coordinates"])
+            SortieNode(sortie_index, sortie_info)
             for sortie_index, sortie_info in enumerate(DataFiles.sortie_data)
         ]
 
@@ -196,28 +219,34 @@ class SortieSelectionMenu:
         ]
 
         self.fogs = [
-            Fog([
-                pygame.Vector2(180, 381),
-                pygame.Vector2(306, 402),
-                pygame.Vector2(309, 325),
-            ], disperse=DataFiles.save_file["chapter_progress"] >= 0),
-            Fog([
-                pygame.Vector2(484, 226),
-                pygame.Vector2(430, 279),
-                pygame.Vector2(498, 139),
-                pygame.Vector2(571, 194),
-            ], disperse=DataFiles.save_file["chapter_progress"] >= 1)
+            Fog(
+                [sortie_node for sortie_node in self.sortie_nodes if sortie_node.chapter == chapter],
+                disperse=DataFiles.save_file["chapter_progress"] >= chapter
+            )
+            for chapter in range(3)
         ]
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                self.mousedown = True
-            # if event.type == pygame.MOUSEMOTION:
-            #     if self.mousedown and self.selected_sortie_node is None:
-            #         movement = pygame.Vector2(event.rel)
-            #         SortieNode.center += movement
+                if self.exit_sortie_selection_menu_button.rect.collidepoint(event.pos):
+                    continue
+                if self.start_sortie_button.rect.collidepoint(event.pos):
+                    continue
+                if self.selected_sortie_node is not None:
+                    continue
+                for sortie_node in self.sortie_nodes:
+                    if sortie_node.select(event.pos):
+                        break
+                else:
+                    self.mousedown = True
+            if event.type == pygame.MOUSEMOTION:
+                if self.mousedown and self.selected_sortie_node is None:
+                    movement = pygame.Vector2(event.rel)
+                    SortieNode.center += movement
             if event.type == pygame.MOUSEBUTTONUP:
-                self.mousedown = False
+                if self.mousedown:
+                    self.mousedown = False
+                    continue
 
                 click = (
                     self.exit_sortie_selection_menu_button.click(event.pos)

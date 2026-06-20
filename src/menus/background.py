@@ -21,7 +21,7 @@ class Cloud:
         shadow_rect = self.shadow.get_rect()
         shadow_rect.centerx = self.x + self.SHADOW_OFFSET.x
         shadow_rect.top = self.y + self.SHADOW_OFFSET.y
-        surface.blit(self.shadow, shadow_rect, special_flags=pygame.BLEND_RGBA_SUB)
+        surface.blit(self.shadow, shadow_rect, special_flags=pygame.BLEND_RGB_SUB)
 
         rect = self.sprite.get_rect()
         rect.centerx = self.x
