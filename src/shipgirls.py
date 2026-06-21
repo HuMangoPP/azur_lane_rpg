@@ -96,8 +96,14 @@ class ShipgirlBattleComponent:
             target.battle_component.evasion_gauge -= 1
             return False
         else:
-            shell_type = self.shell_type()
-            target.battle_component.hp -= self.stat("firepower")
+            weapon_config = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {})
+            shell_type = weapon_config.get("shell_type", "normal")
+            damage = self.stat("firepower")
+            if shell_type == "AP":
+                crit_chance = weapon_config.get("crit_chance", 10)
+                if random.randint(0, 99) < crit_chance:
+                    damage *= weapon_config.get("crit_mult", 2)
+            target.battle_component.hp -= damage
             target.battle_component.shake()
             return True
 
