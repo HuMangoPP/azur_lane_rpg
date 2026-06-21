@@ -8,9 +8,18 @@ from src.constants import Color
 
 SHELL_COLORS = {
     "normal": [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
-    "HE": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
-    "AP": [(112, 83, 0), (212, 165, 30), (255, 242, 97)],
+    "HE": [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
+    "AP": [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
 }
+FIRE_COLORS = [
+    (255, 244, 128, 220),
+    (255, 164, 42, 210),
+    (238, 76, 34, 190),
+]
+FIRE_SMOKE_COLORS = [
+    (44, 35, 31, 90),
+    (77, 68, 62, 80),
+]
 
 SHELL_SCALE = 1/1000
 
@@ -236,6 +245,43 @@ class VFXManager:
             self.effects.append(Smoke(
                 pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, size=smoke_size, drift_distance=smoke_distance
             ))
+
+    def spawn_fire(self, rect):
+        spark_angle = math.radians(random.uniform(240, 300))
+        spark_dir = get_vec(1, spark_angle)
+        x = rect.centerx
+        if spark_dir.x > 0:
+            x += random.uniform(0, rect.width * 0.2)
+        elif spark_dir.x < 0:
+            x -= random.uniform(0, rect.width * 0.2)
+        y = rect.centery + random.uniform(-rect.height * 0.2, rect.height * 0.3)
+        flame_origin = pygame.Vector2(x, y)
+        spark_color = random.choice(FIRE_COLORS)
+        spark_duration = random.uniform(0.25, 0.45)
+        spark_distance = random.uniform(22, 46)
+        spark_size = (random.uniform(14, 24), random.uniform(4, 8))
+        self.effects.append(Spark(
+            flame_origin, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
+        ))
+
+        if random.random() > 0.35:
+            return
+        smoke_angle = math.radians(random.uniform(245, 295))
+        smoke_dir = get_vec(1, smoke_angle)
+        x = rect.centerx
+        if smoke_dir.x > 0:
+            x += random.uniform(0, rect.width * 0.25)
+        elif smoke_dir.x < 0:
+            x -= random.uniform(0, rect.width * 0.25)
+        y = rect.centery + random.uniform(-rect.height * 0.3, rect.height * 0.2)
+        smoke_origin = pygame.Vector2(x, y)
+        smoke_color = random.choice(FIRE_SMOKE_COLORS)
+        smoke_duration = random.uniform(0.45, 0.7)
+        smoke_size = random.uniform(18, 30)
+        smoke_distance = random.uniform(28, 48)
+        self.effects.append(Smoke(
+            smoke_origin, smoke_angle, smoke_color, duration=smoke_duration, size=smoke_size, drift_distance=smoke_distance
+        ))
 
     def update(self, dt):
         for effect in self.effects:

@@ -9,7 +9,8 @@
 		"equippable_by": "DD",
 		"firepower": 4,
 		"reload": 40,
-		"shell_type": "normal"
+		"shell_type": "HE",
+		"ignite_chance": 100
 	},
 	"twin_150": {
 		"type": "weapon",

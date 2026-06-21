@@ -112,8 +112,8 @@ class ShipgirlBattleComponent:
             self.hp -= self.ignite_damage
             self.shake()
 
-        if self.ignite_ticks <= 0:
-            self.ignite_timer = 0
+            if self.ignite_ticks <= 0:
+                self.ignite_timer = 0
 
     def _deal_damage(self, target):
         target.battle_component.evasion_gauge += target.battle_component.stat("evasion") / 1000
@@ -203,6 +203,8 @@ class ShipgirlBattleComponent:
             return
         
         self._update_ignite(dt)
+        if self.ignite_ticks > 0:
+            vfx_manager.spawn_fire(rect)
 
         if self.attack_timer > 0:
             start_pos = pygame.Vector2(rect.center)
