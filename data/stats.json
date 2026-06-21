@@ -27,7 +27,7 @@
 		"max_hp": [168, 32],
 		"evasion": [55, 5],
 		"firepower": [24, 8],
-		"reload": [55, 6]
+		"reload": [200, 6]
 	},
 	"SS": {
 		"max_hp": [64, 12],

@@ -16,6 +16,7 @@ class DummyTarget:
 class ShipgirlBattleComponent:
     SHELL_SPEED = 800
     TORPEDO_SPEED = 200
+    AIRCRAFT_SPEED = 100
 
     def __init__(self, name, is_player):
         self.active = False
@@ -74,7 +75,7 @@ class ShipgirlBattleComponent:
 
     def attack_speed(self):
         if self.hull_type == "CV":
-            return 0
+            return self.AIRCRAFT_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("aircraft_speed", 0)
         if self.hull_type == "SS":
             return self.TORPEDO_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("torpedo_speed", 0)
         return self.SHELL_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
@@ -119,10 +120,7 @@ class ShipgirlBattleComponent:
         vfx_manager.spawn_muzzle_flash(start_pos, shell_render_angle, shell_type)
 
     def _spawn_impact_effects(self, hit, rect, target, vfx_manager):
-        if self.hull_type == "CV":
-            return False, False
-
-        if self.hull_type == "SS":
+        if self.hull_type in ["SS", "CV"]:
             if hit:
                 vfx_manager.spawn_splash_impact(target.rect.center)
                 return False, True
@@ -140,9 +138,8 @@ class ShipgirlBattleComponent:
         if hit:
             vfx_manager.spawn_shell_impact(target.rect.center, shell_render_angle, shell_type)
             return True, False
-        else:
-            vfx_manager.spawn_splash_impact(target.rect.center)
-            return False, True
+        vfx_manager.spawn_splash_impact(target.rect.center)
+        return False, True
 
     def update(self, dt, rect, fleet, vfx_manager):
         self.shake_time = max(0, self.shake_time - dt)
@@ -211,8 +208,26 @@ class ShipgirlBattleComponent:
         t = 1 - self.attack_timer
 
         if self.hull_type == "CV":
-            return
-        if self.hull_type == "SS":
+            start_pos = pygame.Vector2(rect.center)
+            target_pos = pygame.Vector2(self.target.rect.center)
+            relpos = target_pos - start_pos
+            aircraft_relpos = screen_x(1) * relpos.normalize()
+            distance_ratio = 0.5 * relpos.length() / aircraft_relpos.length()
+            aircraft_sprite = pygame.transform.flip(
+                DataFiles.sprites["encounter"]["aircraft"],
+                flip_x=relpos.x < 0,
+                flip_y=False
+            )
+            aircraft_rect = aircraft_sprite.get_rect()
+            aircraft_height = 128 / (1 + math.exp(-20 * (t-distance_ratio-0.1)))
+            aircraft_rect.center = start_pos + aircraft_relpos * t - pygame.Vector2(0, aircraft_height)
+            surface.blit(aircraft_sprite, aircraft_rect)
+
+            if t < distance_ratio:
+                return
+            t = 0.5 * (t - distance_ratio) / (1 - distance_ratio) + 0.5
+        
+        if self.hull_type in ["SS", "CV"]:
             start_pos = pygame.Vector2((rect.centerx, rect.bottom))
             target_pos = pygame.Vector2((self.target.rect.centerx, self.target.rect.bottom))
             relpos = target_pos - start_pos

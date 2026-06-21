@@ -122,7 +122,8 @@
 		"attack": { "left": 160, "top": 384, "width": 32, "height": 32 }
 	},
 	"encounter": {
-		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 }
+		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 },
+		"aircraft": { "left": 32, "top": 0, "width": 48, "height": 48 }
 	},
 	"background": {
 		"wave0": { "left": 0, "top": 0, "width": 256, "height": 128 },
