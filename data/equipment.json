@@ -9,7 +9,7 @@
 		"equippable_by": "DD",
 		"firepower": 4,
 		"reload": 40,
-		"shell_type": "AP"
+		"shell_type": "normal"
 	},
 	"twin_150": {
 		"type": "weapon",

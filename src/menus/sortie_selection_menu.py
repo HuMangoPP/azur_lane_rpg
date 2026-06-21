@@ -96,7 +96,7 @@ class Fog:
         self.disperse_timer = 1
 
         self.cloud_timers = [
-            math.radians(360)*random.random()
+            math.radians(random.randint(0, 359))
             for _ in self.centroids
         ]
     
@@ -214,7 +214,7 @@ class SortieSelectionMenu:
             for i in range(num_waves)
         ]
         self.wave_timers = [
-            math.radians(360)*random.random()
+            math.radians(random.randint(0, 359))
             for _ in range(num_waves)
         ]
 

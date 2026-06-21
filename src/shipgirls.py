@@ -53,6 +53,9 @@ class ShipgirlBattleComponent:
         self.attack_timer = 0
         self.target = None
         self.evasion_gauge = 0
+        self.ignite_timer = 0
+        self.ignite_ticks = 0
+        self.ignite_damage = 0
 
         self.last_exp = self.exp
         self.exp_timer = 0
@@ -88,7 +91,29 @@ class ShipgirlBattleComponent:
         self.cooldown_timer = 1
         self.target = None
         self.evasion_gauge = 0
+        self.ignite_timer = 0
+        self.ignite_ticks = 0
+        self.ignite_damage = 0
         self.shake_time = 0
+
+    def ignite(self, damage, ticks):
+        self.ignite_timer = 0
+        self.ignite_ticks = ticks
+        self.ignite_damage = damage
+
+    def _update_ignite(self, dt):
+        if self.ignite_ticks <= 0:
+            return
+
+        self.ignite_timer += dt
+        while self.ignite_timer >= 1:
+            self.ignite_timer -= 1
+            self.ignite_ticks -= 1
+            self.hp -= self.ignite_damage
+            self.shake()
+
+        if self.ignite_ticks <= 0:
+            self.ignite_timer = 0
 
     def _deal_damage(self, target):
         target.battle_component.evasion_gauge += target.battle_component.stat("evasion") / 1000
@@ -104,6 +129,13 @@ class ShipgirlBattleComponent:
                 if random.randint(0, 99) < crit_chance:
                     damage *= weapon_config.get("crit_mult", 2)
             target.battle_component.hp -= damage
+            if shell_type == "HE":
+                ignite_chance = weapon_config.get("ignite_chance", 20)
+                if random.randint(0, 99) < ignite_chance:
+                    target.battle_component.ignite(
+                        weapon_config.get("ignite_damage", 1),
+                        weapon_config.get("ignite_ticks", 5),
+                    )
             target.battle_component.shake()
             return True
 
@@ -170,6 +202,8 @@ class ShipgirlBattleComponent:
         if not self.active:
             return
         
+        self._update_ignite(dt)
+
         if self.attack_timer > 0:
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)

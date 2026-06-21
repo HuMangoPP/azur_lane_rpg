@@ -296,8 +296,7 @@ class EncounterMenu:
                 for siren in defeated_sirens:
                     siren_data = DataFiles.siren_data[siren.name]
                     for drop, drop_rate in siren_data["drops"].items():
-                        drop_roll = random.random() * 100
-                        if drop_roll < drop_rate:
+                        if random.randint(0, 99) < drop_rate:
                             self.drops.append(Drop(drop, pygame.Vector2(siren.rect.center)))
             self.menu_manager.siren_fleet.update(dt, self.menu_manager, self.vfx_manager)
 

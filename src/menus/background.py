@@ -37,7 +37,7 @@ class Background:
             for i in range(num_waves)
         ]
         self.wave_timers = [
-            math.radians(360)*random.random()
+            math.radians(random.randint(0, 359))
             for _ in range(num_waves)
         ]
 
@@ -62,7 +62,7 @@ class Background:
 
         self.cloud_timer += dt
         if self.cloud_timer > self.cloud_spawn_time:
-            move_right = random.random() > 0.5
+            move_right = bool(random.randint(0, 1))
             self.clouds.append(Cloud(
                 random.randint(1, DataFiles.sprites["background"]["num_clouds"])-1,
                 0 if move_right else screen_x(1),
