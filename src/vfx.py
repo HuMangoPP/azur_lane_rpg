@@ -20,6 +20,12 @@ FIRE_SMOKE_COLORS = [
     (44, 35, 31, 90),
     (77, 68, 62, 80),
 ]
+DAMAGE_COUNTER_COLORS = {
+    "normal": ((255, 246, 126), (90, 65, 16)),
+    "HE": ((255, 94, 124), (88, 8, 31)),
+    "AP": ((105, 255, 255), (0, 76, 90)),
+    "torpedo": ((158, 208, 255), (18, 60, 102)),
+}
 
 SHELL_SCALE = 1/1000
 
@@ -59,7 +65,7 @@ class Spark(VFX):
         self.fly_distance = fly_distance
         self.spark_angle = angle
 
-    def draw(self, surface):
+    def draw(self, surface, font):
         if self.delay > 0:
             return
         
@@ -88,7 +94,7 @@ class Ring(VFX):
         self.radius = radius
         self.color = color
     
-    def draw(self, surface):
+    def draw(self, surface, font):
         if self.delay > 0:
             return
         
@@ -109,7 +115,7 @@ class Slash(VFX):
         self.perpendicular = pygame.Vector2(-self.direction.y, self.direction.x)
         self.color = color
 
-    def draw(self, surface):
+    def draw(self, surface, font):
         if self.delay > 0:
             return
         
@@ -138,7 +144,7 @@ class Smoke(VFX):
         self.size = size
         self.drift_distance = drift_distance
 
-    def draw(self, surface):
+    def draw(self, surface, font):
         if self.delay > 0:
             return
         
@@ -155,6 +161,48 @@ class Smoke(VFX):
         smoke_pos = self.pos + get_vec(self.drift_distance * t, self.angle)
         rect.center = smoke_pos
         surface.blit(smoke_surf, rect)
+
+
+class DamageCounter(VFX):
+    def __init__(self, pos, damage, shell_type, duration=2, delay=0):
+        super().__init__(duration, delay)
+
+        self.pos = pygame.Vector2(pos)
+        self.text = f"-{damage:g}"
+        self.color, self.outline_color = DAMAGE_COUNTER_COLORS.get(
+            shell_type,
+            DAMAGE_COUNTER_COLORS["normal"],
+        )
+        self.float_distance = 48
+        self.font_scale = 2
+
+    def draw(self, surface, font):
+        if self.delay > 0:
+            return
+
+        t = min(1, self.lifetime / self.duration)
+        alpha = int(255 * min(1, (1 - t) * 1.5))
+        y_offset = self.float_distance * (1 - (t - 1) ** 2)
+        text_pos = self.pos - pygame.Vector2(0, y_offset)
+
+        text_surf = pygame.Surface((
+            font.get_width(self.text, self.font_scale, 0) + 2,
+            font.get_height(self.text, self.font_scale, 0) + 2,
+        ))
+        text_surf.set_colorkey((0, 0, 0))
+        font.render(
+            text_surf,
+            self.text,
+            pygame.Vector2(text_surf.get_rect().center),
+            self.color,
+            self.font_scale,
+            style="center",
+            outline_color=self.outline_color,
+        )
+        text_surf.set_alpha(alpha)
+
+        rect = text_surf.get_rect(center=text_pos)
+        surface.blit(text_surf, rect)
 
 
 class VFXManager:
@@ -283,13 +331,16 @@ class VFXManager:
             smoke_origin, smoke_angle, smoke_color, duration=smoke_duration, size=smoke_size, drift_distance=smoke_distance
         ))
 
+    def spawn_damage_counter(self, pos, damage, shell_type):
+        self.effects.append(DamageCounter(pos, damage, shell_type))
+
     def update(self, dt):
         for effect in self.effects:
             effect.update(dt)
         self.effects = [effect for effect in self.effects if not effect.expired]
 
-    def draw(self, surface):
+    def draw(self, surface, font):
         overlay = pygame.Surface(surface.get_size(), flags=pygame.SRCALPHA)
         for effect in self.effects:
-            effect.draw(overlay)
+            effect.draw(overlay, font)
         surface.blit(overlay, (0, 0))

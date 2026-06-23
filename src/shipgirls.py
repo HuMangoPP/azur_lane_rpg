@@ -84,7 +84,10 @@ class ShipgirlBattleComponent:
         return self.SHELL_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
 
     def shell_type(self):
-        return DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_type", "normal")
+        if self.hull_type in ["SS", "CV"]:
+            return "torpedo"
+        weapon_config = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {})
+        return weapon_config.get("shell_type", "normal")
 
     def reset(self):
         self.hp = self.stat("max_hp")
@@ -115,20 +118,21 @@ class ShipgirlBattleComponent:
             if self.ignite_ticks <= 0:
                 self.ignite_timer = 0
 
-    def _deal_damage(self, target):
+    def _deal_damage(self, target, vfx_manager):
         target.battle_component.evasion_gauge += target.battle_component.stat("evasion") / 1000
         if target.battle_component.evasion_gauge >= 1:
             target.battle_component.evasion_gauge -= 1
             return False
         else:
             weapon_config = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {})
-            shell_type = weapon_config.get("shell_type", "normal")
+            shell_type = self.shell_type()
             damage = self.stat("firepower")
             if shell_type == "AP":
                 crit_chance = weapon_config.get("crit_chance", 10)
                 if random.randint(0, 99) < crit_chance:
                     damage *= weapon_config.get("crit_mult", 2)
             target.battle_component.hp -= damage
+            vfx_manager.spawn_damage_counter(target.rect.midtop, damage, shell_type)
             if shell_type == "HE":
                 ignite_chance = weapon_config.get("ignite_chance", 20)
                 if random.randint(0, 99) < ignite_chance:
@@ -218,10 +222,10 @@ class ShipgirlBattleComponent:
                         if shipgirl is None:
                             continue
 
-                        hit = self._deal_damage(shipgirl)
+                        hit = self._deal_damage(shipgirl, vfx_manager)
                         play_shell_impact, play_splash_impact = self._spawn_impact_effects(hit, rect, shipgirl, vfx_manager)
                 else:
-                    hit = self._deal_damage(self.target)
+                    hit = self._deal_damage(self.target, vfx_manager)
                     play_shell_impact, play_splash_impact = self._spawn_impact_effects(hit, rect, self.target, vfx_manager)
                 
                 if play_shell_impact:

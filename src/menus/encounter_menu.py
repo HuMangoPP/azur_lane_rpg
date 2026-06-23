@@ -364,7 +364,7 @@ class EncounterMenu:
 
         self.menu_manager.player_fleet.draw_battle_component(surface, font)
         self.menu_manager.siren_fleet.draw_battle_component(surface, font)
-        self.vfx_manager.draw(surface)
+        self.vfx_manager.draw(surface, font)
 
         self.next_encounter_button.draw(surface, font)
         self.open_reward_cache_button.draw(surface, font)
