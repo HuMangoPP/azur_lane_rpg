@@ -164,17 +164,19 @@ class Smoke(VFX):
 
 
 class DamageCounter(VFX):
-    def __init__(self, pos, damage, shell_type, duration=2, delay=0):
+    def __init__(self, pos, damage, shell_type, crit=False, text=None, duration=2, delay=0):
         super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
-        self.text = f"-{damage:g}"
+        self.text = text or f"-{damage:g}"
+        if crit:
+            self.text += "!"
         self.color, self.outline_color = DAMAGE_COUNTER_COLORS.get(
             shell_type,
             DAMAGE_COUNTER_COLORS["normal"],
         )
         self.float_distance = 48
-        self.font_scale = 2
+        self.font_scale = 3 if crit else 2
 
     def draw(self, surface, font):
         if self.delay > 0:
@@ -331,8 +333,11 @@ class VFXManager:
             smoke_origin, smoke_angle, smoke_color, duration=smoke_duration, size=smoke_size, drift_distance=smoke_distance
         ))
 
-    def spawn_damage_counter(self, pos, damage, shell_type):
-        self.effects.append(DamageCounter(pos, damage, shell_type))
+    def spawn_damage_counter(self, pos, damage, shell_type, crit=False):
+        self.effects.append(DamageCounter(pos, damage, shell_type, crit=crit))
+
+    def spawn_miss_counter(self, pos):
+        self.effects.append(DamageCounter(pos, 0, "torpedo", text="miss"))
 
     def update(self, dt):
         for effect in self.effects:

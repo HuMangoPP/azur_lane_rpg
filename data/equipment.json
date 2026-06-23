@@ -46,7 +46,8 @@
 		"equippable_by": "BB",
 		"firepower": 16,
 		"reload": 10,
-		"shell_type": "normal"
+		"shell_type": "AP",
+		"crit_chance": 100
 	},
 	"steering_gear": {
 		"type": "aux",

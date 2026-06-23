@@ -104,35 +104,42 @@ class ShipgirlBattleComponent:
         self.ignite_ticks = ticks
         self.ignite_damage = damage
 
-    def _update_ignite(self, dt):
+    def _update_ignite(self, dt, rect, vfx_manager):
         if self.ignite_ticks <= 0:
             return
 
         self.ignite_timer += dt
+        agg_ignite_damage = 0
         while self.ignite_timer >= 1:
             self.ignite_timer -= 1
             self.ignite_ticks -= 1
-            self.hp -= self.ignite_damage
-            self.shake()
+            agg_ignite_damage += 1
 
             if self.ignite_ticks <= 0:
                 self.ignite_timer = 0
+        if agg_ignite_damage > 0:
+            self.hp -= agg_ignite_damage
+            vfx_manager.spawn_damage_counter(rect.midtop, agg_ignite_damage, "HE")
+            self.shake()
 
     def _deal_damage(self, target, vfx_manager):
         target.battle_component.evasion_gauge += target.battle_component.stat("evasion") / 1000
         if target.battle_component.evasion_gauge >= 1:
             target.battle_component.evasion_gauge -= 1
+            vfx_manager.spawn_miss_counter(target.rect.midtop)
             return False
         else:
             weapon_config = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {})
             shell_type = self.shell_type()
             damage = self.stat("firepower")
+            crit = False
             if shell_type == "AP":
                 crit_chance = weapon_config.get("crit_chance", 10)
                 if random.randint(0, 99) < crit_chance:
+                    crit = True
                     damage *= weapon_config.get("crit_mult", 2)
             target.battle_component.hp -= damage
-            vfx_manager.spawn_damage_counter(target.rect.midtop, damage, shell_type)
+            vfx_manager.spawn_damage_counter(target.rect.midtop, damage, shell_type, crit)
             if shell_type == "HE":
                 ignite_chance = weapon_config.get("ignite_chance", 20)
                 if random.randint(0, 99) < ignite_chance:
@@ -206,7 +213,7 @@ class ShipgirlBattleComponent:
         if not self.active:
             return
         
-        self._update_ignite(dt)
+        self._update_ignite(dt, rect, vfx_manager)
         if self.ignite_ticks > 0:
             vfx_manager.spawn_fire(rect)
 
