@@ -76,9 +76,14 @@ class Equipment:
     AUX2 = 2
 
 class Stats:
-    RESEARCH_EXP_REQUIREMENTS = [0, 0, 5, 8]
     EXP_BASE = 12
     EXP_GROWTH = 2
+
+    @classmethod
+    def research_exp_requirements(cls, num_shipgirls_in_port):
+        if num_shipgirls_in_port < 2:
+            return 0
+        return cls.exp_amount_at_level(num_shipgirls_in_port-1)
 
     @classmethod
     def exp_amount_at_level(cls, level):

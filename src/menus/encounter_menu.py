@@ -286,7 +286,7 @@ class EncounterMenu:
         if self.fast_forward:
             dt = dt * 2
         if self.slow_down:
-            dt = dt / 5
+            dt = dt / 2
         if self.encounter_started:
             afloat_sirens_before = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
             self.menu_manager.player_fleet.update(dt, self.vfx_manager)
@@ -315,7 +315,7 @@ class EncounterMenu:
                 self.exp_timer = 1
                 DataFiles.save_file["research_progress"] += self.research_exp
                 num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
-                exp_req = Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
+                exp_req = Stats.research_exp_requirements(num_shipgirls_in_port)
                 if DataFiles.save_file["research_progress"] >= exp_req:
                     if DataFiles.save_file["research_target"] == DataFiles.get_faction_shipgirls()["CA"]:
                         self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
@@ -342,14 +342,15 @@ class EncounterMenu:
             if not self.menu_manager.siren_fleet.afloat:
                 self.encounter_end_flag = False
                 for siren in self.menu_manager.siren_fleet.fleet:
+                    siren_reward_exp = Stats.stat(
+                        siren.battle_component.exp,
+                        *DataFiles.siren_data[siren.name]["reward_exp"]
+                    )
                     for shipgirl in self.menu_manager.player_fleet.shipgirls:
                         if shipgirl is not None:
-                            shipgirl.battle_component.exp += Stats.stat(
-                                siren.battle_component.exp,
-                                *DataFiles.siren_data[siren.name]["reward_exp"]
-                            )
+                            shipgirl.battle_component.exp += siren_reward_exp
                     if DataFiles.save_file["research_target"] is not None:
-                        self.research_exp += siren.battle_component.exp
+                        self.research_exp += siren_reward_exp
 
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()
@@ -382,7 +383,7 @@ class EncounterMenu:
                 centerx=screen_x(0.5), bottom=Box.BOTTOM_OF_SCREEN
             )
             num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
-            exp_req = Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
+            exp_req = Stats.research_exp_requirements(num_shipgirls_in_port)
             research_progress = DataFiles.save_file["research_progress"] + self.research_exp * self.exp_timer
             bar_fill = get_rect(
                 width=bar_width * min(1, research_progress/exp_req),

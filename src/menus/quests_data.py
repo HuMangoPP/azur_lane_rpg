@@ -654,7 +654,7 @@ def equip_weapon_tutorial_draw(menu_manager, surface, font):
         menu_manager.current_menu == menu_manager.equipment_menu
         and menu_manager.equipment_menu.selected_shipgirl.name == DataFiles.get_faction_shipgirls()["DD"]
     ):
-        if menu_manager.equipment_menu.selected_equipment == Equipment.WEAPON:
+        if menu_manager.equipment_menu.selected_slot == Equipment.WEAPON:
             button_rect = menu_manager.equipment_menu.equippable_rects[0]
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,

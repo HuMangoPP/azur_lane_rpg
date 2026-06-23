@@ -267,7 +267,7 @@ class PortMenu:
                     num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
                     DataFiles.save_file["shipgirls"][self.blueprint_selected_item] = {
                         "equipment": [None, None, None],
-                        "exp": Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
+                        "exp": Stats.research_exp_requirements(num_shipgirls_in_port)
                     }
                     shipgirl = Shipgirl(self.blueprint_selected_item, True)
                     self.menu_manager.available_shipgirls.append(shipgirl)
@@ -675,7 +675,7 @@ class PortMenu:
             hull_type = selected_entity_info.get("hull_type")
             selected_entity_stats = DataFiles.stats_data[hull_type]
             num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
-            research_shipgirl_exp = Stats.RESEARCH_EXP_REQUIREMENTS[num_shipgirls_in_port]
+            research_shipgirl_exp = Stats.research_exp_requirements(num_shipgirls_in_port)
             shipgirl_stats = {
                 "hull_type": hull_type,
                 "max_hp": Stats.stat(research_shipgirl_exp, *selected_entity_stats["max_hp"]),
