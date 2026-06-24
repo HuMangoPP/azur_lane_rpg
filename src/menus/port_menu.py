@@ -786,7 +786,7 @@ class PortMenu:
                 "firepower": selected_entity_info["firepower"][0],
                 "reload": selected_entity_info["reload"][0],
                 "target_pref": selected_entity_info["target_pref"],
-                "EXP": selected_entity_info["exp"],
+                "EXP": selected_entity_info["reward_exp"],
             }
         else:
             drop_icons = []

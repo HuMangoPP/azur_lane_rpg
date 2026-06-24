@@ -168,7 +168,7 @@ class DamageCounter(VFX):
         super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
-        self.text = text or f"-{damage:g}"
+        self.text = text or str(damage)
         if crit:
             self.text += "!"
         self.color, self.outline_color = DAMAGE_COUNTER_COLORS.get(

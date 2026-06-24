@@ -1,10 +1,10 @@
 {
 	"explorer": {
 		"hull_type": "DD",
-		"max_hp": [72, 12],
+		"max_hp": [60, 8],
 		"evasion": [140, 14],
-		"reload": [115, 11],
-		"firepower": [4, 2],
+		"reload": [160, 16],
+		"firepower": [2, 1],
 		"target_pref": "front",
 		"reward_exp": [4, 1],
 		"drops": {
@@ -15,10 +15,10 @@
 	},
 	"tracer": {
 		"hull_type": "CL",
-		"max_hp": [96, 16],
-		"evasion": [100, 10],
-		"reload": [100, 10],
-		"firepower": [5, 2],
+		"max_hp": [68, 9],
+		"evasion": [120, 12],
+		"reload": [140, 14],
+		"firepower": [4, 2],
 		"target_pref": "highest_hp",
 		"reward_exp": [8, 2],
 		"drops": {
@@ -29,10 +29,10 @@
 	},
 	"oceana": {
 		"hull_type": "CA",
-		"max_hp": [120, 20],
-		"evasion": [60, 6],
-		"reload": [85, 8],
-		"firepower": [7, 2],
+		"max_hp": [78, 10],
+		"evasion": [80, 80],
+		"reload": [100, 10],
+		"firepower": [8, 4],
 		"target_pref": "highest_hp",
 		"reward_exp": [12, 3],
 		"drops": {
@@ -43,12 +43,12 @@
 	},
 	"breaker": {
 		"hull_type": "BB",
-		"max_hp": [176, 28],
-		"evasion": [20, 2],
-		"reload": [65, 6],
-		"firepower": [9, 2],
+		"max_hp": [92, 12],
+		"evasion": [60, 6],
+		"reload": [80, 8],
+		"firepower": [10, 5],
 		"target_pref": "all",
-		"reward_exp": [20, 4],
+		"reward_exp": [20, 5],
 		"drops": {
 			"BB_blueprint": 10,
 			"wisdom_cube": 1
@@ -58,11 +58,11 @@
 	"strategist": {
 		"hull_type": "CV",
 		"max_hp": [152, 24],
-		"evasion": [35, 3],
-		"reload": [50, 5],
-		"firepower": [10, 3],
+		"evasion": [70, 7],
+		"reload": [60, 6],
+		"firepower": [15, 7],
 		"target_pref": "all",
-		"reward_exp": [20, 4],
+		"reward_exp": [24, 6],
 		"drops": {
 			"CV_blueprint": 10,
 			"wisdom_cube": 1
@@ -73,10 +73,10 @@
 		"hull_type": "SS",
 		"max_hp": [56, 8],
 		"evasion": [180, 18],
-		"reload": [60, 6],
-		"firepower": [9, 2],
+		"reload": [70, 7],
+		"firepower": [12, 6],
 		"target_pref": "front",
-		"reward_exp": [16, 3],
+		"reward_exp": [16, 4],
 		"drops": {
 			"SS_blueprint": 10,
 			"wisdom_cube": 1
@@ -85,12 +85,12 @@
 	},
 	"tester": {
 		"hull_type": "BB",
-		"max_hp": [1200, 120],
+		"max_hp": [300, 50],
 		"evasion": [35, 5],
-		"reload": [95, 8],
-		"firepower": [56, 4],
+		"reload": [100, 10],
+		"firepower": [10, 5],
 		"target_pref": "all",
-		"reward_exp": [160, 20],
+		"reward_exp": [40, 10],
 		"drops": {},
 		"equipment": [null, null, null]
 	}

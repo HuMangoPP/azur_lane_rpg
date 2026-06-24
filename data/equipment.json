@@ -7,7 +7,7 @@
 			"metals": 1
 		},
 		"equippable_by": "DD",
-		"firepower": 4,
+		"firepower": 2,
 		"reload": 40,
 		"shell_type": "normal"
 	},
@@ -19,7 +19,7 @@
 			"plastics": 1
 		},
 		"equippable_by": "CL",
-		"firepower": 8,
+		"firepower": 4,
 		"reload": 30,
 		"shell_type": "normal"
 	},
@@ -31,8 +31,8 @@
 			"metals": 1
 		},
 		"equippable_by": "CA",
-		"firepower": 12,
-		"reload": 25,
+		"firepower": 8,
+		"reload": 20,
 		"shell_type": "normal"
 	},
 	"tri_406": {
@@ -43,7 +43,7 @@
 			"plastics": 1
 		},
 		"equippable_by": "BB",
-		"firepower": 16,
+		"firepower": 10,
 		"reload": 10,
 		"shell_type": "normal"
 	},

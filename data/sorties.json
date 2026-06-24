@@ -23,7 +23,7 @@
 				"back": []
 			},
 			{
-				"front": ["explorer:0", "explorer:0"],
+				"front": ["explorer:0", "explorer:1"],
 				"back": ["oceana:0"]
 			}
 		],
@@ -36,16 +36,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:0", "explorer:0", "explorer:0"],
+				"front": ["explorer:0", "explorer:1", "explorer:1"],
 				"back": []
 			},
 			{
-				"front": ["explorer:0", "explorer:0", "explorer:0"],
+				"front": ["explorer:0", "explorer:1", "explorer:1"],
 				"back": ["oceana:0"]
 			},
 			{
-				"front": ["explorer:0", "explorer:0"],
-				"back": ["oceana:0", "oceana:0"]
+				"front": ["explorer:1", "explorer:1"],
+				"back": ["oceana:0", "oceana:1"]
 			}
 		],
 		"rewards": {
@@ -59,16 +59,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:0", "explorer:0", "explorer:0"],
-				"back": ["explorer:0"]
+				"front": ["explorer:0", "explorer:1", "explorer:1"],
+				"back": ["oceana:1"]
 			},
 			{
-				"front": ["explorer:0", "explorer:0", "explorer:0"],
-				"back": ["oceana:0", "oceana:0"]
+				"front": ["explorer:1", "explorer:1", "explorer:1"],
+				"back": ["oceana:0", "oceana:1"]
 			},
 			{
-				"front": ["explorer:0", "explorer:0"],
-				"back": ["breaker:0"]
+				"front": ["explorer:1", "explorer:1"],
+				"back": ["tester:0"]
 			}
 		],
 		"rewards": {
