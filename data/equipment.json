@@ -47,6 +47,28 @@
 		"reload": 10,
 		"shell_type": "normal"
 	},
+	"mag_torps": {
+		"type": "weapon",
+		"craft_reqs": {
+			"SS_blueprint": 1,
+			"electronics": 1,
+			"plastics": 1
+		},
+		"equippable_by": "SS",
+		"firepower": 12,
+		"reload": 8
+	},
+	"torp_bomber": {
+		"type": "weapon",
+		"craft_reqs": {
+			"CV_blueprint": 1,
+			"metals": 1,
+			"gunpowder": 1
+		},
+		"equippable_by": "CV",
+		"firepower": 15,
+		"reload": 5
+	},
 	"steering_gear": {
 		"type": "aux",
 		"craft_reqs": {

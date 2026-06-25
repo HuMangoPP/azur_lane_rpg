@@ -19,7 +19,7 @@
 		"evasion": [120, 12],
 		"reload": [140, 14],
 		"firepower": [4, 2],
-		"target_pref": "highest_hp",
+		"target_pref": "front",
 		"reward_exp": [8, 2],
 		"drops": {
 			"CL_blueprint": 10,
@@ -30,7 +30,7 @@
 	"oceana": {
 		"hull_type": "CA",
 		"max_hp": [78, 10],
-		"evasion": [80, 80],
+		"evasion": [80, 8],
 		"reload": [100, 10],
 		"firepower": [8, 4],
 		"target_pref": "highest_hp",

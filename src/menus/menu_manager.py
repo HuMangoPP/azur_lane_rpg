@@ -29,7 +29,7 @@ class MenuManager:
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=(Box.WIDTH+Box.PADDING)*(i%4-1.5) + screen_x(0.75),
                 centery=(Box.HEIGHT+Box.PADDING)*(i//4-1.5) + screen_y(0.5)
-            ) for i in range(4)
+            ) for i in range(6)
         ]
 
         self.menu_register = {

@@ -175,7 +175,7 @@ class PortMenu:
             right=self.dossier_overlay.right,
             bottom=self.dossier_overlay.bottom
         )
-        num_dossier_tabs = 5
+        num_dossier_tabs = 7
         tab_width = self.dossier_bg.width / num_dossier_tabs
         tab_height = 48
         self.dossier_tabs = [
@@ -222,8 +222,8 @@ class PortMenu:
 
         self.selected_overlay_filter = 0
         self.shipgirl_filters = ["USS", "HMS", "IJN", "KMS"]
-        self.equipment_filters = ["DD", "CL", "CA", "BB", "AUX"]
-        self.siren_filters = ["DD", "CL", "CA", "BB"]
+        self.equipment_filters = ["DD", "CL", "CA", "BB", "SS", "CV", "AUX"]
+        self.siren_filters = ["DD", "CL", "CA", "BB", "SS", "CV"]
 
         num_icons_per_row = (self.dossier_page.width-Box.PADDING) // (Box.WIDTH+Box.PADDING)
         icon_padding = (self.dossier_page.width - 2*Box.PADDING - num_icons_per_row*Box.WIDTH) / (num_icons_per_row-1)
@@ -700,7 +700,7 @@ class PortMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 self.exit_overlay(event)
 
-                if self.selected_overlay_filter == 4: # TODO
+                if self.selected_overlay_filter == len(self.dossier_tabs) - 1:
                     equipment = [
                         equip for equip, equip_data in DataFiles.equipment_data.items()
                         if equip_data["type"] == "aux"
@@ -716,7 +716,7 @@ class PortMenu:
                     DataFiles.sfx["knock"].play()
 
     def draw_gear_lab_overlay(self, surface, font):
-        if self.selected_overlay_filter == 4: # TODO
+        if self.selected_overlay_filter == len(self.dossier_tabs) - 1:
             equipment = [
                 equip for equip, equip_data in DataFiles.equipment_data.items()
                 if equip_data["type"] == "aux"
