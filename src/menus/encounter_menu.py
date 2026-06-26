@@ -215,8 +215,13 @@ class EncounterMenu:
                 for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
                     if (
                         shipgirl is not None
-                        and shipgirl.battle_component.active
-                        and shipgirl.battle_component.attack_timer <= 0
+                        and (
+                            not shipgirl.battle_component.active
+                            or (
+                                shipgirl.battle_component.active
+                                and shipgirl.battle_component.attack_timer <= 0
+                            )
+                        )
                         and shipgirl.rect.collidepoint(event.pos)
                     ):
                         self.mouse_start_drag = event.pos

@@ -223,7 +223,7 @@ class SortieSelectionMenu:
                 [sortie_node for sortie_node in self.sortie_nodes if sortie_node.chapter == chapter],
                 disperse=DataFiles.save_file["chapter_progress"] >= chapter
             )
-            for chapter in range(3)
+            for chapter in range(4)
         ]
     def update(self, dt, events):
         for event in events:
