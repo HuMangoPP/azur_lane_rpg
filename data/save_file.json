@@ -8,22 +8,6 @@
 		"new_jersey": {
 			"equipment": [null, null, null],
 			"exp": 0
-		},
-		"enterprise": {
-			"equipment": [null, null, null],
-			"exp": 0
-		},
-		"albacore": {
-			"equipment": [null, null, null],
-			"exp": 0
-		},
-		"guam": {
-			"equipment": [null, null, null],
-			"exp": 0
-		},
-		"san_diego": {
-			"equipment": [null, null, null],
-			"exp": 0
 		}
 	},
 	"equipment": {},
