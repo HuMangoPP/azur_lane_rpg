@@ -8,6 +8,10 @@
 		"new_jersey": {
 			"equipment": [null, null, null],
 			"exp": 0
+		},
+		"enterprise": {
+			"equipment": [null, null, null],
+			"exp": 0
 		}
 	},
 	"equipment": {},

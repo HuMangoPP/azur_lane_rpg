@@ -70,5 +70,10 @@
 		"pivot": [42, 23],
 		"idle": [0, null],
 		"walk": [0, null]
+	},
+	"headpiece": {
+		"pivot": [0, 0],
+		"idle": [0, null],
+		"walk": [0, null]
 	}
 }

@@ -2,7 +2,7 @@
 	"spritesheet": "live2d/breaker.png",
 	"colorkey": [255, 0, 0],
 	"back_torso": {
-		"pivot": [34, 42],
+		"pivot": [0, 0],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
@@ -12,28 +12,28 @@
 		"walk": [30, "sint"]
 	},
 	"right_leg": {
-		"pivot": [51, 70],
+		"pivot": [51, 71],
 		"idle": [10, "one_plus_sint"],
 		"walk": [-30, "sint"]
 	},
 	"torso": {
-		"pivot": [45, 60],
+		"pivot": [46, 60],
 		"idle": [0, null],
 		"walk": [0, null]
 	},
 	"left_arm": {
-		"pivot": [40, 54],
+		"pivot": [40, 55],
 		"idle": [-15, "one_plus_sint"],
 		"walk": [-15, "sint"]
 	},
 	"right_arm": {
-		"pivot": [53, 54],
+		"pivot": [54, 56],
 		"idle": [15, "one_plus_sint"],
 		"walk": [15, "sint"]
 	},
 	"back_hair": {
 		"pivot": [48, 24],
-		"idle": [0, null],
+		"idle": [5, "sint"],
 		"walk": [-5, "sint"]
 	},
 	"head": {
@@ -62,12 +62,17 @@
 		"walk": [-5, "sint"]
 	},
 	"right_bangs": {
-		"pivot": [61, 24],
+		"pivot": [60, 23],
 		"idle": [5, "one_plus_sint"],
 		"walk": [5, "sint_sq"]
 	},
 	"bangs": {
-		"pivot": [42, 23],
+		"pivot": [43, 21],
+		"idle": [5, "one_plus_sint"],
+		"walk": [0, null]
+	},
+	"headpiece": {
+		"pivot": [0, 0],
 		"idle": [0, null],
 		"walk": [0, null]
 	}

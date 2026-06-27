@@ -17,7 +17,8 @@ PART_NAMES = [
     "left_leg",
     "left_hair",
     "back_torso",
-    "back_hair"
+    "back_hair",
+    "headpiece"
 ]
 
 class Live2DPart:
@@ -115,6 +116,7 @@ class Live2D:
         "right_hair",
         "right_bangs",
         "bangs",
+        "headpiece",
     ]
 
     CONNECTIONS = {
@@ -132,6 +134,7 @@ class Live2D:
         "right_bangs": "head",
         "bangs": "head",
         "right_arm": "torso",
+        "headpiece": "head",
     }
 
     IDLE_ANIMATION = 0
@@ -175,9 +178,15 @@ class Live2D:
     def update(self, dt):
         self.t = (self.t + self.ANIMATION_SPEED * dt) % 1
         t = math.radians(360 * self.t)
+        sint = math.sin(t)
+        one_plus_sint = 0.5 * (1 + sint)
+        sint_sq = sint ** 2
+        anim_t = {
+            "sint": sint,
+            "one_plus_sint": one_plus_sint,
+            "sint_sq": sint_sq
+        }
         if self.animation == self.IDLE_ANIMATION:
-            one_plus_sint = 0.5 * (1 + math.sin(t))
-            anim_t = {"one_plus_sint": one_plus_sint}
             for part in PART_NAMES:
                 part_data = self.model_dict[part]
                 idle_animation = part_data["idle"]
@@ -186,9 +195,6 @@ class Live2D:
                 self.set_rotation(part, idle_animation[0] * anim_t[idle_animation[1]])
             self.set_offset("torso", pygame.Vector2(0, 5 * one_plus_sint))
         elif self.animation == self.WALK_ANIMATION:
-            sint = math.sin(t)
-            sint_sq = sint ** 2
-            anim_t = {"sint": sint, "sint_sq": sint_sq}
             for part in PART_NAMES:
                 part_data = self.model_dict[part]
                 walk_animation = part_data["walk"]

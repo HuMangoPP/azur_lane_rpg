@@ -1,0 +1,218 @@
+{
+    "spritesheet": "live2d/enterprise.png",
+    "colorkey": [
+        255,
+        0,
+        0
+    ],
+    "bangs": {
+        "pivot": [
+            42,
+            23
+        ],
+        "idle": [
+            5,
+            "sint"
+        ],
+        "walk": [
+            5,
+            "sint_sq"
+        ]
+    },
+    "right_bangs": {
+        "pivot": [
+            64,
+            32
+        ],
+        "idle": [
+            5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            10,
+            "sint_sq"
+        ]
+    },
+    "right_hair": {
+        "pivot": [
+            66,
+            27
+        ],
+        "idle": [
+            5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            5,
+            "sint_sq"
+        ]
+    },
+    "left_bangs": {
+        "pivot": [
+            29,
+            29
+        ],
+        "idle": [
+            -5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            -5,
+            "sint_sq"
+        ]
+    },
+    "top_head": {
+        "pivot": [
+            0,
+            0
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    },
+    "head": {
+        "pivot": [
+            45,
+            51
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    },
+    "right_arm": {
+        "pivot": [
+            54,
+            55
+        ],
+        "idle": [
+            5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            15,
+            "sint"
+        ]
+    },
+    "torso": {
+        "pivot": [
+            46,
+            63
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    },
+    "left_arm": {
+        "pivot": [
+            40,
+            55
+        ],
+        "idle": [
+            -5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            -15,
+            "sint"
+        ]
+    },
+    "right_leg": {
+        "pivot": [
+            51,
+            70
+        ],
+        "idle": [
+            5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            -30,
+            "sint"
+        ]
+    },
+    "left_leg": {
+        "pivot": [
+            42,
+            70
+        ],
+        "idle": [
+            -5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            30,
+            "sint"
+        ]
+    },
+    "left_hair": {
+        "pivot": [
+            28,
+            33
+        ],
+        "idle": [
+            -5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            -5,
+            "sint_sq"
+        ]
+    },
+    "back_torso": {
+        "pivot": [
+            48,
+            61
+        ],
+        "idle": [
+            5,
+            "sint"
+        ],
+        "walk": [
+            5,
+            "sint_sq"
+        ]
+    },
+    "back_hair": {
+        "pivot": [
+            49,
+            31
+        ],
+        "idle": [
+            5,
+            "sint"
+        ],
+        "walk": [
+            5,
+            "sint_sq"
+        ]
+    },
+    "headpiece": {
+        "pivot": [
+            0,
+            0
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    }
+}
