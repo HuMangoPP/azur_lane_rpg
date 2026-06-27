@@ -319,6 +319,9 @@ class EncounterMenu:
             if self.exp_timer > 1:
                 self.exp_timer = 1
                 DataFiles.save_file["research_progress"] += self.research_exp
+                DataFiles.save_file["specialized_wisdom_cubes"][
+                    DataFiles.save_file["research_target"]
+                ] = DataFiles.save_file["research_progress"]
                 avg_shipgirl_level = int(
                     sum(
                         Stats.level(shipgirl.battle_component.exp)
