@@ -268,32 +268,29 @@ class PortMenu:
                 has_generic_wisdom_cube = inventory.get("wisdom_cube", 0) > 0
                 if (
                     all(inventory.get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items())
-                    and (has_specialized_wisdom_cube or has_generic_wisdom_cube)
+                    and has_specialized_wisdom_cube
                 ):
+                    shipgirl_exp = specialized_wisdom_cubes[self.blueprint_selected_item]
                     DataFiles.save_file["shipgirls"][self.blueprint_selected_item] = {
                         "equipment": [None, None, None],
-                        "exp": DataFiles.save_file["research_progress"]
+                        "exp": shipgirl_exp
                     }
                     shipgirl = Shipgirl(self.blueprint_selected_item, True)
                     self.menu_manager.available_shipgirls.append(shipgirl)
                     for ingredient, req in selected_entity_reqs.items():
                         inventory[ingredient] -= req
-                    if has_specialized_wisdom_cube:
-                        specialized_wisdom_cubes.pop(self.blueprint_selected_item)
-                    else:
-                        inventory["wisdom_cube"] -= 1
+                    specialized_wisdom_cubes.pop(self.blueprint_selected_item)
                     DataFiles.save_file["research_target"] = None
-                    DataFiles.save_file["research_progress"] = 0
                     self.blueprint_selected_item = None
                     self.blueprint_confirm_button.active = False
                 elif (
                     DataFiles.save_file["research_target"] != self.blueprint_selected_item
+                    and not has_specialized_wisdom_cube
                     and has_generic_wisdom_cube
                 ):
                     inventory["wisdom_cube"] -= 1
                     specialized_wisdom_cubes[self.blueprint_selected_item] = 0
                     DataFiles.save_file["research_target"] = self.blueprint_selected_item
-                    DataFiles.save_file["research_progress"] = 0
             elif self.current_overlay == self.GEAR_LAB:
                 selected_entity_reqs = DataFiles.equipment_data[self.blueprint_selected_item]["craft_reqs"]
                 if all(DataFiles.save_file["inventory"].get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items()):
@@ -696,7 +693,7 @@ class PortMenu:
             ]
             hull_type = selected_entity_info.get("hull_type")
             selected_entity_stats = DataFiles.stats_data[hull_type]
-            research_shipgirl_exp = DataFiles.save_file["research_progress"]
+            research_shipgirl_exp = specialized_wisdom_cubes.get(self.blueprint_selected_item, 0)
             shipgirl_stats = {
                 "hull_type": hull_type,
                 "max_hp": Stats.stat(research_shipgirl_exp, *selected_entity_stats["max_hp"]),

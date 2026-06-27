@@ -3,11 +3,11 @@
 	"shipgirls": {
 		"laffey": {
 			"equipment": [null, null, null],
-			"exp": 56
+			"exp": 0
 		},
 		"new_jersey": {
 			"equipment": [null, null, null],
-			"exp": 56
+			"exp": 0
 		}
 	},
 	"equipment": {},
@@ -17,26 +17,17 @@
 		"wisdom_cube": 0,
 		"huggy_pillow": 0,
 		"dragon_cannon": 0,
-		"decoration_coin": 5,
-		"battle_mech": 1,
-		"CA_blueprint": 1
+		"decoration_coin": 1
 	},
-	"specialized_wisdom_cubes": {
-		"guam": 44
-	},
+	"specialized_wisdom_cubes": {},
 	"decoration_depot": {},
 	"decorations": [],
-	"research_target": "guam",
-	"research_progress": 44,
-	"sortie_progress": 2,
+	"research_target": null,
+	"sortie_progress": 0,
 	"chapter_progress": 0,
 	"quests": {
 		"choose_faction": "completed",
 		"construct_shipgirls": "completed",
-		"first_sortie": "completed",
-		"inventory": "completed",
-		"intel_center": "completed",
-		"research_shipgirl": "completed",
-		"construct_shipgirl": "new"
+		"first_sortie": "new"
 	}
 }

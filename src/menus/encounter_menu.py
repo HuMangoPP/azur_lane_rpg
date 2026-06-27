@@ -318,10 +318,9 @@ class EncounterMenu:
             self.exp_timer += dt
             if self.exp_timer > 1:
                 self.exp_timer = 1
-                DataFiles.save_file["research_progress"] += self.research_exp
-                DataFiles.save_file["specialized_wisdom_cubes"][
-                    DataFiles.save_file["research_target"]
-                ] = DataFiles.save_file["research_progress"]
+                research_target = DataFiles.save_file["research_target"]
+                specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
+                specialized_wisdom_cubes[research_target] += self.research_exp
                 avg_shipgirl_level = int(
                     sum(
                         Stats.level(shipgirl.battle_component.exp)
@@ -330,12 +329,12 @@ class EncounterMenu:
                     / len(self.menu_manager.available_shipgirls)
                 )
                 exp_req = Stats.exp_to_level(avg_shipgirl_level)
-                if DataFiles.save_file["research_progress"] >= exp_req:
-                    if DataFiles.save_file["research_target"] == DataFiles.get_faction_shipgirls()["CA"]:
+                if specialized_wisdom_cubes[research_target] >= exp_req:
+                    if research_target == DataFiles.get_faction_shipgirls()["CA"]:
                         self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
                         DataFiles.save_file["quests"][construct_shipgirl_quest.quest_id] = "new"
 
-                    unique_item = DataFiles.shipgirl_data[DataFiles.save_file["research_target"]]["unique_item"]
+                    unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) == 0:
                         self.drops.append(Drop(unique_item, pygame.Vector2(screen_x(0.5), screen_y(0.5))))
                 self.research_exp = 0
@@ -403,7 +402,11 @@ class EncounterMenu:
                 / len(self.menu_manager.available_shipgirls)
             )
             exp_req = Stats.exp_to_level(avg_shipgirl_level)
-            research_progress = DataFiles.save_file["research_progress"] + self.research_exp * self.exp_timer
+            research_target = DataFiles.save_file["research_target"]
+            research_progress = (
+                DataFiles.save_file["specialized_wisdom_cubes"][research_target]
+                + self.research_exp * self.exp_timer
+            )
             bar_fill = get_rect(
                 width=bar_width * min(1, research_progress/exp_req),
                 height=bar_height, left=bar_background.left, top=bar_background.top 

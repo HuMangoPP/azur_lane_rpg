@@ -68,7 +68,6 @@
 		["bed", [9, 1], "north"]
 	],
 	"research_target": null,
-	"research_progress": 0,
 	"sortie_progress": 24,
 	"chapter_progress": 3,
 	"quests": {

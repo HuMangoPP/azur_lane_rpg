@@ -98,6 +98,14 @@ def choose_faction_on_start(menu_manager):
         choose_faction_button.active = True
 
 def choose_faction_on_complete(menu_manager):
+    faction_shipgirls = DataFiles.get_faction_shipgirls()
+    specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
+    for hull_type in ["DD", "BB"]:
+        shipgirl = faction_shipgirls[hull_type]
+        if DataFiles.save_file["inventory"].get("wisdom_cube", 0) > 0:
+            DataFiles.save_file["inventory"]["wisdom_cube"] -= 1
+            specialized_wisdom_cubes[shipgirl] = 0
+
     quest_name = construct_shipgirls_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = construct_shipgirls_quest
     if quest_name not in DataFiles.save_file["quests"]:
