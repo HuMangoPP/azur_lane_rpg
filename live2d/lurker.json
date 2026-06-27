@@ -1,0 +1,218 @@
+{
+    "spritesheet": "live2d/lurker.png",
+    "colorkey": [
+        255,
+        0,
+        0
+    ],
+    "bangs": {
+        "pivot": [
+            43,
+            22
+        ],
+        "idle": [
+            5,
+            "sint"
+        ],
+        "walk": [
+            5,
+            "sint_sq"
+        ]
+    },
+    "right_bangs": {
+        "pivot": [
+            62,
+            43
+        ],
+        "idle": [
+            5,
+            "sint"
+        ],
+        "walk": [
+            5,
+            "sint_sq"
+        ]
+    },
+    "right_hair": {
+        "pivot": [
+            0,
+            0
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    },
+    "left_bangs": {
+        "pivot": [
+            29,
+            44
+        ],
+        "idle": [
+            5,
+            "sint"
+        ],
+        "walk": [
+            5,
+            "sint_sq"
+        ]
+    },
+    "top_head": {
+        "pivot": [
+            0,
+            0
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    },
+    "head": {
+        "pivot": [
+            45,
+            52
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    },
+    "right_arm": {
+        "pivot": [
+            54,
+            55
+        ],
+        "idle": [
+            5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            30,
+            "sint"
+        ]
+    },
+    "torso": {
+        "pivot": [
+            46,
+            65
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    },
+    "left_arm": {
+        "pivot": [
+            40,
+            55
+        ],
+        "idle": [
+            -5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            -30,
+            "sint"
+        ]
+    },
+    "right_leg": {
+        "pivot": [
+            51,
+            70
+        ],
+        "idle": [
+            5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            -30,
+            "sint"
+        ]
+    },
+    "left_leg": {
+        "pivot": [
+            42,
+            70
+        ],
+        "idle": [
+            -5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            30,
+            "sint"
+        ]
+    },
+    "left_hair": {
+        "pivot": [
+            0,
+            0
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    },
+    "back_torso": {
+        "pivot": [
+            0,
+            0
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    },
+    "back_hair": {
+        "pivot": [
+            54,
+            14
+        ],
+        "idle": [
+            5,
+            "one_plus_sint"
+        ],
+        "walk": [
+            5,
+            "sint_sq"
+        ]
+    },
+    "headpiece": {
+        "pivot": [
+            0,
+            0
+        ],
+        "idle": [
+            0,
+            null
+        ],
+        "walk": [
+            0,
+            null
+        ]
+    }
+}
