@@ -80,10 +80,8 @@ class Stats:
     EXP_GROWTH = 2
 
     @classmethod
-    def research_exp_requirements(cls, num_shipgirls_in_port):
-        if num_shipgirls_in_port < 2:
-            return 0
-        return cls.exp_amount_at_level(num_shipgirls_in_port-1)
+    def exp_to_level(cls, level):
+        return sum(cls.exp_amount_at_level(l) for l in range(level))
 
     @classmethod
     def exp_amount_at_level(cls, level):

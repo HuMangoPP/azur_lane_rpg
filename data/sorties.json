@@ -11,7 +11,7 @@
 			}
 		],
 		"rewards": {
-			"CA_blueprint": 1
+			"wisdom_cube": 1
 		},
 		"coordinates": [[0, 0]],
 		"chapter": 0
@@ -23,12 +23,16 @@
 				"back": []
 			},
 			{
-				"front": ["explorer:0", "explorer:1"],
+				"front": ["explorer:0"],
+				"back": ["oceana:0"]
+			},
+			{
+				"front": ["explorer:0", "explorer:0"],
 				"back": ["oceana:0"]
 			}
 		],
 		"rewards": {
-			"wisdom_cube": 1
+			"CA_blueprint": 1
 		},
 		"coordinates": [[1, 0]],
 		"chapter": 0

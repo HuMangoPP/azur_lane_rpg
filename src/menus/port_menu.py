@@ -264,16 +264,16 @@ class PortMenu:
                     unique_item: 1
                 }
                 if all(DataFiles.save_file["inventory"].get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items()):
-                    num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
                     DataFiles.save_file["shipgirls"][self.blueprint_selected_item] = {
                         "equipment": [None, None, None],
-                        "exp": Stats.research_exp_requirements(num_shipgirls_in_port)
+                        "exp": DataFiles.save_file["research_progress"]
                     }
                     shipgirl = Shipgirl(self.blueprint_selected_item, True)
                     self.menu_manager.available_shipgirls.append(shipgirl)
                     for ingredient, req in selected_entity_reqs.items():
                         DataFiles.save_file["inventory"][ingredient] -= req
                     DataFiles.save_file["research_target"] = None
+                    DataFiles.save_file["research_progress"] = 0
                     self.blueprint_selected_item = None
                     self.blueprint_confirm_button.active = False
                 else:
@@ -674,8 +674,7 @@ class PortMenu:
             ]
             hull_type = selected_entity_info.get("hull_type")
             selected_entity_stats = DataFiles.stats_data[hull_type]
-            num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
-            research_shipgirl_exp = Stats.research_exp_requirements(num_shipgirls_in_port)
+            research_shipgirl_exp = DataFiles.save_file["research_progress"]
             shipgirl_stats = {
                 "hull_type": hull_type,
                 "max_hp": Stats.stat(research_shipgirl_exp, *selected_entity_stats["max_hp"]),

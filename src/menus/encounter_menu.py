@@ -319,17 +319,22 @@ class EncounterMenu:
             if self.exp_timer > 1:
                 self.exp_timer = 1
                 DataFiles.save_file["research_progress"] += self.research_exp
-                num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
-                exp_req = Stats.research_exp_requirements(num_shipgirls_in_port)
+                avg_shipgirl_level = int(
+                    sum(
+                        Stats.level(shipgirl.battle_component.exp)
+                        for shipgirl in self.menu_manager.available_shipgirls
+                    )
+                    / len(self.menu_manager.available_shipgirls)
+                )
+                exp_req = Stats.exp_to_level(avg_shipgirl_level)
                 if DataFiles.save_file["research_progress"] >= exp_req:
                     if DataFiles.save_file["research_target"] == DataFiles.get_faction_shipgirls()["CA"]:
                         self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
                         DataFiles.save_file["quests"][construct_shipgirl_quest.quest_id] = "new"
 
                     unique_item = DataFiles.shipgirl_data[DataFiles.save_file["research_target"]]["unique_item"]
-                    DataFiles.save_file["research_progress"] = 0
-                    self.drops.append(Drop(unique_item, pygame.Vector2(screen_x(0.5), screen_y(0.5))))
-                    DataFiles.save_file["research_target"] = None
+                    if DataFiles.save_file["inventory"].get(unique_item, 0) == 0:
+                        self.drops.append(Drop(unique_item, pygame.Vector2(screen_x(0.5), screen_y(0.5))))
                 self.research_exp = 0
         elif self.exp_timer > 0:
             self.exp_timer -= dt
@@ -351,7 +356,7 @@ class EncounterMenu:
                         siren.battle_component.exp,
                         *DataFiles.siren_data[siren.name]["reward_exp"]
                     )
-                    for shipgirl in self.menu_manager.player_fleet.shipgirls:
+                    for shipgirl in self.menu_manager.player_fleet.fleet:
                         if shipgirl is not None:
                             shipgirl.battle_component.exp += siren_reward_exp
                     if DataFiles.save_file["research_target"] is not None:
@@ -387,8 +392,14 @@ class EncounterMenu:
                 width=bar_width, height=bar_height,
                 centerx=screen_x(0.5), bottom=Box.BOTTOM_OF_SCREEN
             )
-            num_shipgirls_in_port = len(DataFiles.save_file["shipgirls"])
-            exp_req = Stats.research_exp_requirements(num_shipgirls_in_port)
+            avg_shipgirl_level = int(
+                sum(
+                    Stats.level(shipgirl.battle_component.exp)
+                    for shipgirl in self.menu_manager.available_shipgirls
+                )
+                / len(self.menu_manager.available_shipgirls)
+            )
+            exp_req = Stats.exp_to_level(avg_shipgirl_level)
             research_progress = DataFiles.save_file["research_progress"] + self.research_exp * self.exp_timer
             bar_fill = get_rect(
                 width=bar_width * min(1, research_progress/exp_req),
