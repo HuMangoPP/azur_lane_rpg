@@ -1,218 +1,79 @@
 {
-    "spritesheet": "live2d/strategist.png",
-    "colorkey": [
-        255,
-        0,
-        0
-    ],
-    "bangs": {
-        "pivot": [
-            0,
-            0
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "right_bangs": {
-        "pivot": [
-            45,
-            27
-        ],
-        "idle": [
-            5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            5,
-            "sint_sq"
-        ]
-    },
-    "right_hair": {
-        "pivot": [
-            63,
-            27
-        ],
-        "idle": [
-            5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            5,
-            "sint_sq"
-        ]
-    },
-    "left_bangs": {
-        "pivot": [
-            43,
-            27
-        ],
-        "idle": [
-            -5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            -5,
-            "sint_sq"
-        ]
-    },
-    "top_head": {
-        "pivot": [
-            0,
-            0
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "head": {
-        "pivot": [
-            46,
-            52
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "right_arm": {
-        "pivot": [
-            54,
-            55
-        ],
-        "idle": [
-            5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            15,
-            "sint"
-        ]
-    },
-    "torso": {
-        "pivot": [
-            45,
-            65
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "left_arm": {
-        "pivot": [
-            41,
-            54
-        ],
-        "idle": [
-            -5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            -15,
-            "sint"
-        ]
-    },
-    "right_leg": {
-        "pivot": [
-            51,
-            70
-        ],
-        "idle": [
-            5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            -30,
-            "sint"
-        ]
-    },
-    "left_leg": {
-        "pivot": [
-            42,
-            70
-        ],
-        "idle": [
-            -5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            30,
-            "sint"
-        ]
-    },
-    "left_hair": {
-        "pivot": [
-            29,
-            25
-        ],
-        "idle": [
-            -5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            -5,
-            "sint_sq"
-        ]
-    },
-    "back_torso": {
-        "pivot": [
-            47,
-            64
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            5,
-            "sint_sq"
-        ]
-    },
-    "back_hair": {
-        "pivot": [
-            47,
-            27
-        ],
-        "idle": [
-            -5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            -5,
-            "sint_sq"
-        ]
-    },
-    "headpiece": {
-        "pivot": [
-            0,
-            0
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    }
+	"spritesheet": "live2d/strategist.png",
+	"colorkey": [255, 0, 0],
+	"bangs": {
+		"pivot": [0, 0],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"right_bangs": {
+		"pivot": [45, 27],
+		"idle": [5, "one_plus_sint"],
+		"walk": [5, "sint_sq"]
+	},
+	"right_hair": {
+		"pivot": [63, 27],
+		"idle": [5, "one_plus_sint"],
+		"walk": [5, "sint_sq"]
+	},
+	"left_bangs": {
+		"pivot": [43, 27],
+		"idle": [-5, "one_plus_sint"],
+		"walk": [-5, "sint_sq"]
+	},
+	"top_head": {
+		"pivot": [0, 0],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"head": {
+		"pivot": [46, 52],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"right_arm": {
+		"pivot": [54, 55],
+		"idle": [15, "one_plus_sint"],
+		"walk": [15, "sint"]
+	},
+	"torso": {
+		"pivot": [45, 65],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"left_arm": {
+		"pivot": [41, 54],
+		"idle": [-15, "one_plus_sint"],
+		"walk": [-15, "sint"]
+	},
+	"right_leg": {
+		"pivot": [51, 70],
+		"idle": [10, "one_plus_sint"],
+		"walk": [-30, "sint"]
+	},
+	"left_leg": {
+		"pivot": [42, 70],
+		"idle": [-10, "one_plus_sint"],
+		"walk": [30, "sint"]
+	},
+	"left_hair": {
+		"pivot": [29, 25],
+		"idle": [-5, "one_plus_sint"],
+		"walk": [-5, "sint_sq"]
+	},
+	"back_torso": {
+		"pivot": [47, 64],
+		"idle": [0, null],
+		"walk": [5, "sint_sq"]
+	},
+	"back_hair": {
+		"pivot": [47, 27],
+		"idle": [-5, "one_plus_sint"],
+		"walk": [-5, "sint_sq"]
+	},
+	"headpiece": {
+		"pivot": [0, 0],
+		"idle": [0, null],
+		"walk": [0, null]
+	}
 }

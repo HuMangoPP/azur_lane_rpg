@@ -23,12 +23,12 @@
 	},
 	"left_arm": {
 		"pivot": [40, 54],
-		"idle": [-15, "one_plus_sint"],
+		"idle": [-10, "one_plus_sint"],
 		"walk": [-15, "sint"]
 	},
 	"right_arm": {
 		"pivot": [53, 54],
-		"idle": [15, "one_plus_sint"],
+		"idle": [10, "one_plus_sint"],
 		"walk": [15, "sint"]
 	},
 	"back_hair": {
@@ -49,7 +49,7 @@
 	"left_hair": {
 		"pivot": [28, 20],
 		"idle": [-5, "one_plus_sint"],
-		"walk": [-5, "sint"]
+		"walk": [-5, "sint_sq"]
 	},
 	"left_bangs": {
 		"pivot": [34, 23],
@@ -59,7 +59,7 @@
 	"right_hair": {
 		"pivot": [55, 23],
 		"idle": [5, "one_plus_sint"],
-		"walk": [-5, "sint"]
+		"walk": [5, "sint_sq"]
 	},
 	"right_bangs": {
 		"pivot": [65, 20],
@@ -68,8 +68,8 @@
 	},
 	"bangs": {
 		"pivot": [42, 23],
-		"idle": [0, null],
-		"walk": [0, null]
+		"idle": [5, "sint"],
+		"walk": [5, "sint_sq"]
 	},
 	"headpiece": {
 		"pivot": [0, 0],

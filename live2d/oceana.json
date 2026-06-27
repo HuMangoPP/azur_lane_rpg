@@ -1,218 +1,79 @@
 {
-    "spritesheet": "live2d/oceana.png",
-    "colorkey": [
-        255,
-        0,
-        0
-    ],
-    "bangs": {
-        "pivot": [
-            42,
-            21
-        ],
-        "idle": [
-            5,
-            "sint"
-        ],
-        "walk": [
-            5,
-            "sint_sq"
-        ]
-    },
-    "right_bangs": {
-        "pivot": [
-            61,
-            22
-        ],
-        "idle": [
-            5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            5,
-            "sint_sq"
-        ]
-    },
-    "right_hair": {
-        "pivot": [
-            64,
-            23
-        ],
-        "idle": [
-            5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            5,
-            "sint_sq"
-        ]
-    },
-    "left_bangs": {
-        "pivot": [
-            30,
-            23
-        ],
-        "idle": [
-            -5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            -5,
-            "sint_sq"
-        ]
-    },
-    "top_head": {
-        "pivot": [
-            0,
-            0
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "head": {
-        "pivot": [
-            46,
-            52
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "right_arm": {
-        "pivot": [
-            54,
-            55
-        ],
-        "idle": [
-            5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            15,
-            "sint"
-        ]
-    },
-    "torso": {
-        "pivot": [
-            46,
-            64
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "left_arm": {
-        "pivot": [
-            41,
-            54
-        ],
-        "idle": [
-            -5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            -15,
-            "sint"
-        ]
-    },
-    "right_leg": {
-        "pivot": [
-            51,
-            70
-        ],
-        "idle": [
-            5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            -30,
-            "sint"
-        ]
-    },
-    "left_leg": {
-        "pivot": [
-            42,
-            70
-        ],
-        "idle": [
-            -5,
-            "one_plus_sint"
-        ],
-        "walk": [
-            30,
-            "sint"
-        ]
-    },
-    "left_hair": {
-        "pivot": [
-            0,
-            0
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "back_torso": {
-        "pivot": [
-            0,
-            0
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "back_hair": {
-        "pivot": [
-            0,
-            0
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    },
-    "headpiece": {
-        "pivot": [
-            0,
-            0
-        ],
-        "idle": [
-            0,
-            null
-        ],
-        "walk": [
-            0,
-            null
-        ]
-    }
+	"spritesheet": "live2d/oceana.png",
+	"colorkey": [255, 0, 0],
+	"bangs": {
+		"pivot": [42, 21],
+		"idle": [5, "sint"],
+		"walk": [5, "sint_sq"]
+	},
+	"right_bangs": {
+		"pivot": [61, 22],
+		"idle": [5, "one_plus_sint"],
+		"walk": [5, "sint_sq"]
+	},
+	"right_hair": {
+		"pivot": [64, 23],
+		"idle": [5, "one_plus_sint"],
+		"walk": [5, "sint_sq"]
+	},
+	"left_bangs": {
+		"pivot": [30, 23],
+		"idle": [-5, "one_plus_sint"],
+		"walk": [-5, "sint_sq"]
+	},
+	"top_head": {
+		"pivot": [0, 0],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"head": {
+		"pivot": [46, 52],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"right_arm": {
+		"pivot": [54, 55],
+		"idle": [15, "one_plus_sint"],
+		"walk": [15, "sint"]
+	},
+	"torso": {
+		"pivot": [46, 64],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"left_arm": {
+		"pivot": [41, 54],
+		"idle": [-15, "one_plus_sint"],
+		"walk": [-15, "sint"]
+	},
+	"right_leg": {
+		"pivot": [51, 70],
+		"idle": [10, "one_plus_sint"],
+		"walk": [-30, "sint"]
+	},
+	"left_leg": {
+		"pivot": [42, 70],
+		"idle": [-10, "one_plus_sint"],
+		"walk": [30, "sint"]
+	},
+	"left_hair": {
+		"pivot": [0, 0],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"back_torso": {
+		"pivot": [0, 0],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"back_hair": {
+		"pivot": [0, 0],
+		"idle": [0, null],
+		"walk": [0, null]
+	},
+	"headpiece": {
+		"pivot": [0, 0],
+		"idle": [0, null],
+		"walk": [0, null]
+	}
 }
