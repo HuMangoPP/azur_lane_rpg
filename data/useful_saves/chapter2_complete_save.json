@@ -18,11 +18,11 @@
 			"exp": 3985
 		},
 		"albacore": {
-			"equipment": ["mag_torps", "autoloader", "repair_toolkit"],
+			"equipment": ["g7e_torp", "autoloader", "repair_toolkit"],
 			"exp": 2339
 		},
 		"enterprise": {
-			"equipment": ["torp_bomber", "steering_gear", "autoloader"],
+			"equipment": ["hellcat", "steering_gear", "autoloader"],
 			"exp": 2911
 		}
 	},
@@ -31,8 +31,8 @@
 		"tri_406": 0,
 		"twin_203": 0,
 		"twin_150": 0,
-		"mag_torps": 0,
-		"torp_bomber": 0,
+		"g7e_torp": 0,
+		"hellcat": 0,
 		"steering_gear": 0,
 		"repair_toolkit": 0,
 		"autoloader": 0,

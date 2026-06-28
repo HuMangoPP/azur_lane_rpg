@@ -362,7 +362,12 @@ class ShipgirlBattleComponent:
         stop_angle = start_angle + (1 - self.cooldown_timer) * 360
         color = (50,200,50) if self.target is not None else (200,50,50)
         draw_annulus(surface, color, center, inner_radius, outer_radius, start_angle, stop_angle)
-        attack_icon = DataFiles.sprites["user_interface"]["attack"]
+        if self.hull_type == "CV":
+            attack_icon = DataFiles.sprites["user_interface"]["air_attack"]
+        elif self.hull_type == "SS":
+            attack_icon = DataFiles.sprites["user_interface"]["torp_attack"]
+        else:
+            attack_icon = DataFiles.sprites["user_interface"]["shell_attack"]
         attack_icon_rect = attack_icon.get_rect()
         attack_icon_rect.center = center
         surface.blit(attack_icon, attack_icon_rect)

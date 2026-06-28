@@ -92,7 +92,7 @@ class PortMenu:
                         self.blueprint_confirm_button.active = True
                         unique_item = DataFiles.shipgirl_data[self.blueprint_selected_item]["unique_item"]
                         if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                            self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["gear_lab"]
+                            self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["construct"]
                             self.blueprint_confirm_button.text = "construct"
                         else:
                             self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["research"]
@@ -544,13 +544,13 @@ class PortMenu:
                 if self.current_overlay == self.SHIPYARD:
                     unique_item = DataFiles.shipgirl_data[self.blueprint_selected_item]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                        self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["gear_lab"]
+                        self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["construct"]
                         self.blueprint_confirm_button.text = "construct"
                     else:
                         self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["research"]
                         self.blueprint_confirm_button.text = "research"
                 else:
-                    self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["gear_lab"]
+                    self.blueprint_confirm_button.background_img = DataFiles.sprites["user_interface"]["construct"]
                     self.blueprint_confirm_button.text = "construct"
         
         for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):

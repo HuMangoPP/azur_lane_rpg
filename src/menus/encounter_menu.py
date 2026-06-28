@@ -478,7 +478,12 @@ class EncounterMenu:
                     annulus_rect.center = drawpos
                     surface.blit(annulus, annulus_rect)
 
-                    attack_icon = DataFiles.sprites["user_interface"]["attack"]
+                    if self.selected_shipgirl.battle_component.hull_type == "CV":
+                        attack_icon = DataFiles.sprites["user_interface"]["air_attack"]
+                    elif self.selected_shipgirl.battle_component.hull_type == "SS":
+                        attack_icon = DataFiles.sprites["user_interface"]["torp_attack"]
+                    else:
+                        attack_icon = DataFiles.sprites["user_interface"]["shell_attack"]
                     attack_icon_rect = attack_icon.get_rect()
                     attack_icon_rect.center = drawpos
                     surface.blit(attack_icon, attack_icon_rect)

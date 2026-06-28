@@ -47,7 +47,7 @@
 		"reload": 10,
 		"shell_type": "normal"
 	},
-	"mag_torps": {
+	"g7e_torp": {
 		"type": "weapon",
 		"craft_reqs": {
 			"SS_blueprint": 1,
@@ -58,7 +58,7 @@
 		"firepower": 12,
 		"reload": 8
 	},
-	"torp_bomber": {
+	"hellcat": {
 		"type": "weapon",
 		"craft_reqs": {
 			"CV_blueprint": 1,

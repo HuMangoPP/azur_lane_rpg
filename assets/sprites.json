@@ -4,122 +4,113 @@
 		"twin_150": { "left": 64, "top": 0, "width": 64, "height": 64 },
 		"twin_203": { "left": 128, "top": 0, "width": 64, "height": 64 },
 		"tri_406": { "left": 192, "top": 0, "width": 64, "height": 64 },
+		"g7e_torp": { "left": 256, "top": 0, "width": 64, "height": 64 },
+		"hellcat": { "left": 320, "top": 0, "width": 64, "height": 64 },
 
 		"ap_shell": { "left": 0, "top": 64, "width": 64, "height": 64 },
 		"autoloader": { "left": 64, "top": 64, "width": 64, "height": 64 },
 		"repair_toolkit": { "left": 128, "top": 64, "width": 64, "height": 64 },
 		"steering_gear": { "left": 192, "top": 64, "width": 64, "height": 64 },
 
-		"BB_blueprint": { "left": 0, "top": 128, "width": 64, "height": 64 },
-		"CA_blueprint": { "left": 64, "top": 128, "width": 64, "height": 64 },
-		"CL_blueprint": { "left": 128, "top": 128, "width": 64, "height": 64 },
-		"DD_blueprint": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"decoration_coin": { "left": 384, "top": 0, "width": 64, "height": 64 },
+		"bed": { "left": 256, "top": 64, "width": 64, "height": 64 },
+		"table": { "left": 320, "top": 64, "width": 64, "height": 64 },
+		"chair": { "left": 384, "top": 64, "width": 64, "height": 64 },
+
+		"DD_blueprint": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"CL_blueprint": { "left": 64, "top": 128, "width": 64, "height": 64 },
+		"CA_blueprint": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"BB_blueprint": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"SS_blueprint": { "left": 256, "top": 128, "width": 64, "height": 64 },
+		"CV_blueprint": { "left": 320, "top": 128, "width": 64, "height": 64 },
+
 		"electronics": { "left": 0, "top": 192, "width": 64, "height": 64 },
 		"gunpowder": { "left": 64, "top": 192, "width": 64, "height": 64 },
 		"metals": { "left": 128, "top": 192, "width": 64, "height": 64 },
 		"plastics": { "left": 192, "top": 192, "width": 64, "height": 64 },
+		"wisdom_cube": { "left": 256, "top": 192, "width": 64, "height": 64 },
 
-		"wisdom_cube": { "left": 0, "top": 256, "width": 64, "height": 64 },
-
-		"explorer": { "left": 64, "top": 256, "width": 64, "height": 64 },
+		"explorer": { "left": 0, "top": 256, "width": 64, "height": 64 },
+		"tracer": { "left": 64, "top": 256, "width": 64, "height": 64 },
 		"oceana": { "left": 128, "top": 256, "width": 64, "height": 64 },
 		"breaker": { "left": 192, "top": 256, "width": 64, "height": 64 },
+		"lurker": { "left": 256, "top": 256, "width": 64, "height": 64 },
+		"strategist": { "left": 320, "top": 256, "width": 64, "height": 64 },
+		"tester": { "left": 384, "top": 256, "width": 64, "height": 64 },
 
 		"laffey": { "left": 0, "top": 320, "width": 64, "height": 64 },
-		"new_jersey": { "left": 64, "top": 320, "width": 64, "height": 64 },
+		"san_diego": { "left": 64, "top": 320, "width": 64, "height": 64 },
 		"guam": { "left": 128, "top": 320, "width": 64, "height": 64 },
-		"san_diego": { "left": 192, "top": 320, "width": 64, "height": 64 },
+		"new_jersey": { "left": 192, "top": 320, "width": 64, "height": 64 },
+		"albacore": { "left": 256, "top": 320, "width": 64, "height": 64 },
+		"enterprise": { "left": 320, "top": 320, "width": 64, "height": 64 },
+
+		"placeholder": { "left": 384, "top": 320, "width": 64, "height": 64 },
 
 		"huggy_pillow": { "left": 0, "top": 384, "width": 64, "height": 64 },
-		"dragon_cannon": { "left": 64, "top": 384, "width": 64, "height": 64 },
+		"star_blaster": { "left": 64, "top": 384, "width": 64, "height": 64 },
 		"battle_mech": { "left": 128, "top": 384, "width": 64, "height": 64 },
-		"star_blaster": { "left": 192, "top": 384, "width": 64, "height": 64 },
-
-		"placeholder": { "left": 256, "top": 0, "width": 64, "height": 64 },
-		"decoration_coin": {
-			"left": 256,
-			"top": 64,
-			"width": 64,
-			"height": 64
-		},
-		"chair": { "left": 256, "top": 128, "width": 64, "height": 64 },
-		"table": { "left": 256, "top": 192, "width": 64, "height": 64 },
-		"bed": { "left": 256, "top": 256, "width": 64, "height": 64 }
+		"dragon_cannon": { "left": 192, "top": 384, "width": 64, "height": 64 }
 	},
 	"user_interface": {
 		"TB_point_up": { "left": 0, "top": 0, "width": 64, "height": 64 },
-		"TB_point_down": { "left": 0, "top": 64, "width": 64, "height": 64 },
-		"TB": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"TB_point_down": { "left": 64, "top": 0, "width": 64, "height": 64 },
+		"TB": { "left": 128, "top": 0, "width": 64, "height": 64 },
 
-		"depot": { "left": 64, "top": 0, "width": 64, "height": 64 },
-		"shipyard": { "left": 64, "top": 64, "width": 64, "height": 64 },
-		"gear_lab": { "left": 64, "top": 128, "width": 64, "height": 64 },
-		"sortie": { "left": 64, "top": 192, "width": 64, "height": 64 },
-		"intel_center": { "left": 64, "top": 256, "width": 64, "height": 64 },
-		"decoration_store": {
-			"left": 192,
-			"top": 128,
-			"width": 64,
-			"height": 64
-		},
-		"decorate_toggle": {
-			"left": 192,
-			"top": 192,
-			"width": 64,
-			"height": 64
-		},
-		"remove_decoration": {
-			"left": 192,
-			"top": 256,
-			"width": 64,
-			"height": 64
-		},
-
-		"unequip_item": {
-			"left": 192,
-			"top": 256,
-			"width": 64,
-			"height": 64
-		},
-
-		"start_sortie": { "left": 0, "top": 192, "width": 64, "height": 64 },
-		"research": { "left": 0, "top": 256, "width": 64, "height": 64 },
-		"cache": { "left": 0, "top": 384, "width": 64, "height": 64 },
-
-		"port": { "left": 64, "top": 320, "width": 32, "height": 32 },
-		"next": { "left": 96, "top": 320, "width": 32, "height": 32 },
-		"prev": { "left": 96, "top": 352, "width": 32, "height": 32 },
-
-		"medal": { "left": 160, "top": 352, "width": 32, "height": 32 },
-		"hull_type": { "left": 64, "top": 384, "width": 32, "height": 32 },
-		"max_hp": { "left": 96, "top": 384, "width": 32, "height": 32 },
-		"evasion": { "left": 128, "top": 384, "width": 32, "height": 32 },
-		"firepower": { "left": 64, "top": 416, "width": 32, "height": 32 },
-		"reload": { "left": 96, "top": 416, "width": 32, "height": 32 },
-		"shell_type": { "left": 128, "top": 416, "width": 32, "height": 32 },
-		"target_pref": { "left": 160, "top": 416, "width": 32, "height": 32 },
-
-		"USS_big": { "left": 128, "top": 0, "width": 64, "height": 64 },
-		"HMS_big": { "left": 128, "top": 64, "width": 64, "height": 64 },
-		"IJN_big": { "left": 128, "top": 128, "width": 64, "height": 64 },
-		"KMS_big": { "left": 128, "top": 192, "width": 64, "height": 64 },
-		"USS": { "left": 128, "top": 256, "width": 32, "height": 32 },
-		"HMS": { "left": 160, "top": 256, "width": 32, "height": 32 },
-		"IJN": { "left": 128, "top": 288, "width": 32, "height": 32 },
-		"KMS": { "left": 160, "top": 288, "width": 32, "height": 32 },
-
-		"DD": { "left": 0, "top": 320, "width": 32, "height": 32 },
-		"CL": { "left": 32, "top": 320, "width": 32, "height": 32 },
-		"CA": { "left": 0, "top": 352, "width": 32, "height": 32 },
-		"BB": { "left": 32, "top": 352, "width": 32, "height": 32 },
-		"AUX": { "left": 64, "top": 352, "width": 32, "height": 32 },
-
+		"cleared": { "left": 0, "top": 64, "width": 32, "height": 32 },
+		"uncleared": { "left": 32, "top": 64, "width": 32, "height": 32 },
+		"locked": { "left": 64, "top": 64, "width": 32, "height": 32 },
 		"compass": { "left": 192, "top": 0, "width": 128, "height": 128 },
-		"cleared": { "left": 128, "top": 320, "width": 32, "height": 32 },
-		"uncleared": { "left": 160, "top": 320, "width": 32, "height": 32 },
-		"locked": { "left": 128, "top": 352, "width": 32, "height": 32 },
 
-		"attack": { "left": 160, "top": 384, "width": 32, "height": 32 }
+		"shell_attack": { "left": 96, "top": 64, "width": 32, "height": 32 },
+		"torp_attack": { "left": 96, "top": 64, "width": 32, "height": 32 },
+		"air_attack": { "left": 96, "top": 64, "width": 32, "height": 32 },
+
+		"port": { "left": 0, "top": 96, "width": 32, "height": 32 },
+		"prev": { "left": 64, "top": 96, "width": 32, "height": 32 },
+		"next": { "left": 96, "top": 96, "width": 32, "height": 32 },
+
+		"USS_big": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"HMS_big": { "left": 64, "top": 128, "width": 64, "height": 64 },
+		"IJN_big": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"KMS_big": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"USS": { "left": 256, "top": 128, "width": 32, "height": 32 },
+		"HMS": { "left": 288, "top": 128, "width": 32, "height": 32 },
+		"IJN": { "left": 256, "top": 160, "width": 32, "height": 32 },
+		"KMS": { "left": 288, "top": 160, "width": 32, "height": 32 },
+
+		"depot": { "left": 0, "top": 192, "width": 64, "height": 64 },
+		"intel_center": { "left": 64, "top": 192, "width": 64, "height": 64 },
+		"shipyard": { "left": 128, "top": 192, "width": 64, "height": 64 },
+		"gear_lab": { "left": 192, "top": 192, "width": 64, "height": 64 },
+		"sortie": { "left": 256, "top": 192, "width": 64, "height": 64 },
+
+		"research": { "left": 0, "top": 256, "width": 64, "height": 64 },
+		"construct": { "left": 192, "top": 192, "width": 64, "height": 64 },
+		"start_sortie": { "left": 64, "top": 256, "width": 64, "height": 64 },
+		"decoration_store": { "left": 128, "top": 256, "width": 64, "height": 64 },
+		"decorate_toggle": { "left": 192, "top": 256, "width": 64, "height": 64 },
+		"remove_decoration": { "left": 256, "top": 256, "width": 64, "height": 64 },
+		"unequip_item": { "left": 256, "top": 256, "width": 64, "height": 64 },
+
+		"cache": { "left": 256, "top": 320, "width": 64, "height": 64 },
+
+		"hull_type": { "left": 0, "top": 320, "width": 32, "height": 32 },
+		"medal": { "left": 32, "top": 320, "width": 32, "height": 32 },
+		"max_hp": { "left": 64, "top": 320, "width": 32, "height": 32 },
+		"evasion": { "left": 96, "top": 320, "width": 32, "height": 32 },
+		"firepower": { "left": 128, "top": 320, "width": 32, "height": 32 },
+		"reload": { "left": 160, "top": 320, "width": 32, "height": 32 },
+		"shell_type": { "left": 192, "top": 320, "width": 32, "height": 32 },
+		"target_pref": { "left": 224, "top": 320, "width": 32, "height": 32 },
+
+		"DD": { "left": 0, "top": 352, "width": 32, "height": 32 },
+		"CL": { "left": 32, "top": 352, "width": 32, "height": 32 },
+		"CA": { "left": 64, "top": 352, "width": 32, "height": 32 },
+		"BB": { "left": 96, "top": 352, "width": 32, "height": 32 },
+		"SS": { "left": 128, "top": 352, "width": 32, "height": 32 },
+		"CV": { "left": 160, "top": 352, "width": 32, "height": 32 },
+		"AUX": { "left": 192, "top": 352, "width": 32, "height": 32 }
 	},
 	"encounter": {
 		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 },

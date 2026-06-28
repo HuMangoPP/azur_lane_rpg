@@ -1,40 +1,8 @@
 {
-	"unlocked_factions": ["USS"],
-	"shipgirls": {
-		"laffey": {
-			"equipment": [null, null, null],
-			"exp": 0
-		},
-		"new_jersey": {
-			"equipment": [null, null, null],
-			"exp": 0
-		},
-		"enterprise": {
-			"equipment": [null, null, null],
-			"exp": 0
-		},
-		"albacore": {
-			"equipment": [null, null, null],
-			"exp": 0
-		},
-		"guam": {
-			"equipment": [null, null, null],
-			"exp": 0
-		},
-		"san_diego": {
-			"equipment": [null, null, null],
-			"exp": 0
-		}
-	},
+	"unlocked_factions": [],
+	"shipgirls": {},
 	"equipment": {},
-	"inventory": {
-		"DD_blueprint": 0,
-		"BB_blueprint": 0,
-		"wisdom_cube": 0,
-		"huggy_pillow": 0,
-		"dragon_cannon": 0,
-		"decoration_coin": 1
-	},
+	"inventory": {},
 	"specialized_wisdom_cubes": {},
 	"decoration_depot": {},
 	"decorations": [],
@@ -42,8 +10,6 @@
 	"sortie_progress": 0,
 	"chapter_progress": 0,
 	"quests": {
-		"choose_faction": "completed",
-		"construct_shipgirls": "completed",
-		"first_sortie": "new"
+		"choose_faction": "new"
 	}
 }
