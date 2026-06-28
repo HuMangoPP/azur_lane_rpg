@@ -16,7 +16,7 @@ class DummyTarget:
 class ShipgirlBattleComponent:
     SHELL_SPEED = 800
     TORPEDO_SPEED = 200
-    AIRCRAFT_SPEED = 100
+    AIRCRAFT_SPEED = 150
 
     def __init__(self, name, is_player):
         self.active = False
@@ -257,7 +257,7 @@ class ShipgirlBattleComponent:
             zip.play(fade_ms=1000)
             zip.fadeout(1000)
 
-    def _draw_attack(self, surface, rect):
+    def _draw_attack(self, surface, rect, vfx_manager):
         t = 1 - self.attack_timer
 
         if self.hull_type == "CV":
@@ -284,11 +284,14 @@ class ShipgirlBattleComponent:
             start_pos = pygame.Vector2((rect.centerx, rect.bottom))
             target_pos = pygame.Vector2((self.target.rect.centerx, self.target.rect.bottom))
             relpos = target_pos - start_pos
-            torpedo_angle = math.degrees(math.atan2(relpos.y, relpos.x))
-            torpedo_sprite = pygame.transform.rotate(DataFiles.sprites["encounter"]["torpedo"], -torpedo_angle)
+            torpedo_angle = math.atan2(relpos.y, relpos.x)
+            torpedo_sprite = pygame.transform.rotate(DataFiles.sprites["encounter"]["torpedo"], -math.degrees(torpedo_angle))
             torpedo_rect = torpedo_sprite.get_rect()
-            torpedo_rect.center = start_pos + relpos * t
+            torpedo_pos = start_pos + relpos * t
+            torpedo_rect.center = torpedo_pos
             surface.blit(torpedo_sprite, torpedo_rect)
+            wake_pos = torpedo_pos - relpos.normalize() * 12
+            vfx_manager.spawn_torpedo_wake(wake_pos, torpedo_angle)
             return
 
         start_pos = pygame.Vector2(rect.center)
@@ -310,7 +313,7 @@ class ShipgirlBattleComponent:
         shell_rect.center = shell_pos
         surface.blit(shell_sprite, shell_rect)
 
-    def draw(self, surface, font, rect):
+    def draw(self, surface, font, rect, vfx_manager):
         bar_width = 64
         bar_height = 8
         if self.exp_timer > 0:
@@ -332,7 +335,7 @@ class ShipgirlBattleComponent:
             return
         
         if self.attack_timer > 0:
-            self._draw_attack(surface, rect)
+            self._draw_attack(surface, rect, vfx_manager)
         
         bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, top=rect.bottom+Box.PADDING)
         bar_fill = get_rect(
@@ -514,13 +517,13 @@ class PlayerFleet:
             if shipgirl is not None:
                 shipgirl.draw(surface, font)
     
-    def draw_battle_component(self, surface, font):
+    def draw_battle_component(self, surface, font, vfx_manager):
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
-                shipgirl.battle_component.draw(surface, font, shipgirl.rect)
+                shipgirl.battle_component.draw(surface, font, shipgirl.rect, vfx_manager)
         for shipgirl in self.backups:
             if shipgirl is not None:
-                shipgirl.battle_component.draw(surface, font, shipgirl.rect)
+                shipgirl.battle_component.draw(surface, font, shipgirl.rect, vfx_manager)
 
 class SirenFleet:
     SLOT_SIZE = 96 # TODO
@@ -615,6 +618,6 @@ class SirenFleet:
         
         return draw_indices
 
-    def draw_battle_component(self, surface, font):
+    def draw_battle_component(self, surface, font, vfx_manager):
         for siren in self.fleet:
-            siren.battle_component.draw(surface, font, siren.rect)
+            siren.battle_component.draw(surface, font, siren.rect, vfx_manager)

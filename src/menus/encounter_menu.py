@@ -375,8 +375,8 @@ class EncounterMenu:
     def draw(self, surface, font):
         self.menu_manager.background.draw(surface, font, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
 
-        self.menu_manager.player_fleet.draw_battle_component(surface, font)
-        self.menu_manager.siren_fleet.draw_battle_component(surface, font)
+        self.menu_manager.player_fleet.draw_battle_component(surface, font, self.vfx_manager)
+        self.menu_manager.siren_fleet.draw_battle_component(surface, font, self.vfx_manager)
         self.vfx_manager.draw(surface, font)
 
         self.next_encounter_button.draw(surface, font)
