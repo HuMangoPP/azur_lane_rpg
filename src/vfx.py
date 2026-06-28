@@ -12,24 +12,34 @@ SHELL_COLORS = {
     "AP": [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
 }
 FIRE_COLORS = [
-    (255, 244, 128, 220),
-    (255, 164, 42, 210),
-    (238, 76, 34, 190),
+    (255, 244, 128),
+    (255, 164, 42),
+    (238, 76, 34),
 ]
 FIRE_SMOKE_COLORS = [
-    (44, 35, 31, 90),
-    (77, 68, 62, 80),
+    (44, 35, 31),
+    (77, 68, 62),
+]
+AIRCRAFT_LAUNCH_RING_COLORS = [
+    (232, 236, 238),
+    (126, 134, 140),
+    (44, 50, 56),
+]
+AIRCRAFT_LAUNCH_SMOKE_COLORS = [
+    (226, 230, 232),
+    (198, 204, 208),
+    (170, 178, 184),
 ]
 TORPEDO_WAKE_COLORS = [
-    (230, 246, 255, 180),
-    (191, 224, 255, 170),
-    (158, 208, 255, 150),
-    (107, 183, 255, 130),
+    (230, 246, 255),
+    (191, 224, 255),
+    (158, 208, 255),
+    (107, 183, 255),
 ]
 TORPEDO_LAUNCH_COLORS = [
-    (245, 252, 255, 230),
-    (78, 192, 255, 210),
-    (18, 96, 190, 190),
+    (245, 252, 255),
+    (78, 192, 255),
+    (18, 96, 190),
 ]
 DAMAGE_COUNTER_COLORS = {
     "normal": ((255, 246, 126), (90, 65, 16)),
@@ -247,6 +257,33 @@ class VFXManager:
                 color,
                 duration=0.45 - 0.08 * i,
                 radius=24 + 18 * i,
+            ))
+
+    def spawn_aircraft_launch(self, pos, launch_angle):
+        for i, color in enumerate(AIRCRAFT_LAUNCH_RING_COLORS):
+            self.effects.append(Ring(
+                pos,
+                color,
+                duration=0.48 - 0.07 * i,
+                radius=36 + 22 * i,
+            ))
+
+        exhaust_angle = launch_angle + math.pi
+        for _ in range(random.randint(4, 6)):
+            smoke_angle = exhaust_angle + math.radians(random.uniform(-35, 35))
+            smoke_color = random.choice(AIRCRAFT_LAUNCH_SMOKE_COLORS)
+            smoke_duration = random.uniform(0.35, 0.55)
+            smoke_delay = random.uniform(0, 0.08)
+            smoke_distance = random.uniform(48, 64)
+            smoke_size = random.randint(24, 38)
+            self.effects.append(Smoke(
+                pos,
+                smoke_angle,
+                smoke_color,
+                duration=smoke_duration,
+                delay=smoke_delay,
+                drift_distance=smoke_distance,
+                size=smoke_size,
             ))
 
     def spawn_shell_impact(self, pos, shell_render_angle, shell_type):
