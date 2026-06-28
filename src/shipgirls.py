@@ -51,6 +51,7 @@ class ShipgirlBattleComponent:
         self.hp = self.stat("max_hp")
         self.cooldown_timer = 1
         self.attack_timer = 0
+        self.torpedo_launch_vfx_played = False
         self.target = None
         self.evasion_gauge = 0
         self.ignite_timer = 0
@@ -92,6 +93,7 @@ class ShipgirlBattleComponent:
     def reset(self):
         self.hp = self.stat("max_hp")
         self.cooldown_timer = 1
+        self.torpedo_launch_vfx_played = False
         self.target = None
         self.evasion_gauge = 0
         self.ignite_timer = 0
@@ -155,6 +157,8 @@ class ShipgirlBattleComponent:
             return
 
         if self.hull_type == "SS":
+            start_pos = pygame.Vector2((rect.centerx, rect.bottom))
+            vfx_manager.spawn_torpedo_launch(start_pos)
             return
 
         start_pos = pygame.Vector2(rect.center)
@@ -250,6 +254,7 @@ class ShipgirlBattleComponent:
             self.shake()
 
             self.attack_timer = 1
+            self.torpedo_launch_vfx_played = False
             self.cooldown_timer = 1
             DataFiles.sfx["boom"].play()
 
@@ -290,6 +295,9 @@ class ShipgirlBattleComponent:
             torpedo_pos = start_pos + relpos * t
             torpedo_rect.center = torpedo_pos
             surface.blit(torpedo_sprite, torpedo_rect)
+            if self.hull_type == "CV" and not self.torpedo_launch_vfx_played:
+                vfx_manager.spawn_torpedo_launch(torpedo_pos)
+                self.torpedo_launch_vfx_played = True
             wake_pos = torpedo_pos - relpos.normalize() * 12
             vfx_manager.spawn_torpedo_wake(wake_pos, torpedo_angle)
             return

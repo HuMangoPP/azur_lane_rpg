@@ -26,6 +26,11 @@ TORPEDO_WAKE_COLORS = [
     (158, 208, 255, 150),
     (107, 183, 255, 130),
 ]
+TORPEDO_LAUNCH_COLORS = [
+    (245, 252, 255, 230),
+    (78, 192, 255, 210),
+    (18, 96, 190, 190),
+]
 DAMAGE_COUNTER_COLORS = {
     "normal": ((255, 246, 126), (90, 65, 16)),
     "HE": ((255, 94, 124), (88, 8, 31)),
@@ -233,6 +238,15 @@ class VFXManager:
             spark_size = (random.randint(16, 27), random.randint(4, 9))
             self.effects.append(Spark(
                 pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
+            ))
+
+    def spawn_torpedo_launch(self, pos):
+        for i, color in enumerate(TORPEDO_LAUNCH_COLORS):
+            self.effects.append(Ring(
+                pos,
+                color,
+                duration=0.45 - 0.08 * i,
+                radius=24 + 18 * i,
             ))
 
     def spawn_shell_impact(self, pos, shell_render_angle, shell_type):
