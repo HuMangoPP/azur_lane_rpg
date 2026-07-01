@@ -75,14 +75,30 @@ class PortMenu:
             for i, faction in enumerate(factions)
         ]
 
+        def open_select_sortie_menu():
+            self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
+            DataFiles.sfx["waves"].play(loops=-1)
+
+        self.open_select_sortie_menu_button = Button(
+            get_rect(width=2*Box.WIDTH,height=Box.HEIGHT,right=Box.RIGHT_OF_SCREEN,bottom=Box.BOTTOM_OF_SCREEN),
+            open_select_sortie_menu,
+            active=False,
+            background_styling={
+                "background_color": Color.START_SORTIE_BUTTON,
+                "background_img": DataFiles.sprites["user_interface"]["sortie"],
+            },
+            hover_styling={"background_color": Color.HOVER_START_SORTIE_BUTTON}
+        )
+
         self.current_overlay = self.NO_OVERLAY
 
         self.visited_inventory = False
         self.visited_intel_center = False
 
-        num_overlay_buttons = 6
+        overlay_buttons_flexbox_width = self.open_select_sortie_menu_button.rect.left
+        num_overlay_buttons = 5
 
-        def open_overlay_factory(overlay_enum):
+        def open_overlay_button_factory(index, overlay_enum, icon):
             def open_overlay():
                 self.current_overlay = overlay_enum
 
@@ -103,64 +119,33 @@ class PortMenu:
                             self.selected_overlay_filter = i
                             break
 
-            return open_overlay
+            return Button(
+                get_rect(
+                    width=Box.WIDTH, height=Box.HEIGHT,
+                    centerx=index/(num_overlay_buttons+1) * overlay_buttons_flexbox_width,
+                    bottom=Box.BOTTOM_OF_SCREEN
+                ),
+                open_overlay,
+                active=False,
+                background_styling={
+                    "background_color": Color.BLACK,
+                    "background_img": DataFiles.sprites["user_interface"][icon],
+                    "opacity": 160,
+                },
+                hover_styling={"opacity": 200}
+            )
 
-        self.open_depot_overlay_button = Button(
-            get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(1/(num_overlay_buttons+1)),
-                bottom=Box.BOTTOM_OF_SCREEN
-            ),
-            open_overlay_factory(self.DEPOT),
-            active=False,
-            background_styling={
-                "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["depot"],
-                "opacity": 160,
-            }
+        self.open_depot_overlay_button = open_overlay_button_factory(
+            1, self.DEPOT, "depot"
         )
-        self.open_intel_center_overlay_button = Button(
-            get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(2/(num_overlay_buttons+1)),
-                bottom=Box.BOTTOM_OF_SCREEN
-            ),
-            open_overlay_factory(self.INTEL_CENTER),
-            active=False,
-            background_styling={
-                "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["intel_center"],
-                "opacity": 160,
-            }
+        self.open_intel_center_overlay_button = open_overlay_button_factory(
+            2, self.INTEL_CENTER, "intel_center"
         )
-        self.open_shipyard_overlay_button = Button(
-            get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(3/(num_overlay_buttons+1)),
-                bottom=Box.BOTTOM_OF_SCREEN
-            ),
-            open_overlay_factory(self.SHIPYARD),
-            active=False,
-            background_styling={
-                "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["shipyard"],
-                "opacity": 160,
-            }
+        self.open_shipyard_overlay_button = open_overlay_button_factory(
+            3, self.SHIPYARD, "shipyard"
         )
-
-        self.open_gear_lab_overlay_button = Button(
-            get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(4/(num_overlay_buttons+1)),
-                bottom=Box.BOTTOM_OF_SCREEN
-            ),
-            open_overlay_factory(self.GEAR_LAB),
-            active=False,
-            background_styling={
-                "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["gear_lab"],
-                "opacity": 160,
-            }
+        self.open_gear_lab_overlay_button = open_overlay_button_factory(
+            4, self.GEAR_LAB, "gear_lab"
         )
 
         self.dossier_overlay = get_rect(
@@ -326,19 +311,8 @@ class PortMenu:
             center=(screen_x(0.5), screen_y(0.5))
         )
 
-        self.open_decoration_store_overlay_button = Button(
-            get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(5/(num_overlay_buttons+1)),
-                bottom=Box.BOTTOM_OF_SCREEN
-            ),
-            open_overlay_factory(self.DECORATION_STORE),
-            active=False,
-            background_styling={
-                "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["decoration_store"],
-                "opacity": 160,
-            }
+        self.open_decoration_store_overlay_button = open_overlay_button_factory(
+            5, self.DECORATION_STORE, "decoration_store"
         )
 
         self.store_overlay = get_rect(
@@ -394,7 +368,8 @@ class PortMenu:
                 "background_color": Color.BLACK,
                 "background_img": DataFiles.sprites["user_interface"]["decorate_toggle"],
                 "opacity": 160,
-            }
+            },
+            hover_styling={"opacity": 200}
         )
         self.decorating_port_menu = False
 
@@ -415,24 +390,27 @@ class PortMenu:
         self.placed_decoration = False
         self.removed_decoration = False
 
-        def open_select_sortie_menu():
-            self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
-            DataFiles.sfx["waves"].play(loops=-1)
-
-        self.open_select_sortie_menu_button = Button(
-            get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(6/(num_overlay_buttons+1)),
-                bottom=Box.BOTTOM_OF_SCREEN
-            ),
-            open_select_sortie_menu,
-            active=False,
-            background_styling={
-                "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["sortie"],
-                "opacity": 160,
-            }
-        )
+        self.hovered_shipgirl = None
+        def open_equipment_menu():
+            self.menu_manager.equipment_menu.selected_shipgirl = self.hovered_shipgirl
+            self.menu_manager.current_menu = self.menu_manager.equipment_menu
+        self.shipgirl_dialogue_options = [
+            Button(
+                rect=get_rect(width=Box.WIDTH,height=Box.HEIGHT,left=0,top=0),
+                callback=callback,
+                active=False,
+                background_styling={
+                    "background_color": Color.BLACK,
+                    "background_img": DataFiles.sprites["user_interface"][sprite],
+                    "opacity": 160
+                },
+                hover_styling={"opacity": 200}
+            )
+            for callback, sprite in zip(
+                [open_equipment_menu, lambda : True],
+                ["equip", "interact"],
+            )
+        ]
 
         self.update_encountered_sirens()
 
@@ -449,6 +427,14 @@ class PortMenu:
 
     def update_no_overlay(self, events):
         for event in events:
+            if event.type == pygame.MOUSEMOTION:
+                self.open_select_sortie_menu_button.hover(event.pos)
+                self.open_depot_overlay_button.hover(event.pos)
+                self.open_shipyard_overlay_button.hover(event.pos)
+                self.open_gear_lab_overlay_button.hover(event.pos)
+                self.open_intel_center_overlay_button.hover(event.pos)
+                self.open_decoration_store_overlay_button.hover(event.pos)
+                self.open_close_decoration_menu_button.hover(event.pos)
             if event.type == pygame.MOUSEBUTTONUP:
                 click = False
 
@@ -481,13 +467,29 @@ class PortMenu:
 
                 if click:
                     DataFiles.sfx["click"].play()
+                    self.hovered_shipgirl = None
+                    continue
+
+                if self.hovered_shipgirl is not None:
+                    for option in self.shipgirl_dialogue_options:
+                        if option.click(event.pos):
+                            DataFiles.sfx["click"].play()
+                        option.active = False
+                    self.hovered_shipgirl.dragged = False
+                    self.release_shipgirl_from_interaction(self.hovered_shipgirl)
+                    self.hovered_shipgirl = None
                     continue
 
                 for shipgirl in self.menu_manager.available_shipgirls:
                     if shipgirl.rect.collidepoint(event.pos):
                         DataFiles.sfx["click"].play()
-                        self.menu_manager.equipment_menu.selected_shipgirl = shipgirl
-                        self.menu_manager.current_menu = self.menu_manager.equipment_menu
+                        self.hovered_shipgirl = shipgirl
+                        self.hovered_shipgirl.dragged = True
+                        dialogue_options_offset = (len(self.shipgirl_dialogue_options)-1)/2
+                        for i, option in enumerate(self.shipgirl_dialogue_options):
+                            option.rect.bottom = shipgirl.rect.top
+                            option.rect.centerx = shipgirl.rect.centerx + (i - dialogue_options_offset) * (Box.WIDTH + Box.PADDING)
+                            option.active = True
 
     def draw_inventory_overlay(self, surface, font):
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.depot_overlay)
@@ -977,6 +979,8 @@ class PortMenu:
                             shipgirl.interacting_decoration = None
                             break
             if event.type == pygame.MOUSEMOTION:
+                self.open_close_decoration_menu_button.hover(event.pos)
+
                 if self.dragged_shipgirl is not None:
                     self.dragged_shipgirl.pos = pygame.Vector2(event.pos) + self.dragged_shipgirl_offset
                     self.dragged_shipgirl.rect.center = self.dragged_shipgirl.pos
@@ -1175,6 +1179,9 @@ class PortMenu:
 
         for shipgirl in self.menu_manager.available_shipgirls:
             shipgirl.draw(surface, font)
+        
+        for option in self.shipgirl_dialogue_options:
+            option.draw(surface, font)
 
         self.open_close_decoration_menu_button.draw(surface, font)
         if self.decorating_port_menu:

@@ -1,7 +1,7 @@
 import pygame
 
 class Button:
-    def __init__(self, rect, callback, active=True, background_styling={}, text_styling={}):
+    def __init__(self, rect, callback, active=True, background_styling={}, text_styling={}, hover_styling={}):
         self.active = active
         self.rect = rect
         self.callback = callback
@@ -20,7 +20,22 @@ class Button:
         if self.text is not None and self.text_align is None:
             self.text_align = (1/2, 1/2)
         self.text_color = text_styling.get("text_color")
+
+        self.hover_background_color = hover_styling.get("background_color", self.background_color)
+        self.hover_outline_color = hover_styling.get("outline_color", self.outline_color)
+        self.hover_outline_width = hover_styling.get("outline_width", self.outline_width)
+        self.hover_opacity = hover_styling.get("opacity", self.opacity)
+        self.hovered = False
     
+    def hover(self, mpos):
+        if not self.active:
+            self.hovered = False
+        elif not self.rect.collidepoint(mpos):
+            self.hovered = False
+        else:
+            self.hovered = True
+        return self.hovered
+
     def click(self, mpos):
         if not self.active:
             return False
@@ -35,15 +50,19 @@ class Button:
         if not self.active:
             return
         
-        if self.background_color is not None:
+        background_color = self.hover_background_color if self.hovered else self.background_color
+        opacity = self.hover_opacity if self.hovered else self.opacity
+        if background_color is not None:
             background = pygame.Surface(self.rect.size)
-            background.fill(self.background_color)
-            if self.opacity is not None:
-                background.set_alpha(self.opacity)
+            background.fill(background_color)
+            if opacity is not None:
+                background.set_alpha(opacity)
             surface.blit(background, self.rect)
         
-        if self.outline_color is not None:
-            pygame.draw.rect(surface, self.outline_color, self.rect, self.outline_width)
+        outline_color = self.hover_outline_color if self.hovered else self.outline_color
+        outline_width = self.hover_outline_width if self.hovered else self.outline_width
+        if outline_color is not None:
+            pygame.draw.rect(surface, outline_color, self.rect, outline_width)
 
         if self.background_img is not None:
             img_rect = self.background_img.get_rect()
