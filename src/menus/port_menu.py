@@ -238,7 +238,7 @@ class PortMenu:
             width=num_items_in_row*(Box.WIDTH+Box.PADDING) + Box.PADDING,
             height=num_items_in_col*(Box.HEIGHT+Box.PADDING) + Box.PADDING,
             right=screen_x(0.5),
-            centery=screen_y(0.5)
+            centery=screen_y(0.4)
         )
         self.warehouse_icons = [
             get_rect(
@@ -248,6 +248,10 @@ class PortMenu:
             ) for i in range(num_items_in_row * num_items_in_col)
         ]
         self.warehouse_selected_item = None
+        self.forklift_x = 0
+        self.forklift_dx = 1
+        self.forklift_pause = 0
+
         # Clipboard-themed right panel
         self.clipboard_bg = get_rect(
             width=3*(Box.WIDTH+Box.PADDING) + 3*Box.PADDING,
@@ -635,6 +639,7 @@ class PortMenu:
             self.current_overlay = self.NO_OVERLAY
             self.overlay_selected_entity = None
             self.overlay_confirm_button.active = False
+            self.overlay_selected_filter = 0
             return True
         return False
 
@@ -898,10 +903,86 @@ class PortMenu:
             image_rect = image.get_rect()
             image_rect.center = rect.center
             surface.blit(image, image_rect)
+            pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, image_rect, width=2*Box.OUTLINE_WIDTH)
 
             if self.current_overlay == self.DEPOT:
                 count = DataFiles.save_file["inventory"][entity]
-                font.render(surface, str(count), rect.center, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
+                font.render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+        cargo_box_sprite = DataFiles.sprites["user_interface"]["cargo_box"]
+        cargo_box_rect = cargo_box_sprite.get_rect()
+        for cargo_box_pos in [
+            pygame.Vector2(self.warehouse_overlay.bottomleft),
+            pygame.Vector2(self.warehouse_overlay.bottomleft) + pygame.Vector2(cargo_box_rect.width, 0),
+            pygame.Vector2(self.warehouse_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width, 0),
+
+            pygame.Vector2(self.warehouse_overlay.bottomright),
+            pygame.Vector2(self.warehouse_overlay.bottomright) + pygame.Vector2(0, -cargo_box_rect.height),
+            pygame.Vector2(self.warehouse_overlay.bottomright) + pygame.Vector2(-cargo_box_rect.width, 0),
+        ]:
+            cargo_box_rect.center = cargo_box_pos
+            surface.blit(cargo_box_sprite, cargo_box_rect)
+        forklift_sprite = pygame.transform.scale_by(
+            pygame.transform.flip(
+                DataFiles.sprites["user_interface"]["forklift"],
+                flip_x=self.forklift_dx < 0,
+                flip_y=False
+            ),
+            (min(2*abs(2*self.forklift_pause - 1), 1), 1)
+        )
+        forklift_rect = forklift_sprite.get_rect()
+        forklift_rect.center = (
+            pygame.Vector2(self.warehouse_overlay.bottomleft)
+            + pygame.Vector2(self.forklift_x * self.warehouse_overlay.width, 0)
+        )
+        surface.blit(forklift_sprite, forklift_rect)
+        for cargo_box_pos in [
+            pygame.Vector2(self.warehouse_overlay.bottomleft) + pygame.Vector2(cargo_box_rect.width/2, cargo_box_rect.height/2),
+            pygame.Vector2(self.warehouse_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width/2, cargo_box_rect.height/2),
+
+            pygame.Vector2(self.warehouse_overlay.bottomright) + pygame.Vector2(-cargo_box_rect.width/2, cargo_box_rect.height/2),
+            pygame.Vector2(self.warehouse_overlay.bottomright) + pygame.Vector2(-cargo_box_rect.width*3/2, cargo_box_rect.height/2),
+        ]:
+            cargo_box_rect.center = cargo_box_pos
+            surface.blit(cargo_box_sprite, cargo_box_rect)
+
+        warehouse_decoration_top = self.warehouse_overlay.top - Box.WIDTH/8
+        corner_rope_sprite = DataFiles.sprites["user_interface"]["corner_rope"]
+        corner_rope_rect = corner_rope_sprite.get_rect()
+        corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH/8 # TODO
+        corner_rope_rect.top = warehouse_decoration_top
+        surface.blit(corner_rope_sprite, corner_rope_rect)
+
+        big_corner_rope_sprite = DataFiles.sprites["user_interface"]["big_corner_rope"]
+        big_corner_rope_rect = big_corner_rope_sprite.get_rect()
+        big_corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH/8 # TODO
+        big_corner_rope_rect.top = warehouse_decoration_top
+        surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
+
+        top_rope_sprite = DataFiles.sprites["user_interface"]["top_rope"]
+        top_rope_rect = top_rope_sprite.get_rect()
+        top_rope_rect.centerx = self.warehouse_overlay.centerx
+        top_rope_rect.top = warehouse_decoration_top
+        surface.blit(top_rope_sprite, top_rope_rect)
+
+        rope_hook_sprite = DataFiles.sprites["user_interface"]["rope_hook"]
+        rope_hook_rect = rope_hook_sprite.get_rect()
+        rope_hook_rect.left = self.warehouse_overlay.left
+        rope_hook_rect.top = warehouse_decoration_top
+        surface.blit(rope_hook_sprite, rope_hook_rect)
+
+        lightbulb_sprite = DataFiles.sprites["user_interface"]["lightbulb"]
+        lightbulb_rect = lightbulb_sprite.get_rect()
+        lightbulb_rect.left = self.warehouse_overlay.left + Box.WIDTH
+        lightbulb_rect.top = warehouse_decoration_top
+        surface.blit(lightbulb_sprite, lightbulb_rect)
+
+        lightbulb_light_sprite = DataFiles.sprites["user_interface"]["lightbulb_light"]
+        lightbulb_light_rect = lightbulb_light_sprite.get_rect()
+        lightbulb_light_rect.centerx = lightbulb_rect.centerx
+        lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
+        surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
 
     def draw_clipboard_overlay(self, surface, font):
         if self.overlay_selected_entity is None:
@@ -928,7 +1009,18 @@ class PortMenu:
         pygame.draw.rect(surface, Color.CLIPBOARD_CLIP, clipboard_clip_rect)
         pygame.draw.polygon(surface, Color.WHITE, self.misaligned_clipboard_page)
         pygame.draw.rect(surface, Color.WHITE, self.clipboard_page)
-        pygame.draw.rect(surface, Color.CLIPBOARD_CLIP, clipboard_clip_rect, width=4) #TODO magic numbers
+        pygame.draw.lines(
+            surface,
+            Color.CLIPBOARD_CLIP_FRONT,
+            False,
+            [
+                clipboard_clip_rect.topleft,
+                clipboard_clip_rect.bottomleft,
+                clipboard_clip_rect.bottomright,
+                clipboard_clip_rect.topright
+            ],
+            width=4
+        ) # TODO width
         font.render(surface, self.overlay_selected_entity, clipboard_name_pos, Color.BLACK, 1, style="center")
         surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), clipboard_highlight_icon)
         pygame.draw.rect(surface, Color.BLACK, clipboard_highlight_icon, width=Box.OUTLINE_WIDTH)
@@ -946,6 +1038,12 @@ class PortMenu:
         font.render(surface, desc, desc_topleft, Color.BLACK, 1, style="topleft", box_width=desc_text_boxwidth)
 
         self.overlay_confirm_button.draw(surface, font)
+
+        clipboard_pencil_sprite = DataFiles.sprites["user_interface"]["clipboard_pencil"]
+        clipboard_pencil_rect = clipboard_pencil_sprite.get_rect()
+        clipboard_pencil_rect.right = self.clipboard_page.right + Box.WIDTH/2 # TODO
+        clipboard_pencil_rect.bottom = self.clipboard_page.bottom + Box.HEIGHT/2
+        surface.blit(clipboard_pencil_sprite, clipboard_pencil_rect)
 
     def rotate_decoration_direction(self):
         self.decoration_direction_index = (self.decoration_direction_index + 1) % len(self.DECORATION_DIRECTIONS)
@@ -1181,6 +1279,23 @@ class PortMenu:
                     self.select_filter(event)
                     self.select_entity(event)
                     self.overlay_confirm_button.click(event.pos)
+
+        if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
+            if self.forklift_pause > 0:
+                prev_forklift_pause = self.forklift_pause
+                self.forklift_pause -= dt
+                if prev_forklift_pause > 0.5 and self.forklift_pause <= 0.5:
+                    self.forklift_dx *= -1
+            elif self.forklift_dx > 0:
+                self.forklift_x += dt / 5
+                if self.forklift_x >= 1:
+                    self.forklift_x = 1
+                    self.forklift_pause = 1
+            elif self.forklift_dx < 0:
+                self.forklift_x -= dt / 5
+                if self.forklift_x <= 0:
+                    self.forklift_x = 0
+                    self.forklift_pause = 1
 
         for shipgirl in self.menu_manager.available_shipgirls:
             shipgirl.update(dt)

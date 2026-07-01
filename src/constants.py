@@ -32,6 +32,7 @@ class Color:
 
     CARGO_BOX = (184, 144, 114)
     CARGO_BOX_BACK = (112, 78, 53)
+    CARGO_BOX_OUTLINE = (82, 54, 32)
 
     DOSSIER_PAGE = (255, 255, 255)
     DOSSIER = (231, 201, 169)
@@ -71,6 +72,7 @@ class Color:
     COMPLETED_QUEST_BANNER = (191, 156, 0)
 
     CLIPBOARD_CLIP = (150, 150, 150)
+    CLIPBOARD_CLIP_FRONT = (175, 175, 175)
 
 class Equipment:
     NUM_EQUIPS = 3
@@ -248,6 +250,10 @@ for wave_index in range(DataFiles.sprites["sortie_selection"]["num_waves"]):
     r, g, b = colorsys.hsv_to_rgb(base_hue, saturation, value)
     wave_color = (int(r*255), int(g*255), int(b*255))
     create_sortie_selection_wave_sprite(wave_index, wave_color)
+
+lightbulb_light = pygame.Surface((64,64))
+pygame.draw.circle(lightbulb_light, (28, 19, 0), (32,32), 32)
+DataFiles.sprites["user_interface"]["lightbulb_light"] = lightbulb_light
 
 class Decorations:
     TILESIZE = 64
