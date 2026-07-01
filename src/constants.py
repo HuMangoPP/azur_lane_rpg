@@ -70,6 +70,8 @@ class Color:
     NEW_QUEST_BANNER = (43, 173, 0)
     COMPLETED_QUEST_BANNER = (191, 156, 0)
 
+    CLIPBOARD_CLIP = (150, 150, 150)
+
 class Equipment:
     NUM_EQUIPS = 3
     WEAPON = 0
@@ -132,6 +134,8 @@ class DataFiles:
     with open("data/decoration_store.json") as f:
         decoration_store = json.load(f)
     
+    with open("data/item_descriptions.json") as f:
+        item_descriptions = json.load(f)
 
     sprites = load_sprites()
     sfx = load_sound(master_file="sfx.json", file_ext="wav")

@@ -1,0 +1,24 @@
+{
+    "decoration_coin": "Currency for buying decorations.",
+
+	"DD_blueprint": "A blueprint for constructing destroyer shipgirls and their weapons.",
+	"CL_blueprint": "A blueprint for constructing light cruiser shipgirls and their weapons.",
+	"CA_blueprint": "A blueprint for constructing heavy cruiser shipgirls and their weapons.",
+	"BB_blueprint": "A blueprint for constructing battleship shipgirls and their weapons.",
+	"SS_blueprint": "A blueprint for constructing submarine shipgirls and their weapons.",
+	"CV_blueprint": "A blueprint for constructing aircraft carrier shipgirls and their weapons.",
+
+	"electronics": "Cutting edge electronic components used for military devices.",
+	"gunpowder": "Military-grade high-explosion gunpowder.",
+	"metals": "Pure metals produced through an extensive refinement process.",
+	"plastics": "High durabilty synthetic plastics resistant to wear and tear.",
+
+	"wisdom_cube": "An otherworldly artifact capable of converting memories into energy.",
+
+	"huggy_pillow": "Can I nap a little longer, please...?",
+	"star_blaster": "I am number one!",
+	"battle_mech": "I only made it for the tail end of the war, but I still dazzled everybody!",
+	"dragon_cannon": "Heh, don'tcha just love it?",
+	"20_battle_stars": "Want to look at my medal collection?",
+	"prank_of_the_day": "Oh, did I jump out and scare you? Sorry 'bout that~!"
+}

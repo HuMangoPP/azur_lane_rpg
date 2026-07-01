@@ -251,14 +251,15 @@ class PortMenu:
         # Clipboard-themed right panel
         self.clipboard_bg = get_rect(
             width=3*(Box.WIDTH+Box.PADDING) + 3*Box.PADDING,
-            height=4*(Box.HEIGHT+Box.PADDING) + 3*Box.PADDING,
+            height=4*(Box.HEIGHT+Box.PADDING) + 3*Box.PADDING + Box.HEIGHT/2,
             left=screen_x(0.5) + Box.PADDING,
             centery=screen_y(0.5)
         )
         self.clipboard_page = get_rect(
             width=self.clipboard_bg.width - 2*Box.PADDING,
-            height=self.clipboard_bg.height - 2*Box.PADDING,
-            center=self.clipboard_bg.center
+            height=self.clipboard_bg.height - 2*Box.PADDING - Box.HEIGHT/4,
+            centerx=self.clipboard_bg.centerx,
+            bottom=self.clipboard_bg.bottom - Box.PADDING
         )
         # Crooked page for styling
         clipboard_page_center = pygame.Vector2(self.clipboard_page.center)
@@ -906,10 +907,16 @@ class PortMenu:
         if self.overlay_selected_entity is None:
             return
     
+        clipboard_clip_rect = get_rect(
+            width=Box.WIDTH, height=Box.HEIGHT/2,
+            centerx=self.clipboard_bg.centerx,
+            top=self.clipboard_bg.top + Box.PADDING
+        )
+
         font_height = 10
         clipboard_name_pos = pygame.Vector2(
             self.clipboard_page.centerx,
-            self.clipboard_page.top + font_height/2 + Box.PADDING
+            self.clipboard_page.top + font_height/2 + Box.PADDING + Box.HEIGHT/4
         )
         clipboard_highlight_icon = get_rect(
             width=Box.WIDTH, height=Box.HEIGHT,
@@ -917,12 +924,26 @@ class PortMenu:
             top=clipboard_name_pos.y + font_height/2 + Box.PADDING
         )
 
-        pygame.draw.rect(surface, Color.CARGO_BOX, self.clipboard_bg)
+        pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.clipboard_bg)
+        pygame.draw.rect(surface, Color.CLIPBOARD_CLIP, clipboard_clip_rect)
         pygame.draw.polygon(surface, Color.WHITE, self.misaligned_clipboard_page)
         pygame.draw.rect(surface, Color.WHITE, self.clipboard_page)
+        pygame.draw.rect(surface, Color.CLIPBOARD_CLIP, clipboard_clip_rect, width=4) #TODO magic numbers
         font.render(surface, self.overlay_selected_entity, clipboard_name_pos, Color.BLACK, 1, style="center")
         surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), clipboard_highlight_icon)
         pygame.draw.rect(surface, Color.BLACK, clipboard_highlight_icon, width=Box.OUTLINE_WIDTH)
+
+        if self.current_overlay == self.DEPOT:
+            desc = DataFiles.item_descriptions.get(self.overlay_selected_entity, "no description")
+        if self.current_overlay == self.DECORATION_STORE:
+            desc = DataFiles.decoration_store[self.overlay_selected_entity]["description"]
+        
+        desc_topleft = pygame.Vector2(
+            self.clipboard_page.left + Box.PADDING + Box.WIDTH/4, # TODO fix alignment
+            clipboard_highlight_icon.bottom + Box.PADDING + Box.HEIGHT/4
+        )
+        desc_text_boxwidth = self.clipboard_page.width - 2*Box.PADDING - Box.WIDTH/2
+        font.render(surface, desc, desc_topleft, Color.BLACK, 1, style="topleft", box_width=desc_text_boxwidth)
 
         self.overlay_confirm_button.draw(surface, font)
 
