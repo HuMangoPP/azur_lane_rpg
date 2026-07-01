@@ -321,8 +321,9 @@ class PortMenu:
         )
 
         self.open_decoration_store_overlay_button = open_overlay_button_factory(
-            5, self.DECORATION_STORE, "decoration_store"
+            5, self.DECORATION_STORE, "decoration_store", "decoration_store_notification"
         )
+        self.decoration_store_notification = True
 
         self.store_overlay = get_rect(
             width=5*(Box.WIDTH+Box.PADDING) + Box.PADDING,
@@ -1395,7 +1396,8 @@ class PortMenu:
             self.intel_center_notification,
             self.shipyard_notification,
             self.gear_lab_notification,
-            False, False,
+            self.decoration_store_notification,
+            False,
         ]
         for button, notification in zip(buttons, notifications):
             button.draw(surface, font)
