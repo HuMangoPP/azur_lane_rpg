@@ -51,7 +51,6 @@ class PortMenu:
         self.menu_manager = menu_manager
         Decorations.floor_rect.center = (screen_x(0.5), screen_y(0.5))
         self.camera_dragging = False
-        self.camera_drag_last_pos = None
 
         factions = ["USS", "HMS", "IJN", "KMS"]
         def choose_faction_factory(faction):
@@ -435,13 +434,22 @@ class PortMenu:
 
         self.update_encountered_sirens()
 
-    def active_button_collidepoint(self, button, pos):
-        return button.active and button.rect.collidepoint(pos)
+    def position_shipgirl_dialogue_options(self):
+        if self.hovered_shipgirl is None:
+            return
 
-    def port_camera_pan(self, delta):
+        dialogue_options_offset = (len(self.shipgirl_dialogue_options)-1)/2
+        for i, option in enumerate(self.shipgirl_dialogue_options):
+            option.rect.bottom = self.hovered_shipgirl.rect.top
+            option.rect.centerx = self.hovered_shipgirl.rect.centerx + (i - dialogue_options_offset) * (Box.WIDTH + Box.PADDING)
+
+    def update_camera_drag(self, event):
+        if not self.camera_dragging:
+            return False
+
         old_topleft = pygame.Vector2(Decorations.floor_rect.topleft)
-        Decorations.floor_rect.x += int(delta.x)
-        Decorations.floor_rect.y += int(delta.y)
+        Decorations.floor_rect.x += event.rel[0]
+        Decorations.floor_rect.y += event.rel[1]
 
         screen_width = screen_x(1)
         screen_height = screen_y(1)
@@ -462,44 +470,7 @@ class PortMenu:
             shipgirl.rect.center = shipgirl.pos
 
         self.position_shipgirl_dialogue_options()
-
-    def position_shipgirl_dialogue_options(self):
-        if self.hovered_shipgirl is None:
-            return
-
-        dialogue_options_offset = (len(self.shipgirl_dialogue_options)-1)/2
-        for i, option in enumerate(self.shipgirl_dialogue_options):
-            option.rect.bottom = self.hovered_shipgirl.rect.top
-            option.rect.centerx = self.hovered_shipgirl.rect.centerx + (i - dialogue_options_offset) * (Box.WIDTH + Box.PADDING)
-
-    def update_camera_drag(self, event):
-        if not self.camera_dragging:
-            return False
-
-        current_pos = pygame.Vector2(event.pos)
-        self.port_camera_pan(current_pos - self.camera_drag_last_pos)
-        self.camera_drag_last_pos = current_pos
         return True
-
-    def stop_camera_drag(self):
-        was_dragging = self.camera_dragging
-        self.camera_dragging = False
-        self.camera_drag_last_pos = None
-        return was_dragging
-
-    def decoration_at_pos(self, pos):
-        clicked_tilepos = (
-            (pos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
-            (pos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
-        )
-        for decoration, tilepos_anchor, direction in DataFiles.save_file["decorations"]:
-            decoration_info = DataFiles.decoration_store[decoration][direction]
-            if (
-                tilepos_anchor[0] <= clicked_tilepos[0] < tilepos_anchor[0] + decoration_info["width"]
-                and tilepos_anchor[1] <= clicked_tilepos[1] < tilepos_anchor[1] + decoration_info["height"]
-            ):
-                return True
-        return False
 
     def can_start_no_overlay_camera_drag(self, pos):
         if self.menu_manager.quest_manager.selected_quest is not None:
@@ -516,7 +487,7 @@ class PortMenu:
             *self.choose_faction_buttons,
             *self.shipgirl_dialogue_options,
         ]
-        if any(self.active_button_collidepoint(button, pos) for button in buttons):
+        if any(button.active and button.rect.collidepoint(pos) for button in buttons):
             return False
 
         for i in range(len(self.menu_manager.quest_manager.quests)):
@@ -534,17 +505,28 @@ class PortMenu:
     def can_start_decorate_camera_drag(self, pos):
         if self.decoration_depot_overlay.collidepoint(pos):
             return False
-        if self.active_button_collidepoint(self.open_close_decoration_menu_button, pos):
+        if (
+            self.open_close_decoration_menu_button.active
+            and self.open_close_decoration_menu_button.rect.collidepoint(pos)
+        ):
             return False
         if self.selected_decoration_in_depot is not None:
             return False
-        if self.deleting_decoration and self.decoration_at_pos(pos):
-            return False
-        return not any(shipgirl.rect.collidepoint(pos) for shipgirl in self.menu_manager.available_shipgirls)
+        
+        if self.deleting_decoration:
+            clicked_tilepos = (
+                (pos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
+                (pos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
+            )
+            for decoration, tilepos_anchor, direction in DataFiles.save_file["decorations"]:
+                decoration_info = DataFiles.decoration_store[decoration][direction]
+                if (
+                    tilepos_anchor[0] <= clicked_tilepos[0] < tilepos_anchor[0] + decoration_info["width"]
+                    and tilepos_anchor[1] <= clicked_tilepos[1] < tilepos_anchor[1] + decoration_info["height"]
+                ):
+                    return False
 
-    def start_camera_drag(self, pos):
-        self.camera_dragging = True
-        self.camera_drag_last_pos = pygame.Vector2(pos)
+        return not any(shipgirl.rect.collidepoint(pos) for shipgirl in self.menu_manager.available_shipgirls)
 
     def update_encountered_sirens(self):
         self.encountered_sirens = set()
@@ -570,7 +552,7 @@ class PortMenu:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1 and self.can_start_no_overlay_camera_drag(event.pos):
-                    self.start_camera_drag(event.pos)
+                    self.camera_dragging = True
                     continue
 
             if event.type == pygame.MOUSEMOTION:
@@ -591,7 +573,8 @@ class PortMenu:
                 for button in buttons:
                     button.hover(event.pos)
             if event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1 and self.stop_camera_drag():
+                if event.button == 1 and self.camera_dragging:
+                    self.camera_dragging = False
                     continue
 
                 click = False
@@ -1140,7 +1123,7 @@ class PortMenu:
                                 break
 
                     if self.dragged_shipgirl is None and self.can_start_decorate_camera_drag(event.pos):
-                        self.start_camera_drag(event.pos)
+                        self.camera_dragging = True
                         continue
             if event.type == pygame.MOUSEMOTION:
                 if self.update_camera_drag(event):
@@ -1165,7 +1148,8 @@ class PortMenu:
                 if event.button != 1:
                     continue
 
-                if self.stop_camera_drag():
+                if self.camera_dragging:
+                    self.camera_dragging = False
                     continue
 
                 if self.dragged_shipgirl is not None:
