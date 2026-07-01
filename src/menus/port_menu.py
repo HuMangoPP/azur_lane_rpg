@@ -1046,8 +1046,8 @@ class PortMenu:
     def release_shipgirl_from_interaction(self, shipgirl):
         shipgirl.interacting_decoration = None
         shipgirl.wander_target = pygame.Vector2(
-            screen_x(random.random()),
-            screen_y(random.random())
+            random.uniform(Decorations.floor_rect.left, Decorations.floor_rect.right),
+            random.uniform(Decorations.floor_rect.top, Decorations.floor_rect.bottom)
         )
         shipgirl.pause_time = random.uniform(1, 3) # TODO
 
@@ -1383,8 +1383,8 @@ class PortMenu:
             return
         
         buttons = [
-            self.open_intel_center_overlay_button,
             self.open_depot_overlay_button,
+            self.open_intel_center_overlay_button,
             self.open_shipyard_overlay_button,
             self.open_gear_lab_overlay_button,
             self.open_decoration_store_overlay_button,

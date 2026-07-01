@@ -5,7 +5,7 @@ import pygame
 
 from engine.util import get_rect, draw_annulus
 
-from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y
+from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y, Decorations
 from src.vfx import shell_position, SHELL_SCALE
 from live2d.live2d import Live2D
 
@@ -417,8 +417,8 @@ class Shipgirl:
             to_target = self.wander_target - self.pos
             if to_target.length() < 10: # TODO
                 self.wander_target = pygame.Vector2(
-                    screen_x(random.random()),
-                    screen_y(random.random())
+                    random.uniform(Decorations.floor_rect.left, Decorations.floor_rect.right),
+                    random.uniform(Decorations.floor_rect.top, Decorations.floor_rect.bottom)
                 )
                 self.pause_time = random.uniform(1, 3) # TODO
             else:
