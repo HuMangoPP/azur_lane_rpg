@@ -247,8 +247,8 @@ for wave_index in range(DataFiles.sprites["sortie_selection"]["num_waves"]):
 
 class Decorations:
     TILESIZE = 64
-    NUM_TILES_IN_ROW = int(TEMP_SCREEN_SIZE[0] // TILESIZE)
-    NUM_TILES_IN_COL = int(TEMP_SCREEN_SIZE[1] // TILESIZE)
+    NUM_TILES_IN_ROW = 2 * int(TEMP_SCREEN_SIZE[0] // TILESIZE)
+    NUM_TILES_IN_COL = 2 * int(TEMP_SCREEN_SIZE[1] // TILESIZE)
 
     @classmethod
     def create_floor_surf(cls):

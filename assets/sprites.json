@@ -95,6 +95,7 @@
 
 		"equip": { "left": 192, "top": 192, "width": 64, "height": 64 },
 		"interact": { "left": 320, "top": 256, "width": 64, "height": 64 },
+		"close": { "left": 320, "top": 192, "width": 64, "height": 64 },
 
 		"cache": { "left": 256, "top": 320, "width": 64, "height": 64 },
 
