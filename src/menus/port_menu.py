@@ -97,13 +97,19 @@ class PortMenu:
 
         self.visited_inventory = False
         self.visited_intel_center = False
+        self.depot_notification = True
+        self.intel_center_notification = True
+        self.shipyard_notification = True
+        self.gear_lab_notification = True
 
         overlay_buttons_flexbox_width = self.open_select_sortie_menu_button.rect.left
         num_overlay_buttons = 5
 
-        def open_overlay_button_factory(index, overlay_enum, icon):
+        def open_overlay_button_factory(index, overlay_enum, icon, notification_attr=None):
             def open_overlay():
                 self.current_overlay = overlay_enum
+                if notification_attr is not None:
+                    setattr(self, notification_attr, False)
 
                 if overlay_enum == self.SHIPYARD:
                     if DataFiles.save_file["research_target"] is not None:
@@ -139,16 +145,16 @@ class PortMenu:
             )
 
         self.open_depot_overlay_button = open_overlay_button_factory(
-            1, self.DEPOT, "depot"
+            1, self.DEPOT, "depot", "depot_notification"
         )
         self.open_intel_center_overlay_button = open_overlay_button_factory(
-            2, self.INTEL_CENTER, "intel_center"
+            2, self.INTEL_CENTER, "intel_center", "intel_center_notification"
         )
         self.open_shipyard_overlay_button = open_overlay_button_factory(
-            3, self.SHIPYARD, "shipyard"
+            3, self.SHIPYARD, "shipyard", "shipyard_notification"
         )
         self.open_gear_lab_overlay_button = open_overlay_button_factory(
-            4, self.GEAR_LAB, "gear_lab"
+            4, self.GEAR_LAB, "gear_lab", "gear_lab_notification"
         )
 
         self.dossier_overlay = get_rect(
@@ -549,6 +555,15 @@ class PortMenu:
                     + [siren_name.split(":")[0] for siren_name in encounter["back"]]
                 )
         self.encountered_sirens = list(self.encountered_sirens)
+
+    def draw_button_notification(self, surface, button, notification):
+        if not button.active or not notification:
+            return
+
+        notification_sprite = DataFiles.sprites["user_interface"]["notification"]
+        notification_rect = notification_sprite.get_rect()
+        notification_rect.center = button.rect.topright
+        surface.blit(notification_sprite, notification_rect)
 
     def update_no_overlay(self, events):
         for event in events:
@@ -1367,12 +1382,24 @@ class PortMenu:
                 pygame.draw.rect(surface, Color.WHITE, delete_rect, width=Box.OUTLINE_WIDTH)
             return
         
-        self.open_select_sortie_menu_button.draw(surface, font)
-        self.open_depot_overlay_button.draw(surface, font)
-        self.open_shipyard_overlay_button.draw(surface, font)
-        self.open_gear_lab_overlay_button.draw(surface, font)
-        self.open_intel_center_overlay_button.draw(surface, font)
-        self.open_decoration_store_overlay_button.draw(surface, font)
+        buttons = [
+            self.open_intel_center_overlay_button,
+            self.open_depot_overlay_button,
+            self.open_shipyard_overlay_button,
+            self.open_gear_lab_overlay_button,
+            self.open_decoration_store_overlay_button,
+            self.open_select_sortie_menu_button,
+        ]
+        notifications = [
+            self.depot_notification,
+            self.intel_center_notification,
+            self.shipyard_notification,
+            self.gear_lab_notification,
+            False, False,
+        ]
+        for button, notification in zip(buttons, notifications):
+            button.draw(surface, font)
+            self.draw_button_notification(surface, button, notification)
 
         if self.current_overlay == self.DEPOT:
             self.draw_inventory_overlay(surface, font)

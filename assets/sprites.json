@@ -67,6 +67,7 @@
 		"air_attack": { "left": 96, "top": 64, "width": 32, "height": 32 },
 
 		"port": { "left": 0, "top": 96, "width": 32, "height": 32 },
+		"notification": { "left": 32, "top": 96, "width": 32, "height": 32 },
 		"prev": { "left": 64, "top": 96, "width": 32, "height": 32 },
 		"next": { "left": 96, "top": 96, "width": 32, "height": 32 },
 
@@ -88,9 +89,24 @@
 		"research": { "left": 0, "top": 256, "width": 64, "height": 64 },
 		"construct": { "left": 192, "top": 192, "width": 64, "height": 64 },
 		"start_sortie": { "left": 64, "top": 256, "width": 64, "height": 64 },
-		"decoration_store": { "left": 128, "top": 256, "width": 64, "height": 64 },
-		"decorate_toggle": { "left": 192, "top": 256, "width": 64, "height": 64 },
-		"remove_decoration": { "left": 256, "top": 256, "width": 64, "height": 64 },
+		"decoration_store": {
+			"left": 128,
+			"top": 256,
+			"width": 64,
+			"height": 64
+		},
+		"decorate_toggle": {
+			"left": 192,
+			"top": 256,
+			"width": 64,
+			"height": 64
+		},
+		"remove_decoration": {
+			"left": 256,
+			"top": 256,
+			"width": 64,
+			"height": 64
+		},
 		"unequip_item": { "left": 256, "top": 256, "width": 64, "height": 64 },
 
 		"equip": { "left": 192, "top": 192, "width": 64, "height": 64 },
