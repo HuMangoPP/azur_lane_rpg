@@ -97,14 +97,15 @@ def choose_faction_on_start(menu_manager):
     for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
         choose_faction_button.active = True
 
-def choose_faction_on_complete(menu_manager):
-    faction_shipgirls = DataFiles.get_faction_shipgirls()
-    specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
-    for hull_type in ["DD", "BB"]:
-        shipgirl = faction_shipgirls[hull_type]
-        if DataFiles.save_file["inventory"].get("wisdom_cube", 0) > 0:
-            DataFiles.save_file["inventory"]["wisdom_cube"] -= 1
-            specialized_wisdom_cubes[shipgirl] = 0
+def choose_faction_on_complete(menu_manager, save_file_load=False):
+    if not save_file_load:
+        faction_shipgirls = DataFiles.get_faction_shipgirls()
+        specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
+        for hull_type in ["DD", "BB"]:
+            shipgirl = faction_shipgirls[hull_type]
+            if DataFiles.save_file["inventory"].get("wisdom_cube", 0) > 0:
+                DataFiles.save_file["inventory"]["wisdom_cube"] -= 1
+                specialized_wisdom_cubes[shipgirl] = 0
 
     quest_name = construct_shipgirls_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = construct_shipgirls_quest
@@ -169,7 +170,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
 
             draw_tb(surface, font, None, rect.topright, True, False)
         elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
-            if menu_manager.port_menu.selected_overlay_filter is None:
+            if menu_manager.port_menu.overlay_selected_filter is None:
                 shipgirl_data = {
                     shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
                     if shipgirl not in DataFiles.save_file["shipgirls"]
@@ -180,7 +181,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
                     shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
                     if shipgirl not in DataFiles.save_file["shipgirls"]
                     and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                    and shipgirl_info["faction"] == menu_manager.port_menu.shipgirl_filters[menu_manager.port_menu.selected_overlay_filter]
+                    and shipgirl_info["faction"] == menu_manager.port_menu.shipyard_filters[menu_manager.port_menu.overlay_selected_filter]
                 }
 
             for i, (shipgirl, shipgirl_info) in enumerate(shipgirl_data.items()):
@@ -197,8 +198,8 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
                 draw_tb(surface, font, None, rect.bottomleft, False, True)
             
-            if menu_manager.port_menu.blueprint_selected_item in shipgirls:
-                button_rect = menu_manager.port_menu.blueprint_confirm_button.rect
+            if menu_manager.port_menu.overlay_selected_entity in shipgirls:
+                button_rect = menu_manager.port_menu.overlay_confirm_button.rect
                 rect = get_rect(
                     width=button_rect.width + 2*Box.PADDING,
                     height=button_rect.height + 2*Box.PADDING,
@@ -212,7 +213,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
 def construct_shipgirls_on_start(menu_manager):
     menu_manager.port_menu.open_shipyard_overlay_button.active = True
 
-def construct_shipgirls_on_complete(menu_manager):
+def construct_shipgirls_on_complete(menu_manager, save_file_load=False):
     quest_name = first_sortie_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = first_sortie_quest
     if quest_name not in DataFiles.save_file["quests"]:
@@ -345,7 +346,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
 def first_sortie_on_start(menu_manager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
 
-def first_sortie_on_complete(menu_manager):
+def first_sortie_on_complete(menu_manager, save_file_load=False):
     quest_name = inventory_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = inventory_quest
     if quest_name not in DataFiles.save_file["quests"]:
@@ -376,7 +377,7 @@ inventory_post_quest_dialogue = [
 ]
 
 def inventory_completion_criteria(menu_manager):
-    return menu_manager.port_menu.visited_inventory
+    return menu_manager.port_menu.visited_depot
 
 def inventory_tutorial_draw(menu_manager, surface, font):
     if menu_manager.current_menu != menu_manager.port_menu:
@@ -393,7 +394,7 @@ def inventory_tutorial_draw(menu_manager, surface, font):
 
         draw_tb(surface, font, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DEPOT:
-        rect = menu_manager.port_menu.depot_overlay
+        rect = menu_manager.port_menu.warehouse_overlay
         draw_tb(
             surface, font,
             "You can see all of your items here!",
@@ -404,7 +405,7 @@ def inventory_tutorial_draw(menu_manager, surface, font):
 def inventory_on_start(menu_manager):
     menu_manager.port_menu.open_depot_overlay_button.active = True
 
-def inventory_on_complete(menu_manager):
+def inventory_on_complete(menu_manager, save_file_load=False):
     quest_name = intel_center_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = intel_center_quest
     if quest_name not in DataFiles.save_file["quests"]:
@@ -454,7 +455,7 @@ def intel_center_tutorial_draw(menu_manager, surface, font):
 
         draw_tb(surface, font, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.INTEL_CENTER:
-        if menu_manager.port_menu.blueprint_selected_item is None:
+        if menu_manager.port_menu.overlay_selected_entity is None:
             siren_rect = menu_manager.port_menu.dossier_icons[0]
             rect = get_rect(
                 width=siren_rect.width + 2*Box.PADDING,
@@ -475,7 +476,7 @@ def intel_center_tutorial_draw(menu_manager, surface, font):
 def intel_center_on_start(menu_manager):
     menu_manager.port_menu.open_intel_center_overlay_button.active = True
 
-def intel_center_on_complete(menu_manager):
+def intel_center_on_complete(menu_manager, save_file_load=False):
     quest_name = research_shipgirl_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = research_shipgirl_quest
     if quest_name not in DataFiles.save_file["quests"]:
@@ -516,7 +517,7 @@ def research_shipgirl_completion_criteria(menu_manager):
 def research_shipgirl_on_start(menu_manager):
     menu_manager.port_menu.open_shipyard_overlay_button.active = True
 
-def research_shipgirl_on_complete(menu_manager):
+def research_shipgirl_on_complete(menu_manager, save_file_load=False):
     pass
 
 research_shipgirl_quest = Quest(
@@ -550,7 +551,7 @@ def construct_shipgirl_completion_criteria(menu_manager):
 def construct_shipgirl_on_start(menu_manager):
     pass
 
-def construct_shipgirl_on_complete(menu_manager):
+def construct_shipgirl_on_complete(menu_manager, save_file_load=False):
     pass
 
 construct_shipgirl_quest = Quest(
@@ -596,8 +597,8 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font):
 
         draw_tb(surface, font, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.GEAR_LAB:
-        if menu_manager.port_menu.blueprint_selected_item == "twin_120":
-            button_rect = menu_manager.port_menu.blueprint_confirm_button.rect
+        if menu_manager.port_menu.overlay_selected_entity == "twin_120":
+            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,
@@ -620,7 +621,7 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font):
 def craft_weapon_on_start(menu_manager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
 
-def craft_weapon_on_complete(menu_manager):
+def craft_weapon_on_complete(menu_manager, save_file_load=False):
     quest_name = equip_weapon_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = equip_weapon_quest
     if quest_name not in DataFiles.save_file["quests"]:
@@ -686,7 +687,7 @@ def equip_weapon_tutorial_draw(menu_manager, surface, font):
 def equip_weapon_on_start(menu_manager):
     pass
 
-def equip_weapon_on_complete(menu_manager):
+def equip_weapon_on_complete(menu_manager, save_file_load=False):
     pass
 
 equip_weapon_quest = Quest(
@@ -736,16 +737,16 @@ def buy_decoration_tutorial_draw(menu_manager, surface, font):
 
         draw_tb(surface, font, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DECORATION_STORE:
-        if menu_manager.port_menu.store_selected_item is None:
-            rect = menu_manager.port_menu.store_overlay
+        if menu_manager.port_menu.overlay_selected_entity is None:
+            rect = menu_manager.port_menu.warehouse_overlay
             draw_tb(
                 surface, font,
                 "Pick any decoration to buy.",
                 rect.center,
                 False, False
             )
-        elif menu_manager.port_menu.store_confirm_button.active:
-            button_rect = menu_manager.port_menu.store_confirm_button.rect
+        elif menu_manager.port_menu.overlay_confirm_button.active:
+            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,
@@ -758,7 +759,7 @@ def buy_decoration_tutorial_draw(menu_manager, surface, font):
 def buy_decoration_on_start(menu_manager):
     menu_manager.port_menu.open_decoration_store_overlay_button.active = True
 
-def buy_decoration_on_complete(menu_manager):
+def buy_decoration_on_complete(menu_manager, save_file_load=False):
     quest_name = decorate_port_quest.quest_id
     menu_manager.quest_manager.quests[quest_name] = decorate_port_quest
     if quest_name not in DataFiles.save_file["quests"]:
@@ -952,7 +953,7 @@ def decorate_port_on_start(menu_manager):
     port_menu.placed_decoration = False
     port_menu.removed_decoration = False
 
-def decorate_port_on_complete(menu_manager):
+def decorate_port_on_complete(menu_manager, save_file_load=False):
     pass
 
 decorate_port_quest = Quest(

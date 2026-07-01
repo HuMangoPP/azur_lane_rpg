@@ -54,7 +54,6 @@
 		"construct_shipgirl": "completed",
 		"craft_weapon": "completed",
 		"equip_weapon": "completed",
-		"buy_decoration": "completed",
-		"decorate_port": "completed"
+		"buy_decoration": "new"
 	}
 }
