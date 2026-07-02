@@ -162,6 +162,13 @@
 			"top": 576,
 			"width": 64,
 			"height": 32
+		},
+		"red_circle": { "left": 224, "top": 512, "width": 96, "height": 96 },
+		"decoration_coin": {
+			"left": 320,
+			"top": 512,
+			"width": 64,
+			"height": 64
 		}
 	},
 	"encounter": {

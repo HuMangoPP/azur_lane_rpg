@@ -117,11 +117,7 @@ class PortMenu:
                     if DataFiles.save_file["research_target"] is not None:
                         self.overlay_selected_entity = DataFiles.save_file["research_target"]
                         self.overlay_confirm_button.active = True
-                        self.overlay_confirm_button.rect.centerx = self.blueprint_page.centerx
-                        self.overlay_confirm_button.rect.bottom = self.blueprint_page.bottom - Box.PADDING
-                        self.overlay_confirm_button.outline_color = Color.WHITE
-                        self.overlay_confirm_button.text_align = (2/3, 1/2)
-                        self.overlay_confirm_button.text_color = Color.WHITE
+                        self.position_overlay_confirm_button_on_sticky_note()
                         unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
                         if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
                             self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["construct"]
@@ -215,7 +211,7 @@ class PortMenu:
         # Blueprint-themed right panel
         self.blueprint_page = get_rect(
             width=4*(Box.WIDTH + Box.PADDING) + Box.PADDING,
-            height=5*(Box.HEIGHT + Box.PADDING) + Box.PADDING,
+            height=5*(Box.HEIGHT + Box.PADDING) + Box.PADDING + Box.HEIGHT,
             left=self.dossier_overlay.right+Box.PADDING,
             centery=screen_y(0.5),
         )
@@ -229,6 +225,23 @@ class PortMenu:
             blueprint_page_center - page_horizontal + page_vertical,
             blueprint_page_center - page_horizontal - page_vertical,
             blueprint_page_center + page_horizontal - page_vertical,
+        ]
+        # Sticky-note confirm surface attached to the blueprint's top-right corner.
+        self.sticky_note_page = get_rect(
+            width=2*Box.WIDTH + 2*Box.PADDING,
+            height=2*Box.HEIGHT + 2*Box.PADDING,
+            right=self.blueprint_page.right + Box.WIDTH + Box.PADDING,
+            top=self.blueprint_page.top - Box.HEIGHT/2 - Box.PADDING,
+        )
+        sticky_note_page_center = pygame.Vector2(self.sticky_note_page.center)
+        rotated_angle = -5
+        page_horizontal = get_vec(self.sticky_note_page.width/2, math.radians(rotated_angle))
+        page_vertical = get_vec(self.sticky_note_page.height/2, math.radians(90+rotated_angle))
+        self.sticky_note_misaligned_page = [
+            sticky_note_page_center + page_horizontal + page_vertical,
+            sticky_note_page_center - page_horizontal + page_vertical,
+            sticky_note_page_center - page_horizontal - page_vertical,
+            sticky_note_page_center + page_horizontal - page_vertical,
         ]
 
         # Warehouse-themed left panel
@@ -334,7 +347,7 @@ class PortMenu:
                     DataFiles.save_file["inventory"].get("decoration_coin", 0) - 1
                 )
                 if DataFiles.save_file["inventory"]["decoration_coin"] <= 0:
-                    self.clipboard_confirm_button.active = False
+                    self.overlay_confirm_button.active = False
 
         self.overlay_confirm_button = Button(
             get_rect(
@@ -535,6 +548,12 @@ class PortMenu:
         notification_rect.center = button.rect.topright
         surface.blit(notification_sprite, notification_rect)
 
+    def position_overlay_confirm_button_on_sticky_note(self):
+        self.overlay_confirm_button.rect.center = self.sticky_note_page.center
+        self.overlay_confirm_button.outline_color = Color.STICKY_NOTE_OUTLINE
+        self.overlay_confirm_button.text_align = (2/3, 1/2)
+        self.overlay_confirm_button.text_color = Color.BLACK
+
     def update_no_overlay(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -625,15 +644,23 @@ class PortMenu:
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             left_overlay = self.warehouse_overlay
             right_overlay = self.clipboard_bg
+            clicked_right_overlay = right_overlay.collidepoint(mouseup_event.pos)
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             left_overlay = self.dossier_overlay
             right_overlay = self.blueprint_page
+            clicked_right_overlay = (
+                right_overlay.collidepoint(mouseup_event.pos)
+                or (
+                    self.overlay_confirm_button.active
+                    and self.sticky_note_page.collidepoint(mouseup_event.pos)
+                )
+            )
 
         if (
             not left_overlay.collidepoint(mouseup_event.pos)
             and (
                 self.overlay_selected_entity is None
-                or not right_overlay.collidepoint(mouseup_event.pos)
+                or not clicked_right_overlay
             )
         ):
             self.current_overlay = self.NO_OVERLAY
@@ -705,11 +732,7 @@ class PortMenu:
                     self.overlay_confirm_button.text_align = (1/2, 1/2)
                     self.overlay_confirm_button.text_color = Color.START_SORTIE_BUTTON
                 if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
-                    self.overlay_confirm_button.rect.centerx = self.blueprint_page.centerx
-                    self.overlay_confirm_button.rect.bottom = self.blueprint_page.bottom - Box.PADDING
-                    self.overlay_confirm_button.outline_color = Color.WHITE
-                    self.overlay_confirm_button.text_align = (2/3, 1/2)
-                    self.overlay_confirm_button.text_color = Color.WHITE
+                    self.position_overlay_confirm_button_on_sticky_note()
 
                 if self.current_overlay == self.SHIPYARD:
                     unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
@@ -779,6 +802,11 @@ class PortMenu:
             image_rect = image.get_rect()
             image_rect.center = rect.center
             surface.blit(image, image_rect)
+            if entity == self.overlay_selected_entity:
+                selected_sprite = DataFiles.sprites["user_interface"]["red_circle"]
+                selected_rect = selected_sprite.get_rect()
+                selected_rect.center = rect.center
+                surface.blit(selected_sprite, selected_rect)
             pygame.draw.rect(surface, Color.BLACK, rect, width=Box.OUTLINE_WIDTH)
         
         overlay_paperclip_sprite = DataFiles.sprites["user_interface"]["overlay_paperclip"]
@@ -786,6 +814,14 @@ class PortMenu:
         overlay_paperclip_rect.left = self.dossier_bg.left - Box.WIDTH/4 # TODO alignment
         overlay_paperclip_rect.top = self.dossier_bg.top
         surface.blit(overlay_paperclip_sprite, overlay_paperclip_rect)
+
+    def draw_sticky_note_overlay(self, surface, font):
+        if not self.overlay_confirm_button.active:
+            return
+
+        pygame.draw.polygon(surface, Color.STICKY_NOTE, self.sticky_note_misaligned_page)
+        pygame.draw.rect(surface, Color.STICKY_NOTE, self.sticky_note_page)
+        self.overlay_confirm_button.draw(surface, font)
 
     def draw_blueprint_overlay(self, surface, font):
         if self.overlay_selected_entity is None:
@@ -816,10 +852,25 @@ class PortMenu:
         surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), blueprint_highlight_icon)
         pygame.draw.rect(surface, Color.WHITE, blueprint_highlight_icon, width=Box.OUTLINE_WIDTH)
 
+        def draw_blueprint_divider(label, y):
+            divider_margin = 2*Box.PADDING
+            label_left = self.blueprint_page.left + divider_margin
+            line_left = label_left + font.get_width(label, 1, 0) + Box.PADDING
+            line_right = self.blueprint_page.right - divider_margin
+            font.render(surface, label, (label_left, y), Color.WHITE, 1, style="centerleft")
+            pygame.draw.line(
+                surface,
+                Color.WHITE,
+                (line_left, y),
+                (line_right, y),
+                width=Box.OUTLINE_WIDTH
+            )
+
         if self.current_overlay == self.INTEL_CENTER:
             selected_siren = DataFiles.siren_data[self.overlay_selected_entity]
             drop_rates = selected_siren["drops"]
             icons = [(drop, str(drop_rate)) for drop, drop_rate in drop_rates.items()]
+            rewards_header = "drops"
             info = { # TODO scale by level
                 "hull_type": selected_siren.get("hull_type"),
                 "max_hp": selected_siren["max_hp"][0],
@@ -845,6 +896,7 @@ class PortMenu:
                 (research_req, f"{count}/1")
                 for research_req, count in research_reqs
             ]
+            rewards_header = "materials"
             hull_type = selected_shipgirl.get("hull_type")
             selected_entity_stats = DataFiles.stats_data[hull_type]
             research_shipgirl_exp = specialized_wisdom_cubes.get(self.overlay_selected_entity, 0)
@@ -864,6 +916,7 @@ class PortMenu:
                 (material, f"{inventory.get(material,0)}/{req}")
                 for material, req in crafting_reqs.items()
             ]
+            rewards_header = "materials"
             info = {
                 "hull_type": selected_equipment.get("equippable_by"),
                 "max_hp": selected_equipment.get("max_hp"),
@@ -874,8 +927,13 @@ class PortMenu:
             }
 
         icon_size = 32 # TODO
+        stats_divider_y = blueprint_highlight_icon.bottom + Box.PADDING + font_height/2
+        rewards_divider_y = blueprint_icons[0].top - Box.PADDING - font_height/2
+        draw_blueprint_divider("stats", stats_divider_y)
+        draw_blueprint_divider(rewards_header, rewards_divider_y)
+
         left_align = [blueprint_icons[0].left + Box.PADDING,self.blueprint_page.centerx + Box.PADDING]
-        y = blueprint_highlight_icon.bottom + Box.PADDING
+        y = stats_divider_y + font_height/2 + Box.PADDING
         info_index = 0
         for info_key, info_value in info.items():
             if info_value is None:
@@ -901,8 +959,6 @@ class PortMenu:
             xy = (rect.centerx, rect.top+0.67*rect.height)
             font.render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        self.overlay_confirm_button.draw(surface, font)
-
         overlay_pencil_sprite = DataFiles.sprites["user_interface"]["overlay_pencil"]
         overlay_pencil_rect = overlay_pencil_sprite.get_rect()
         overlay_pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
@@ -914,6 +970,7 @@ class PortMenu:
         overlay_compass_rect.left = self.blueprint_page.left - Box.WIDTH/2 # TODO alignment
         overlay_compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
         surface.blit(overlay_compass_sprite, overlay_compass_rect)
+        self.draw_sticky_note_overlay(surface, font)
 
     def draw_warehouse_overlay(self, surface, font):
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.warehouse_overlay)
@@ -1034,6 +1091,17 @@ class PortMenu:
         pygame.draw.rect(surface, Color.CLIPBOARD_CLIP, clipboard_clip_rect)
         pygame.draw.polygon(surface, Color.WHITE, self.misaligned_clipboard_page)
         pygame.draw.rect(surface, Color.WHITE, self.clipboard_page)
+        if self.current_overlay == self.DECORATION_STORE:
+            coin_count = DataFiles.save_file["inventory"].get("decoration_coin", 0)
+
+            coin_sprite = DataFiles.sprites["user_interface"]["decoration_coin"]
+            coin_rect = coin_sprite.get_rect()
+            coin_rect.right = self.clipboard_page.right - Box.PADDING
+            coin_rect.top = self.clipboard_page.top + Box.PADDING
+
+            for _ in range(coin_count):
+                coin_rect.y -= 6 # TODO decoration coin height
+                surface.blit(coin_sprite, coin_rect)
         pygame.draw.lines(
             surface,
             Color.CLIPBOARD_CLIP_FRONT,
