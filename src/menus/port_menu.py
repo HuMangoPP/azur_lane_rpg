@@ -30,6 +30,17 @@ def get_decoration_sprite_rect(decoration, direction, tilepos_anchor):
     sprite_rect.bottomleft = tile_rect.bottomleft
     return sprite_rect
 
+def get_rotated_rect_polygon(rect, rotated_angle, offset=(0, 0)):
+    rect_center = pygame.Vector2(rect.center) + pygame.Vector2(offset)
+    rect_horizontal = get_vec(rect.width/2, math.radians(rotated_angle))
+    rect_vertical = get_vec(rect.height/2, math.radians(90 + rotated_angle))
+    return [
+        rect_center + rect_horizontal + rect_vertical,
+        rect_center - rect_horizontal + rect_vertical,
+        rect_center - rect_horizontal - rect_vertical,
+        rect_center + rect_horizontal - rect_vertical,
+    ]
+
 def in_tileable_area(tiles):
     return (
         min(tile[0] for tile in tiles) >= 0
@@ -188,17 +199,6 @@ class PortMenu:
             height=self.dossier_bg.height - 2*Box.PADDING,
             center=self.dossier_bg.center
         )
-        # A crooked page for styling
-        dossier_page_center = pygame.Vector2(self.dossier_page.center)
-        rotated_angle = 5
-        page_horizontal = get_vec(self.dossier_page.width/2, math.radians(rotated_angle))
-        page_vertical = get_vec(self.dossier_page.height/2, math.radians(90+rotated_angle))
-        self.misaligned_dossier_page = [
-            dossier_page_center + page_horizontal + page_vertical,
-            dossier_page_center - page_horizontal + page_vertical,
-            dossier_page_center - page_horizontal - page_vertical,
-            dossier_page_center + page_horizontal - page_vertical,
-        ]
         # Icons on page
         self.dossier_icons = [
             get_rect(
@@ -215,17 +215,6 @@ class PortMenu:
             left=self.dossier_overlay.right+Box.PADDING,
             centery=screen_y(0.5),
         )
-        # Crooked blueprint page for styling
-        blueprint_page_center = pygame.Vector2(self.blueprint_page.center)
-        rotated_angle = 5
-        page_horizontal = get_vec(self.blueprint_page.width/2, math.radians(rotated_angle))
-        page_vertical = get_vec(self.blueprint_page.height/2, math.radians(90+rotated_angle))
-        self.misaligned_blueprint_page = [
-            blueprint_page_center + page_horizontal + page_vertical,
-            blueprint_page_center - page_horizontal + page_vertical,
-            blueprint_page_center - page_horizontal - page_vertical,
-            blueprint_page_center + page_horizontal - page_vertical,
-        ]
         # Sticky-note confirm surface attached to the blueprint's top-right corner.
         self.sticky_note_page = get_rect(
             width=2*Box.WIDTH + 2*Box.PADDING,
@@ -233,16 +222,6 @@ class PortMenu:
             right=self.blueprint_page.right + Box.WIDTH + Box.PADDING,
             top=self.blueprint_page.top - Box.HEIGHT/2 - Box.PADDING,
         )
-        sticky_note_page_center = pygame.Vector2(self.sticky_note_page.center)
-        rotated_angle = -5
-        page_horizontal = get_vec(self.sticky_note_page.width/2, math.radians(rotated_angle))
-        page_vertical = get_vec(self.sticky_note_page.height/2, math.radians(90+rotated_angle))
-        self.sticky_note_misaligned_page = [
-            sticky_note_page_center + page_horizontal + page_vertical,
-            sticky_note_page_center - page_horizontal + page_vertical,
-            sticky_note_page_center - page_horizontal - page_vertical,
-            sticky_note_page_center + page_horizontal - page_vertical,
-        ]
 
         # Warehouse-themed left panel
         num_items_in_row = 5
@@ -278,17 +257,6 @@ class PortMenu:
             centerx=self.clipboard_bg.centerx,
             bottom=self.clipboard_bg.bottom - Box.PADDING
         )
-        # Crooked page for styling
-        clipboard_page_center = pygame.Vector2(self.clipboard_page.center)
-        rotated_angle = 5
-        page_horizontal = get_vec(self.clipboard_page.width/2, math.radians(rotated_angle))
-        page_vertical = get_vec(self.clipboard_page.height/2, math.radians(90+rotated_angle))
-        self.misaligned_clipboard_page = [
-            clipboard_page_center + page_horizontal + page_vertical,
-            clipboard_page_center - page_horizontal + page_vertical,
-            clipboard_page_center - page_horizontal - page_vertical,
-            clipboard_page_center + page_horizontal - page_vertical,
-        ]
 
         # Overlay logic state
         def overlay_confirm():
@@ -795,7 +763,17 @@ class PortMenu:
                     if equip_data["type"] == "weapon"
                     and equip_data["equippable_by"] == self.gear_lab_filters[self.overlay_selected_filter]
                 ]
-        pygame.draw.polygon(surface, Color.DOSSIER_PAGE, self.misaligned_dossier_page)
+        misaligned_pages = [
+            (-5, pygame.Vector2(-8, 6), (224, 218, 201)),
+            (4, pygame.Vector2(6, -4), (235, 229, 212)),
+            (-2, pygame.Vector2(3, 5), (244, 239, 224)),
+        ]
+        for rotated_angle, offset, color in misaligned_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
+            )
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
         for entity, rect in zip(entities, self.dossier_icons):
             image = DataFiles.get_entity_sprite(entity)
@@ -819,7 +797,17 @@ class PortMenu:
         if not self.overlay_confirm_button.active:
             return
 
-        pygame.draw.polygon(surface, Color.STICKY_NOTE, self.sticky_note_misaligned_page)
+        misaligned_pages = [
+            (4, pygame.Vector2(-5, 4), Color.STICKY_NOTE_BACK),
+            (-5, pygame.Vector2(5, -3), (239, 207, 87)),
+            (2, pygame.Vector2(2, 4), (247, 220, 105)),
+        ]
+        for rotated_angle, offset, color in misaligned_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                get_rotated_rect_polygon(self.sticky_note_page, rotated_angle, offset)
+            )
         pygame.draw.rect(surface, Color.STICKY_NOTE, self.sticky_note_page)
         self.overlay_confirm_button.draw(surface, font)
 
@@ -846,7 +834,17 @@ class PortMenu:
             ) for i in range(2*num_icons_per_row)
         ]
 
-        pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
+        misaligned_pages = [
+            (-5, pygame.Vector2(-7, 6), Color.BLUEPRINT_PAGE_BACK),
+            (4, pygame.Vector2(7, -4), (34, 62, 125)),
+            (-2, pygame.Vector2(3, 5), (45, 76, 145)),
+        ]
+        for rotated_angle, offset, color in misaligned_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset)
+            )
         pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
         font.render(surface, self.overlay_selected_entity, blueprint_name_pos, Color.WHITE, 1, style="center")
         surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), blueprint_highlight_icon)
@@ -1089,7 +1087,17 @@ class PortMenu:
 
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.clipboard_bg)
         pygame.draw.rect(surface, Color.CLIPBOARD_CLIP, clipboard_clip_rect)
-        pygame.draw.polygon(surface, Color.WHITE, self.misaligned_clipboard_page)
+        misaligned_pages = [
+            (-5, pygame.Vector2(-6, 5), (220, 220, 210)),
+            (4, pygame.Vector2(7, -3), (233, 233, 224)),
+            (-2, pygame.Vector2(2, 4), (244, 244, 236)),
+        ]
+        for rotated_angle, offset, color in misaligned_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                get_rotated_rect_polygon(self.clipboard_page, rotated_angle, offset)
+            )
         pygame.draw.rect(surface, Color.WHITE, self.clipboard_page)
         if self.current_overlay == self.DECORATION_STORE:
             coin_count = DataFiles.save_file["inventory"].get("decoration_coin", 0)
