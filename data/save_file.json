@@ -2,63 +2,40 @@
 	"unlocked_factions": ["USS"],
 	"shipgirls": {
 		"laffey": {
-			"equipment": ["twin_120", "repair_toolkit", "ap_shell"],
-			"exp": 4248
+			"equipment": ["twin_120", null, null],
+			"exp": 504
 		},
 		"new_jersey": {
-			"equipment": ["tri_406", "autoloader", "steering_gear"],
-			"exp": 4994
+			"equipment": ["tri_406", null, null],
+			"exp": 504
 		},
 		"guam": {
-			"equipment": ["twin_203", "steering_gear", null],
-			"exp": 5287
-		},
-		"san_diego": {
-			"equipment": ["twin_150", "ap_shell", "repair_toolkit"],
-			"exp": 3985
-		},
-		"albacore": {
-			"equipment": ["g7e_torp", "autoloader", "repair_toolkit"],
-			"exp": 2339
-		},
-		"enterprise": {
-			"equipment": ["hellcat", "steering_gear", "autoloader"],
-			"exp": 2911
+			"equipment": [null, null, null],
+			"exp": 487
 		}
 	},
 	"equipment": {
 		"twin_120": 0,
-		"tri_406": 0,
-		"twin_203": 0,
-		"twin_150": 0,
-		"g7e_torp": 0,
-		"hellcat": 0,
-		"steering_gear": 0,
-		"repair_toolkit": 0,
-		"autoloader": 0,
-		"ap_shell": 0
+		"tri_406": 0
 	},
 	"inventory": {
 		"DD_blueprint": 0,
 		"BB_blueprint": 0,
-		"wisdom_cube": 1,
+		"wisdom_cube": 0,
 		"huggy_pillow": 0,
 		"dragon_cannon": 0,
 		"decoration_coin": 7,
-		"CA_blueprint": 0,
+		"CA_blueprint": 1,
 		"battle_mech": 0,
 		"metals": 1,
-		"gunpowder": 1,
+		"gunpowder": 0,
 		"plastics": 0,
-		"electronics": 0,
-		"CL_blueprint": 0,
-		"star_blaster": 0,
-		"SS_blueprint": 0,
-		"prank_of_the_day": 0,
-		"CV_blueprint": 0,
-		"20_battle_stars": 0
+		"electronics": 1,
+		"CL_blueprint": 1
 	},
-	"specialized_wisdom_cubes": {},
+	"specialized_wisdom_cubes": {
+		"san_diego": 147
+	},
 	"decoration_depot": {
 		"bed": 0
 	},
@@ -67,9 +44,9 @@
 		["bed", [7, 1], "north"],
 		["bed", [9, 1], "north"]
 	],
-	"research_target": null,
-	"sortie_progress": 24,
-	"chapter_progress": 3,
+	"research_target": "san_diego",
+	"sortie_progress": 6,
+	"chapter_progress": 1,
 	"quests": {
 		"choose_faction": "completed",
 		"construct_shipgirls": "completed",

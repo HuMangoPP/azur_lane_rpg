@@ -166,7 +166,7 @@ class PortMenu:
         self.dossier_overlay = get_rect(
             width=num_items_in_row*(Box.WIDTH + Box.PADDING) + 4*Box.PADDING,
             height=num_items_in_col*(Box.HEIGHT + Box.PADDING) + 3*Box.PADDING + Box.HEIGHT,
-            right=screen_x(0.5),
+            right=screen_x(0.5) + Box.WIDTH,
             centery=screen_y(0.5)
         )
         # Manila folder background
@@ -182,7 +182,7 @@ class PortMenu:
         self.dossier_tabs = [
             get_rect(
                 width=tab_size, height=tab_size,
-                left=self.dossier_bg.left+i*(tab_size+Box.PADDING),
+                left=self.dossier_bg.left+i*Box.WIDTH,
                 bottom=self.dossier_bg.top
             ) for i in range(num_dossier_tabs)
         ]
@@ -214,10 +214,10 @@ class PortMenu:
 
         # Blueprint-themed right panel
         self.blueprint_page = get_rect(
-            left=screen_x(0.5)+Box.PADDING,
-            centery=screen_y(0.5),
             width=4*(Box.WIDTH + Box.PADDING) + Box.PADDING,
-            height=5*(Box.HEIGHT + Box.PADDING) + Box.PADDING
+            height=5*(Box.HEIGHT + Box.PADDING) + Box.PADDING,
+            left=self.dossier_overlay.right+Box.PADDING,
+            centery=screen_y(0.5),
         )
         # Crooked blueprint page for styling
         blueprint_page_center = pygame.Vector2(self.blueprint_page.center)
@@ -237,7 +237,7 @@ class PortMenu:
         self.warehouse_overlay = get_rect(
             width=num_items_in_row*(Box.WIDTH+Box.PADDING) + Box.PADDING,
             height=num_items_in_col*(Box.HEIGHT+Box.PADDING) + Box.PADDING,
-            right=screen_x(0.5),
+            right=screen_x(0.5) + Box.WIDTH/2,
             centery=screen_y(0.4)
         )
         self.warehouse_icons = [
@@ -256,7 +256,7 @@ class PortMenu:
         self.clipboard_bg = get_rect(
             width=3*(Box.WIDTH+Box.PADDING) + 3*Box.PADDING,
             height=4*(Box.HEIGHT+Box.PADDING) + 3*Box.PADDING + Box.HEIGHT/2,
-            left=screen_x(0.5) + Box.PADDING,
+            left=self.warehouse_overlay.right + Box.WIDTH/2,
             centery=screen_y(0.5)
         )
         self.clipboard_page = get_rect(
@@ -734,7 +734,14 @@ class PortMenu:
                 color = Color.DOSSIER
             else:
                 color = Color.DOSSIER_BACK
-            pygame.draw.rect(surface, color, rect)
+            tab_extra_width = Box.WIDTH - rect.width
+            tab_polygon = [
+                rect.bottomleft,
+                rect.topleft,
+                rect.topright,
+                pygame.Vector2(rect.bottomright) + pygame.Vector2(tab_extra_width, 0),
+            ]
+            pygame.draw.polygon(surface, color, tab_polygon)
             icon = DataFiles.sprites["user_interface"][cat]
             icon_rect = icon.get_rect()
             icon_rect.centerx = rect.left + rect.height/2
@@ -773,6 +780,12 @@ class PortMenu:
             image_rect.center = rect.center
             surface.blit(image, image_rect)
             pygame.draw.rect(surface, Color.BLACK, rect, width=Box.OUTLINE_WIDTH)
+        
+        overlay_paperclip_sprite = DataFiles.sprites["user_interface"]["overlay_paperclip"]
+        overlay_paperclip_rect = overlay_paperclip_sprite.get_rect()
+        overlay_paperclip_rect.left = self.dossier_bg.left - Box.WIDTH/4 # TODO alignment
+        overlay_paperclip_rect.top = self.dossier_bg.top
+        surface.blit(overlay_paperclip_sprite, overlay_paperclip_rect)
 
     def draw_blueprint_overlay(self, surface, font):
         if self.overlay_selected_entity is None:
@@ -889,6 +902,18 @@ class PortMenu:
             font.render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         self.overlay_confirm_button.draw(surface, font)
+
+        overlay_pencil_sprite = DataFiles.sprites["user_interface"]["overlay_pencil"]
+        overlay_pencil_rect = overlay_pencil_sprite.get_rect()
+        overlay_pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
+        overlay_pencil_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
+        surface.blit(overlay_pencil_sprite, overlay_pencil_rect)
+
+        overlay_compass_sprite = DataFiles.sprites["user_interface"]["overlay_compass"]
+        overlay_compass_rect = overlay_compass_sprite.get_rect()
+        overlay_compass_rect.left = self.blueprint_page.left - Box.WIDTH/2 # TODO alignment
+        overlay_compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
+        surface.blit(overlay_compass_sprite, overlay_compass_rect)
 
     def draw_warehouse_overlay(self, surface, font):
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.warehouse_overlay)
@@ -1039,11 +1064,11 @@ class PortMenu:
 
         self.overlay_confirm_button.draw(surface, font)
 
-        clipboard_pencil_sprite = DataFiles.sprites["user_interface"]["clipboard_pencil"]
-        clipboard_pencil_rect = clipboard_pencil_sprite.get_rect()
-        clipboard_pencil_rect.right = self.clipboard_page.right + Box.WIDTH/2 # TODO
-        clipboard_pencil_rect.bottom = self.clipboard_page.bottom + Box.HEIGHT/2
-        surface.blit(clipboard_pencil_sprite, clipboard_pencil_rect)
+        overlay_pencil_sprite = DataFiles.sprites["user_interface"]["overlay_pencil"]
+        overlay_pencil_rect = overlay_pencil_sprite.get_rect()
+        overlay_pencil_rect.right = self.clipboard_page.right + Box.WIDTH/4 # TODO alignment
+        overlay_pencil_rect.bottom = self.clipboard_page.bottom + Box.HEIGHT/2
+        surface.blit(overlay_pencil_sprite, overlay_pencil_rect)
 
     def rotate_decoration_direction(self):
         self.decoration_direction_index = (self.decoration_direction_index + 1) % len(self.DECORATION_DIRECTIONS)

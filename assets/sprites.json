@@ -142,14 +142,27 @@
 			"width": 96,
 			"height": 128
 		},
-		"clipboard_pencil": {
+		"lightbulb": { "left": 192, "top": 384, "width": 32, "height": 192 },
+		"forklift": { "left": 0, "top": 448, "width": 160, "height": 64 },
+
+		"overlay_pencil": {
 			"left": 320,
 			"top": 384,
 			"width": 64,
 			"height": 128
 		},
-		"lightbulb": { "left": 192, "top": 384, "width": 32, "height": 192 },
-		"forklift": { "left": 0, "top": 448, "width": 160, "height": 64 }
+		"overlay_compass": {
+			"left": 0,
+			"top": 512,
+			"width": 128,
+			"height": 128
+		},
+		"overlay_paperclip": {
+			"left": 128,
+			"top": 576,
+			"width": 64,
+			"height": 32
+		}
 	},
 	"encounter": {
 		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 },
