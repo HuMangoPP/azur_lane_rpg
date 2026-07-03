@@ -154,22 +154,23 @@
 		"overlay_compass": {
 			"left": 0,
 			"top": 512,
-			"width": 128,
+			"width": 96,
 			"height": 128
 		},
 		"overlay_paperclip": {
-			"left": 128,
-			"top": 576,
+			"left": 320,
+			"top": 608,
 			"width": 64,
 			"height": 32
 		},
 		"red_circle": { "left": 224, "top": 512, "width": 96, "height": 96 },
 		"decoration_coin": {
-			"left": 320,
-			"top": 512,
+			"left": 96,
+			"top": 576,
 			"width": 64,
 			"height": 64
-		}
+		},
+		"stamp": {"left": 320, "top": 512, "width": 64, "height": 96}
 	},
 	"encounter": {
 		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 },

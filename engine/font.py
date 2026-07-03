@@ -16,21 +16,21 @@ class Font:
             letter.blit(self.font, (-i * self.font_width, 0))
             self.char_map[char] = letter
     
-    def _get_lines(self, text, width, box_width):
-        if box_width <= 0:
+    def _get_lines(self, text, char_width, box_width):
+        if box_width == 0:
             return [text]
         else:
-            max_chars_per_line = box_width // width
+            max_chars_per_line = box_width // char_width
             lines = []
             line = ""
             words = text.split()
             for word in words:
                 if len(line) > 0 and len(line) + len(word) > max_chars_per_line:
-                    lines.append(line)
+                    lines.append(line.strip())
                     line = word + " "
                 else:
                     line = line + word + " "
-            lines.append(line)
+            lines.append(line.strip())
             return lines
 
     def get_width(self, text, scale, box_width):

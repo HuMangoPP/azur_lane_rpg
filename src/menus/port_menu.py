@@ -323,13 +323,11 @@ class PortMenu:
             get_rect(
                 width=2*Box.WIDTH,
                 height=Box.HEIGHT,
-                centerx=self.clipboard_page.centerx,
-                bottom=self.clipboard_page.bottom - Box.PADDING,
+                center=self.clipboard_page.bottomleft,
             ),
             confirm_decoration_stamp,
             active=False,
-            background_styling={"background_img": DataFiles.sprites["user_interface"].get("stamp")},
-            text_styling={"text": "stamp", "text_color": Color.BLACK}
+            background_styling={"background_img": DataFiles.sprites["user_interface"].get("stamp")}
         )
         self.overlay_selected_entity = None
 
@@ -592,7 +590,16 @@ class PortMenu:
             elif self.has_selected_shipgirl_research_project():
                 self.shipyard_sticky_note_button.active = True
                 research_exp = DataFiles.save_file["specialized_wisdom_cubes"].get(self.overlay_selected_entity, 0)
-                self.shipyard_sticky_note_button.text = f"exp {research_exp}"
+                avg_shipgirl_level = int(
+                    sum(
+                        Stats.level(shipgirl.battle_component.exp)
+                        for shipgirl in self.menu_manager.available_shipgirls
+                    )
+                    / len(self.menu_manager.available_shipgirls)
+                )
+                exp_req = max(1, Stats.exp_to_level(avg_shipgirl_level))
+                research_percentage = int(100 * min(1, research_exp / exp_req))
+                self.shipyard_sticky_note_button.text = f"research progress {research_percentage}%"
         elif self.current_overlay == self.GEAR_LAB:
             self.gear_lab_sticky_note_button.active = self.can_craft_selected_equipment()
         elif self.current_overlay == self.DECORATION_STORE:
@@ -1029,7 +1036,7 @@ class PortMenu:
 
         overlay_compass_sprite = DataFiles.sprites["user_interface"]["overlay_compass"]
         overlay_compass_rect = overlay_compass_sprite.get_rect()
-        overlay_compass_rect.left = self.blueprint_page.left - Box.WIDTH/2 # TODO alignment
+        overlay_compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment
         overlay_compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
         surface.blit(overlay_compass_sprite, overlay_compass_rect)
         self.draw_sticky_note_overlay(surface, font)
@@ -1205,21 +1212,41 @@ class PortMenu:
         if self.current_overlay == self.DECORATION_STORE:
             signature_rect = get_rect(
                 width=self.clipboard_page.width - 2*Box.WIDTH,
-                height=Box.HEIGHT,
+                height=Box.HEIGHT/4,
                 centerx=self.clipboard_page.centerx,
-                bottom=self.clipboard_page.bottom - Box.PADDING
+                bottom=self.clipboard_page.bottom - Box.HEIGHT/2 - Box.PADDING
+            )
+            x_rect = get_rect(
+                width=Box.WIDTH/6,
+                height=Box.WIDTH/6,
+                right=signature_rect.left - Box.PADDING,
+                centery=signature_rect.centery
             )
             pygame.draw.line(
                 surface,
                 Color.BLACK,
-                signature_rect.midleft,
-                signature_rect.midright,
+                x_rect.topleft,
+                x_rect.bottomright,
+                width=Box.OUTLINE_WIDTH
+            )
+            pygame.draw.line(
+                surface,
+                Color.BLACK,
+                x_rect.bottomleft,
+                x_rect.topright,
+                width=Box.OUTLINE_WIDTH
+            )
+            pygame.draw.line(
+                surface,
+                Color.BLACK,
+                signature_rect.bottomleft,
+                signature_rect.bottomright,
                 width=Box.OUTLINE_WIDTH
             )
             font.render(
                 surface,
-                "approved",
-                (signature_rect.left, signature_rect.top + Box.PADDING),
+                "stamp here",
+                (signature_rect.left, signature_rect.bottom + Box.PADDING),
                 Color.BLACK,
                 1,
                 style="topleft"
