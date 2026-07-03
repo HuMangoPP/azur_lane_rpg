@@ -745,8 +745,8 @@ def buy_decoration_tutorial_draw(menu_manager, surface, font):
                 rect.center,
                 False, False
             )
-        elif menu_manager.port_menu.decoration_stamp_button.active:
-            button_rect = menu_manager.port_menu.decoration_stamp_button.rect
+        elif menu_manager.port_menu.decoration_signature_button.active:
+            button_rect = menu_manager.port_menu.decoration_signature_button.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,

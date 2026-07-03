@@ -57,7 +57,13 @@ class PortMenu:
     SHIPYARD = "shipyard"
     GEAR_LAB = "gear_lab"
     DECORATION_STORE = "decoration_store"
+
     DECORATION_DIRECTIONS = ["north", "east", "south", "west"]
+
+    DECORATION_STAMP_ANIMATION_DURATION = 1
+    DECORATION_STAMP_DOWN_TIME = 0.15
+    DECORATION_STAMP_LIFT_TIME = 0.30
+    DECORATION_STAMP_DISAPPEAR_TIME = 0.5
 
     def __init__(self, menu_manager):
         # MenuManager object
@@ -306,8 +312,10 @@ class PortMenu:
             text_styling={"text": "construct", "text_color": Color.BLACK}
         )
 
-        def confirm_decoration_stamp():
+        def confirm_decoration_signature():
             if not self.can_purchase_selected_decoration():
+                return
+            if self.decoration_stamp_animation_timer > 0:
                 return
 
             DataFiles.sfx["coins"].play()
@@ -317,17 +325,21 @@ class PortMenu:
             DataFiles.save_file["inventory"]["decoration_coin"] = (
                 DataFiles.save_file["inventory"].get("decoration_coin", 0) - 1
             )
+            self.decoration_stamp_animation_timer = self.DECORATION_STAMP_ANIMATION_DURATION
+            self.decoration_stamp_animation_pos = pygame.Vector2(pygame.mouse.get_pos())
             self.refresh_overlay_action_buttons()
 
-        self.decoration_stamp_button = Button(
+        self.decoration_stamp_animation_timer = 0
+        self.decoration_stamp_animation_pos = pygame.Vector2((0, 0))
+        self.decoration_signature_button = Button(
             get_rect(
-                width=2*Box.WIDTH,
+                width=self.clipboard_page.width - 2*Box.WIDTH,
                 height=Box.HEIGHT,
-                center=self.clipboard_page.bottomleft,
+                centerx=self.clipboard_page.centerx,
+                bottom=self.clipboard_page.bottom - Box.HEIGHT/2 - Box.PADDING
             ),
-            confirm_decoration_stamp,
+            confirm_decoration_signature,
             active=False,
-            background_styling={"background_img": DataFiles.sprites["user_interface"].get("stamp")}
         )
         self.overlay_selected_entity = None
 
@@ -573,12 +585,13 @@ class PortMenu:
         return (
             self.overlay_selected_entity is not None
             and DataFiles.save_file["inventory"].get("decoration_coin", 0) > 0
+            and self.decoration_stamp_animation_timer <= 0
         )
 
     def refresh_overlay_action_buttons(self):
         self.shipyard_sticky_note_button.active = False
         self.gear_lab_sticky_note_button.active = False
-        self.decoration_stamp_button.active = False
+        self.decoration_signature_button.active = False
 
         if self.current_overlay == self.SHIPYARD:
             if self.can_construct_selected_shipgirl():
@@ -603,7 +616,7 @@ class PortMenu:
         elif self.current_overlay == self.GEAR_LAB:
             self.gear_lab_sticky_note_button.active = self.can_craft_selected_equipment()
         elif self.current_overlay == self.DECORATION_STORE:
-            self.decoration_stamp_button.active = self.can_purchase_selected_decoration()
+            self.decoration_signature_button.active = self.can_purchase_selected_decoration()
 
     def get_current_overlay_action_button(self):
         if self.current_overlay == self.SHIPYARD:
@@ -611,7 +624,7 @@ class PortMenu:
         if self.current_overlay == self.GEAR_LAB:
             return self.gear_lab_sticky_note_button
         if self.current_overlay == self.DECORATION_STORE:
-            return self.decoration_stamp_button
+            return self.decoration_signature_button
         return None
 
     def update_no_overlay(self, events):
@@ -1210,18 +1223,14 @@ class PortMenu:
         font.render(surface, desc, desc_topleft, Color.BLACK, 1, style="topleft", box_width=desc_text_boxwidth)
 
         if self.current_overlay == self.DECORATION_STORE:
-            signature_rect = get_rect(
-                width=self.clipboard_page.width - 2*Box.WIDTH,
-                height=Box.HEIGHT/4,
-                centerx=self.clipboard_page.centerx,
-                bottom=self.clipboard_page.bottom - Box.HEIGHT/2 - Box.PADDING
-            )
+            signature_rect = self.decoration_signature_button.rect
             x_rect = get_rect(
                 width=Box.WIDTH/6,
                 height=Box.WIDTH/6,
                 right=signature_rect.left - Box.PADDING,
-                centery=signature_rect.centery
+                bottom=signature_rect.bottom - Box.PADDING
             )
+            pygame.draw.rect(surface, (220, 220, 220), signature_rect)
             pygame.draw.line(
                 surface,
                 Color.BLACK,
@@ -1251,7 +1260,58 @@ class PortMenu:
                 1,
                 style="topleft"
             )
-            self.decoration_stamp_button.draw(surface, font)
+
+            smiley_sprite = DataFiles.sprites["user_interface"]["smiley"]
+            smiley_rect = smiley_sprite.get_rect()
+            smiley_rect.center = self.decoration_stamp_animation_pos
+            if self.decoration_stamp_animation_timer > 0:
+                elapsed = self.DECORATION_STAMP_ANIMATION_DURATION - self.decoration_stamp_animation_timer
+                if elapsed >= self.DECORATION_STAMP_DISAPPEAR_TIME:
+                    progress = (
+                        self.decoration_stamp_animation_timer
+                        / (self.DECORATION_STAMP_ANIMATION_DURATION - self.DECORATION_STAMP_DISAPPEAR_TIME)
+                    )
+                    smiley_sprite.set_alpha(int(255 * progress))
+                    surface.blit(smiley_sprite, smiley_rect)
+                elif elapsed >= self.DECORATION_STAMP_DOWN_TIME:
+                    smiley_sprite.set_alpha(255)
+                    surface.blit(smiley_sprite, smiley_rect)
+
+            stamp_sprite = DataFiles.sprites["user_interface"]["stamp"]
+            stamp_rect = stamp_sprite.get_rect()
+            if self.decoration_stamp_animation_timer <= 0:
+                stamp_rect.center = self.clipboard_page.bottomleft
+                surface.blit(stamp_sprite, stamp_rect)
+            else:
+                elapsed = self.DECORATION_STAMP_ANIMATION_DURATION - self.decoration_stamp_animation_timer
+                target_pos = pygame.Vector2(self.decoration_stamp_animation_pos)
+                above_pos = target_pos - pygame.Vector2(0, Box.HEIGHT)
+                if elapsed >= self.DECORATION_STAMP_LIFT_TIME:
+                    # stamp is at the above_pos
+                    stamp_rect.centerx = above_pos.x
+                    stamp_rect.bottom = above_pos.y + Box.HEIGHT/2
+                    surface.blit(stamp_sprite, stamp_rect)
+                elif elapsed >= self.DECORATION_STAMP_DOWN_TIME:
+                    # stamp is moving up
+                    progress = min(
+                        1,
+                        (elapsed - self.DECORATION_STAMP_DOWN_TIME)
+                        / (self.DECORATION_STAMP_LIFT_TIME - self.DECORATION_STAMP_DOWN_TIME)
+                    )
+                    stamp_pos = target_pos.lerp(above_pos, progress)
+                    stamp_rect.centerx = stamp_pos.x
+                    stamp_rect.bottom = stamp_pos.y + Box.HEIGHT/2
+                    surface.blit(stamp_sprite, stamp_rect)
+                else:
+                    # stamp is moving down
+                    progress = min(
+                        1,
+                        elapsed / self.DECORATION_STAMP_DOWN_TIME
+                    )
+                    stamp_pos = above_pos.lerp(target_pos, progress)
+                    stamp_rect.centerx = stamp_pos.x
+                    stamp_rect.bottom = stamp_pos.y + Box.HEIGHT/2
+                    surface.blit(stamp_sprite, stamp_rect)
 
         overlay_pencil_sprite = DataFiles.sprites["user_interface"]["overlay_pencil"]
         overlay_pencil_rect = overlay_pencil_sprite.get_rect()
@@ -1481,6 +1541,12 @@ class PortMenu:
                         self.selected_decoration_in_depot = None
 
     def update(self, dt, events):
+        if self.decoration_stamp_animation_timer > 0:
+            self.decoration_stamp_animation_timer -= dt
+            if self.decoration_stamp_animation_timer <= 0:
+                self.decoration_stamp_animation_timer = 0
+                self.refresh_overlay_action_buttons()
+
         if self.decorating_port_menu:
             self.update_decorate_port_menu_overlay(events)
         elif self.current_overlay == self.NO_OVERLAY:

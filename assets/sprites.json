@@ -170,7 +170,8 @@
 			"width": 64,
 			"height": 64
 		},
-		"stamp": {"left": 320, "top": 512, "width": 64, "height": 96}
+		"stamp": { "left": 320, "top": 512, "width": 64, "height": 96 },
+		"smiley": { "left": 96, "top": 512, "width": 64, "height": 64 }
 	},
 	"encounter": {
 		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 },
