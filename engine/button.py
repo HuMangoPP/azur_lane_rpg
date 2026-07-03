@@ -9,7 +9,7 @@ class Button:
         self.background_color = background_styling.get("background_color")
         self.background_img = background_styling.get("background_img")
         self.background_img_align = background_styling.get("background_img_align")
-        if self.background_img is not None and self.background_img_align is None:
+        if self.background_img_align is None:
             self.background_img_align = (1/2, 1/2)
         self.outline_color = background_styling.get("outline_color")
         self.outline_width = background_styling.get("outline_width")
@@ -17,7 +17,7 @@ class Button:
         
         self.text = text_styling.get("text")
         self.text_align = text_styling.get("text_align")
-        if self.text is not None and self.text_align is None:
+        if self.text_align is None:
             self.text_align = (1/2, 1/2)
         self.text_color = text_styling.get("text_color")
 

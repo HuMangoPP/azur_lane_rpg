@@ -199,7 +199,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
                 draw_tb(surface, font, None, rect.bottomleft, False, True)
             
             if menu_manager.port_menu.overlay_selected_entity in shipgirls:
-                button_rect = menu_manager.port_menu.overlay_confirm_button.rect
+                button_rect = menu_manager.port_menu.shipyard_sticky_note_button.rect
                 rect = get_rect(
                     width=button_rect.width + 2*Box.PADDING,
                     height=button_rect.height + 2*Box.PADDING,
@@ -598,7 +598,7 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font):
         draw_tb(surface, font, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.GEAR_LAB:
         if menu_manager.port_menu.overlay_selected_entity == "twin_120":
-            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
+            button_rect = menu_manager.port_menu.gear_lab_sticky_note_button.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,
@@ -745,8 +745,8 @@ def buy_decoration_tutorial_draw(menu_manager, surface, font):
                 rect.center,
                 False, False
             )
-        elif menu_manager.port_menu.overlay_confirm_button.active:
-            button_rect = menu_manager.port_menu.overlay_confirm_button.rect
+        elif menu_manager.port_menu.decoration_stamp_button.active:
+            button_rect = menu_manager.port_menu.decoration_stamp_button.rect
             rect = get_rect(
                 width=button_rect.width + 2*Box.PADDING,
                 height=button_rect.height + 2*Box.PADDING,

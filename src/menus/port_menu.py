@@ -127,15 +127,7 @@ class PortMenu:
                 if overlay_enum == self.SHIPYARD:
                     if DataFiles.save_file["research_target"] is not None:
                         self.overlay_selected_entity = DataFiles.save_file["research_target"]
-                        self.overlay_confirm_button.active = True
-                        self.position_overlay_confirm_button_on_sticky_note()
-                        unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
-                        if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                            self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["construct"]
-                            self.overlay_confirm_button.text = "construct"
-                        else:
-                            self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["research"]
-                            self.overlay_confirm_button.text = "research"
+                        self.refresh_overlay_action_buttons()
                     
                     for i, faction in enumerate(self.shipyard_filters):
                         if DataFiles.save_file["unlocked_factions"][0] == faction:
@@ -259,75 +251,85 @@ class PortMenu:
         )
 
         # Overlay logic state
-        def overlay_confirm():
-            if self.current_overlay == self.SHIPYARD:
-                selected_entity_info = DataFiles.shipgirl_data[self.overlay_selected_entity]
-                hull_type = selected_entity_info["hull_type"]
-                unique_item = selected_entity_info["unique_item"]
-                inventory = DataFiles.save_file["inventory"]
-                specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
-                selected_entity_reqs = {
-                    f"{hull_type}_blueprint": 1,
-                    unique_item: 1
-                }
-                has_specialized_wisdom_cube = self.overlay_selected_entity in specialized_wisdom_cubes
-                has_generic_wisdom_cube = inventory.get("wisdom_cube", 0) > 0
-                if (
-                    all(inventory.get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items())
-                    and has_specialized_wisdom_cube
-                ):
-                    DataFiles.sfx["knock"].play()
-                    shipgirl_exp = specialized_wisdom_cubes[self.overlay_selected_entity]
-                    DataFiles.save_file["shipgirls"][self.overlay_selected_entity] = {
-                        "equipment": [None, None, None],
-                        "exp": shipgirl_exp
-                    }
-                    shipgirl = Shipgirl(self.overlay_selected_entity, True)
-                    self.menu_manager.available_shipgirls.append(shipgirl)
-                    for ingredient, req in selected_entity_reqs.items():
-                        inventory[ingredient] -= req
-                    specialized_wisdom_cubes.pop(self.overlay_selected_entity)
-                    DataFiles.save_file["research_target"] = None
-                    self.overlay_selected_entity = None
-                    self.overlay_confirm_button.active = False
-                elif (
-                    DataFiles.save_file["research_target"] != self.overlay_selected_entity
-                    and not has_specialized_wisdom_cube
-                    and has_generic_wisdom_cube
-                ):
-                    DataFiles.sfx["frequency"].play()
-                    inventory["wisdom_cube"] -= 1
-                    specialized_wisdom_cubes[self.overlay_selected_entity] = 0
-                    DataFiles.save_file["research_target"] = self.overlay_selected_entity
-            elif self.current_overlay == self.GEAR_LAB:
+        def confirm_shipyard_sticky_note():
+            if self.overlay_selected_entity is None:
+                return
+            inventory = DataFiles.save_file["inventory"]
+            specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
+            if self.can_construct_selected_shipgirl():
                 DataFiles.sfx["knock"].play()
-                selected_entity_reqs = DataFiles.equipment_data[self.overlay_selected_entity]["craft_reqs"]
-                if all(DataFiles.save_file["inventory"].get(ingredient, 0) >= req for ingredient, req in selected_entity_reqs.items()):
-                    DataFiles.save_file["equipment"][self.overlay_selected_entity] = DataFiles.save_file["equipment"].get(self.overlay_selected_entity, 0) + 1
-                    for ingredient, req in selected_entity_reqs.items():
-                        DataFiles.save_file["inventory"][ingredient] -= req
-            elif self.current_overlay == self.DECORATION_STORE:
-                DataFiles.sfx["coins"].play()
-                DataFiles.save_file["decoration_depot"][self.overlay_selected_entity] = (
-                    DataFiles.save_file["decoration_depot"].get(self.overlay_selected_entity, 0) + 1
-                )
-                DataFiles.save_file["inventory"]["decoration_coin"] = (
-                    DataFiles.save_file["inventory"].get("decoration_coin", 0) - 1
-                )
-                if DataFiles.save_file["inventory"]["decoration_coin"] <= 0:
-                    self.overlay_confirm_button.active = False
-
-        self.overlay_confirm_button = Button(
-            get_rect(
-                width=2*Box.WIDTH, height=Box.HEIGHT,
-                left=0, top=0
-            ),
-            overlay_confirm,
+                shipgirl_exp = specialized_wisdom_cubes[self.overlay_selected_entity]
+                DataFiles.save_file["shipgirls"][self.overlay_selected_entity] = {
+                    "equipment": [None, None, None],
+                    "exp": shipgirl_exp
+                }
+                shipgirl = Shipgirl(self.overlay_selected_entity, True)
+                self.menu_manager.available_shipgirls.append(shipgirl)
+                for ingredient, req in self.get_selected_shipyard_reqs().items():
+                    inventory[ingredient] -= req
+                specialized_wisdom_cubes.pop(self.overlay_selected_entity)
+                if DataFiles.save_file["research_target"] == self.overlay_selected_entity:
+                    DataFiles.save_file["research_target"] = None
+                self.overlay_selected_entity = None
+            elif self.can_start_selected_shipgirl_research():
+                DataFiles.sfx["frequency"].play()
+                inventory["wisdom_cube"] -= 1
+                specialized_wisdom_cubes[self.overlay_selected_entity] = 0
+                DataFiles.save_file["research_target"] = self.overlay_selected_entity
+            self.refresh_overlay_action_buttons()
+        
+        self.shipyard_sticky_note_button = Button(
+            self.sticky_note_page.copy(),
+            confirm_shipyard_sticky_note,
             active=False,
-            background_styling={
-                "background_img_align": (1/4, 1/2),
-                "outline_width": Box.OUTLINE_WIDTH
-            },
+            text_styling={"text_color": Color.BLACK}
+        )
+
+        def confirm_gear_lab_sticky_note():
+            if not self.can_craft_selected_equipment():
+                return
+
+            DataFiles.sfx["knock"].play()
+            selected_entity_reqs = DataFiles.equipment_data[self.overlay_selected_entity]["craft_reqs"]
+            DataFiles.save_file["equipment"][self.overlay_selected_entity] = (
+                DataFiles.save_file["equipment"].get(self.overlay_selected_entity, 0) + 1
+            )
+            for ingredient, req in selected_entity_reqs.items():
+                DataFiles.save_file["inventory"][ingredient] -= req
+
+            self.refresh_overlay_action_buttons()
+        
+        self.gear_lab_sticky_note_button = Button(
+            self.sticky_note_page.copy(),
+            confirm_gear_lab_sticky_note,
+            active=False,
+            text_styling={"text": "construct", "text_color": Color.BLACK}
+        )
+
+        def confirm_decoration_stamp():
+            if not self.can_purchase_selected_decoration():
+                return
+
+            DataFiles.sfx["coins"].play()
+            DataFiles.save_file["decoration_depot"][self.overlay_selected_entity] = (
+                DataFiles.save_file["decoration_depot"].get(self.overlay_selected_entity, 0) + 1
+            )
+            DataFiles.save_file["inventory"]["decoration_coin"] = (
+                DataFiles.save_file["inventory"].get("decoration_coin", 0) - 1
+            )
+            self.refresh_overlay_action_buttons()
+
+        self.decoration_stamp_button = Button(
+            get_rect(
+                width=2*Box.WIDTH,
+                height=Box.HEIGHT,
+                centerx=self.clipboard_page.centerx,
+                bottom=self.clipboard_page.bottom - Box.PADDING,
+            ),
+            confirm_decoration_stamp,
+            active=False,
+            background_styling={"background_img": DataFiles.sprites["user_interface"].get("stamp")},
+            text_styling={"text": "stamp", "text_color": Color.BLACK}
         )
         self.overlay_selected_entity = None
 
@@ -516,11 +518,94 @@ class PortMenu:
         notification_rect.center = button.rect.topright
         surface.blit(notification_sprite, notification_rect)
 
-    def position_overlay_confirm_button_on_sticky_note(self):
-        self.overlay_confirm_button.rect.center = self.sticky_note_page.center
-        self.overlay_confirm_button.outline_color = Color.STICKY_NOTE_OUTLINE
-        self.overlay_confirm_button.text_align = (2/3, 1/2)
-        self.overlay_confirm_button.text_color = Color.BLACK
+    def get_selected_shipyard_reqs(self):
+        if self.overlay_selected_entity is None:
+            return {}
+
+        selected_entity_info = DataFiles.shipgirl_data[self.overlay_selected_entity]
+        hull_type = selected_entity_info["hull_type"]
+        unique_item = selected_entity_info["unique_item"]
+        return {
+            f"{hull_type}_blueprint": 1,
+            unique_item: 1
+        }
+
+    def can_construct_selected_shipgirl(self):
+        if self.overlay_selected_entity is None:
+            return False
+
+        inventory = DataFiles.save_file["inventory"]
+        specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
+        return (
+            self.overlay_selected_entity in specialized_wisdom_cubes
+            and all(
+                inventory.get(ingredient, 0) >= req
+                for ingredient, req in self.get_selected_shipyard_reqs().items()
+            )
+        )
+
+    def can_start_selected_shipgirl_research(self):
+        if self.overlay_selected_entity is None:
+            return False
+
+        specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
+        return (
+            self.overlay_selected_entity not in specialized_wisdom_cubes
+            and DataFiles.save_file["inventory"].get("wisdom_cube", 0) > 0
+        )
+
+    def has_selected_shipgirl_research_project(self):
+        return (
+            self.overlay_selected_entity is not None
+            and self.overlay_selected_entity in DataFiles.save_file["specialized_wisdom_cubes"]
+        )
+
+    def can_craft_selected_equipment(self):
+        if self.overlay_selected_entity is None:
+            return False
+
+        inventory = DataFiles.save_file["inventory"]
+        selected_entity_reqs = DataFiles.equipment_data[self.overlay_selected_entity]["craft_reqs"]
+        return all(
+            inventory.get(ingredient, 0) >= req
+            for ingredient, req in selected_entity_reqs.items()
+        )
+
+    def can_purchase_selected_decoration(self):
+        return (
+            self.overlay_selected_entity is not None
+            and DataFiles.save_file["inventory"].get("decoration_coin", 0) > 0
+        )
+
+    def refresh_overlay_action_buttons(self):
+        self.shipyard_sticky_note_button.active = False
+        self.gear_lab_sticky_note_button.active = False
+        self.decoration_stamp_button.active = False
+
+        if self.current_overlay == self.SHIPYARD:
+            if self.can_construct_selected_shipgirl():
+                self.shipyard_sticky_note_button.active = True
+                self.shipyard_sticky_note_button.text = "construct"
+            elif self.can_start_selected_shipgirl_research():
+                self.shipyard_sticky_note_button.active = True
+                self.shipyard_sticky_note_button.text = "research"
+            elif self.has_selected_shipgirl_research_project():
+                self.shipyard_sticky_note_button.active = True
+                research_exp = DataFiles.save_file["specialized_wisdom_cubes"].get(self.overlay_selected_entity, 0)
+                self.shipyard_sticky_note_button.text = f"exp {research_exp}"
+        elif self.current_overlay == self.GEAR_LAB:
+            self.gear_lab_sticky_note_button.active = self.can_craft_selected_equipment()
+        elif self.current_overlay == self.DECORATION_STORE:
+            self.decoration_stamp_button.active = self.can_purchase_selected_decoration()
+
+    def get_current_overlay_action_button(self):
+        if self.current_overlay == self.SHIPYARD:
+            return self.shipyard_sticky_note_button
+        if self.current_overlay == self.GEAR_LAB:
+            return self.gear_lab_sticky_note_button
+        if self.current_overlay == self.DECORATION_STORE:
+            return self.decoration_stamp_button
+        return None
 
     def update_no_overlay(self, events):
         for event in events:
@@ -616,10 +701,12 @@ class PortMenu:
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             left_overlay = self.dossier_overlay
             right_overlay = self.blueprint_page
+            action_button = self.get_current_overlay_action_button()
             clicked_right_overlay = (
                 right_overlay.collidepoint(mouseup_event.pos)
                 or (
-                    self.overlay_confirm_button.active
+                    action_button is not None
+                    and action_button.active
                     and self.sticky_note_page.collidepoint(mouseup_event.pos)
                 )
             )
@@ -633,7 +720,7 @@ class PortMenu:
         ):
             self.current_overlay = self.NO_OVERLAY
             self.overlay_selected_entity = None
-            self.overlay_confirm_button.active = False
+            self.refresh_overlay_action_buttons()
             self.overlay_selected_filter = 0
             return True
         return False
@@ -687,35 +774,11 @@ class PortMenu:
             if rect.collidepoint(mouseup_event.pos):
                 DataFiles.sfx["click"].play()
                 self.overlay_selected_entity = entity
-                self.overlay_confirm_button.active = self.current_overlay in [self.SHIPYARD, self.GEAR_LAB, self.DECORATION_STORE]
 
                 if self.current_overlay in [self.DEPOT, self.INTEL_CENTER]:
                     setattr(self, f"visited_{self.current_overlay}", True)
 
-                if self.current_overlay in [self.DECORATION_STORE]:
-                    self.overlay_confirm_button.rect.centerx = self.clipboard_page.centerx
-                    self.overlay_confirm_button.rect.bottom = self.clipboard_page.bottom - Box.PADDING
-                    self.overlay_confirm_button.background_img = None
-                    self.overlay_confirm_button.outline_color = Color.START_SORTIE_BUTTON
-                    self.overlay_confirm_button.text_align = (1/2, 1/2)
-                    self.overlay_confirm_button.text_color = Color.START_SORTIE_BUTTON
-                if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
-                    self.position_overlay_confirm_button_on_sticky_note()
-
-                if self.current_overlay == self.SHIPYARD:
-                    unique_item = DataFiles.shipgirl_data[self.overlay_selected_entity]["unique_item"]
-                    if DataFiles.save_file["inventory"].get(unique_item, 0) > 0:
-                        self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["construct"]
-                        self.overlay_confirm_button.text = "construct"
-                    else:
-                        self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["research"]
-                        self.overlay_confirm_button.text = "research"
-                if self.current_overlay == self.GEAR_LAB:
-                    self.overlay_confirm_button.background_img = DataFiles.sprites["user_interface"]["construct"]
-                    self.overlay_confirm_button.text = "construct"
-                if self.current_overlay == self.DECORATION_STORE:
-                    self.overlay_confirm_button.text = "purchase"
-                    self.overlay_confirm_button.active = DataFiles.save_file["inventory"].get("decoration_coin", 0) > 0
+                self.refresh_overlay_action_buttons()
 
     def draw_dossier_overlay(self, surface, font):
         entity_filters = getattr(self, f"{self.current_overlay}_filters")
@@ -794,7 +857,8 @@ class PortMenu:
         surface.blit(overlay_paperclip_sprite, overlay_paperclip_rect)
 
     def draw_sticky_note_overlay(self, surface, font):
-        if not self.overlay_confirm_button.active:
+        action_button = self.get_current_overlay_action_button()
+        if action_button is None or not action_button.active:
             return
 
         misaligned_pages = [
@@ -809,7 +873,7 @@ class PortMenu:
                 get_rotated_rect_polygon(self.sticky_note_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.STICKY_NOTE, self.sticky_note_page)
-        self.overlay_confirm_button.draw(surface, font)
+        action_button.draw(surface, font)
 
     def draw_blueprint_overlay(self, surface, font):
         if self.overlay_selected_entity is None:
@@ -1138,7 +1202,29 @@ class PortMenu:
         desc_text_boxwidth = self.clipboard_page.width - 2*Box.PADDING - Box.WIDTH/2
         font.render(surface, desc, desc_topleft, Color.BLACK, 1, style="topleft", box_width=desc_text_boxwidth)
 
-        self.overlay_confirm_button.draw(surface, font)
+        if self.current_overlay == self.DECORATION_STORE:
+            signature_rect = get_rect(
+                width=self.clipboard_page.width - 2*Box.WIDTH,
+                height=Box.HEIGHT,
+                centerx=self.clipboard_page.centerx,
+                bottom=self.clipboard_page.bottom - Box.PADDING
+            )
+            pygame.draw.line(
+                surface,
+                Color.BLACK,
+                signature_rect.midleft,
+                signature_rect.midright,
+                width=Box.OUTLINE_WIDTH
+            )
+            font.render(
+                surface,
+                "approved",
+                (signature_rect.left, signature_rect.top + Box.PADDING),
+                Color.BLACK,
+                1,
+                style="topleft"
+            )
+            self.decoration_stamp_button.draw(surface, font)
 
         overlay_pencil_sprite = DataFiles.sprites["user_interface"]["overlay_pencil"]
         overlay_pencil_rect = overlay_pencil_sprite.get_rect()
@@ -1379,7 +1465,9 @@ class PortMenu:
                         continue
                     self.select_filter(event)
                     self.select_entity(event)
-                    self.overlay_confirm_button.click(event.pos)
+                    action_button = self.get_current_overlay_action_button()
+                    if action_button is not None:
+                        action_button.click(event.pos)
 
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             if self.forklift_pause > 0:
