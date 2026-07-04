@@ -364,8 +364,8 @@ class PortMenu:
         self.decoration_depot_overlay = get_rect(
             width=3*(Box.WIDTH+Box.PADDING) + Box.PADDING,
             height=3*(Box.HEIGHT+Box.PADDING) + Box.PADDING,
-            left=Box.LEFT_OF_SCREEN,
-            top=Box.TOP_OF_SCREEN
+            left=Box.WIDTH,
+            bottom=screen_y(1) - Box.HEIGHT
         )
         self.selected_decoration_in_depot = None
         self.decoration_direction_index = 0
@@ -1643,6 +1643,7 @@ class PortMenu:
         self.toggle_decoration_mode_button.draw(surface, font)
 
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.decoration_depot_overlay)
+
         decoration_index = 0
         for decoration, amt in DataFiles.save_file["decoration_depot"].items():
             if amt <= 0:
@@ -1668,6 +1669,67 @@ class PortMenu:
         surface.blit(DataFiles.sprites["user_interface"]["remove_decoration"], delete_rect)
         if self.deleting_decoration:
             pygame.draw.rect(surface, Color.WHITE, delete_rect, width=Box.OUTLINE_WIDTH)
+
+        depot_decoration_top = self.decoration_depot_overlay.top - Box.WIDTH/8
+        top_rope_sprite = DataFiles.sprites["user_interface"]["top_rope"]
+        top_rope_rect = top_rope_sprite.get_rect()
+        top_rope_rect.centerx = self.decoration_depot_overlay.centerx + Box.WIDTH/4
+        top_rope_rect.top = depot_decoration_top
+        surface.blit(top_rope_sprite, top_rope_rect)
+
+        rope_hook_sprite = pygame.transform.flip(
+            DataFiles.sprites["user_interface"]["rope_hook"],
+            True, False
+        )
+        rope_hook_rect = rope_hook_sprite.get_rect()
+        rope_hook_rect.right = self.decoration_depot_overlay.right - Box.PADDING
+        rope_hook_rect.top = depot_decoration_top
+        surface.blit(rope_hook_sprite, rope_hook_rect)
+
+        corner_rope_sprite = pygame.transform.flip(
+            DataFiles.sprites["user_interface"]["corner_rope"],
+            True, False
+        )
+        corner_rope_rect = corner_rope_sprite.get_rect()
+        corner_rope_rect.left = self.decoration_depot_overlay.left - Box.WIDTH/8
+        corner_rope_rect.top = depot_decoration_top
+        surface.blit(corner_rope_sprite, corner_rope_rect)
+
+        big_corner_rope_sprite = pygame.transform.flip(
+            DataFiles.sprites["user_interface"]["big_corner_rope"],
+            True, False
+        )
+        big_corner_rope_rect = big_corner_rope_sprite.get_rect()
+        big_corner_rope_rect.left = self.decoration_depot_overlay.left - Box.WIDTH/8 # TODO
+        big_corner_rope_rect.top = depot_decoration_top
+        surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
+
+        lightbulb_sprite = DataFiles.sprites["user_interface"]["lightbulb"]
+        lightbulb_rect = lightbulb_sprite.get_rect()
+        lightbulb_rect.centerx = self.decoration_depot_overlay.left + Box.WIDTH
+        lightbulb_rect.top = depot_decoration_top
+        surface.blit(lightbulb_sprite, lightbulb_rect)
+
+        lightbulb_light_sprite = DataFiles.sprites["user_interface"]["lightbulb_light"]
+        lightbulb_light_rect = lightbulb_light_sprite.get_rect()
+        lightbulb_light_rect.centerx = lightbulb_rect.centerx
+        lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
+        surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
+
+        cargo_box_sprite = DataFiles.sprites["user_interface"]["cargo_box"]
+        cargo_box_rect = cargo_box_sprite.get_rect()
+        for cargo_box_pos in [
+            pygame.Vector2(self.decoration_depot_overlay.bottomleft),
+            pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(cargo_box_rect.width, 0),
+            pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(cargo_box_rect.width/2, cargo_box_rect.height/2),
+            pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width/2, cargo_box_rect.height/2),
+
+            pygame.Vector2(self.decoration_depot_overlay.bottomright),
+            pygame.Vector2(self.decoration_depot_overlay.bottomright) + pygame.Vector2(cargo_box_rect.width/2, -cargo_box_rect.height),
+            pygame.Vector2(self.decoration_depot_overlay.bottomright) + pygame.Vector2(cargo_box_rect.width, 0),
+        ]:
+            cargo_box_rect.center = cargo_box_pos
+            surface.blit(cargo_box_sprite, cargo_box_rect)
 
     def draw(self, surface, font):
         surface.blit(Decorations.floor_surf, Decorations.floor_rect)
