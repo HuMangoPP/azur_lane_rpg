@@ -276,7 +276,6 @@ class PortMenu:
             self.sticky_note_page.copy(),
             confirm_shipyard_sticky_note,
             active=False,
-            text_styling={"text_color": Color.BLACK}
         )
 
         def confirm_gear_lab_sticky_note():
@@ -297,7 +296,7 @@ class PortMenu:
             self.sticky_note_page.copy(),
             confirm_gear_lab_sticky_note,
             active=False,
-            text_styling={"text": "construct", "text_color": Color.BLACK}
+            background_styling={"background_img": DataFiles.sprites["props"]["construct_text"]}
         )
 
         def confirm_decoration_signature():
@@ -584,10 +583,10 @@ class PortMenu:
         if self.current_overlay == self.SHIPYARD:
             if self.can_construct_selected_shipgirl():
                 self.shipyard_sticky_note_button.active = True
-                self.shipyard_sticky_note_button.text = "construct"
+                self.shipyard_sticky_note_button.background_img = DataFiles.sprites["props"]["construct_text"]
             elif self.can_start_selected_shipgirl_research():
                 self.shipyard_sticky_note_button.active = True
-                self.shipyard_sticky_note_button.text = "research"
+                self.shipyard_sticky_note_button.background_img = DataFiles.sprites["props"]["research_text"]
             elif self.has_selected_shipgirl_research_project():
                 self.shipyard_sticky_note_button.active = True
                 research_exp = DataFiles.save_file["specialized_wisdom_cubes"].get(self.overlay_selected_entity, 0)
@@ -600,7 +599,7 @@ class PortMenu:
                 )
                 exp_req = max(1, Stats.exp_to_level(avg_shipgirl_level))
                 research_percentage = int(100 * min(1, research_exp / exp_req))
-                self.shipyard_sticky_note_button.text = f"research progress {research_percentage}%"
+                self.shipyard_sticky_note_button.background_img = DataFiles.sprites["props"]["research_text"] # TODO what do?
         elif self.current_overlay == self.GEAR_LAB:
             self.gear_lab_sticky_note_button.active = self.can_craft_selected_equipment()
         elif self.current_overlay == self.DECORATION_STORE:
@@ -863,6 +862,11 @@ class PortMenu:
         paperclip_rect.left = self.dossier_bg.left - 4 # TODO paper clip offset
         paperclip_rect.top = self.dossier_bg.top
         surface.blit(paperclip_sprite, paperclip_rect)
+
+        classified_sprite = DataFiles.sprites["props"]["classified"]
+        classified_rect = classified_sprite.get_rect()
+        classified_rect.topright = self.dossier_bg.topright
+        surface.blit(classified_sprite, classified_rect)
 
     def draw_sticky_note_overlay(self, surface, font):
         action_button = self.get_current_overlay_action_button()

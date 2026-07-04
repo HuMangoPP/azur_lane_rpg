@@ -276,6 +276,11 @@ class EquipmentMenu:
                     style="centerleft"
                 )
 
+        classified_sprite = DataFiles.sprites["props"]["classified"]
+        classified_rect = classified_sprite.get_rect()
+        classified_rect.topright = self.dossier_bg.topright
+        surface.blit(classified_sprite, classified_rect)
+
         paperclip_sprite = pygame.transform.rotate(
             DataFiles.sprites["props"]["paperclip"],
             -90
@@ -372,8 +377,8 @@ class EquipmentMenu:
 
         lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
         lightbulb_crop_rect = lightbulb_sprite.get_rect()
-        lightbulb_crop_rect.top = lightbulb_crop_rect.height // 2
-        lightbulb_crop_rect.height -= lightbulb_crop_rect.top
+        lightbulb_crop_rect.top = lightbulb_crop_rect.height / 2
+        lightbulb_crop_rect.height = lightbulb_crop_rect.height / 2
         lightbulb_rect = lightbulb_crop_rect.copy()
         lightbulb_rect.centerx = top_rope_rect.right
         lightbulb_rect.top = depot_decoration_top
