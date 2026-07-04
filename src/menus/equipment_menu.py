@@ -275,6 +275,15 @@ class EquipmentMenu:
                     1,
                     style="centerleft"
                 )
+
+        overlay_paperclip_sprite = pygame.transform.rotate(
+            DataFiles.sprites["user_interface"]["overlay_paperclip"],
+            -90
+        )
+        overlay_paperclip_rect = overlay_paperclip_sprite.get_rect()
+        overlay_paperclip_rect.right = self.dossier_page.right
+        overlay_paperclip_rect.top = self.dossier_bg.top - 4 # TODO paper clip offset
+        surface.blit(overlay_paperclip_sprite, overlay_paperclip_rect)
         
         misaligned_blueprint_pages = [
             (-6, pygame.Vector2(-5, 7), Color.BLUEPRINT_PAGE_BACK),
@@ -303,6 +312,18 @@ class EquipmentMenu:
             pygame.draw.rect(surface, Color.WHITE, rect, width=outline_width)
             if equipment is not None:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+
+        overlay_pencil_sprite = DataFiles.sprites["user_interface"]["overlay_pencil"]
+        overlay_pencil_rect = overlay_pencil_sprite.get_rect()
+        overlay_pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
+        overlay_pencil_rect.bottom = self.blueprint_page.bottom
+        surface.blit(overlay_pencil_sprite, overlay_pencil_rect)
+
+        overlay_compass_sprite = DataFiles.sprites["user_interface"]["overlay_compass"]
+        overlay_compass_rect = overlay_compass_sprite.get_rect()
+        overlay_compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment
+        overlay_compass_rect.bottom = self.blueprint_page.bottom
+        surface.blit(overlay_compass_sprite, overlay_compass_rect)
         
         equippable = self.get_equippable_options()
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.equipment_depot)

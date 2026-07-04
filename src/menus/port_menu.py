@@ -860,7 +860,7 @@ class PortMenu:
         
         overlay_paperclip_sprite = DataFiles.sprites["user_interface"]["overlay_paperclip"]
         overlay_paperclip_rect = overlay_paperclip_sprite.get_rect()
-        overlay_paperclip_rect.left = self.dossier_bg.left - Box.WIDTH/4 # TODO alignment
+        overlay_paperclip_rect.left = self.dossier_bg.left - 4 # TODO paper clip offset
         overlay_paperclip_rect.top = self.dossier_bg.top
         surface.blit(overlay_paperclip_sprite, overlay_paperclip_rect)
 
