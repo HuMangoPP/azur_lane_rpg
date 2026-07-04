@@ -799,7 +799,7 @@ def decorate_port_completion_criteria(menu_manager):
         and port_menu.placed_decoration
         and port_menu.removed_decoration
         and len(DataFiles.save_file["decorations"]) > 0
-        and not port_menu.decorating_port_menu
+        and not port_menu.is_decorating
     )
 
 def _decorate_port_get_depot_decoration_rects(port_menu):
@@ -857,11 +857,11 @@ def decorate_port_tutorial_draw(menu_manager, surface, font):
         return
 
     port_menu = menu_manager.port_menu
-    if not port_menu.decorating_port_menu:
+    if not port_menu.is_decorating:
         if port_menu.current_overlay != port_menu.NO_OVERLAY:
             return
 
-        button_rect = port_menu.open_close_decoration_menu_button.rect
+        button_rect = port_menu.toggle_decoration_mode_button.rect
         rect = get_rect(
             width=button_rect.width + 2*Box.PADDING,
             height=button_rect.height + 2*Box.PADDING,
@@ -935,7 +935,7 @@ def decorate_port_tutorial_draw(menu_manager, surface, font):
         )
         return
 
-    button_rect = port_menu.open_close_decoration_menu_button.rect
+    button_rect = port_menu.toggle_decoration_mode_button.rect
     rect = get_rect(
         width=button_rect.width + 2*Box.PADDING,
         height=button_rect.height + 2*Box.PADDING,
@@ -947,7 +947,7 @@ def decorate_port_tutorial_draw(menu_manager, surface, font):
 
 def decorate_port_on_start(menu_manager):
     port_menu = menu_manager.port_menu
-    port_menu.open_close_decoration_menu_button.active = True
+    port_menu.toggle_decoration_mode_button.active = True
     port_menu.moved_decoration_depot_overlay = False
     port_menu.rotated_decoration = False
     port_menu.placed_decoration = False

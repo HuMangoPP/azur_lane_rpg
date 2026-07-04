@@ -343,14 +343,14 @@ class PortMenu:
         )
         self.overlay_selected_entity = None
 
-        def open_close_decoration_menu():
-            self.decorating_port_menu = not self.decorating_port_menu
+        def toggle_decoration_mode():
+            self.is_decorating = not self.is_decorating
 
             close_shipgirl_dialogue_options()
 
-        self.open_close_decoration_menu_button = Button(
+        self.toggle_decoration_mode_button = Button(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
-            callback=open_close_decoration_menu,
+            callback=toggle_decoration_mode,
             active=False,
             background_styling={
                 "background_color": Color.BLACK,
@@ -359,7 +359,7 @@ class PortMenu:
             },
             hover_styling={"opacity": 200}
         )
-        self.decorating_port_menu = False
+        self.is_decorating = False
 
         self.decoration_depot_overlay = get_rect(
             width=3*(Box.WIDTH+Box.PADDING) + Box.PADDING,
@@ -463,7 +463,7 @@ class PortMenu:
             self.open_gear_lab_overlay_button,
             self.open_intel_center_overlay_button,
             self.open_decoration_store_overlay_button,
-            self.open_close_decoration_menu_button,
+            self.toggle_decoration_mode_button,
             *self.choose_faction_buttons,
             *self.shipgirl_dialogue_options,
         ]
@@ -486,8 +486,8 @@ class PortMenu:
         if self.decoration_depot_overlay.collidepoint(pos):
             return False
         if (
-            self.open_close_decoration_menu_button.active
-            and self.open_close_decoration_menu_button.rect.collidepoint(pos)
+            self.toggle_decoration_mode_button.active
+            and self.toggle_decoration_mode_button.rect.collidepoint(pos)
         ):
             return False
         if self.selected_decoration_in_depot is not None:
@@ -645,7 +645,7 @@ class PortMenu:
                     self.open_gear_lab_overlay_button,
                     self.open_intel_center_overlay_button,
                     self.open_decoration_store_overlay_button,
-                    self.open_close_decoration_menu_button,
+                    self.toggle_decoration_mode_button,
                     *self.choose_faction_buttons,
                     *self.shipgirl_dialogue_options,
                 ]
@@ -677,7 +677,7 @@ class PortMenu:
                     self.open_gear_lab_overlay_button,
                     self.open_intel_center_overlay_button,
                     self.open_decoration_store_overlay_button,
-                    self.open_close_decoration_menu_button,
+                    self.toggle_decoration_mode_button,
                 ]
                 click = (
                     click
@@ -1406,7 +1406,7 @@ class PortMenu:
 
                 if (
                     self.selected_decoration_in_depot is None
-                    and not self.open_close_decoration_menu_button.rect.collidepoint(event.pos)
+                    and not self.toggle_decoration_mode_button.rect.collidepoint(event.pos)
                 ):
                     if not self.deleting_decoration:
                         for shipgirl in self.menu_manager.available_shipgirls:
@@ -1424,7 +1424,7 @@ class PortMenu:
                 if self.update_camera_drag(event):
                     continue
 
-                self.open_close_decoration_menu_button.hover(event.pos)
+                self.toggle_decoration_mode_button.hover(event.pos)
 
                 if self.dragged_shipgirl is not None:
                     self.dragged_shipgirl.pos = pygame.Vector2(event.pos) + self.dragged_shipgirl_offset
@@ -1461,7 +1461,7 @@ class PortMenu:
                     self.decoration_depot_drag_offset = None
                     continue
 
-                if self.open_close_decoration_menu_button.click(event.pos):
+                if self.toggle_decoration_mode_button.click(event.pos):
                     DataFiles.sfx["click"].play()
                     self.selected_decoration_in_depot = None
                     self.deleting_decoration = False
@@ -1547,7 +1547,7 @@ class PortMenu:
                 self.decoration_stamp_animation_timer = 0
                 self.refresh_overlay_action_buttons()
 
-        if self.decorating_port_menu:
+        if self.is_decorating:
             self.update_decorate_port_menu_overlay(events)
         elif self.current_overlay == self.NO_OVERLAY:
             self.update_no_overlay(events)
@@ -1583,19 +1583,7 @@ class PortMenu:
             shipgirl.update(dt)
             shipgirl.animate(dt)
 
-    def draw(self, surface, font):
-        surface.blit(Decorations.floor_surf, Decorations.floor_rect)
-
-        decorations = sorted(
-            DataFiles.save_file["decorations"],
-            key=lambda decoration_data : decoration_data[1][1]
-        )
-        for decoration_data in decorations:
-            decoration, tilepos_anchor, direction = decoration_data
-            sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
-            sprite_rect = get_decoration_sprite_rect(decoration, direction, tilepos_anchor)
-            surface.blit(sprite, sprite_rect)
-
+    def draw_decoration_mode_overlay(self, surface, font):
         if self.deleting_decoration:
             mpos = pygame.mouse.get_pos()
             hovered_tilepos = (
@@ -1623,7 +1611,7 @@ class PortMenu:
                 occupied_tiles.update(get_decoration_tiles(decoration, direction, tilepos_anchor))
 
             decoration = self.selected_decoration_in_depot
-            direction = direction = self.DECORATION_DIRECTIONS[self.decoration_direction_index]
+            direction = self.DECORATION_DIRECTIONS[self.decoration_direction_index]
             mpos = pygame.mouse.get_pos()
             hovered_tilepos = (
                 (mpos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
@@ -1652,35 +1640,59 @@ class PortMenu:
         for option in self.shipgirl_dialogue_options:
             option.draw(surface, font)
 
-        self.open_close_decoration_menu_button.draw(surface, font)
-        if self.decorating_port_menu:
-            pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.decoration_depot_overlay)
-            decoration_index = 0
-            for decoration, amt in DataFiles.save_file["decoration_depot"].items():
-                if amt <= 0:
-                    continue
-                rect = get_rect(
-                    width=Box.WIDTH, height=Box.HEIGHT,
-                    left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-                    top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-                )
-                sprite = DataFiles.get_entity_sprite(decoration)
-                pygame.draw.rect(surface, Color.CARGO_BOX, rect)
-                surface.blit(sprite, rect)
-                font.render(surface,str(amt),rect.center,Color.WHITE,1,style="center",outline_color=Color.BLACK)
-                if self.selected_decoration_in_depot == decoration:
-                    pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                decoration_index += 1
-            delete_rect = get_rect(
+        self.toggle_decoration_mode_button.draw(surface, font)
+
+        pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.decoration_depot_overlay)
+        decoration_index = 0
+        for decoration, amt in DataFiles.save_file["decoration_depot"].items():
+            if amt <= 0:
+                continue
+            rect = get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
                 top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
             )
-            pygame.draw.rect(surface, Color.CARGO_BOX, delete_rect)
-            surface.blit(DataFiles.sprites["user_interface"]["remove_decoration"], delete_rect)
-            if self.deleting_decoration:
-                pygame.draw.rect(surface, Color.WHITE, delete_rect, width=Box.OUTLINE_WIDTH)
+            sprite = DataFiles.get_entity_sprite(decoration)
+            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
+            surface.blit(sprite, rect)
+            font.render(surface,str(amt),rect.center,Color.WHITE,1,style="center",outline_color=Color.BLACK)
+            if self.selected_decoration_in_depot == decoration:
+                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            decoration_index += 1
+        delete_rect = get_rect(
+            width=Box.WIDTH, height=Box.HEIGHT,
+            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+        )
+        pygame.draw.rect(surface, Color.CARGO_BOX, delete_rect)
+        surface.blit(DataFiles.sprites["user_interface"]["remove_decoration"], delete_rect)
+        if self.deleting_decoration:
+            pygame.draw.rect(surface, Color.WHITE, delete_rect, width=Box.OUTLINE_WIDTH)
+
+    def draw(self, surface, font):
+        surface.blit(Decorations.floor_surf, Decorations.floor_rect)
+
+        decorations = sorted(
+            DataFiles.save_file["decorations"],
+            key=lambda decoration_data : decoration_data[1][1]
+        )
+        for decoration_data in decorations:
+            decoration, tilepos_anchor, direction = decoration_data
+            sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
+            sprite_rect = get_decoration_sprite_rect(decoration, direction, tilepos_anchor)
+            surface.blit(sprite, sprite_rect)
+
+        if self.is_decorating:
+            self.draw_decoration_mode_overlay(surface, font)
             return
+
+        for shipgirl in self.menu_manager.available_shipgirls:
+            shipgirl.draw(surface, font)
+        
+        for option in self.shipgirl_dialogue_options:
+            option.draw(surface, font)
+
+        self.toggle_decoration_mode_button.draw(surface, font)
         
         buttons = [
             self.open_depot_overlay_button,
