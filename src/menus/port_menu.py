@@ -1,8 +1,7 @@
-import math
 import random
 import pygame
 
-from engine.util import get_rect, get_vec
+from engine.util import get_rect
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, Decorations
@@ -29,17 +28,6 @@ def get_decoration_sprite_rect(decoration, direction, tilepos_anchor):
     sprite_rect = sprite.get_rect()
     sprite_rect.bottomleft = tile_rect.bottomleft
     return sprite_rect
-
-def get_rotated_rect_polygon(rect, rotated_angle, offset=(0, 0)):
-    rect_center = pygame.Vector2(rect.center) + pygame.Vector2(offset)
-    rect_horizontal = get_vec(rect.width/2, math.radians(rotated_angle))
-    rect_vertical = get_vec(rect.height/2, math.radians(90 + rotated_angle))
-    return [
-        rect_center + rect_horizontal + rect_vertical,
-        rect_center - rect_horizontal + rect_vertical,
-        rect_center - rect_horizontal - rect_vertical,
-        rect_center + rect_horizontal - rect_vertical,
-    ]
 
 def in_tileable_area(tiles):
     return (
@@ -855,7 +843,7 @@ class PortMenu:
             pygame.draw.polygon(
                 surface,
                 color,
-                get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
+                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
         for entity, rect in zip(entities, self.dossier_icons):
@@ -890,7 +878,7 @@ class PortMenu:
             pygame.draw.polygon(
                 surface,
                 color,
-                get_rotated_rect_polygon(self.sticky_note_page, rotated_angle, offset)
+                Box.get_rotated_rect_polygon(self.sticky_note_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.STICKY_NOTE, self.sticky_note_page)
         action_button.draw(surface, font)
@@ -927,7 +915,7 @@ class PortMenu:
             pygame.draw.polygon(
                 surface,
                 color,
-                get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset)
+                Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
         font.render(surface, self.overlay_selected_entity, blueprint_name_pos, Color.WHITE, 1, style="center")
@@ -1180,7 +1168,7 @@ class PortMenu:
             pygame.draw.polygon(
                 surface,
                 color,
-                get_rotated_rect_polygon(self.clipboard_page, rotated_angle, offset)
+                Box.get_rotated_rect_polygon(self.clipboard_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.WHITE, self.clipboard_page)
         if self.current_overlay == self.DECORATION_STORE:

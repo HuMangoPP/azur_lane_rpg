@@ -1,6 +1,9 @@
 import json
 import colorsys
+import math
 import pygame
+
+from engine.util import get_vec
 
 TEMP_SCREEN_SIZE = pygame.Vector2(960, 540) # TODO
 FPS = 60
@@ -23,6 +26,18 @@ class Box:
     RIGHT_OF_SCREEN = screen_x(1) - EDGE_PADDING
     TOP_OF_SCREEN = screen_y(0) + EDGE_PADDING
     BOTTOM_OF_SCREEN = screen_y(1) - EDGE_PADDING
+
+    @staticmethod
+    def get_rotated_rect_polygon(rect, rotated_angle, offset=(0, 0)):
+        rect_center = pygame.Vector2(rect.center) + pygame.Vector2(offset)
+        rect_horizontal = get_vec(rect.width/2, math.radians(rotated_angle))
+        rect_vertical = get_vec(rect.height/2, math.radians(90 + rotated_angle))
+        return [
+            rect_center + rect_horizontal + rect_vertical,
+            rect_center - rect_horizontal + rect_vertical,
+            rect_center - rect_horizontal - rect_vertical,
+            rect_center + rect_horizontal - rect_vertical,
+        ]
 
 class Color:
     WHITE = (255,255,255)

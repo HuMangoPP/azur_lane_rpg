@@ -21,16 +21,6 @@ class EquipmentMenu:
         self.blueprint_page = blueprint_surf.get_rect()
         self.blueprint_page.left = screen_x(0.5) - Box.WIDTH
         self.blueprint_page.bottom = screen_y(0.5) + 1.25*Box.HEIGHT
-        blueprint_page_center = pygame.Vector2(self.blueprint_page.center)
-        rotated_angle = 5
-        page_horizontal = get_vec(self.blueprint_page.width/2, math.radians(rotated_angle))
-        page_vertical = get_vec(self.blueprint_page.height/2, math.radians(90+rotated_angle))
-        self.misaligned_blueprint_page = [
-            blueprint_page_center + page_horizontal + page_vertical,
-            blueprint_page_center + page_horizontal - page_vertical,
-            blueprint_page_center - page_horizontal - page_vertical,
-            blueprint_page_center - page_horizontal + page_vertical,
-        ]
         self.equipped_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
@@ -80,16 +70,6 @@ class EquipmentMenu:
             centerx=screen_x(0.25),
             top=screen_y(0.5)
         )
-        dossier_page_center = pygame.Vector2(self.dossier_page.center)
-        rotated_angle = 5
-        page_horizontal = get_vec(self.dossier_page.width/2, math.radians(rotated_angle))
-        page_vertical = get_vec(self.dossier_page.height/2, math.radians(90 + rotated_angle))
-        self.misaligned_dossier_page = [
-            dossier_page_center + page_horizontal + page_vertical,
-            dossier_page_center + page_horizontal - page_vertical,
-            dossier_page_center - page_horizontal - page_vertical,
-            dossier_page_center - page_horizontal + page_vertical,
-        ]
         self.dossier_bg = get_rect(
             width=self.dossier_page.width + 2*Box.PADDING,
             height=self.dossier_page.height + 2*Box.PADDING,
@@ -209,7 +189,17 @@ class EquipmentMenu:
         surface.fill((59, 31, 18))
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
         pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
-        pygame.draw.polygon(surface, Color.DOSSIER_PAGE, self.misaligned_dossier_page)
+        misaligned_dossier_pages = [
+            (-4, pygame.Vector2(-6, 7), (224, 218, 201)),
+            (5, pygame.Vector2(8, -5), (235, 229, 212)),
+            (-3, pygame.Vector2(2, 6), (244, 239, 224)),
+        ]
+        for rotated_angle, offset, color in misaligned_dossier_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
+            )
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
 
         # TODO instead of the live2d model, draw a little plushie of the character
@@ -286,7 +276,17 @@ class EquipmentMenu:
                     style="centerleft"
                 )
         
-        pygame.draw.polygon(surface, Color.BLUEPRINT_PAGE_BACK, self.misaligned_blueprint_page)
+        misaligned_blueprint_pages = [
+            (-6, pygame.Vector2(-5, 7), Color.BLUEPRINT_PAGE_BACK),
+            (3, pygame.Vector2(8, -5), (34, 62, 125)),
+            (-1, pygame.Vector2(4, 6), (45, 76, 145)),
+        ]
+        for rotated_angle, offset, color in misaligned_blueprint_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset)
+            )
         surface.blit(DataFiles.sprites["equipment_menu"]["blueprint"], self.blueprint_page)
         faction_icon = DataFiles.sprites["user_interface"][f"{faction}_big"]
         faction_icon_rect = faction_icon.get_rect()
