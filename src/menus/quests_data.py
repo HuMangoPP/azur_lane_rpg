@@ -28,7 +28,7 @@ def draw_tb(surface, font_registry, text, point_pos, point_down, point_right):
 
     if text is not None:
         text_scale = 1
-        max_text_width = font_registry.font_width*25
+        max_text_width = font_registry["big_pixel"].font_width*25
         text_height = font_registry["big_pixel"].get_height(text, text_scale, max_text_width)
         text_box_width = font_registry["big_pixel"].get_width(text, text_scale, max_text_width)
         text_rect = get_rect(

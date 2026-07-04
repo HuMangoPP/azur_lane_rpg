@@ -88,6 +88,8 @@ class PortMenu:
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
             DataFiles.sfx["waves"].play(loops=-1)
 
+            close_shipgirl_dialogue_options()
+
         self.open_select_sortie_menu_button = Button(
             get_rect(width=2*Box.WIDTH,height=Box.HEIGHT,right=Box.RIGHT_OF_SCREEN,bottom=Box.BOTTOM_OF_SCREEN),
             open_select_sortie_menu,
@@ -127,6 +129,9 @@ class PortMenu:
                         if DataFiles.save_file["unlocked_factions"][0] == faction:
                             self.overlay_selected_filter = i
                             break
+                
+                close_shipgirl_dialogue_options()
+
             return Button(
                 get_rect(
                     width=Box.WIDTH, height=Box.HEIGHT,
@@ -278,7 +283,7 @@ class PortMenu:
             active=False,
             text_styling={
                 "text_font": "handwritten",
-                "text_color": Color.START_SORTIE_BUTTON,
+                "text_color": Color.STICKY_NOTE_HANDWRITING,
             }
         )
 
@@ -303,7 +308,7 @@ class PortMenu:
             text_styling={
                 "text": "construct?",
                 "text_font": "handwritten",
-                "text_color": Color.START_SORTIE_BUTTON,
+                "text_color": Color.STICKY_NOTE_HANDWRITING,
             }
         )
 
@@ -380,6 +385,8 @@ class PortMenu:
         def open_equipment_menu():
             self.menu_manager.equipment_menu.selected_shipgirl = self.hovered_shipgirl
             self.menu_manager.current_menu = self.menu_manager.equipment_menu
+
+            close_shipgirl_dialogue_options()
 
         def close_shipgirl_dialogue_options():
             if self.hovered_shipgirl is not None:
@@ -685,7 +692,6 @@ class PortMenu:
 
                 if click:
                     DataFiles.sfx["click"].play()
-                    self.hovered_shipgirl = None
                     continue
 
                 if self.hovered_shipgirl is not None:
@@ -852,29 +858,48 @@ class PortMenu:
                 color,
                 Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
             )
+
+        sticky_tabs = [
+            (-7, 78, "yellow"),
+            (-5, 159, "green"),
+            (-12, 203, "pink"),
+        ]
+        for sticky_tab_offsetx, sticky_tab_offsety, sticky_tab_color in sticky_tabs:
+            sticky_tab_sprite = DataFiles.sprites["props"][f"sticky_tab_{sticky_tab_color}"]
+            sticky_tab_rect = sticky_tab_sprite.get_rect()
+            sticky_tab_rect.centerx = self.dossier_page.left + sticky_tab_offsetx
+            sticky_tab_rect.centery = self.dossier_page.top + sticky_tab_offsety
+            surface.blit(sticky_tab_sprite, sticky_tab_rect)
+
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
+        red_circle_sprite = DataFiles.sprites["props"]["red_circle"]
+        red_circle_rect = red_circle_sprite.get_rect()
+        red_circle_rect.topleft = (-2*Box.WIDTH, -2*Box.HEIGHT)
         for entity, rect in zip(entities, self.dossier_icons):
             image = DataFiles.get_entity_sprite(entity)
             image_rect = image.get_rect()
             image_rect.center = rect.center
             surface.blit(image, image_rect)
-            if entity == self.overlay_selected_entity:
-                selected_sprite = DataFiles.sprites["props"]["red_circle"]
-                selected_rect = selected_sprite.get_rect()
-                selected_rect.center = rect.center
-                surface.blit(selected_sprite, selected_rect)
+            if self.overlay_selected_entity == entity:
+                red_circle_rect.center = rect.center
             pygame.draw.rect(surface, Color.BLACK, rect, width=Box.OUTLINE_WIDTH)
-        
+        surface.blit(red_circle_sprite, red_circle_rect)
+
         paperclip_sprite = DataFiles.sprites["props"]["paperclip"]
         paperclip_rect = paperclip_sprite.get_rect()
         paperclip_rect.left = self.dossier_bg.left - 4 # TODO paper clip offset
         paperclip_rect.top = self.dossier_bg.top
         surface.blit(paperclip_sprite, paperclip_rect)
 
-        classified_sprite = DataFiles.sprites["props"]["classified"]
+        classified_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["classified"], 1.5)
         classified_rect = classified_sprite.get_rect()
         classified_rect.topright = self.dossier_bg.topright
         surface.blit(classified_sprite, classified_rect)
+
+        coffee_ring_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["coffee_ring"], 1.5)
+        coffee_ring_rect = coffee_ring_sprite.get_rect()
+        coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
+        surface.blit(coffee_ring_sprite, coffee_ring_rect)
 
     def draw_sticky_note_overlay(self, surface, font_registry):
         action_button = self.get_current_overlay_action_button()

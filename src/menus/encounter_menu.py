@@ -415,8 +415,8 @@ class EncounterMenu:
             pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
             banner_text = "shipgirl research progress"
             banner_surf = pygame.Surface((
-                len(banner_text)*font_registry.font_width + 2*Box.PADDING,
-                font_registry.font_height + 2*Box.PADDING
+                len(banner_text)*font_registry["big_pixel"].font_width + 2*Box.PADDING,
+                font_registry["big_pixel"].font_height + 2*Box.PADDING
             ))
             banner_surf.fill(Color.BLACK)
             banner_surf.set_alpha(160)
@@ -440,8 +440,8 @@ class EncounterMenu:
             elif not self.menu_manager.siren_fleet.afloat:
                 end_text = "you win"
             banner_surf = pygame.Surface((
-                len(end_text)*font_size*font_registry.font_width + 2*Box.PADDING, 
-                font_size*font_registry.font_height + 2*Box.PADDING
+                len(end_text)*font_size*font_registry["big_pixel"].font_width + 2*Box.PADDING, 
+                font_size*font_registry["big_pixel"].font_height + 2*Box.PADDING
             ))
             banner_surf.fill(Color.BLACK)
             banner_surf.set_alpha(160)

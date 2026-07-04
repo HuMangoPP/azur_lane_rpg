@@ -48,8 +48,8 @@ class QuestManager:
             if banner_text is not None:
                 font_size = 1
                 quest_status_banner = pygame.Surface((
-                    2*Box.PADDING + len(banner_text)*font_registry.font_width,
-                    2*Box.PADDING + font_registry.font_height
+                    2*Box.PADDING + len(banner_text)*font_registry["big_pixel"].font_width,
+                    2*Box.PADDING + font_registry["big_pixel"].font_height
                 ))
                 quest_status_banner.fill(banner_color)
                 # quest_status_banner.set_alpha(160)

@@ -335,7 +335,7 @@ class SortieSelectionMenu:
             pygame.draw.rect(surface, Color.BLACK, self.selected_sortie_info_panel)
             title_card_rect = get_rect(
                 width=self.selected_sortie_info_panel.width,
-                height=2*font_registry.font_height + 2*Box.PADDING,
+                height=2*font_registry["big_pixel"].font_height + 2*Box.PADDING,
                 left=self.selected_sortie_info_panel.left,
                 top=self.selected_sortie_info_panel.top
             )
@@ -370,7 +370,7 @@ class SortieSelectionMenu:
                 rect = get_rect(
                     width=Box.WIDTH, height=Box.HEIGHT,
                     left=self.selected_sortie_info_panel.left + Box.PADDING + (i%3)*(Box.WIDTH+Box.PADDING),
-                    top=title_card_rect.bottom + 2*Box.PADDING + font_registry.font_height + (i//3)*(Box.HEIGHT+Box.PADDING)
+                    top=title_card_rect.bottom + 2*Box.PADDING + font_registry["big_pixel"].font_height + (i//3)*(Box.HEIGHT+Box.PADDING)
                 )
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 surface.blit(DataFiles.get_entity_sprite(reward), rect)

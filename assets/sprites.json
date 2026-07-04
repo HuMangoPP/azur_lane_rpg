@@ -179,8 +179,8 @@
 		},
 		"red_circle": { "left": 256, "top": 192, "width": 96, "height": 96 },
 		"paperclip": {
-			"left": 256,
-			"top": 288,
+			"left": 0,
+			"top": 160,
 			"width": 64,
 			"height": 32
 		},
@@ -190,8 +190,32 @@
 			"width": 64,
 			"height": 96,
 			"rotation": 90,
-			"scale": 1.5,
 			"opacity": 150
+		},
+		"sticky_tab_yellow": {
+			"left": 256,
+			"top": 288,
+			"width": 64,
+			"height": 32
+		},
+		"sticky_tab_green": {
+			"left": 320,
+			"top": 288,
+			"width": 64,
+			"height": 32
+		},
+		"sticky_tab_pink": {
+			"left": 352,
+			"top": 160,
+			"width": 64,
+			"height": 32
+		},
+		"coffee_ring": {
+			"left": 352,
+			"top": 96,
+			"width": 64,
+			"height": 64,
+			"opacity": 100
 		}
 	},
 	"encounter": {

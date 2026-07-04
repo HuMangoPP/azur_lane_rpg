@@ -255,7 +255,7 @@ class EquipmentMenu:
                 font_registry["big_pixel"].render(
                     surface,
                     f"+{stat_delta}",
-                    (rect.right + Box.PADDING + font_registry.font_width*len(stat_text), rect.centery),
+                    (rect.right + Box.PADDING + font_registry["big_pixel"].font_width*len(stat_text), rect.centery),
                     (34, 178, 34),
                     1,
                     style="centerleft"
@@ -270,7 +270,7 @@ class EquipmentMenu:
                 font_registry["big_pixel"].render(
                     surface,
                     str(stat_delta),
-                    (rect.right + Box.PADDING + font_registry.font_width*len(stat_text), rect.centery),
+                    (rect.right + Box.PADDING + font_registry["big_pixel"].font_width*len(stat_text), rect.centery),
                     (178, 34, 34),
                     1,
                     style="centerleft"
@@ -280,6 +280,11 @@ class EquipmentMenu:
         classified_rect = classified_sprite.get_rect()
         classified_rect.topright = self.dossier_bg.topright
         surface.blit(classified_sprite, classified_rect)
+
+        coffee_ring_sprite = DataFiles.sprites["props"]["coffee_ring"]
+        coffee_ring_rect = coffee_ring_sprite.get_rect()
+        coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
+        surface.blit(coffee_ring_sprite, coffee_ring_rect)
 
         paperclip_sprite = pygame.transform.rotate(
             DataFiles.sprites["props"]["paperclip"],
@@ -307,7 +312,7 @@ class EquipmentMenu:
         faction_icon_rect.left = self.blueprint_page.left + Box.PADDING
         faction_icon_rect.top = self.blueprint_page.top + Box.PADDING
         surface.blit(faction_icon, faction_icon_rect)
-        font_registry["big_pixel"].render(surface,f"{faction} {self.selected_shipgirl.name}",(faction_icon_rect.right, faction_icon_rect.centery-font_registry.font_height-2),Color.WHITE,1)
+        font_registry["big_pixel"].render(surface,f"{faction} {self.selected_shipgirl.name}",(faction_icon_rect.right, faction_icon_rect.centery-font_registry["big_pixel"].font_height-2),Color.WHITE,1)
         ship_class = DataFiles.shipgirl_data[self.selected_shipgirl.name]["class"]
         hull_type = DataFiles.shipgirl_data[self.selected_shipgirl.name]["hull_type"]
         font_registry["big_pixel"].render(surface,f"{ship_class}-class {hull_type}",(faction_icon_rect.right, faction_icon_rect.centery+2),Color.WHITE,1)
