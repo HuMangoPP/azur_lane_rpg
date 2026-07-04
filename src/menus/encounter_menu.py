@@ -28,7 +28,7 @@ class Drop:
             self.pos.y = min(self.pos.y, self.bottom)
             self.vel = self.vel + pygame.Vector2(0, 200) * dt
     
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         image = DataFiles.get_entity_sprite(self.item)
         rect = image.get_rect()
         rect.center = self.pos
@@ -372,20 +372,20 @@ class EncounterMenu:
         self.vfx_manager.update(dt)
         self.menu_manager.background.update(dt)
 
-    def draw(self, surface, font):
-        self.menu_manager.background.draw(surface, font, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
+    def draw(self, surface, font_registry):
+        self.menu_manager.background.draw(surface, font_registry, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
 
-        self.menu_manager.player_fleet.draw_battle_component(surface, font, self.vfx_manager)
-        self.menu_manager.siren_fleet.draw_battle_component(surface, font, self.vfx_manager)
-        self.vfx_manager.draw(surface, font)
+        self.menu_manager.player_fleet.draw_battle_component(surface, font_registry, self.vfx_manager)
+        self.menu_manager.siren_fleet.draw_battle_component(surface, font_registry, self.vfx_manager)
+        self.vfx_manager.draw(surface, font_registry)
 
-        self.next_encounter_button.draw(surface, font)
-        self.open_reward_cache_button.draw(surface, font)
-        self.return_to_port_button.draw(surface, font)
-        self.retreat_button.draw(surface, font)
+        self.next_encounter_button.draw(surface, font_registry)
+        self.open_reward_cache_button.draw(surface, font_registry)
+        self.return_to_port_button.draw(surface, font_registry)
+        self.retreat_button.draw(surface, font_registry)
 
         for drop in self.drops:
-            drop.draw(surface, font)
+            drop.draw(surface, font_registry)
         
         if self.exp_timer > 0:
             bar_width = 256
@@ -415,8 +415,8 @@ class EncounterMenu:
             pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
             banner_text = "shipgirl research progress"
             banner_surf = pygame.Surface((
-                len(banner_text)*font.font_width + 2*Box.PADDING,
-                font.font_height + 2*Box.PADDING
+                len(banner_text)*font_registry.font_width + 2*Box.PADDING,
+                font_registry.font_height + 2*Box.PADDING
             ))
             banner_surf.fill(Color.BLACK)
             banner_surf.set_alpha(160)
@@ -424,7 +424,7 @@ class EncounterMenu:
             banner_rect.centerx = bar_background.centerx
             banner_rect.bottom = bar_background.top - Box.PADDING
             surface.blit(banner_surf, banner_rect)
-            font.render(
+            font_registry["big_pixel"].render(
                 surface,
                 banner_text,
                 banner_rect.center,
@@ -440,15 +440,15 @@ class EncounterMenu:
             elif not self.menu_manager.siren_fleet.afloat:
                 end_text = "you win"
             banner_surf = pygame.Surface((
-                len(end_text)*font_size*font.font_width + 2*Box.PADDING, 
-                font_size*font.font_height + 2*Box.PADDING
+                len(end_text)*font_size*font_registry.font_width + 2*Box.PADDING, 
+                font_size*font_registry.font_height + 2*Box.PADDING
             ))
             banner_surf.fill(Color.BLACK)
             banner_surf.set_alpha(160)
             banner_rect = banner_surf.get_rect()
             banner_rect.center = self.end_sortie_text_pos
             surface.blit(banner_surf, banner_rect)
-            font.render(surface, end_text, self.end_sortie_text_pos, Color.WHITE, font_size, style="center")
+            font_registry["big_pixel"].render(surface, end_text, self.end_sortie_text_pos, Color.WHITE, font_size, style="center")
 
         mpos = pygame.mouse.get_pos()
         if self.mouse_start_drag is not None:

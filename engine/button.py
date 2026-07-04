@@ -44,7 +44,7 @@ class Button:
         self.callback()
         return True
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         if not self.active:
             return
         
@@ -75,7 +75,7 @@ class Button:
                 self.rect.left + self.rect.width * self.text_align[0],
                 self.rect.top + self.rect.height * self.text_align[1]
             )
-            font.render(
+            font_registry["big_pixel"].render(
                 surface,
                 self.text,
                 text_pos,

@@ -72,7 +72,7 @@ class Background:
             self.cloud_timer = 0
             self.cloud_spawn_time = random.uniform(5, 10)
     
-    def draw(self, surface, font, shipgirl=None, player_fleet=None, siren_fleet=None):
+    def draw(self, surface, font_registry, shipgirl=None, player_fleet=None, siren_fleet=None):
         sky_surf = DataFiles.sprites["background"]["sky"]
         sky_surf_rect = sky_surf.get_rect()
         sky_surf_rect.top = 0
@@ -96,14 +96,14 @@ class Background:
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
             if i == (num_waves-1)/2:
                 if shipgirl is not None:
-                    shipgirl.draw(surface, font)
+                    shipgirl.draw(surface, font_registry)
                 if player_fleet is not None:
-                    player_fleet.draw_shipgirl(surface, font)
+                    player_fleet.draw_shipgirl(surface, font_registry)
             
             if siren_draw_indices is not None:
                 for draw_index, siren in siren_draw_indices:
                     if i == draw_index:
-                        siren.draw(surface, font) 
+                        siren.draw(surface, font_registry) 
 
             wave = DataFiles.sprites["background"][f"wave{i}"]
             wave_rect = wave.get_rect()

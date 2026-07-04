@@ -164,11 +164,11 @@ class FleetSelectionMenu:
 
         self.menu_manager.background.update(dt)
 
-    def draw(self, surface, font):
-        self.menu_manager.background.draw(surface, font, player_fleet=self.menu_manager.player_fleet)
+    def draw(self, surface, font_registry):
+        self.menu_manager.background.draw(surface, font_registry, player_fleet=self.menu_manager.player_fleet)
 
-        self.start_sortie_button.draw(surface, font)
-        self.exit_fleet_selection_menu_button.draw(surface, font)
+        self.start_sortie_button.draw(surface, font_registry)
+        self.exit_fleet_selection_menu_button.draw(surface, font_registry)
 
         for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.menu_manager.available_shipgirl_rects):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)

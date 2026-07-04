@@ -1,9 +1,9 @@
 import pygame
 
 class Font:
-    def __init__(self, font_path="engine/font.png"):
-        self.font = pygame.image.load(font_path).convert_alpha()
-        self.chars = list('abcdefghijklmnopqrstuvwxyz1234567890.,;-?!_:+[]')
+    def __init__(self, font_name: str, charset: str):
+        self.font = pygame.image.load(f"engine/{font_name}.png").convert_alpha()
+        self.chars = list(charset)
         self.font_width = self.font.get_width() // len(self.chars)
         self.font_height = self.font.get_height()
         self.padding = 4

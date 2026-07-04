@@ -86,7 +86,7 @@ class Spark(VFX):
         self.fly_distance = fly_distance
         self.spark_angle = angle
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         if self.delay > 0:
             return
         
@@ -115,7 +115,7 @@ class Ring(VFX):
         self.radius = radius
         self.color = color
     
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         if self.delay > 0:
             return
         
@@ -136,7 +136,7 @@ class Slash(VFX):
         self.perpendicular = pygame.Vector2(-self.direction.y, self.direction.x)
         self.color = color
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         if self.delay > 0:
             return
         
@@ -165,7 +165,7 @@ class Smoke(VFX):
         self.size = size
         self.drift_distance = drift_distance
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         if self.delay > 0:
             return
         
@@ -197,9 +197,9 @@ class DamageCounter(VFX):
             DAMAGE_COUNTER_COLORS["normal"],
         )
         self.float_distance = 48
-        self.font_scale = 3 if crit else 2
+        self.font_registry_scale = 3 if crit else 2
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         if self.delay > 0:
             return
 
@@ -209,16 +209,16 @@ class DamageCounter(VFX):
         text_pos = self.pos - pygame.Vector2(0, y_offset)
 
         text_surf = pygame.Surface((
-            font.get_width(self.text, self.font_scale, 0) + 2,
-            font.get_height(self.text, self.font_scale, 0) + 2,
+            font_registry["big_pixel"].get_width(self.text, self.font_registry_scale, 0) + 2,
+            font_registry["big_pixel"].get_height(self.text, self.font_registry_scale, 0) + 2,
         ))
         text_surf.set_colorkey((0, 0, 0))
-        font.render(
+        font_registry["big_pixel"].render(
             text_surf,
             self.text,
             pygame.Vector2(text_surf.get_rect().center),
             self.color,
-            self.font_scale,
+            self.font_registry_scale,
             style="center",
             outline_color=self.outline_color,
         )
@@ -436,8 +436,8 @@ class VFXManager:
             effect.update(dt)
         self.effects = [effect for effect in self.effects if not effect.expired]
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         overlay = pygame.Surface(surface.get_size(), flags=pygame.SRCALPHA)
         for effect in self.effects:
-            effect.draw(overlay, font)
+            effect.draw(overlay, font_registry)
         surface.blit(overlay, (0, 0))

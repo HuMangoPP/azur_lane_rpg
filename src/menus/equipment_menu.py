@@ -185,7 +185,7 @@ class EquipmentMenu:
                 else:
                     self.hovered_equipment = None
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         surface.fill((59, 31, 18))
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
         pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
@@ -203,17 +203,17 @@ class EquipmentMenu:
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
 
         # TODO instead of the live2d model, draw a little plushie of the character
-        self.selected_shipgirl.draw(surface, font)
+        self.selected_shipgirl.draw(surface, font_registry)
 
         faction = DataFiles.shipgirl_data[self.selected_shipgirl.name]["faction"]
-        font.render(surface,f"{faction} {self.selected_shipgirl.name}",(self.dossier_page.left+Box.PADDING, self.dossier_page.top+Box.PADDING),Color.BLACK,1)
+        font_registry["big_pixel"].render(surface,f"{faction} {self.selected_shipgirl.name}",(self.dossier_page.left+Box.PADDING, self.dossier_page.top+Box.PADDING),Color.BLACK,1)
         level = Stats.level(self.selected_shipgirl.battle_component.exp) + 1
         medal_icon = DataFiles.sprites["user_interface"]["medal"]
         medal_rect = medal_icon.get_rect()
         medal_rect.left = self.dossier_page.left + Box.PADDING
         medal_rect.centery = self.exp_bar_bg.centery
         surface.blit(medal_icon, medal_rect)
-        font.render(
+        font_registry["big_pixel"].render(
             surface,
             str(level),
             medal_rect.center,
@@ -236,7 +236,7 @@ class EquipmentMenu:
             stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.BLACK)
             surface.blit(stat_icon, rect)
             stat_text = str(self.selected_shipgirl.battle_component.stat(stat))
-            font.render(
+            font_registry["big_pixel"].render(
                 surface,
                 stat_text,
                 (rect.right + Box.PADDING, rect.centery),
@@ -252,10 +252,10 @@ class EquipmentMenu:
                     center+get_vec(length=Box.PADDING, angle=math.radians(150)),
                     center+get_vec(length=Box.PADDING, angle=math.radians(270))
                 ])
-                font.render(
+                font_registry["big_pixel"].render(
                     surface,
                     f"+{stat_delta}",
-                    (rect.right + Box.PADDING + font.font_width*len(stat_text), rect.centery),
+                    (rect.right + Box.PADDING + font_registry.font_width*len(stat_text), rect.centery),
                     (34, 178, 34),
                     1,
                     style="centerleft"
@@ -267,10 +267,10 @@ class EquipmentMenu:
                     center+get_vec(length=Box.PADDING, angle=math.radians(210)),
                     center+get_vec(length=Box.PADDING, angle=math.radians(330))
                 ])
-                font.render(
+                font_registry["big_pixel"].render(
                     surface,
                     str(stat_delta),
-                    (rect.right + Box.PADDING + font.font_width*len(stat_text), rect.centery),
+                    (rect.right + Box.PADDING + font_registry.font_width*len(stat_text), rect.centery),
                     (178, 34, 34),
                     1,
                     style="centerleft"
@@ -307,10 +307,10 @@ class EquipmentMenu:
         faction_icon_rect.left = self.blueprint_page.left + Box.PADDING
         faction_icon_rect.top = self.blueprint_page.top + Box.PADDING
         surface.blit(faction_icon, faction_icon_rect)
-        font.render(surface,f"{faction} {self.selected_shipgirl.name}",(faction_icon_rect.right, faction_icon_rect.centery-font.font_height-2),Color.WHITE,1)
+        font_registry["big_pixel"].render(surface,f"{faction} {self.selected_shipgirl.name}",(faction_icon_rect.right, faction_icon_rect.centery-font_registry.font_height-2),Color.WHITE,1)
         ship_class = DataFiles.shipgirl_data[self.selected_shipgirl.name]["class"]
         hull_type = DataFiles.shipgirl_data[self.selected_shipgirl.name]["hull_type"]
-        font.render(surface,f"{ship_class}-class {hull_type}",(faction_icon_rect.right, faction_icon_rect.centery+2),Color.WHITE,1)
+        font_registry["big_pixel"].render(surface,f"{ship_class}-class {hull_type}",(faction_icon_rect.right, faction_icon_rect.centery+2),Color.WHITE,1)
         for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
             outline_width = Box.OUTLINE_WIDTH + int(self.selected_slot == i)
             pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_BACK, rect)
@@ -413,4 +413,4 @@ class EquipmentMenu:
             cargo_box_rect.center = cargo_box_pos
             surface.blit(cargo_box_sprite, cargo_box_rect)
         
-        self.exit_equipment_menu_button.draw(surface, font)
+        self.exit_equipment_menu_button.draw(surface, font_registry)

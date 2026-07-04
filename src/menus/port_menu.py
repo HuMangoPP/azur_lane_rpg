@@ -787,7 +787,7 @@ class PortMenu:
 
                 self.refresh_overlay_action_buttons()
 
-    def draw_dossier_overlay(self, surface, font):
+    def draw_dossier_overlay(self, surface, font_registry):
         entity_filters = getattr(self, f"{self.current_overlay}_filters")
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
         for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
@@ -868,7 +868,7 @@ class PortMenu:
         classified_rect.topright = self.dossier_bg.topright
         surface.blit(classified_sprite, classified_rect)
 
-    def draw_sticky_note_overlay(self, surface, font):
+    def draw_sticky_note_overlay(self, surface, font_registry):
         action_button = self.get_current_overlay_action_button()
         if action_button is None or not action_button.active:
             return
@@ -885,9 +885,9 @@ class PortMenu:
                 Box.get_rotated_rect_polygon(self.sticky_note_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.STICKY_NOTE, self.sticky_note_page)
-        action_button.draw(surface, font)
+        action_button.draw(surface, font_registry)
 
-    def draw_blueprint_overlay(self, surface, font):
+    def draw_blueprint_overlay(self, surface, font_registry):
         if self.overlay_selected_entity is None:
             return
 
@@ -922,16 +922,16 @@ class PortMenu:
                 Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
-        font.render(surface, self.overlay_selected_entity, blueprint_name_pos, Color.WHITE, 1, style="center")
+        font_registry["big_pixel"].render(surface, self.overlay_selected_entity, blueprint_name_pos, Color.WHITE, 1, style="center")
         surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), blueprint_highlight_icon)
         pygame.draw.rect(surface, Color.WHITE, blueprint_highlight_icon, width=Box.OUTLINE_WIDTH)
 
         def draw_blueprint_divider(label, y):
             divider_margin = 2*Box.PADDING
             label_left = self.blueprint_page.left + divider_margin
-            line_left = label_left + font.get_width(label, 1, 0) + Box.PADDING
+            line_left = label_left + font_registry["big_pixel"].get_width(label, 1, 0) + Box.PADDING
             line_right = self.blueprint_page.right - divider_margin
-            font.render(surface, label, (label_left, y), Color.WHITE, 1, style="centerleft")
+            font_registry["big_pixel"].render(surface, label, (label_left, y), Color.WHITE, 1, style="centerleft")
             pygame.draw.line(
                 surface,
                 Color.WHITE,
@@ -1021,8 +1021,8 @@ class PortMenu:
                 surface.blit(info_icon, info_rect)
             else:
                 info_rect = get_rect(width=icon_size, height=icon_size, left=x, top=y)
-                font.render(surface,str(info_key),info_rect.center,Color.WHITE,1,style="center")
-            font.render(surface,str(info_value),(info_rect.right + Box.PADDING, info_rect.centery),Color.WHITE,1,style="centerleft",)
+                font_registry["big_pixel"].render(surface,str(info_key),info_rect.center,Color.WHITE,1,style="center")
+            font_registry["big_pixel"].render(surface,str(info_value),(info_rect.right + Box.PADDING, info_rect.centery),Color.WHITE,1,style="centerleft",)
             info_index += 1
             if info_index % 2 == 0:
                 y += icon_size
@@ -1031,7 +1031,7 @@ class PortMenu:
             surface.blit(DataFiles.get_entity_sprite(icon_name), rect)
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             xy = (rect.centerx, rect.top+0.67*rect.height)
-            font.render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            font_registry["big_pixel"].render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
@@ -1049,9 +1049,9 @@ class PortMenu:
         compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment
         compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
         surface.blit(compass_sprite, compass_rect)
-        self.draw_sticky_note_overlay(surface, font)
+        self.draw_sticky_note_overlay(surface, font_registry)
 
-    def draw_warehouse_overlay(self, surface, font):
+    def draw_warehouse_overlay(self, surface, font_registry):
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.warehouse_overlay)
 
         if self.current_overlay == self.DEPOT:
@@ -1069,7 +1069,7 @@ class PortMenu:
             if self.current_overlay == self.DEPOT:
                 count = DataFiles.save_file["inventory"][entity]
                 count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
-                font.render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
@@ -1151,7 +1151,7 @@ class PortMenu:
         lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
 
-    def draw_clipboard_overlay(self, surface, font):
+    def draw_clipboard_overlay(self, surface, font_registry):
         if self.overlay_selected_entity is None:
             return
     
@@ -1209,7 +1209,7 @@ class PortMenu:
             ],
             width=4
         ) # TODO width
-        font.render(surface, self.overlay_selected_entity, clipboard_name_pos, Color.BLACK, 1, style="center")
+        font_registry["big_pixel"].render(surface, self.overlay_selected_entity, clipboard_name_pos, Color.BLACK, 1, style="center")
         surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), clipboard_highlight_icon)
         pygame.draw.rect(surface, Color.BLACK, clipboard_highlight_icon, width=Box.OUTLINE_WIDTH)
 
@@ -1223,7 +1223,7 @@ class PortMenu:
             clipboard_highlight_icon.bottom + Box.PADDING + Box.HEIGHT/4
         )
         desc_text_boxwidth = self.clipboard_page.width - 2*Box.PADDING - Box.WIDTH/2
-        font.render(surface, desc, desc_topleft, Color.BLACK, 1, style="topleft", box_width=desc_text_boxwidth)
+        font_registry["big_pixel"].render(surface, desc, desc_topleft, Color.BLACK, 1, style="topleft", box_width=desc_text_boxwidth)
 
         if self.current_overlay == self.DECORATION_STORE:
             signature_rect = self.decoration_signature_button.rect
@@ -1255,7 +1255,7 @@ class PortMenu:
                 signature_rect.bottomright,
                 width=Box.OUTLINE_WIDTH
             )
-            font.render(
+            font_registry["big_pixel"].render(
                 surface,
                 "stamp here",
                 (signature_rect.left, signature_rect.bottom + Box.PADDING),
@@ -1586,7 +1586,7 @@ class PortMenu:
             shipgirl.update(dt)
             shipgirl.animate(dt)
 
-    def draw_decoration_mode_overlay(self, surface, font):
+    def draw_decoration_mode_overlay(self, surface, font_registry):
         if self.deleting_decoration:
             mpos = pygame.mouse.get_pos()
             hovered_tilepos = (
@@ -1638,12 +1638,12 @@ class PortMenu:
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
         for shipgirl in self.menu_manager.available_shipgirls:
-            shipgirl.draw(surface, font)
+            shipgirl.draw(surface, font_registry)
         
         for option in self.shipgirl_dialogue_options:
-            option.draw(surface, font)
+            option.draw(surface, font_registry)
 
-        self.toggle_decoration_mode_button.draw(surface, font)
+        self.toggle_decoration_mode_button.draw(surface, font_registry)
 
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.decoration_depot_overlay)
 
@@ -1659,7 +1659,7 @@ class PortMenu:
             sprite = DataFiles.get_entity_sprite(decoration)
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
             surface.blit(sprite, rect)
-            font.render(surface,str(amt),rect.center,Color.WHITE,1,style="center",outline_color=Color.BLACK)
+            font_registry["big_pixel"].render(surface,str(amt),rect.center,Color.WHITE,1,style="center",outline_color=Color.BLACK)
             if self.selected_decoration_in_depot == decoration:
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             decoration_index += 1
@@ -1734,7 +1734,7 @@ class PortMenu:
             cargo_box_rect.center = cargo_box_pos
             surface.blit(cargo_box_sprite, cargo_box_rect)
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         surface.blit(Decorations.floor_surf, Decorations.floor_rect)
 
         decorations = sorted(
@@ -1748,16 +1748,16 @@ class PortMenu:
             surface.blit(sprite, sprite_rect)
 
         if self.is_decorating:
-            self.draw_decoration_mode_overlay(surface, font)
+            self.draw_decoration_mode_overlay(surface, font_registry)
             return
 
         for shipgirl in self.menu_manager.available_shipgirls:
-            shipgirl.draw(surface, font)
+            shipgirl.draw(surface, font_registry)
         
         for option in self.shipgirl_dialogue_options:
-            option.draw(surface, font)
+            option.draw(surface, font_registry)
 
-        self.toggle_decoration_mode_button.draw(surface, font)
+        self.toggle_decoration_mode_button.draw(surface, font_registry)
         
         buttons = [
             self.open_depot_overlay_button,
@@ -1776,16 +1776,16 @@ class PortMenu:
             False,
         ]
         for button, notification in zip(buttons, notifications):
-            button.draw(surface, font)
+            button.draw(surface, font_registry)
             self.draw_button_notification(surface, button, notification)
 
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
-            self.draw_warehouse_overlay(surface, font)
-            self.draw_clipboard_overlay(surface, font)
+            self.draw_warehouse_overlay(surface, font_registry)
+            self.draw_clipboard_overlay(surface, font_registry)
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
-            self.draw_dossier_overlay(surface, font)
-            self.draw_blueprint_overlay(surface, font)
+            self.draw_dossier_overlay(surface, font_registry)
+            self.draw_blueprint_overlay(surface, font_registry)
     
-        self.menu_manager.quest_manager.draw(surface, font)
+        self.menu_manager.quest_manager.draw(surface, font_registry)
         for choose_faction_button in self.choose_faction_buttons:
-            choose_faction_button.draw(surface, font)
+            choose_faction_button.draw(surface, font_registry)

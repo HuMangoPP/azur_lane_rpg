@@ -28,7 +28,7 @@ class QuestManager:
             self.selected_quest = None
         return False
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         for i, quest in enumerate(self.quests.values()):
             rect = get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
@@ -48,8 +48,8 @@ class QuestManager:
             if banner_text is not None:
                 font_size = 1
                 quest_status_banner = pygame.Surface((
-                    2*Box.PADDING + len(banner_text)*font.font_width,
-                    2*Box.PADDING + font.font_height
+                    2*Box.PADDING + len(banner_text)*font_registry.font_width,
+                    2*Box.PADDING + font_registry.font_height
                 ))
                 quest_status_banner.fill(banner_color)
                 # quest_status_banner.set_alpha(160)
@@ -58,10 +58,10 @@ class QuestManager:
                 banner_rect.centery = rect.centery
                 surface.blit(quest_status_banner, banner_rect)
                 textpos = (rect.right + Box.PADDING, rect.centery)
-                font.render(surface, banner_text, textpos, Color.WHITE, font_size, style="centerleft")
+                font_registry["big_pixel"].render(surface, banner_text, textpos, Color.WHITE, font_size, style="centerleft")
         
         if self.selected_quest is not None:
-            self.selected_quest.draw(surface, font)
+            self.selected_quest.draw(surface, font_registry)
 
 class Quest:
     DIALOGUE_OVERLAY = get_rect(
@@ -176,7 +176,7 @@ class Quest:
                 self.pre_quest_finished = True
         return False
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         shipgirls = DataFiles.get_faction_shipgirls()
 
         if self.rewards_collected:
@@ -228,7 +228,7 @@ class Quest:
         surface.blit(tb_sprite, rect)
 
         text_width = box.width - 2*Box.PADDING
-        font.render(
+        font_registry["big_pixel"].render(
             surface,
             text.format(**{
                 f"{hull_type}_shipgirl": " ".join(shipgirl.split("_"))
@@ -247,7 +247,7 @@ class Quest:
             next_sprite_rect.center = button.center
             surface.blit(next_sprite, next_sprite_rect)
         else:
-            font.render(surface, button_text, button.center, Color.WHITE, 1, style="center")
+            font_registry["big_pixel"].render(surface, button_text, button.center, Color.WHITE, 1, style="center")
 
         if show_reward:
             for rect, (reward, amt) in zip(self.reward_rects, self.rewards.items()):
@@ -255,4 +255,4 @@ class Quest:
                     reward = "placeholder"
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 surface.blit(DataFiles.get_entity_sprite(reward), rect)
-                font.render(surface, str(amt), rect.center, Color.WHITE, 1, style="center")
+                font_registry["big_pixel"].render(surface, str(amt), rect.center, Color.WHITE, 1, style="center")

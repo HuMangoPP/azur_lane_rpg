@@ -120,11 +120,11 @@ def change_amplitude(animation, delta):
         animation[1] = EDIT_WAVES[0]
 
 
-def draw_text(surface, font, text, x, y, color=(230, 230, 230)):
-    surface.blit(font.render(text, True, color), (x, y))
+def draw_text(surface, font_registry, text, x, y, color=(230, 230, 230)):
+    surface.blit(font_registry["big_pixel"].render(text, True, color), (x, y))
 
 
-def draw_layer_grid(surface, layers, selected_index, font):
+def draw_layer_grid(surface, layers, selected_index, font_registry):
     for i, part in enumerate(PART_NAMES):
         col = i % GRID_COLUMNS
         row = i // GRID_COLUMNS
@@ -137,10 +137,10 @@ def draw_layer_grid(surface, layers, selected_index, font):
 
         border = (250, 220, 80) if i == selected_index else (90, 90, 100)
         pygame.draw.rect(surface, border, rect, 2)
-        draw_text(surface, font, part, x, y + LAYER_SIZE + 4, border)
+        draw_text(surface, font_registry, part, x, y + LAYER_SIZE + 4, border)
 
 
-def draw_selected_layer(surface, layer, part_data, panel_x, panel_y, font):
+def draw_selected_layer(surface, layer, part_data, panel_x, panel_y, font_registry):
     scaled_size = LAYER_SIZE * PREVIEW_SCALE
     rect = pygame.Rect(panel_x, panel_y, scaled_size, scaled_size)
     scaled = pygame.transform.scale(layer, (scaled_size, scaled_size))
@@ -152,11 +152,11 @@ def draw_selected_layer(surface, layer, part_data, panel_x, panel_y, font):
     pygame.draw.line(surface, (255, 236, 90), (pivot_pos.x - 8, pivot_pos.y), (pivot_pos.x + 8, pivot_pos.y), 2)
     pygame.draw.line(surface, (255, 236, 90), (pivot_pos.x, pivot_pos.y - 8), (pivot_pos.x, pivot_pos.y + 8), 2)
 
-    draw_text(surface, font, "Click enlarged layer to set pivot", panel_x, panel_y + scaled_size + 10)
+    draw_text(surface, font_registry, "Click enlarged layer to set pivot", panel_x, panel_y + scaled_size + 10)
     return rect
 
 
-def draw_status(surface, font, shipgirl, selected_part, part_data, preview_animation, panel_x, panel_y):
+def draw_status(surface, font_registry, shipgirl, selected_part, part_data, preview_animation, panel_x, panel_y):
     idle = part_data["idle"]
     walk = part_data["walk"]
     lines = [
@@ -178,7 +178,7 @@ def draw_status(surface, font, shipgirl, selected_part, part_data, preview_anima
 
     y = panel_y
     for line in lines:
-        draw_text(surface, font, line, panel_x, y)
+        draw_text(surface, font_registry, line, panel_x, y)
         y += 22
 
 
@@ -199,7 +199,7 @@ def main():
     height = max(grid_height + PADDING, LAYER_SIZE * PREVIEW_SCALE + 300) + 200
     screen = pygame.display.set_mode((width, height))
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont(None, 20)
+    font_registry = pygame.font_registry.Sysfont_registry(None, 20)
 
     model_path, model = load_or_create_model(args.shipgirl)
     save_model(model_path, model)
@@ -284,11 +284,11 @@ def main():
         live2d.update(dt)
 
         screen.fill((24, 24, 28))
-        draw_layer_grid(screen, layers, selected_index, font)
+        draw_layer_grid(screen, layers, selected_index, font_registry)
 
         panel_x = grid_width + PADDING
         selected_layer_rect = draw_selected_layer(
-            screen, layers[selected_part], selected_part_data, panel_x, PADDING, font
+            screen, layers[selected_part], selected_part_data, panel_x, PADDING, font_registry
         )
 
         preview_y = PADDING + LAYER_SIZE * PREVIEW_SCALE + 56
@@ -298,7 +298,7 @@ def main():
 
         draw_status(
             screen,
-            font,
+            font_registry,
             args.shipgirl,
             selected_part,
             selected_part_data,

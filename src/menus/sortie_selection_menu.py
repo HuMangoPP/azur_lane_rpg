@@ -303,7 +303,7 @@ class SortieSelectionMenu:
         for fog in self.fogs:
             fog.update(dt)
 
-    def draw(self, surface, font):
+    def draw(self, surface, font_registry):
         num_wave_reps = 5
         wave_rep_offset = (num_wave_reps-1)/2
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
@@ -315,7 +315,7 @@ class SortieSelectionMenu:
                 wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
                 surface.blit(wave, wave_rect)
 
-        self.exit_sortie_selection_menu_button.draw(surface, font)
+        self.exit_sortie_selection_menu_button.draw(surface, font_registry)
 
         compass_rose = DataFiles.sprites["user_interface"]["compass_rose"]
         compass_rose_rect = compass_rose.get_rect()
@@ -335,7 +335,7 @@ class SortieSelectionMenu:
             pygame.draw.rect(surface, Color.BLACK, self.selected_sortie_info_panel)
             title_card_rect = get_rect(
                 width=self.selected_sortie_info_panel.width,
-                height=2*font.font_height + 2*Box.PADDING,
+                height=2*font_registry.font_height + 2*Box.PADDING,
                 left=self.selected_sortie_info_panel.left,
                 top=self.selected_sortie_info_panel.top
             )
@@ -346,8 +346,8 @@ class SortieSelectionMenu:
             else:
                 title_card_color = Color.LOCKED_ZONE_FILL
             pygame.draw.rect(surface, title_card_color, title_card_rect)
-            self.start_sortie_button.draw(surface, font)
-            font.render(
+            self.start_sortie_button.draw(surface, font_registry)
+            font_registry["big_pixel"].render(
                 surface,
                 f"zone {self.selected_sortie_node.index + 1}",
                 title_card_rect.center,
@@ -356,7 +356,7 @@ class SortieSelectionMenu:
                 style="center",
             )
 
-            font.render(
+            font_registry["big_pixel"].render(
                 surface,
                 "rewards",
                 (self.selected_sortie_info_panel.left + Box.PADDING, title_card_rect.bottom + Box.PADDING),
@@ -370,7 +370,7 @@ class SortieSelectionMenu:
                 rect = get_rect(
                     width=Box.WIDTH, height=Box.HEIGHT,
                     left=self.selected_sortie_info_panel.left + Box.PADDING + (i%3)*(Box.WIDTH+Box.PADDING),
-                    top=title_card_rect.bottom + 2*Box.PADDING + font.font_height + (i//3)*(Box.HEIGHT+Box.PADDING)
+                    top=title_card_rect.bottom + 2*Box.PADDING + font_registry.font_height + (i//3)*(Box.HEIGHT+Box.PADDING)
                 )
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 surface.blit(DataFiles.get_entity_sprite(reward), rect)

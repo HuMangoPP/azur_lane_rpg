@@ -15,7 +15,12 @@ from src.menus.menu_manager import MenuManager
 
 display = screen
 clock = pygame.Clock()
-font = Font(font_path="engine/big_font.png")
+with open("engine/fonts.json") as f:
+    fonts = json.load(f)
+    font_registry = {
+        font: Font(font, charset)
+        for font, charset in fonts.items()
+    }
 
 menu_manager = MenuManager()
 
@@ -65,11 +70,11 @@ while running:
         quest.completed = quest.completed or quest.completion_criteria(menu_manager)
 
     display.fill((50,20,20)) # TODO
-    menu_manager.current_menu.draw(display, font)
+    menu_manager.current_menu.draw(display, font_registry)
     for quest in menu_manager.quest_manager.started_quests.values():
         if quest.started and not quest.completed:
-            quest.tutorial_draw(menu_manager, display, font)
-    font.render(
+            quest.tutorial_draw(menu_manager, display, font_registry)
+    font_registry["big_pixel"].render(
         display,
         str(fps),
         (32, TEMP_SCREEN_SIZE[1]-32),

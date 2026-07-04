@@ -6,7 +6,7 @@ from src.constants import DataFiles, Box, Color, Equipment, Decorations
 from src.menus.quests import Quest
 from src.menus.sortie_selection_menu import SortieNode
 
-def draw_tb(surface, font, text, point_pos, point_down, point_right):
+def draw_tb(surface, font_registry, text, point_pos, point_down, point_right):
     point_pos = pygame.Vector2(point_pos)
 
     if point_down:
@@ -28,9 +28,9 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
 
     if text is not None:
         text_scale = 1
-        max_text_width = font.font_width*25
-        text_height = font.get_height(text, text_scale, max_text_width)
-        text_box_width = font.get_width(text, text_scale, max_text_width)
+        max_text_width = font_registry.font_width*25
+        text_height = font_registry["big_pixel"].get_height(text, text_scale, max_text_width)
+        text_box_width = font_registry["big_pixel"].get_width(text, text_scale, max_text_width)
         text_rect = get_rect(
             width=text_box_width + 2*Box.PADDING,
             height=text_height + 2*Box.PADDING,
@@ -53,7 +53,7 @@ def draw_tb(surface, font, text, point_pos, point_down, point_right):
             ]
         pygame.draw.rect(surface, Color.DIALOGUE_BOX, text_rect)
         pygame.draw.polygon(surface, Color.DIALOGUE_BOX, polygon)
-        font.render(
+        font_registry["big_pixel"].render(
             surface,
             text,
             pygame.Vector2(text_rect.topleft) + pygame.Vector2(Box.PADDING, Box.PADDING),
@@ -90,7 +90,7 @@ def choose_faction_completion_criteria(menu_manager):
 
     return completed
 
-def choose_faction_tutorial_draw(menu_manager, surface, font):
+def choose_faction_tutorial_draw(menu_manager, surface, font_registry):
     pass
 
 def choose_faction_on_start(menu_manager):
@@ -155,7 +155,7 @@ def construct_shipgirls_completion_criteria(menu_manager):
     )
 
 def shipyard_tutorial_draw_factory(highlighted_hull_types):
-    def shipyard_tutorial_draw(menu_manager, surface, font):
+    def shipyard_tutorial_draw(menu_manager, surface, font_registry):
         if menu_manager.current_menu != menu_manager.port_menu:
             return
         
@@ -168,7 +168,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.topright, True, False)
+            draw_tb(surface, font_registry, None, rect.topright, True, False)
         elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
             if menu_manager.port_menu.overlay_selected_filter is None:
                 shipgirl_data = {
@@ -196,7 +196,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
 
                 rect = menu_manager.port_menu.dossier_icons[i]
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-                draw_tb(surface, font, None, rect.bottomleft, False, True)
+                draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
             
             if menu_manager.port_menu.overlay_selected_entity in shipgirls:
                 button_rect = menu_manager.port_menu.shipyard_sticky_note_button.rect
@@ -206,7 +206,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
                     center=button_rect.center
                 )
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-                draw_tb(surface, font, None, rect.bottomright, False, False)
+                draw_tb(surface, font_registry, None, rect.bottomright, False, False)
 
     return shipyard_tutorial_draw
 
@@ -251,7 +251,7 @@ first_sortie_post_quest_dialogue = [
 def first_sortie_completion_criteria(menu_manager):
     return DataFiles.save_file["sortie_progress"] == 1
 
-def first_sortie_tutorial_draw(menu_manager, surface, font):
+def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
     if menu_manager.current_menu == menu_manager.port_menu:
         button_rect = menu_manager.port_menu.open_select_sortie_menu_button.rect
         rect = get_rect(
@@ -261,7 +261,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
         )
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        draw_tb(surface, font, None, rect.topright, True, False)
+        draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.current_menu == menu_manager.sortie_selection_menu:
         q, r = menu_manager.sortie_selection_menu.sortie_nodes[0].hexes[0]
         xy = hex_to_pixel(q, r, SortieNode.SIZE)
@@ -271,7 +271,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
         )
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        draw_tb(surface, font, None, rect.bottomleft, False, True)
+        draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
     elif menu_manager.current_menu == menu_manager.fleet_selection_menu:
         if menu_manager.fleet_selection_menu.start_sortie_button.active:
             button_rect = menu_manager.fleet_selection_menu.start_sortie_button.rect
@@ -282,7 +282,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.topleft, True, True)
+            draw_tb(surface, font_registry, None, rect.topleft, True, True)
         else:
             center_fleet_slot = menu_manager.fleet_selection_menu.fleet_slots[1]
             rect = get_rect(
@@ -296,7 +296,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
             dd_shipgirl = shipgirls["DD"]
             bb_shipgirl = shipgirls["BB"]
             draw_tb(
-                surface, font,
+                surface, font_registry,
                 f"drag {dd_shipgirl} and {bb_shipgirl} to your fleet",
                 rect.bottomright,
                 False, False
@@ -307,7 +307,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
                 pygame.draw.rect(surface, Color.RED, siren.rect, width=Box.OUTLINE_WIDTH)
             
             draw_tb(
-                surface, font,
+                surface, font_registry,
                 "drag all of your shipgirls onto the enemy siren",
                 menu_manager.siren_fleet.front[0].rect.topleft,
                 True, True
@@ -321,7 +321,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
+            draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         elif menu_manager.encounter_menu.open_reward_cache_button.active:
             button_rect = menu_manager.encounter_menu.open_reward_cache_button.rect
             rect = get_rect(
@@ -331,7 +331,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
+            draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         elif menu_manager.encounter_menu.return_to_port_button.active:
             button_rect = menu_manager.encounter_menu.return_to_port_button.rect
             rect = get_rect(
@@ -341,7 +341,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
+            draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
 
 def first_sortie_on_start(menu_manager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
@@ -379,7 +379,7 @@ inventory_post_quest_dialogue = [
 def inventory_completion_criteria(menu_manager):
     return menu_manager.port_menu.visited_depot
 
-def inventory_tutorial_draw(menu_manager, surface, font):
+def inventory_tutorial_draw(menu_manager, surface, font_registry):
     if menu_manager.current_menu != menu_manager.port_menu:
         return
 
@@ -392,11 +392,11 @@ def inventory_tutorial_draw(menu_manager, surface, font):
         )
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        draw_tb(surface, font, None, rect.topright, True, False)
+        draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DEPOT:
         rect = menu_manager.port_menu.warehouse_overlay
         draw_tb(
-            surface, font,
+            surface, font_registry,
             "You can see all of your items here!",
             (rect.left, rect.centery),
             False, True
@@ -440,7 +440,7 @@ intel_center_post_quest_dialogue = [
 def intel_center_completion_criteria(menu_manager):
     return menu_manager.port_menu.visited_intel_center
 
-def intel_center_tutorial_draw(menu_manager, surface, font):
+def intel_center_tutorial_draw(menu_manager, surface, font_registry):
     if menu_manager.current_menu != menu_manager.port_menu:
         return
 
@@ -453,7 +453,7 @@ def intel_center_tutorial_draw(menu_manager, surface, font):
         )
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        draw_tb(surface, font, None, rect.topright, True, False)
+        draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.INTEL_CENTER:
         if menu_manager.port_menu.overlay_selected_entity is None:
             siren_rect = menu_manager.port_menu.dossier_icons[0]
@@ -463,11 +463,11 @@ def intel_center_tutorial_draw(menu_manager, surface, font):
                 center=siren_rect.center
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
-            draw_tb(surface, font, None, rect.bottomright, False, False)
+            draw_tb(surface, font_registry, None, rect.bottomright, False, False)
         else:
             rect = menu_manager.port_menu.blueprint_page
             draw_tb(
-                surface, font,
+                surface, font_registry,
                 "The intel center has information on siren stats as well as the potential drops from defeating the siren.",
                 (rect.right, rect.centery),
                 False, False
@@ -582,7 +582,7 @@ craft_weapon_post_quest_dialogue = [
 def craft_weapon_completion_criteria(menu_manager):
     return DataFiles.save_file["equipment"].get("twin_120", 0) == 1
 
-def craft_weapon_tutorial_draw(menu_manager, surface, font):
+def craft_weapon_tutorial_draw(menu_manager, surface, font_registry):
     if menu_manager.current_menu != menu_manager.port_menu:
         return
 
@@ -595,7 +595,7 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font):
         )
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        draw_tb(surface, font, None, rect.topright, True, False)
+        draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.GEAR_LAB:
         if menu_manager.port_menu.overlay_selected_entity == "twin_120":
             button_rect = menu_manager.port_menu.gear_lab_sticky_note_button.rect
@@ -606,7 +606,7 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
+            draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         else:
             button_rect = menu_manager.port_menu.dossier_icons[0]
             rect = get_rect(
@@ -616,7 +616,7 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomright, False, False)
+            draw_tb(surface, font_registry, None, rect.bottomright, False, False)
 
 def craft_weapon_on_start(menu_manager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
@@ -653,12 +653,12 @@ equip_weapon_post_quest_dialogue = [
 def equip_weapon_completion_criteria(menu_manager):
     return DataFiles.save_file["shipgirls"][DataFiles.get_faction_shipgirls()["DD"]]["equipment"][Equipment.WEAPON] == "twin_120"
 
-def equip_weapon_tutorial_draw(menu_manager, surface, font):
+def equip_weapon_tutorial_draw(menu_manager, surface, font_registry):
     if menu_manager.current_menu == menu_manager.port_menu:
         rect = menu_manager.available_shipgirls[0].rect
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        draw_tb(surface, font, None, rect.bottomright, False, False)
+        draw_tb(surface, font_registry, None, rect.bottomright, False, False)
     elif (
         menu_manager.current_menu == menu_manager.equipment_menu
         and menu_manager.equipment_menu.selected_shipgirl.name == DataFiles.get_faction_shipgirls()["DD"]
@@ -672,7 +672,7 @@ def equip_weapon_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
+            draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         else:
             button_rect = menu_manager.equipment_menu.equipped_rects[0]
             rect = get_rect(
@@ -682,7 +682,7 @@ def equip_weapon_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomleft, False, True)
+            draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         
 def equip_weapon_on_start(menu_manager):
     pass
@@ -722,7 +722,7 @@ def buy_decoration_completion_criteria(menu_manager):
         for decoration_count in DataFiles.save_file["decoration_depot"].values()
     )
 
-def buy_decoration_tutorial_draw(menu_manager, surface, font):
+def buy_decoration_tutorial_draw(menu_manager, surface, font_registry):
     if menu_manager.current_menu != menu_manager.port_menu:
         return
 
@@ -735,12 +735,12 @@ def buy_decoration_tutorial_draw(menu_manager, surface, font):
         )
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        draw_tb(surface, font, None, rect.topright, True, False)
+        draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DECORATION_STORE:
         if menu_manager.port_menu.overlay_selected_entity is None:
             rect = menu_manager.port_menu.warehouse_overlay
             draw_tb(
-                surface, font,
+                surface, font_registry,
                 "Pick any decoration to buy.",
                 rect.center,
                 False, False
@@ -754,7 +754,7 @@ def buy_decoration_tutorial_draw(menu_manager, surface, font):
             )
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-            draw_tb(surface, font, None, rect.bottomright, False, False)
+            draw_tb(surface, font_registry, None, rect.bottomright, False, False)
 
 def buy_decoration_on_start(menu_manager):
     menu_manager.port_menu.open_decoration_store_overlay_button.active = True
@@ -841,18 +841,18 @@ def _decorate_port_get_placed_decoration_rect():
         top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
     )
 
-def _decorate_port_draw_depot_items(menu_manager, surface, font, text):
+def _decorate_port_draw_depot_items(menu_manager, surface, font_registry, text):
     for rect in _decorate_port_get_depot_decoration_rects(menu_manager.port_menu):
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
     draw_tb(
-        surface, font,
+        surface, font_registry,
         text,
         rect.bottomright,
         False, False
     )
 
-def decorate_port_tutorial_draw(menu_manager, surface, font):
+def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
     if menu_manager.current_menu != menu_manager.port_menu:
         return
 
@@ -869,13 +869,13 @@ def decorate_port_tutorial_draw(menu_manager, surface, font):
         )
         pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-        draw_tb(surface, font, None, rect.bottomleft, False, True)
+        draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         return
 
     if not port_menu.moved_decoration_depot_overlay:
         rect = port_menu.decoration_depot_overlay
         draw_tb(
-            surface, font,
+            surface, font_registry,
             "Drag the depot overlay if it is in the way.",
             (rect.right, rect.centery),
             False, False
@@ -885,19 +885,19 @@ def decorate_port_tutorial_draw(menu_manager, surface, font):
     if not port_menu.placed_decoration:
         if port_menu.selected_decoration_in_depot is None:
             _decorate_port_draw_depot_items(
-                menu_manager, surface, font,
+                menu_manager, surface, font_registry,
                 "Pick one decoration from your depot."
             )
         elif not port_menu.rotated_decoration:
             draw_tb(
-                surface, font,
+                surface, font_registry,
                 "Right click to rotate the decoration.",
                 pygame.mouse.get_pos(),
                 False, False
             )
         else:
             draw_tb(
-                surface, font,
+                surface, font_registry,
                 "Left click an open tile to place it.",
                 pygame.mouse.get_pos(),
                 False, False
@@ -909,7 +909,7 @@ def decorate_port_tutorial_draw(menu_manager, surface, font):
             rect = _decorate_port_get_delete_rect(port_menu)
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
             draw_tb(
-                surface, font,
+                surface, font_registry,
                 "Use this to remove a placed decoration.",
                 rect.bottomright,
                 False, False
@@ -919,7 +919,7 @@ def decorate_port_tutorial_draw(menu_manager, surface, font):
             if rect is not None:
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
                 draw_tb(
-                    surface, font,
+                    surface, font_registry,
                     "Click the placed decoration to return it to the depot.",
                     rect.bottomright,
                     False, False
@@ -928,7 +928,7 @@ def decorate_port_tutorial_draw(menu_manager, surface, font):
 
     if len(DataFiles.save_file["decorations"]) <= 0:
         draw_tb(
-            surface, font,
+            surface, font_registry,
             "Place the decoration again.",
             pygame.mouse.get_pos(),
             False, False
@@ -943,7 +943,7 @@ def decorate_port_tutorial_draw(menu_manager, surface, font):
     )
     pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
-    draw_tb(surface, font, "Exit edit mode.", rect.bottomleft, False, True)
+    draw_tb(surface, font_registry, "Exit edit mode.", rect.bottomleft, False, True)
 
 def decorate_port_on_start(menu_manager):
     port_menu = menu_manager.port_menu
