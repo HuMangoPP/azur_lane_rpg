@@ -852,17 +852,17 @@ class PortMenu:
             image_rect.center = rect.center
             surface.blit(image, image_rect)
             if entity == self.overlay_selected_entity:
-                selected_sprite = DataFiles.sprites["user_interface"]["red_circle"]
+                selected_sprite = DataFiles.sprites["props"]["red_circle"]
                 selected_rect = selected_sprite.get_rect()
                 selected_rect.center = rect.center
                 surface.blit(selected_sprite, selected_rect)
             pygame.draw.rect(surface, Color.BLACK, rect, width=Box.OUTLINE_WIDTH)
         
-        overlay_paperclip_sprite = DataFiles.sprites["user_interface"]["overlay_paperclip"]
-        overlay_paperclip_rect = overlay_paperclip_sprite.get_rect()
-        overlay_paperclip_rect.left = self.dossier_bg.left - 4 # TODO paper clip offset
-        overlay_paperclip_rect.top = self.dossier_bg.top
-        surface.blit(overlay_paperclip_sprite, overlay_paperclip_rect)
+        paperclip_sprite = DataFiles.sprites["props"]["paperclip"]
+        paperclip_rect = paperclip_sprite.get_rect()
+        paperclip_rect.left = self.dossier_bg.left - 4 # TODO paper clip offset
+        paperclip_rect.top = self.dossier_bg.top
+        surface.blit(paperclip_sprite, paperclip_rect)
 
     def draw_sticky_note_overlay(self, surface, font):
         action_button = self.get_current_overlay_action_button()
@@ -1029,22 +1029,22 @@ class PortMenu:
             xy = (rect.centerx, rect.top+0.67*rect.height)
             font.render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        overlay_pencil_sprite = DataFiles.sprites["user_interface"]["overlay_pencil"]
-        overlay_pencil_rect = overlay_pencil_sprite.get_rect()
-        overlay_pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
-        overlay_pencil_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
+        pencil_sprite = DataFiles.sprites["props"]["pencil"]
+        pencil_rect = pencil_sprite.get_rect()
+        pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
+        pencil_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
 
-        overlay_ruler_sprite = DataFiles.sprites["user_interface"]["overlay_ruler"]
-        overlay_ruler_rect = overlay_ruler_sprite.get_rect()
-        overlay_ruler_rect.center = overlay_pencil_rect.midleft
-        surface.blit(overlay_ruler_sprite, overlay_ruler_rect)
-        surface.blit(overlay_pencil_sprite, overlay_pencil_rect)
+        ruler_sprite = DataFiles.sprites["props"]["ruler"]
+        ruler_rect = ruler_sprite.get_rect()
+        ruler_rect.center = pencil_rect.midleft
+        surface.blit(ruler_sprite, ruler_rect)
+        surface.blit(pencil_sprite, pencil_rect)
 
-        overlay_compass_sprite = DataFiles.sprites["user_interface"]["overlay_compass"]
-        overlay_compass_rect = overlay_compass_sprite.get_rect()
-        overlay_compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment
-        overlay_compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
-        surface.blit(overlay_compass_sprite, overlay_compass_rect)
+        compass_sprite = DataFiles.sprites["props"]["compass"]
+        compass_rect = compass_sprite.get_rect()
+        compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment
+        compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
+        surface.blit(compass_sprite, compass_rect)
         self.draw_sticky_note_overlay(surface, font)
 
     def draw_warehouse_overlay(self, surface, font):
@@ -1067,7 +1067,7 @@ class PortMenu:
                 count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
                 font.render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        cargo_box_sprite = DataFiles.sprites["user_interface"]["cargo_box"]
+        cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
         for cargo_box_pos in [
             pygame.Vector2(self.warehouse_overlay.bottomleft),
@@ -1082,7 +1082,7 @@ class PortMenu:
             surface.blit(cargo_box_sprite, cargo_box_rect)
         forklift_sprite = pygame.transform.scale_by(
             pygame.transform.flip(
-                DataFiles.sprites["user_interface"]["forklift"],
+                DataFiles.sprites["props"]["forklift"],
                 flip_x=self.forklift_dx < 0,
                 flip_y=False
             ),
@@ -1105,43 +1105,43 @@ class PortMenu:
             surface.blit(cargo_box_sprite, cargo_box_rect)
 
         warehouse_decoration_top = self.warehouse_overlay.top - Box.WIDTH/8
-        corner_rope_sprite = DataFiles.sprites["user_interface"]["corner_rope"]
+        corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
         corner_rope_rect = corner_rope_sprite.get_rect()
         corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH/8 # TODO
         corner_rope_rect.top = warehouse_decoration_top
         surface.blit(corner_rope_sprite, corner_rope_rect)
 
-        big_corner_rope_sprite = DataFiles.sprites["user_interface"]["big_corner_rope"]
+        big_corner_rope_sprite = DataFiles.sprites["props"]["big_corner_rope"]
         big_corner_rope_rect = big_corner_rope_sprite.get_rect()
         big_corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH/8 # TODO
         big_corner_rope_rect.top = warehouse_decoration_top
         surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
 
-        top_rope_sprite = DataFiles.sprites["user_interface"]["top_rope"]
+        top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
         top_rope_rect = top_rope_sprite.get_rect()
         top_rope_rect.left = self.warehouse_overlay.centerx + Box.WIDTH/4
         top_rope_rect.top = warehouse_decoration_top
         surface.blit(top_rope_sprite, top_rope_rect)
 
-        big_top_rope_sprite = DataFiles.sprites["user_interface"]["big_top_rope"]
+        big_top_rope_sprite = DataFiles.sprites["props"]["big_top_rope"]
         big_top_rope_rect = big_top_rope_sprite.get_rect()
         big_top_rope_rect.right = self.warehouse_overlay.centerx
         big_top_rope_rect.top = warehouse_decoration_top
         surface.blit(big_top_rope_sprite, big_top_rope_rect)
 
-        rope_hook_sprite = DataFiles.sprites["user_interface"]["rope_hook"]
+        rope_hook_sprite = DataFiles.sprites["props"]["rope_hook"]
         rope_hook_rect = rope_hook_sprite.get_rect()
         rope_hook_rect.left = self.warehouse_overlay.left
         rope_hook_rect.top = warehouse_decoration_top
         surface.blit(rope_hook_sprite, rope_hook_rect)
 
-        lightbulb_sprite = DataFiles.sprites["user_interface"]["lightbulb"]
+        lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
         lightbulb_rect = lightbulb_sprite.get_rect()
         lightbulb_rect.left = self.warehouse_overlay.left + Box.WIDTH
         lightbulb_rect.top = warehouse_decoration_top
         surface.blit(lightbulb_sprite, lightbulb_rect)
 
-        lightbulb_light_sprite = DataFiles.sprites["user_interface"]["lightbulb_light"]
+        lightbulb_light_sprite = DataFiles.sprites["props"]["lightbulb_light"]
         lightbulb_light_rect = lightbulb_light_sprite.get_rect()
         lightbulb_light_rect.centerx = lightbulb_rect.centerx
         lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
@@ -1185,7 +1185,7 @@ class PortMenu:
         if self.current_overlay == self.DECORATION_STORE:
             coin_count = DataFiles.save_file["inventory"].get("decoration_coin", 0)
 
-            coin_sprite = DataFiles.sprites["user_interface"]["decoration_coin"]
+            coin_sprite = DataFiles.sprites["props"]["decoration_coin"]
             coin_rect = coin_sprite.get_rect()
             coin_rect.right = self.clipboard_page.right - Box.PADDING
             coin_rect.top = self.clipboard_page.top + Box.PADDING
@@ -1260,7 +1260,7 @@ class PortMenu:
                 style="topleft"
             )
 
-            smiley_sprite = DataFiles.sprites["user_interface"]["smiley"]
+            smiley_sprite = DataFiles.sprites["props"]["smiley"]
             smiley_rect = smiley_sprite.get_rect()
             smiley_rect.center = self.decoration_stamp_animation_pos
             if self.decoration_stamp_animation_timer > 0:
@@ -1276,7 +1276,7 @@ class PortMenu:
                     smiley_sprite.set_alpha(255)
                     surface.blit(smiley_sprite, smiley_rect)
 
-            stamp_sprite = DataFiles.sprites["user_interface"]["stamp"]
+            stamp_sprite = DataFiles.sprites["props"]["stamp"]
             stamp_rect = stamp_sprite.get_rect()
             if self.decoration_stamp_animation_timer <= 0:
                 stamp_rect.center = self.clipboard_page.bottomleft
@@ -1312,11 +1312,11 @@ class PortMenu:
                     stamp_rect.bottom = stamp_pos.y + Box.HEIGHT/2
                     surface.blit(stamp_sprite, stamp_rect)
 
-        overlay_pencil_sprite = DataFiles.sprites["user_interface"]["overlay_pencil"]
-        overlay_pencil_rect = overlay_pencil_sprite.get_rect()
-        overlay_pencil_rect.right = self.clipboard_page.right + Box.WIDTH/4 # TODO alignment
-        overlay_pencil_rect.bottom = self.clipboard_page.bottom + Box.HEIGHT/2
-        surface.blit(overlay_pencil_sprite, overlay_pencil_rect)
+        pencil_sprite = DataFiles.sprites["props"]["pencil"]
+        pencil_rect = pencil_sprite.get_rect()
+        pencil_rect.right = self.clipboard_page.right + Box.WIDTH/4 # TODO alignment
+        pencil_rect.bottom = self.clipboard_page.bottom + Box.HEIGHT/2
+        surface.blit(pencil_sprite, pencil_rect)
 
     def rotate_decoration_direction(self):
         self.decoration_direction_index = (self.decoration_direction_index + 1) % len(self.DECORATION_DIRECTIONS)
@@ -1670,14 +1670,14 @@ class PortMenu:
             pygame.draw.rect(surface, Color.WHITE, delete_rect, width=Box.OUTLINE_WIDTH)
 
         depot_decoration_top = self.decoration_depot_overlay.top - Box.WIDTH/8
-        top_rope_sprite = DataFiles.sprites["user_interface"]["top_rope"]
+        top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
         top_rope_rect = top_rope_sprite.get_rect()
         top_rope_rect.centerx = self.decoration_depot_overlay.centerx + Box.WIDTH/4
         top_rope_rect.top = depot_decoration_top
         surface.blit(top_rope_sprite, top_rope_rect)
 
         rope_hook_sprite = pygame.transform.flip(
-            DataFiles.sprites["user_interface"]["rope_hook"],
+            DataFiles.sprites["props"]["rope_hook"],
             True, False
         )
         rope_hook_rect = rope_hook_sprite.get_rect()
@@ -1686,7 +1686,7 @@ class PortMenu:
         surface.blit(rope_hook_sprite, rope_hook_rect)
 
         corner_rope_sprite = pygame.transform.flip(
-            DataFiles.sprites["user_interface"]["corner_rope"],
+            DataFiles.sprites["props"]["corner_rope"],
             True, False
         )
         corner_rope_rect = corner_rope_sprite.get_rect()
@@ -1695,7 +1695,7 @@ class PortMenu:
         surface.blit(corner_rope_sprite, corner_rope_rect)
 
         big_corner_rope_sprite = pygame.transform.flip(
-            DataFiles.sprites["user_interface"]["big_corner_rope"],
+            DataFiles.sprites["props"]["big_corner_rope"],
             True, False
         )
         big_corner_rope_rect = big_corner_rope_sprite.get_rect()
@@ -1703,19 +1703,19 @@ class PortMenu:
         big_corner_rope_rect.top = depot_decoration_top
         surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
 
-        lightbulb_sprite = DataFiles.sprites["user_interface"]["lightbulb"]
+        lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
         lightbulb_rect = lightbulb_sprite.get_rect()
         lightbulb_rect.centerx = self.decoration_depot_overlay.left + Box.WIDTH
         lightbulb_rect.top = depot_decoration_top
         surface.blit(lightbulb_sprite, lightbulb_rect)
 
-        lightbulb_light_sprite = DataFiles.sprites["user_interface"]["lightbulb_light"]
+        lightbulb_light_sprite = DataFiles.sprites["props"]["lightbulb_light"]
         lightbulb_light_rect = lightbulb_light_sprite.get_rect()
         lightbulb_light_rect.centerx = lightbulb_rect.centerx
         lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
 
-        cargo_box_sprite = DataFiles.sprites["user_interface"]["cargo_box"]
+        cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
         for cargo_box_pos in [
             pygame.Vector2(self.decoration_depot_overlay.bottomleft),

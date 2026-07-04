@@ -60,7 +60,7 @@
 		"cleared": { "left": 0, "top": 64, "width": 32, "height": 32 },
 		"uncleared": { "left": 32, "top": 64, "width": 32, "height": 32 },
 		"locked": { "left": 64, "top": 64, "width": 32, "height": 32 },
-		"compass": { "left": 192, "top": 0, "width": 128, "height": 128 },
+		"compass_rose": { "left": 192, "top": 0, "width": 128, "height": 128 },
 
 		"shell_attack": { "left": 96, "top": 64, "width": 32, "height": 32 },
 		"torp_attack": { "left": 96, "top": 64, "width": 32, "height": 32 },
@@ -130,50 +130,60 @@
 		"BB": { "left": 96, "top": 352, "width": 32, "height": 32 },
 		"SS": { "left": 128, "top": 352, "width": 32, "height": 32 },
 		"CV": { "left": 160, "top": 352, "width": 32, "height": 32 },
-		"AUX": { "left": 192, "top": 352, "width": 32, "height": 32 },
+		"AUX": { "left": 192, "top": 352, "width": 32, "height": 32 }
+	},
+	"props": {
+		"cargo_box": { "left": 0, "top": 0, "width": 48, "height": 48 },
+		"forklift": { "left": 64, "top": 0, "width": 160, "height": 64 },
+		"decoration_coin": { "left": 224, "top": 0, "width": 64, "height": 64 },
+		"smiley": { "left": 288, "top": 0, "width": 64, "height": 64 },
+		"stamp": { "left": 352, "top": 0, "width": 64, "height": 96 },
 
-		"cargo_box": { "left": 0, "top": 384, "width": 48, "height": 48 },
-		"corner_rope": { "left": 64, "top": 384, "width": 64, "height": 64 },
-		"top_rope": { "left": 128, "top": 384, "width": 64, "height": 64 },
-		"rope_hook": { "left": 160, "top": 448, "width": 32, "height": 128 },
+		"big_top_rope": { "left": 0, "top": 64, "width": 128, "height": 96 },
+		"top_rope": { "left": 128, "top": 64, "width": 64, "height": 64 },
+		"corner_rope": { "left": 192, "top": 64, "width": 64, "height": 64 },
 		"big_corner_rope": {
-			"left": 224,
-			"top": 384,
+			"left": 256,
+			"top": 64,
 			"width": 96,
 			"height": 128
 		},
-		"big_top_rope": { "left": 192, "top": 608, "width": 128, "height": 92 },
-		"lightbulb": { "left": 192, "top": 384, "width": 32, "height": 192 },
-		"forklift": { "left": 0, "top": 448, "width": 160, "height": 64 },
+		"rope_hook": {
+			"left": 128,
+			"top": 128,
+			"width": 128,
+			"height": 32,
+			"rotation": 90
+		},
+		"lightbulb": {
+			"left": 64,
+			"top": 160,
+			"width": 192,
+			"height": 32,
+			"rotation": 90
+		},
 
-		"overlay_pencil": {
-			"left": 320,
-			"top": 384,
-			"width": 64,
-			"height": 128
-		},
-		"overlay_compass": {
-			"left": 0,
-			"top": 512,
+		"pencil": { "left": 0, "top": 192, "width": 64, "height": 128 },
+		"compass": {
+			"left": 64,
+			"top": 192,
 			"width": 96,
 			"height": 128
 		},
-		"overlay_paperclip": {
-			"left": 320,
-			"top": 608,
+		"ruler": {
+			"left": 160,
+			"top": 192,
+			"width": 96,
+			"height": 128,
+			"rotation": 90
+		},
+		"red_circle": { "left": 256, "top": 192, "width": 96, "height": 96 },
+		"paperclip": {
+			"left": 256,
+			"top": 288,
 			"width": 64,
 			"height": 32
-		},
-		"overlay_ruler": { "left": 0, "top": 640, "width": 128, "height": 92 },
-		"red_circle": { "left": 224, "top": 512, "width": 96, "height": 96 },
-		"decoration_coin": {
-			"left": 96,
-			"top": 576,
-			"width": 64,
-			"height": 64
-		},
-		"stamp": { "left": 320, "top": 512, "width": 64, "height": 96 },
-		"smiley": { "left": 96, "top": 512, "width": 64, "height": 64 }
+		}
 	},
 	"encounter": {
 		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 },

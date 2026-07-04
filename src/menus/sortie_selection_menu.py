@@ -317,11 +317,11 @@ class SortieSelectionMenu:
 
         self.exit_sortie_selection_menu_button.draw(surface, font)
 
-        compass = DataFiles.sprites["user_interface"]["compass"]
-        compass_rect = compass.get_rect()
-        compass_rect.bottom = Box.BOTTOM_OF_SCREEN
-        compass_rect.left = Box.LEFT_OF_SCREEN
-        surface.blit(compass, compass_rect)
+        compass_rose = DataFiles.sprites["user_interface"]["compass_rose"]
+        compass_rose_rect = compass_rose.get_rect()
+        compass_rose_rect.bottom = Box.BOTTOM_OF_SCREEN
+        compass_rose_rect.left = Box.LEFT_OF_SCREEN
+        surface.blit(compass_rose, compass_rose_rect)
 
         for sortie_node in self.sortie_nodes:
             sortie_node.draw_shadow(surface)

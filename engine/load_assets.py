@@ -19,6 +19,7 @@ def load_sprites(directory="assets", master_sprite_file="sprites.json", colorkey
         for sprite_name, load_info in sprite_group_info.items():
             crop = pygame.Rect(load_info["left"], load_info["top"], load_info["width"], load_info["height"])
             sprite = pygame.transform.scale_by(sprite_atlas.subsurface(crop), load_info.get("scale", 1))
+            sprite = pygame.transform.rotate(sprite, load_info.get("rotation", 0))
             group_sprites[sprite_name] = sprite
         sprites[sprite_group] = group_sprites
 

@@ -271,7 +271,7 @@ for wave_index in range(DataFiles.sprites["sortie_selection"]["num_waves"]):
 
 lightbulb_light = pygame.Surface((64,64))
 pygame.draw.circle(lightbulb_light, (28, 19, 0), (32,32), 32)
-DataFiles.sprites["user_interface"]["lightbulb_light"] = lightbulb_light
+DataFiles.sprites["props"]["lightbulb_light"] = lightbulb_light
 
 class Decorations:
     TILESIZE = 64

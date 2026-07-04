@@ -276,14 +276,14 @@ class EquipmentMenu:
                     style="centerleft"
                 )
 
-        overlay_paperclip_sprite = pygame.transform.rotate(
-            DataFiles.sprites["user_interface"]["overlay_paperclip"],
+        paperclip_sprite = pygame.transform.rotate(
+            DataFiles.sprites["props"]["paperclip"],
             -90
         )
-        overlay_paperclip_rect = overlay_paperclip_sprite.get_rect()
-        overlay_paperclip_rect.right = self.dossier_page.right
-        overlay_paperclip_rect.top = self.dossier_bg.top - 4 # TODO paper clip offset
-        surface.blit(overlay_paperclip_sprite, overlay_paperclip_rect)
+        paperclip_rect = paperclip_sprite.get_rect()
+        paperclip_rect.right = self.dossier_page.right
+        paperclip_rect.top = self.dossier_bg.top - 4 # TODO paper clip offset
+        surface.blit(paperclip_sprite, paperclip_rect)
         
         misaligned_blueprint_pages = [
             (-6, pygame.Vector2(-5, 7), Color.BLUEPRINT_PAGE_BACK),
@@ -313,22 +313,22 @@ class EquipmentMenu:
             if equipment is not None:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
 
-        overlay_pencil_sprite = DataFiles.sprites["user_interface"]["overlay_pencil"]
-        overlay_pencil_rect = overlay_pencil_sprite.get_rect()
-        overlay_pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
-        overlay_pencil_rect.bottom = self.blueprint_page.bottom
+        pencil_sprite = DataFiles.sprites["props"]["pencil"]
+        pencil_rect = pencil_sprite.get_rect()
+        pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
+        pencil_rect.bottom = self.blueprint_page.bottom
 
-        overlay_ruler_sprite = DataFiles.sprites["user_interface"]["overlay_ruler"]
-        overlay_ruler_rect = overlay_ruler_sprite.get_rect()
-        overlay_ruler_rect.midbottom = overlay_pencil_rect.bottomleft
-        surface.blit(overlay_ruler_sprite, overlay_ruler_rect)
-        surface.blit(overlay_pencil_sprite, overlay_pencil_rect)
+        ruler_sprite = DataFiles.sprites["props"]["ruler"]
+        ruler_rect = ruler_sprite.get_rect()
+        ruler_rect.midbottom = pencil_rect.bottomleft
+        surface.blit(ruler_sprite, ruler_rect)
+        surface.blit(pencil_sprite, pencil_rect)
 
-        overlay_compass_sprite = DataFiles.sprites["user_interface"]["overlay_compass"]
-        overlay_compass_rect = overlay_compass_sprite.get_rect()
-        overlay_compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment
-        overlay_compass_rect.bottom = self.blueprint_page.bottom
-        surface.blit(overlay_compass_sprite, overlay_compass_rect)
+        compass_sprite = DataFiles.sprites["props"]["compass"]
+        compass_rect = compass_sprite.get_rect()
+        compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment
+        compass_rect.bottom = self.blueprint_page.bottom
+        surface.blit(compass_sprite, compass_rect)
         
         equippable = self.get_equippable_options()
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.equipment_depot)
@@ -340,37 +340,37 @@ class EquipmentMenu:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
 
         depot_decoration_top = self.equipment_depot.top - Box.WIDTH/8
-        top_rope_sprite = DataFiles.sprites["user_interface"]["top_rope"]
+        top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
         top_rope_rect = top_rope_sprite.get_rect()
         top_rope_rect.left = self.equipment_depot.centerx + Box.WIDTH/2
         top_rope_rect.top = depot_decoration_top
         surface.blit(top_rope_sprite, top_rope_rect)
 
-        big_top_rope_sprite = DataFiles.sprites["user_interface"]["big_top_rope"]
+        big_top_rope_sprite = DataFiles.sprites["props"]["big_top_rope"]
         big_top_rope_rect = big_top_rope_sprite.get_rect()
         big_top_rope_rect.right = self.equipment_depot.centerx - Box.WIDTH/2
         big_top_rope_rect.top = depot_decoration_top
         surface.blit(big_top_rope_sprite, big_top_rope_rect)
 
-        rope_hook_sprite = DataFiles.sprites["user_interface"]["rope_hook"]
+        rope_hook_sprite = DataFiles.sprites["props"]["rope_hook"]
         rope_hook_rect = rope_hook_sprite.get_rect()
         rope_hook_rect.left = self.equipment_depot.left + Box.WIDTH/2
         rope_hook_rect.top = depot_decoration_top
         surface.blit(rope_hook_sprite, rope_hook_rect)
 
-        corner_rope_sprite = DataFiles.sprites["user_interface"]["corner_rope"]
+        corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
         corner_rope_rect = corner_rope_sprite.get_rect()
         corner_rope_rect.right = self.equipment_depot.right + Box.WIDTH/8
         corner_rope_rect.top = depot_decoration_top
         surface.blit(corner_rope_sprite, corner_rope_rect)
 
-        big_corner_rope_sprite = DataFiles.sprites["user_interface"]["big_corner_rope"]
+        big_corner_rope_sprite = DataFiles.sprites["props"]["big_corner_rope"]
         big_corner_rope_rect = big_corner_rope_sprite.get_rect()
         big_corner_rope_rect.right = self.equipment_depot.right + Box.WIDTH/8
         big_corner_rope_rect.top = depot_decoration_top
         surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
 
-        lightbulb_sprite = DataFiles.sprites["user_interface"]["lightbulb"]
+        lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
         lightbulb_crop_rect = lightbulb_sprite.get_rect()
         lightbulb_crop_rect.top = lightbulb_crop_rect.height // 2
         lightbulb_crop_rect.height -= lightbulb_crop_rect.top
@@ -379,13 +379,13 @@ class EquipmentMenu:
         lightbulb_rect.top = depot_decoration_top
         surface.blit(lightbulb_sprite, lightbulb_rect, lightbulb_crop_rect)
 
-        lightbulb_light_sprite = DataFiles.sprites["user_interface"]["lightbulb_light"]
+        lightbulb_light_sprite = DataFiles.sprites["props"]["lightbulb_light"]
         lightbulb_light_rect = lightbulb_light_sprite.get_rect()
         lightbulb_light_rect.centerx = lightbulb_rect.centerx
         lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
 
-        cargo_box_sprite = DataFiles.sprites["user_interface"]["cargo_box"]
+        cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
         left_crate_stack = pygame.Vector2(self.equipment_depot.bottomleft)
         right_crate_stack = pygame.Vector2(self.equipment_depot.bottomright)
