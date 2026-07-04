@@ -317,6 +317,11 @@ class EquipmentMenu:
         overlay_pencil_rect = overlay_pencil_sprite.get_rect()
         overlay_pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
         overlay_pencil_rect.bottom = self.blueprint_page.bottom
+
+        overlay_ruler_sprite = DataFiles.sprites["user_interface"]["overlay_ruler"]
+        overlay_ruler_rect = overlay_ruler_sprite.get_rect()
+        overlay_ruler_rect.midbottom = overlay_pencil_rect.bottomleft
+        surface.blit(overlay_ruler_sprite, overlay_ruler_rect)
         surface.blit(overlay_pencil_sprite, overlay_pencil_rect)
 
         overlay_compass_sprite = DataFiles.sprites["user_interface"]["overlay_compass"]
@@ -337,9 +342,15 @@ class EquipmentMenu:
         depot_decoration_top = self.equipment_depot.top - Box.WIDTH/8
         top_rope_sprite = DataFiles.sprites["user_interface"]["top_rope"]
         top_rope_rect = top_rope_sprite.get_rect()
-        top_rope_rect.centerx = self.equipment_depot.centerx + Box.WIDTH
+        top_rope_rect.left = self.equipment_depot.centerx + Box.WIDTH/2
         top_rope_rect.top = depot_decoration_top
         surface.blit(top_rope_sprite, top_rope_rect)
+
+        big_top_rope_sprite = DataFiles.sprites["user_interface"]["big_top_rope"]
+        big_top_rope_rect = big_top_rope_sprite.get_rect()
+        big_top_rope_rect.right = self.equipment_depot.centerx - Box.WIDTH/2
+        big_top_rope_rect.top = depot_decoration_top
+        surface.blit(big_top_rope_sprite, big_top_rope_rect)
 
         rope_hook_sprite = DataFiles.sprites["user_interface"]["rope_hook"]
         rope_hook_rect = rope_hook_sprite.get_rect()

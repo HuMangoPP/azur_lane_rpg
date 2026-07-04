@@ -1033,6 +1033,11 @@ class PortMenu:
         overlay_pencil_rect = overlay_pencil_sprite.get_rect()
         overlay_pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
         overlay_pencil_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
+
+        overlay_ruler_sprite = DataFiles.sprites["user_interface"]["overlay_ruler"]
+        overlay_ruler_rect = overlay_ruler_sprite.get_rect()
+        overlay_ruler_rect.center = overlay_pencil_rect.midleft
+        surface.blit(overlay_ruler_sprite, overlay_ruler_rect)
         surface.blit(overlay_pencil_sprite, overlay_pencil_rect)
 
         overlay_compass_sprite = DataFiles.sprites["user_interface"]["overlay_compass"]
@@ -1114,9 +1119,15 @@ class PortMenu:
 
         top_rope_sprite = DataFiles.sprites["user_interface"]["top_rope"]
         top_rope_rect = top_rope_sprite.get_rect()
-        top_rope_rect.centerx = self.warehouse_overlay.centerx
+        top_rope_rect.left = self.warehouse_overlay.centerx + Box.WIDTH/4
         top_rope_rect.top = warehouse_decoration_top
         surface.blit(top_rope_sprite, top_rope_rect)
+
+        big_top_rope_sprite = DataFiles.sprites["user_interface"]["big_top_rope"]
+        big_top_rope_rect = big_top_rope_sprite.get_rect()
+        big_top_rope_rect.right = self.warehouse_overlay.centerx
+        big_top_rope_rect.top = warehouse_decoration_top
+        surface.blit(big_top_rope_sprite, big_top_rope_rect)
 
         rope_hook_sprite = DataFiles.sprites["user_interface"]["rope_hook"]
         rope_hook_rect = rope_hook_sprite.get_rect()

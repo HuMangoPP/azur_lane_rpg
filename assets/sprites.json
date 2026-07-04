@@ -142,6 +142,7 @@
 			"width": 96,
 			"height": 128
 		},
+		"big_top_rope": { "left": 192, "top": 608, "width": 128, "height": 92 },
 		"lightbulb": { "left": 192, "top": 384, "width": 32, "height": 192 },
 		"forklift": { "left": 0, "top": 448, "width": 160, "height": 64 },
 
@@ -163,6 +164,7 @@
 			"width": 64,
 			"height": 32
 		},
+		"overlay_ruler": { "left": 0, "top": 640, "width": 128, "height": 92 },
 		"red_circle": { "left": 224, "top": 512, "width": 96, "height": 96 },
 		"decoration_coin": {
 			"left": 96,
