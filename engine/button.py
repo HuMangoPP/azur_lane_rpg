@@ -15,7 +15,8 @@ class Button:
         
         self.text = text_styling.get("text")
         self.text_align = text_styling.get("text_align", (1/2, 1/2))
-        self.text_color = text_styling.get("text_color", (0, 0, 0))
+        self.text_font = text_styling.get("text_font", "big_pixel")
+        self.text_color = text_styling.get("text_color", (255, 255, 255))
         self.text_size = text_styling.get("text_size", 1)
         self.text_margins = text_styling.get("text_margins", 8)
 
@@ -75,7 +76,7 @@ class Button:
                 self.rect.left + self.rect.width * self.text_align[0],
                 self.rect.top + self.rect.height * self.text_align[1]
             )
-            font_registry["big_pixel"].render(
+            font_registry[self.text_font].render(
                 surface,
                 self.text,
                 text_pos,

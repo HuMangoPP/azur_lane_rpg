@@ -276,6 +276,10 @@ class PortMenu:
             self.sticky_note_page.copy(),
             confirm_shipyard_sticky_note,
             active=False,
+            text_styling={
+                "text_font": "handwritten",
+                "text_color": Color.START_SORTIE_BUTTON,
+            }
         )
 
         def confirm_gear_lab_sticky_note():
@@ -296,7 +300,11 @@ class PortMenu:
             self.sticky_note_page.copy(),
             confirm_gear_lab_sticky_note,
             active=False,
-            background_styling={"background_img": DataFiles.sprites["props"]["construct_text"]}
+            text_styling={
+                "text": "construct?",
+                "text_font": "handwritten",
+                "text_color": Color.START_SORTIE_BUTTON,
+            }
         )
 
         def confirm_decoration_signature():
@@ -583,10 +591,10 @@ class PortMenu:
         if self.current_overlay == self.SHIPYARD:
             if self.can_construct_selected_shipgirl():
                 self.shipyard_sticky_note_button.active = True
-                self.shipyard_sticky_note_button.background_img = DataFiles.sprites["props"]["construct_text"]
+                self.shipyard_sticky_note_button.text = "construct?"
             elif self.can_start_selected_shipgirl_research():
                 self.shipyard_sticky_note_button.active = True
-                self.shipyard_sticky_note_button.background_img = DataFiles.sprites["props"]["research_text"]
+                self.shipyard_sticky_note_button.text = "research?"
             elif self.has_selected_shipgirl_research_project():
                 self.shipyard_sticky_note_button.active = True
                 research_exp = DataFiles.save_file["specialized_wisdom_cubes"].get(self.overlay_selected_entity, 0)
@@ -599,7 +607,7 @@ class PortMenu:
                 )
                 exp_req = max(1, Stats.exp_to_level(avg_shipgirl_level))
                 research_percentage = int(100 * min(1, research_exp / exp_req))
-                self.shipyard_sticky_note_button.background_img = DataFiles.sprites["props"]["research_text"] # TODO what do?
+                self.shipyard_sticky_note_button.text = f"research progress {research_percentage}%"
         elif self.current_overlay == self.GEAR_LAB:
             self.gear_lab_sticky_note_button.active = self.can_craft_selected_equipment()
         elif self.current_overlay == self.DECORATION_STORE:
