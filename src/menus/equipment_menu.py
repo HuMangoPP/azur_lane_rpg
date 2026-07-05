@@ -317,11 +317,19 @@ class EquipmentMenu:
         hull_type = DataFiles.shipgirl_data[self.selected_shipgirl.name]["hull_type"]
         font_registry["big_pixel"].render(surface,f"{ship_class}-class {hull_type}",(faction_icon_rect.right, faction_icon_rect.centery+2),Color.WHITE,1)
         for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
-            outline_width = Box.OUTLINE_WIDTH + int(self.selected_slot == i)
-            pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_BACK, rect)
-            pygame.draw.rect(surface, Color.WHITE, rect, width=outline_width)
+            pygame.draw.rect(
+                surface,
+                Color.BLUEPRINT_PAGE_GLOW if self.selected_slot == i else Color.BLUEPRINT_PAGE_BACK,
+                rect
+            )
             if equipment is not None:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+            if self.selected_slot == i:
+                pygame.draw.rect(surface, Color.BLUEPRINT_SLOT_BORDER_GLOW, rect, width=Box.OUTLINE_WIDTH)
+                slot_glow = DataFiles.sprites["user_interface"]["blueprint_slot_glow"]
+                slot_glow_rect = slot_glow.get_rect()
+                slot_glow_rect.bottomleft = rect.topleft
+                surface.blit(slot_glow, slot_glow_rect, special_flags=pygame.BLEND_RGB_ADD)
 
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()

@@ -55,6 +55,8 @@ class Color:
 
     BLUEPRINT_PAGE = (56, 88, 162)
     BLUEPRINT_PAGE_BACK = (24, 48, 103)
+    BLUEPRINT_PAGE_GLOW = (102, 148, 255)
+    BLUEPRINT_SLOT_BORDER_GLOW = (204, 220, 255)
     STICKY_NOTE = (255, 232, 126)
     STICKY_NOTE_BACK = (224, 188, 71)
     STICKY_NOTE_OUTLINE = (169, 126, 41)
@@ -273,6 +275,13 @@ for wave_index in range(DataFiles.sprites["sortie_selection"]["num_waves"]):
 lightbulb_light = pygame.Surface((64,64))
 pygame.draw.circle(lightbulb_light, (28, 19, 0), (32,32), 32)
 DataFiles.sprites["props"]["lightbulb_light"] = lightbulb_light
+
+blueprint_slot_glow = pygame.Surface((1, 2))
+blueprint_slot_glow.set_at((0, 1), [c2 - c1 for c1, c2 in zip(
+    Color.BLUEPRINT_PAGE, Color.BLUEPRINT_PAGE_GLOW
+)])
+blueprint_slot_glow = pygame.transform.smoothscale(blueprint_slot_glow, (Box.WIDTH, Box.HEIGHT))
+DataFiles.sprites["user_interface"]["blueprint_slot_glow"] = blueprint_slot_glow
 
 class Decorations:
     TILESIZE = 64
