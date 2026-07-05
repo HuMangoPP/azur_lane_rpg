@@ -19,8 +19,8 @@ class EquipmentMenu:
 
         blueprint_surf = DataFiles.sprites["equipment_menu"]["blueprint"]
         self.blueprint_page = blueprint_surf.get_rect()
-        self.blueprint_page.left = screen_x(0.5) - Box.WIDTH
-        self.blueprint_page.top = Box.TOP_OF_SCREEN
+        self.blueprint_page.left = screen_x(0.5) - Box.WIDTH * 3/2
+        self.blueprint_page.top = Box.TOP_OF_SCREEN - Box.PADDING
         self.equipped_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
@@ -205,11 +205,15 @@ class EquipmentMenu:
                     self.hovered_equipment = None
 
     def draw(self, surface, font_registry):
+        floor_color = 105, 105, 105 # TODO
+        surface.fill(floor_color)
+
         workshop_floor = get_rect(
             width=screen_x(1), height=Box.HEIGHT,
             left=0, top=self.equipment_depot.bottom
         )
-        pygame.draw.rect(surface, (84, 56, 35), workshop_floor)
+        # pygame.draw.rect(surface, (84, 56, 35), workshop_floor)
+        pygame.draw.rect(surface, floor_color, workshop_floor)
 
         workshop_wall = get_rect(
             width=screen_x(1), height=2*Box.HEIGHT,
@@ -264,6 +268,93 @@ class EquipmentMenu:
         lightbulb_light_rect.centerx = lightbulb_rect.centerx
         lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
+
+        equippable = self.get_equippable_options()
+        pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.equipment_depot)
+        for equipment, rect in zip(equippable, self.equippable_rects):
+            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
+            if equipment == self.UNEQUIP_ITEM:
+                surface.blit(DataFiles.sprites["user_interface"]["unequip_item"], rect)
+            else:
+                surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+
+        self.selected_shipgirl.draw(surface, font_registry)
+
+        depot_decoration_top = self.equipment_depot.top - Box.WIDTH/8
+        top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
+        top_rope_rect = top_rope_sprite.get_rect()
+        top_rope_rect.left = self.equipment_depot.centerx + Box.WIDTH/2
+        top_rope_rect.top = depot_decoration_top
+        surface.blit(top_rope_sprite, top_rope_rect)
+
+        big_top_rope_sprite = DataFiles.sprites["props"]["big_top_rope"]
+        big_top_rope_rect = big_top_rope_sprite.get_rect()
+        big_top_rope_rect.right = self.equipment_depot.centerx - Box.WIDTH/2
+        big_top_rope_rect.top = depot_decoration_top
+        surface.blit(big_top_rope_sprite, big_top_rope_rect)
+
+        rope_hook_sprite = DataFiles.sprites["props"]["rope_hook"]
+        rope_hook_rect = rope_hook_sprite.get_rect()
+        rope_hook_rect.left = self.equipment_depot.left + Box.WIDTH/2
+        rope_hook_rect.top = depot_decoration_top
+        surface.blit(rope_hook_sprite, rope_hook_rect)
+
+        corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
+        corner_rope_rect = corner_rope_sprite.get_rect()
+        corner_rope_rect.right = self.equipment_depot.right + Box.WIDTH/8
+        corner_rope_rect.top = depot_decoration_top
+        surface.blit(corner_rope_sprite, corner_rope_rect)
+
+        big_corner_rope_sprite = DataFiles.sprites["props"]["big_corner_rope"]
+        big_corner_rope_rect = big_corner_rope_sprite.get_rect()
+        big_corner_rope_rect.right = self.equipment_depot.right + Box.WIDTH/8
+        big_corner_rope_rect.top = depot_decoration_top
+        surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
+
+        lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
+        lightbulb_crop_rect = lightbulb_sprite.get_rect()
+        lightbulb_crop_rect.top = lightbulb_crop_rect.height / 2
+        lightbulb_crop_rect.height = lightbulb_crop_rect.height / 2
+        lightbulb_rect = lightbulb_crop_rect.copy()
+        lightbulb_rect.centerx = top_rope_rect.right
+        lightbulb_rect.top = depot_decoration_top
+        surface.blit(lightbulb_sprite, lightbulb_rect, lightbulb_crop_rect)
+
+        lightbulb_light_sprite = DataFiles.sprites["props"]["lightbulb_light"]
+        lightbulb_light_rect = lightbulb_light_sprite.get_rect()
+        lightbulb_light_rect.centerx = lightbulb_rect.centerx
+        lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
+        surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
+
+        cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
+        cargo_box_rect = cargo_box_sprite.get_rect()
+        left_crate_stack = pygame.Vector2(self.equipment_depot.bottomleft)
+        right_crate_stack = pygame.Vector2(self.equipment_depot.bottomright)
+        for cargo_box_pos in [
+            left_crate_stack,
+            left_crate_stack + pygame.Vector2(cargo_box_rect.width, 0),
+            left_crate_stack + pygame.Vector2(0, -cargo_box_rect.height),
+            left_crate_stack + pygame.Vector2(0, -2*cargo_box_rect.height),
+            left_crate_stack + pygame.Vector2(-cargo_box_rect.width, 0),
+            left_crate_stack + pygame.Vector2(-cargo_box_rect.width, -cargo_box_rect.height),
+            
+            right_crate_stack,
+            right_crate_stack + pygame.Vector2(-cargo_box_rect.width, 0),
+            right_crate_stack + pygame.Vector2(-2*cargo_box_rect.width, 0),
+            right_crate_stack + pygame.Vector2(0, -cargo_box_rect.height),
+            right_crate_stack + pygame.Vector2(cargo_box_rect.width, 0),
+            right_crate_stack + pygame.Vector2(cargo_box_rect.width, -cargo_box_rect.height),
+            right_crate_stack + pygame.Vector2(cargo_box_rect.width/2, -2*cargo_box_rect.height),
+        ]:
+            cargo_box_rect.center = cargo_box_pos
+            surface.blit(cargo_box_sprite, cargo_box_rect)
+
+        tabletop_rect = get_rect(
+            width=screen_x(1) - 2*Box.WIDTH,
+            height=workshop_ceiling.top,
+            left=Box.WIDTH, top=0
+        )
+        pygame.draw.rect(surface, (171, 85, 33), tabletop_rect)
 
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
         pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
@@ -423,84 +514,7 @@ class EquipmentMenu:
         compass_rect.bottom = self.blueprint_page.bottom
         surface.blit(compass_sprite, compass_rect)
         
-        equippable = self.get_equippable_options()
-        pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.equipment_depot)
-        for equipment, rect in zip(equippable, self.equippable_rects):
-            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
-            if equipment == self.UNEQUIP_ITEM:
-                surface.blit(DataFiles.sprites["user_interface"]["unequip_item"], rect)
-            else:
-                surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+        # section divider
+        pygame.draw.line(surface, Color.BLACK, workshop_ceiling.topleft, workshop_ceiling.topright, width=4)
 
-        self.selected_shipgirl.draw(surface, font_registry)
-
-        depot_decoration_top = self.equipment_depot.top - Box.WIDTH/8
-        top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
-        top_rope_rect = top_rope_sprite.get_rect()
-        top_rope_rect.left = self.equipment_depot.centerx + Box.WIDTH/2
-        top_rope_rect.top = depot_decoration_top
-        surface.blit(top_rope_sprite, top_rope_rect)
-
-        big_top_rope_sprite = DataFiles.sprites["props"]["big_top_rope"]
-        big_top_rope_rect = big_top_rope_sprite.get_rect()
-        big_top_rope_rect.right = self.equipment_depot.centerx - Box.WIDTH/2
-        big_top_rope_rect.top = depot_decoration_top
-        surface.blit(big_top_rope_sprite, big_top_rope_rect)
-
-        rope_hook_sprite = DataFiles.sprites["props"]["rope_hook"]
-        rope_hook_rect = rope_hook_sprite.get_rect()
-        rope_hook_rect.left = self.equipment_depot.left + Box.WIDTH/2
-        rope_hook_rect.top = depot_decoration_top
-        surface.blit(rope_hook_sprite, rope_hook_rect)
-
-        corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
-        corner_rope_rect = corner_rope_sprite.get_rect()
-        corner_rope_rect.right = self.equipment_depot.right + Box.WIDTH/8
-        corner_rope_rect.top = depot_decoration_top
-        surface.blit(corner_rope_sprite, corner_rope_rect)
-
-        big_corner_rope_sprite = DataFiles.sprites["props"]["big_corner_rope"]
-        big_corner_rope_rect = big_corner_rope_sprite.get_rect()
-        big_corner_rope_rect.right = self.equipment_depot.right + Box.WIDTH/8
-        big_corner_rope_rect.top = depot_decoration_top
-        surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
-
-        lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
-        lightbulb_crop_rect = lightbulb_sprite.get_rect()
-        lightbulb_crop_rect.top = lightbulb_crop_rect.height / 2
-        lightbulb_crop_rect.height = lightbulb_crop_rect.height / 2
-        lightbulb_rect = lightbulb_crop_rect.copy()
-        lightbulb_rect.centerx = top_rope_rect.right
-        lightbulb_rect.top = depot_decoration_top
-        surface.blit(lightbulb_sprite, lightbulb_rect, lightbulb_crop_rect)
-
-        lightbulb_light_sprite = DataFiles.sprites["props"]["lightbulb_light"]
-        lightbulb_light_rect = lightbulb_light_sprite.get_rect()
-        lightbulb_light_rect.centerx = lightbulb_rect.centerx
-        lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
-        surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
-
-        cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
-        cargo_box_rect = cargo_box_sprite.get_rect()
-        left_crate_stack = pygame.Vector2(self.equipment_depot.bottomleft)
-        right_crate_stack = pygame.Vector2(self.equipment_depot.bottomright)
-        for cargo_box_pos in [
-            left_crate_stack,
-            left_crate_stack + pygame.Vector2(cargo_box_rect.width, 0),
-            left_crate_stack + pygame.Vector2(0, -cargo_box_rect.height),
-            left_crate_stack + pygame.Vector2(0, -2*cargo_box_rect.height),
-            left_crate_stack + pygame.Vector2(-cargo_box_rect.width, 0),
-            left_crate_stack + pygame.Vector2(-cargo_box_rect.width, -cargo_box_rect.height),
-            
-            right_crate_stack,
-            right_crate_stack + pygame.Vector2(-cargo_box_rect.width, 0),
-            right_crate_stack + pygame.Vector2(-2*cargo_box_rect.width, 0),
-            right_crate_stack + pygame.Vector2(0, -cargo_box_rect.height),
-            right_crate_stack + pygame.Vector2(cargo_box_rect.width, 0),
-            right_crate_stack + pygame.Vector2(cargo_box_rect.width, -cargo_box_rect.height),
-            right_crate_stack + pygame.Vector2(cargo_box_rect.width/2, -2*cargo_box_rect.height),
-        ]:
-            cargo_box_rect.center = cargo_box_pos
-            surface.blit(cargo_box_sprite, cargo_box_rect)
-        
         self.exit_equipment_menu_button.draw(surface, font_registry)
