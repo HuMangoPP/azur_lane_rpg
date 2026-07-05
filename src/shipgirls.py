@@ -405,14 +405,12 @@ class Shipgirl:
 
     def update(self, dt):
         if self.dragged or self.interacting_decoration is not None:
-            if self.sprite is not None:
-                self.sprite.set_animation(Live2D.IDLE_ANIMATION)
+            self.sprite.set_animation(Live2D.IDLE_ANIMATION)
             return
         
         if self.pause_time > 0:
             self.pause_time -= dt
-            if self.sprite is not None:
-                self.sprite.set_animation(Live2D.IDLE_ANIMATION)
+            self.sprite.set_animation(Live2D.IDLE_ANIMATION)
         else:
             to_target = self.wander_target - self.pos
             if to_target.length() < 10: # TODO
@@ -429,22 +427,16 @@ class Shipgirl:
                 else:
                     self.facing_left = True
             
-            if self.sprite is not None:
-                self.sprite.set_animation(Live2D.WALK_ANIMATION)
+            self.sprite.set_animation(Live2D.WALK_ANIMATION)
         self.rect.center = self.pos
 
     def animate(self, dt):
-        if self.sprite is not None:
-            self.sprite.update(dt)
+        self.sprite.update(dt)
 
     def draw(self, surface, font_registry):
-        if self.sprite is not None:
-            shake_amt = 4
-            shake_offset = shake_amt * math.sin(4*math.radians(360)*self.battle_component.shake_time)
-            self.sprite.draw(surface, self.rect.centerx + shake_offset, self.rect.centery, not self.facing_left)
-        else:
-            pygame.draw.rect(surface, Color.WHITE, self.rect, width=Box.OUTLINE_WIDTH)
-            font_registry["big_pixel"].render(surface, self.name, self.rect.center, Color.WHITE, 1, style="center")
+        shake_amt = 4
+        shake_offset = shake_amt * math.sin(4*math.radians(360)*self.battle_component.shake_time)
+        self.sprite.draw(surface, self.rect.centerx + shake_offset, self.rect.centery, not self.facing_left)
 
 class PlayerFleet:
     def __init__(self):

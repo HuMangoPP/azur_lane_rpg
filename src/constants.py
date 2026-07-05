@@ -283,6 +283,10 @@ blueprint_slot_glow.set_at((0, 1), [c2 - c1 for c1, c2 in zip(
 blueprint_slot_glow = pygame.transform.smoothscale(blueprint_slot_glow, (Box.WIDTH, Box.HEIGHT))
 DataFiles.sprites["user_interface"]["blueprint_slot_glow"] = blueprint_slot_glow
 
+lightbulb_light = pygame.Surface((64, 64))
+pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)
+DataFiles.sprites["equipment_menu"]["lightbulb_light"] = lightbulb_light
+
 class Decorations:
     TILESIZE = 64
     NUM_TILES_IN_ROW = 2 * int(TEMP_SCREEN_SIZE[0] // TILESIZE)

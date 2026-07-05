@@ -119,9 +119,8 @@ class FleetSelectionMenu:
                                 self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup].rect.center = self.backup_fleet_slots[self.selected_shipgirl_index_from_backup].center
                         self.menu_manager.player_fleet.shipgirls[i] = self.selected_shipgirl
                         self.selected_shipgirl.rect.center = self.fleet_slots[i].center
-                        if self.selected_shipgirl.sprite is not None:
-                            self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-                            self.selected_shipgirl.facing_left = False
+                        self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+                        self.selected_shipgirl.facing_left = False
                         self.selected_shipgirl = None
                 if self.selected_shipgirl is not None:
                     for i, slot in enumerate(self.backup_fleet_slots):
@@ -138,9 +137,8 @@ class FleetSelectionMenu:
                                 self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup].rect.center = self.backup_fleet_slots[self.selected_shipgirl_index_from_backup].center
                         self.menu_manager.player_fleet.backups[i] = self.selected_shipgirl
                         self.selected_shipgirl.rect.center = self.backup_fleet_slots[i].center
-                        if self.selected_shipgirl.sprite is not None:
-                            self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-                            self.selected_shipgirl.facing_left = False
+                        self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+                        self.selected_shipgirl.facing_left = False
                         self.selected_shipgirl = None
 
                 self.mouse_start_drag = None

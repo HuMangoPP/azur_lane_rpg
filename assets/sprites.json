@@ -246,7 +246,19 @@
 		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 }
 	},
 	"equipment_menu": {
-		"blueprint": { "left": 0, "top": 0, "width": 448, "height": 320 }
+		"blueprint": { "left": 0, "top": 0, "width": 448, "height": 288 },
+		"table": { "left": 0, "top": 288, "width": 128, "height": 64 },
+		"pegboard": { "left": 128, "top": 288, "width": 128, "height": 64 },
+		"paints": { "left": 256, "top": 288, "width": 64, "height": 32 },
+		"oil_drum": { "left": 320, "top": 288, "width": 64, "height": 64 },
+		"cabinet": { "left": 384, "top": 288, "width": 64, "height": 64 },
+		"lightbulb": {
+			"left": 256,
+			"top": 320,
+			"width": 64,
+			"height": 32,
+			"rotation": 90
+		}
 	},
 	"decorations": {
 		"bed_north": {

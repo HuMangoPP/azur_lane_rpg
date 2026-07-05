@@ -20,7 +20,7 @@ class EquipmentMenu:
         blueprint_surf = DataFiles.sprites["equipment_menu"]["blueprint"]
         self.blueprint_page = blueprint_surf.get_rect()
         self.blueprint_page.left = screen_x(0.5) - Box.WIDTH
-        self.blueprint_page.bottom = screen_y(0.5) + 1.25*Box.HEIGHT
+        self.blueprint_page.top = Box.TOP_OF_SCREEN
         self.equipped_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
@@ -45,8 +45,8 @@ class EquipmentMenu:
         self.equipment_depot = get_rect(
             width=num_equipment_per_row*(Box.WIDTH+Box.PADDING)+Box.PADDING,
             height=num_equipment_rows*(Box.HEIGHT+Box.PADDING)+Box.PADDING,
-            centerx=self.blueprint_page.centerx,
-            top=self.blueprint_page.bottom + Box.PADDING,
+            right=self.blueprint_page.right,
+            bottom=Box.BOTTOM_OF_SCREEN
         )
         self.equippable_rects = [
             get_rect(
@@ -60,15 +60,16 @@ class EquipmentMenu:
 
         font_height = 12
         self.dossier_page = get_rect(
-            width=2.5*Box.WIDTH + 2*Box.PADDING,
+            width=3*Box.WIDTH + 2*Box.PADDING,
             height=(
                 2*Box.PADDING # padding
                 + font_height+Box.PADDING # name
                 + Box.HEIGHT/2 # exp
                 + 2*Box.HEIGHT # stats
+                + Box.HEIGHT
             ),
             centerx=screen_x(0.25),
-            top=screen_y(0.5)
+            bottom=self.blueprint_page.bottom
         )
         self.dossier_bg = get_rect(
             width=self.dossier_page.width + 2*Box.PADDING,
@@ -103,6 +104,7 @@ class EquipmentMenu:
         def exit_equipment_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
             self.selected_shipgirl = None
+            self.shipgirl_x = 0
 
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
@@ -115,6 +117,10 @@ class EquipmentMenu:
                 "opacity": 160
             }
         )
+
+        self.shipgirl_x = None
+        self.target_shipgirl_x = 0
+        self.shipgirl_pause_time = 0
 
     def get_stat_delta(self, shipgirl, stat):
         if self.hovered_equipment is None:
@@ -148,10 +154,23 @@ class EquipmentMenu:
         return options
 
     def update(self, dt, events):
-        self.selected_shipgirl.rect.centerx = screen_x(0.25)
-        self.selected_shipgirl.rect.bottom = screen_y(0.5) - Box.HEIGHT
-        if self.selected_shipgirl.sprite is not None:
+        if self.shipgirl_x is None:
+            self.shipgirl_x = screen_x(0.5)
+            self.target_shipgirl_x = self.shipgirl_x
+            self.selected_shipgirl.rect.bottom = self.equipment_depot.bottom + Box.HEIGHT/4
+        if self.shipgirl_pause_time > 0:
+            self.shipgirl_pause_time -= dt
             self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+        elif abs(self.target_shipgirl_x - self.selected_shipgirl.rect.centerx) < 10:
+            self.shipgirl_pause_time = random.uniform(1, 3)
+            self.target_shipgirl_x = random.uniform(Box.LEFT_OF_SCREEN, Box.RIGHT_OF_SCREEN)
+        else:
+            relx = self.target_shipgirl_x - self.selected_shipgirl.rect.centerx
+            direction = relx / abs(relx)
+            self.shipgirl_x += direction * 50 * dt # TODO
+            self.selected_shipgirl.facing_left = direction < 0
+            self.selected_shipgirl.sprite.set_animation(Live2D.WALK_ANIMATION)
+        self.selected_shipgirl.rect.centerx = self.shipgirl_x
         self.selected_shipgirl.animate(dt)
         
         equip_slots = [Equipment.WEAPON, Equipment.AUX1, Equipment.AUX2]
@@ -186,7 +205,66 @@ class EquipmentMenu:
                     self.hovered_equipment = None
 
     def draw(self, surface, font_registry):
-        surface.fill((59, 31, 18))
+        workshop_floor = get_rect(
+            width=screen_x(1), height=Box.HEIGHT,
+            left=0, top=self.equipment_depot.bottom
+        )
+        pygame.draw.rect(surface, (84, 56, 35), workshop_floor)
+
+        workshop_wall = get_rect(
+            width=screen_x(1), height=2*Box.HEIGHT,
+            left=0, bottom=workshop_floor.top
+        )
+        pygame.draw.rect(surface, (59, 39, 23), workshop_wall)
+
+        workshop_ceiling = get_rect(
+            width=screen_x(1), height=Box.HEIGHT/2,
+            left=0, bottom=workshop_wall.top
+        )
+        pygame.draw.rect(surface, (84, 56, 35), workshop_ceiling)
+
+        table_sprite = DataFiles.sprites["equipment_menu"]["table"]
+        table_rect = table_sprite.get_rect()
+        table_rect.bottom = workshop_floor.top + Box.PADDING
+        table_rect.right = self.equipment_depot.left - 3/2 * Box.WIDTH
+        surface.blit(table_sprite, table_rect)
+
+        pegboard_sprite = DataFiles.sprites["equipment_menu"]["pegboard"]
+        pegboard_rect = pegboard_sprite.get_rect()
+        pegboard_rect.bottom = table_rect.top
+        pegboard_rect.centerx = table_rect.centerx
+        surface.blit(pegboard_sprite, pegboard_rect)
+
+        paints_sprite = DataFiles.sprites["equipment_menu"]["paints"]
+        paints_rect = paints_sprite.get_rect()
+        paints_rect.centerx = table_rect.left
+        paints_rect.bottom = table_rect.bottom
+        surface.blit(paints_sprite, paints_rect)
+
+        oil_drum_sprite = DataFiles.sprites["equipment_menu"]["oil_drum"]
+        oil_drum_rect = oil_drum_sprite.get_rect()
+        oil_drum_rect.right = table_rect.left - Box.WIDTH/2
+        oil_drum_rect.bottom = table_rect.bottom
+        surface.blit(oil_drum_sprite, oil_drum_rect)
+
+        cabinet_sprite = DataFiles.sprites["equipment_menu"]["cabinet"]
+        cabinet_rect = cabinet_sprite.get_rect()
+        cabinet_rect.right = table_rect.left
+        cabinet_rect.bottom = oil_drum_rect.top
+        surface.blit(cabinet_sprite, cabinet_rect)
+
+        lightbulb_sprite = DataFiles.sprites["equipment_menu"]["lightbulb"]
+        lightbulb_rect = lightbulb_sprite.get_rect()
+        lightbulb_rect.left = table_rect.centerx
+        lightbulb_rect.top = workshop_wall.top - Box.PADDING
+        surface.blit(lightbulb_sprite, lightbulb_rect)
+
+        lightbulb_light_sprite = DataFiles.sprites["equipment_menu"]["lightbulb_light"]
+        lightbulb_light_rect = lightbulb_light_sprite.get_rect()
+        lightbulb_light_rect.centerx = lightbulb_rect.centerx
+        lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
+        surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
+
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
         pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
         misaligned_dossier_pages = [
@@ -201,9 +279,6 @@ class EquipmentMenu:
                 Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
-
-        # TODO instead of the live2d model, draw a little plushie of the character
-        self.selected_shipgirl.draw(surface, font_registry)
 
         faction = DataFiles.shipgirl_data[self.selected_shipgirl.name]["faction"]
         font_registry["big_pixel"].render(surface,f"{faction} {self.selected_shipgirl.name}",(self.dossier_page.left+Box.PADDING, self.dossier_page.top+Box.PADDING),Color.BLACK,1)
@@ -356,6 +431,8 @@ class EquipmentMenu:
                 surface.blit(DataFiles.sprites["user_interface"]["unequip_item"], rect)
             else:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+
+        self.selected_shipgirl.draw(surface, font_registry)
 
         depot_decoration_top = self.equipment_depot.top - Box.WIDTH/8
         top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
