@@ -11,6 +11,8 @@ from live2d.live2d import Live2D
 
 class EquipmentMenu:
     UNEQUIP_ITEM = "__unequip_item__"
+    TABLETOP_COLOR = (171, 85, 33)
+    TABLETOP_GRAIN_SEED = 0
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -153,6 +155,27 @@ class EquipmentMenu:
             options = [self.UNEQUIP_ITEM] + options
         return options
 
+    def draw_tabletop(self, surface, tabletop_rect):
+        grain_rng = random.Random(self.TABLETOP_GRAIN_SEED)
+        y = tabletop_rect.top
+
+        while y < tabletop_rect.bottom:
+            band_height = min(grain_rng.randint(4, 24), tabletop_rect.bottom - y)
+            color_offset = grain_rng.randint(-16, 16)
+            color = (
+                max(0, min(255, self.TABLETOP_COLOR[0] + color_offset)),
+                max(0, min(255, self.TABLETOP_COLOR[1] + color_offset // 2)),
+                max(0, min(255, self.TABLETOP_COLOR[2] + color_offset // 3)),
+            )
+            band_rect = get_rect(
+                width=tabletop_rect.width,
+                height=band_height,
+                left=tabletop_rect.left,
+                top=y
+            )
+            pygame.draw.rect(surface, color, band_rect)
+            y += band_height
+
     def update(self, dt, events):
         if self.shipgirl_x is None:
             self.shipgirl_x = screen_x(0.5)
@@ -205,8 +228,10 @@ class EquipmentMenu:
                     self.hovered_equipment = None
 
     def draw(self, surface, font_registry):
-        floor_color = 105, 105, 105 # TODO
-        surface.fill(floor_color)
+        # TODO
+        floor_color = (71, 71, 71)
+        wall_color = 105, 105, 105
+        surface.fill(wall_color)
 
         workshop_floor = get_rect(
             width=screen_x(1), height=Box.HEIGHT,
@@ -219,13 +244,13 @@ class EquipmentMenu:
             width=screen_x(1), height=2*Box.HEIGHT,
             left=0, bottom=workshop_floor.top
         )
-        pygame.draw.rect(surface, (59, 39, 23), workshop_wall)
+        pygame.draw.rect(surface, wall_color, workshop_wall)
 
         workshop_ceiling = get_rect(
             width=screen_x(1), height=Box.HEIGHT/2,
             left=0, bottom=workshop_wall.top
         )
-        pygame.draw.rect(surface, (84, 56, 35), workshop_ceiling)
+        pygame.draw.rect(surface, floor_color, workshop_ceiling)
 
         table_sprite = DataFiles.sprites["equipment_menu"]["table"]
         table_rect = table_sprite.get_rect()
@@ -354,7 +379,7 @@ class EquipmentMenu:
             height=workshop_ceiling.top,
             left=Box.WIDTH, top=0
         )
-        pygame.draw.rect(surface, (171, 85, 33), tabletop_rect)
+        self.draw_tabletop(surface, tabletop_rect)
 
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
         pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
