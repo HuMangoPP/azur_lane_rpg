@@ -203,6 +203,64 @@ class SortieProp:
     def draw(self, surface):
         surface.blit(self.sprite, self.get_rect())
 
+class ChapterNameRibbon:
+    PADDING_X = 24
+    FONT_SCALE = 1
+
+    def __init__(self, chapter, sortie_nodes):
+        self.chapter = chapter
+        self.text = f"chapter {chapter}"
+        self.position = self.get_position(sortie_nodes)
+
+    def get_position(self, sortie_nodes):
+        hex_positions = []
+        for sortie_node in sortie_nodes:
+            for q, r in sortie_node.hexes:
+                hex_positions.append(pygame.Vector2(hex_to_pixel(q, r, SortieNode.SIZE)))
+
+        left = min(position.x for position in hex_positions)
+        right = max(position.x for position in hex_positions)
+        bottom = max(position.y for position in hex_positions)
+        return pygame.Vector2((left + right) / 2, bottom + 3 * SortieNode.SIZE)
+
+    def get_width(self, font_registry):
+        left = DataFiles.sprites["sortie_selection"]["name_left"]
+        right = DataFiles.sprites["sortie_selection"]["name_right"]
+        middle = DataFiles.sprites["sortie_selection"]["name_middle"]
+        text_width = font_registry["handwritten"].get_width(self.text, self.FONT_SCALE, 0) - Box.WIDTH
+        middle_width = max(middle.get_width(), text_width + 2 * self.PADDING_X)
+        return left.get_width() + middle_width + right.get_width()
+
+    def get_rect(self, font_registry):
+        width = self.get_width(font_registry)
+        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
+        return get_rect(width=width, height=height, center=self.position + SortieNode.center)
+
+    def draw(self, surface, font_registry):
+        left = DataFiles.sprites["sortie_selection"]["name_left"]
+        middle = DataFiles.sprites["sortie_selection"]["name_middle"]
+        right = DataFiles.sprites["sortie_selection"]["name_right"]
+        rect = self.get_rect(font_registry)
+
+        left_rect = left.get_rect(topleft=rect.topleft)
+        surface.blit(left, left_rect)
+
+        middle_rect = middle.get_rect()
+        middle_rect.left = left_rect.right
+        middle_rect.top = rect.top
+        middle_right = rect.right - right.get_width()
+        while middle_rect.left < middle_right:
+            source_width = min(middle.get_width(), middle_right - middle_rect.left)
+            source_rect = pygame.Rect(0, 0, source_width, middle.get_height())
+            surface.blit(middle, middle_rect, source_rect)
+            middle_rect.left += source_width
+
+        right_rect = right.get_rect(topright=rect.topright)
+        surface.blit(right, right_rect)
+
+        text_pos = pygame.Vector2(rect.centerx, rect.centery)
+        font_registry["handwritten"].render(surface, self.text, text_pos, Color.BLACK, self.FONT_SCALE, style="center")
+
 class SortieSelectionMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -279,6 +337,7 @@ class SortieSelectionMenu:
             math.radians(random.randint(0, 359))
             for _ in range(num_waves)
         ]
+        self.chapter_name_ribbons = self.create_chapter_name_ribbons()
         self.sortie_props = self.create_sortie_props()
 
         self.fogs = [
@@ -288,6 +347,21 @@ class SortieSelectionMenu:
             )
             for chapter in range(4)
         ]
+
+    def get_chapters(self):
+        return sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
+
+    def create_chapter_name_ribbons(self):
+        ribbons = []
+        for chapter in self.get_chapters():
+            chapter_nodes = [
+                sortie_node for sortie_node in self.sortie_nodes
+                if sortie_node.chapter == chapter
+            ]
+            if len(chapter_nodes) == 0:
+                continue
+            ribbons.append(ChapterNameRibbon(chapter, chapter_nodes))
+        return ribbons
 
     def get_prop_count(self, num_nodes):
         if num_nodes <= 4:
@@ -461,6 +535,9 @@ class SortieSelectionMenu:
         
         for fog in self.fogs:
             fog.draw(surface)
+
+        for chapter_name_ribbon in self.chapter_name_ribbons:
+            chapter_name_ribbon.draw(surface, font_registry)
         
         if self.selected_sortie_node is not None:
             pygame.draw.rect(surface, Color.BLACK, self.selected_sortie_info_panel)
