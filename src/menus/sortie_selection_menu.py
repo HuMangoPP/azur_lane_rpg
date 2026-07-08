@@ -2,7 +2,7 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, pixel_to_hex, hex_to_pixel, get_cluster_edges
+from engine.util import get_rect, pixel_to_hex, hex_to_pixel, get_cluster_edges, HEX_DIRECTIONS
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -45,6 +45,9 @@ class SortieNode:
         ]
         pygame.draw.polygon(surface, Color.OCEAN_SHADOW, polygon)
 
+    def get_depth(self):
+        return max(point.y for point in self.polygon)
+
     def draw(self, surface):
         if self.cleared:
             fill = Color.CLEARED_ZONE_FILL
@@ -55,7 +58,10 @@ class SortieNode:
             fill = Color.UNCLEARED_ZONE_FILL
             outline = Color.UNCLEARED_ZONE_OUTLINE
             glow = Color.UNCLEARED_ZONE_GLOW
-            icon = DataFiles.sprites["user_interface"]["uncleared"]
+            if len(self.hexes) > 1:
+                icon = DataFiles.sprites["user_interface"]["boss"]
+            else:
+                icon = DataFiles.sprites["user_interface"]["uncleared"]
         else:
             fill = Color.LOCKED_ZONE_FILL
             outline = Color.LOCKED_ZONE_OUTLINE
@@ -142,6 +148,23 @@ class Fog:
             cloud_rect.center = center
             surface.blit(cloud_sprite, cloud_rect)
 
+class SortieProp:
+    def __init__(self, sprite_key, position):
+        self.sprite_key = sprite_key
+        self.position = pygame.Vector2(position)
+        self.sprite = DataFiles.sprites["sortie_selection"][sprite_key]
+
+    def get_rect(self):
+        rect = self.sprite.get_rect()
+        rect.center = self.position + SortieNode.center
+        return rect
+
+    def get_depth(self):
+        return self.position.y
+
+    def draw(self, surface):
+        surface.blit(self.sprite, self.get_rect())
+
 class SortieSelectionMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -217,6 +240,7 @@ class SortieSelectionMenu:
             math.radians(random.randint(0, 359))
             for _ in range(num_waves)
         ]
+        self.sortie_props = self.create_sortie_props()
 
         self.fogs = [
             Fog(
@@ -225,6 +249,76 @@ class SortieSelectionMenu:
             )
             for chapter in range(4)
         ]
+
+    def get_chapters(self):
+        return sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
+
+    def get_prop_count(self, num_nodes):
+        if num_nodes <= 4:
+            return 1
+        if num_nodes <= 7:
+            return 2
+        if num_nodes <= 10:
+            return 3
+        return 4
+
+    def create_sortie_props(self):
+        sortie_props = []
+        for chapter in self.get_chapters():
+            chapter_nodes = [
+                sortie_node
+                for sortie_node in self.sortie_nodes
+                if sortie_node.chapter == chapter
+            ]
+            occupied_hexes = set()
+            for sortie_node in chapter_nodes:
+                occupied_hexes.update(sortie_node.hexes)
+
+            if len(occupied_hexes) <= 1:
+                continue
+
+            rng = random.Random(f"sortie-selection-props-chapter-{chapter}")
+            count = self.get_prop_count(len(chapter_nodes))
+            prop_keys = ["lighthouse", "shipwreck"] + ["island"] * count + ["rocks"] * count
+
+            candidate_hexes = sorted({
+                (q + dq, r + dr)
+                for q, r in occupied_hexes
+                for dq, dr in HEX_DIRECTIONS
+                if (q + dq, r + dr) not in occupied_hexes
+            })
+
+            rng.shuffle(prop_keys)
+            rng.shuffle(candidate_hexes)
+            for prop_key, (q, r) in zip(prop_keys, candidate_hexes):
+                position = pygame.Vector2(hex_to_pixel(q, r, SortieNode.SIZE))
+                sortie_props.append(SortieProp(prop_key, position))
+
+        return sorted(sortie_props, key=lambda prop: prop.position.y)
+
+    def draw_waves(self, surface):
+        num_wave_reps = 5
+        wave_rep_offset = (num_wave_reps - 1) / 2
+        for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
+            wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
+            wave_rect = wave.get_rect()
+            wave_rect.top = wave_y + 8 * math.sin(2 * wave_timer)
+            centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
+            for j in range(num_wave_reps):
+                wave_rect.centerx = centerx + wave_rect.width * (j - wave_rep_offset)
+                surface.blit(wave, wave_rect)
+
+    def draw_nodes_and_props(self, surface):
+        for sortie_node in self.sortie_nodes:
+            sortie_node.draw_shadow(surface)
+
+        drawables = [
+            *[(sortie_node.get_depth(), sortie_node) for sortie_node in self.sortie_nodes],
+            *[(sortie_prop.get_depth(), sortie_prop) for sortie_prop in self.sortie_props],
+        ]
+        for _, drawable in sorted(drawables, key=lambda item: item[0]):
+            drawable.draw(surface)
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -304,16 +398,7 @@ class SortieSelectionMenu:
             fog.update(dt)
 
     def draw(self, surface, font_registry):
-        num_wave_reps = 5
-        wave_rep_offset = (num_wave_reps-1)/2
-        for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
-            wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
-            wave_rect = wave.get_rect()
-            wave_rect.top = wave_y + 8 * math.sin(2*wave_timer)
-            centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
-            for j in range(num_wave_reps):
-                wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
-                surface.blit(wave, wave_rect)
+        self.draw_waves(surface)
 
         self.exit_sortie_selection_menu_button.draw(surface, font_registry)
 
@@ -323,10 +408,7 @@ class SortieSelectionMenu:
         compass_rose_rect.left = Box.LEFT_OF_SCREEN
         surface.blit(compass_rose, compass_rose_rect)
 
-        for sortie_node in self.sortie_nodes:
-            sortie_node.draw_shadow(surface)
-        for sortie_node in self.sortie_nodes[::-1]:
-            sortie_node.draw(surface)
+        self.draw_nodes_and_props(surface)
         
         for fog in self.fogs:
             fog.draw(surface)

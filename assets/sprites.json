@@ -59,7 +59,8 @@
 
 		"cleared": { "left": 0, "top": 64, "width": 32, "height": 32 },
 		"uncleared": { "left": 32, "top": 64, "width": 32, "height": 32 },
-		"locked": { "left": 64, "top": 64, "width": 32, "height": 32 },
+		"boss": { "left": 64, "top": 64, "width": 32, "height": 32 },
+		"locked": { "left": 128, "top": 96, "width": 32, "height": 32 },
 		"compass_rose": { "left": 192, "top": 0, "width": 128, "height": 128 },
 
 		"shell_attack": { "left": 96, "top": 64, "width": 32, "height": 32 },
@@ -243,7 +244,14 @@
 		"cloud9": { "left": 384, "top": 768, "width": 128, "height": 128 }
 	},
 	"sortie_selection": {
-		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 }
+		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 },
+		"island": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"rocks": { "left": 64, "top": 128, "width": 64, "height": 64 },
+		"shipwreck": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"lighthouse": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"name_left": { "left": 0, "top": 192, "width": 64, "height": 64 },
+		"name_middle": { "left": 64, "top": 192, "width": 64, "height": 64 },
+		"name_right": { "left": 128, "top": 192, "width": 64, "height": 64 }
 	},
 	"equipment_menu": {
 		"blueprint": { "left": 0, "top": 0, "width": 448, "height": 288 },
