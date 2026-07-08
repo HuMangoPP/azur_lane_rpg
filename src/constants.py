@@ -283,6 +283,17 @@ blueprint_slot_glow.set_at((0, 1), [c2 - c1 for c1, c2 in zip(
 blueprint_slot_glow = pygame.transform.smoothscale(blueprint_slot_glow, (Box.WIDTH, Box.HEIGHT))
 DataFiles.sprites["user_interface"]["blueprint_slot_glow"] = blueprint_slot_glow
 
+def create_sortie_node_selection_glow(sprite_key, color):
+    glow_color = tuple(c // 2 for c in color)
+    glow = pygame.Surface((1, 2))
+    glow.set_at((0, 1), glow_color)
+    glow = pygame.transform.smoothscale(glow, (math.ceil(Box.WIDTH * 3**(1/2)/2), Box.HEIGHT))
+    DataFiles.sprites["sortie_selection"][sprite_key] = glow
+
+create_sortie_node_selection_glow("cleared_node_selection_glow", Color.CLEARED_ZONE_GLOW)
+create_sortie_node_selection_glow("uncleared_node_selection_glow", Color.UNCLEARED_ZONE_GLOW)
+create_sortie_node_selection_glow("locked_node_selection_glow", Color.LOCKED_ZONE_GLOW)
+
 lightbulb_light = pygame.Surface((64, 64))
 pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)
 DataFiles.sprites["equipment_menu"]["lightbulb_light"] = lightbulb_light

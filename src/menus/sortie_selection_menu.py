@@ -73,6 +73,14 @@ class SortieNode:
                 DataFiles.sprites["user_interface"]["locked"],
             )
 
+    def get_selection_glow_sprite(self):
+        if self.cleared:
+            return DataFiles.sprites["sortie_selection"]["cleared_node_selection_glow"]
+        elif self.unlocked:
+            return DataFiles.sprites["sortie_selection"]["uncleared_node_selection_glow"]
+        else:
+            return DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
+
     def draw(self, surface):
         fill, outline, _, icon = self.get_styling()
         polygon = [point + self.center for point in self.polygon]
@@ -93,6 +101,24 @@ class SortieNode:
         polygon = [point + self.center for point in self.polygon]
         pygame.draw.polygon(surface, outline, polygon, width=2*Box.OUTLINE_WIDTH)
         pygame.draw.polygon(surface, glow, polygon, width=Box.OUTLINE_WIDTH)
+
+    def draw_selection_effect(self, surface):
+        glow = self.get_selection_glow_sprite()
+        for q, r in self.hexes:
+            x, y = hex_to_pixel(q, r, self.SIZE)
+            glow_rect = glow.get_rect()
+            glow_rect.midbottom = pygame.Vector2(x, y) + self.center
+            surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
+
+        _, _, glow, icon = self.get_styling()
+        polygon = [point + self.center for point in self.polygon]
+        pygame.draw.polygon(surface, glow, polygon)
+        
+        for q, r in self.hexes:
+            x, y = hex_to_pixel(q, r, self.SIZE)
+            icon_rect = icon.get_rect()
+            icon_rect.center = pygame.Vector2(x,y) + self.center
+            surface.blit(icon, icon_rect)
 
 class Fog:
     def __init__(self, sortie_nodes, disperse=False):
@@ -208,6 +234,7 @@ class SortieSelectionMenu:
             self.menu_manager.player_fleet.clear_fleet()
             self.menu_manager.siren_fleet.clear_fleet()
 
+            self.selected_sortie_node.hovered = False
             self.selected_sortie_node = None
             self.start_sortie_button.active = False
         
@@ -334,6 +361,9 @@ class SortieSelectionMenu:
         for sortie_node in self.sortie_nodes:
             sortie_node.draw_hover_effect(surface)
 
+        if self.selected_sortie_node is not None:
+            self.selected_sortie_node.draw_selection_effect(surface)
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -368,6 +398,7 @@ class SortieSelectionMenu:
                             continue
                         click = True
                         self.selected_sortie_node = sortie_node
+                        self.selected_sortie_node.hovered = True
 
                         rx = -100 # get x value of rightmost hex
                         cy = 0 # get average y value of all hexes
@@ -393,6 +424,7 @@ class SortieSelectionMenu:
                             self.start_sortie_button.background_color = Color.LOCKED_ZONE_FILL
                 else:
                     if not self.selected_sortie_info_panel.collidepoint(event.pos):
+                        self.selected_sortie_node.hovered = False
                         self.selected_sortie_node = None
                         self.start_sortie_button.active = False
 
@@ -400,8 +432,9 @@ class SortieSelectionMenu:
                     DataFiles.sfx["click"].play()
 
             if event.type == pygame.MOUSEMOTION:
-                for sortie_node in self.sortie_nodes:
-                    sortie_node.hover(event.pos)
+                if self.selected_sortie_node is None:
+                    for sortie_node in self.sortie_nodes:
+                        sortie_node.hover(event.pos)
 
         num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
         self.wave_timers = [
