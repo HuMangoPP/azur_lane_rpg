@@ -116,3 +116,11 @@ def get_cluster_edges(cluster_hexes, size):
         polygon.append(c)
 
     return polygon
+
+def adjacent_hexes(q, r, steps):
+    adjacent = {(q, r)}
+    if steps <= 0:
+        return adjacent
+    for dq, dr in HEX_DIRECTIONS:
+        adjacent |= adjacent_hexes(q + dq, r + dr, steps-1)
+    return adjacent

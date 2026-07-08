@@ -2,7 +2,7 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, pixel_to_hex, hex_to_pixel, get_cluster_edges, HEX_DIRECTIONS
+from engine.util import get_rect, pixel_to_hex, hex_to_pixel, get_cluster_edges, adjacent_hexes
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -289,9 +289,6 @@ class SortieSelectionMenu:
             for chapter in range(4)
         ]
 
-    def get_chapters(self):
-        return sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
-
     def get_prop_count(self, num_nodes):
         if num_nodes <= 4:
             return 1
@@ -302,16 +299,21 @@ class SortieSelectionMenu:
         return 4
 
     def create_sortie_props(self):
-        sortie_props = []
-        for chapter in self.get_chapters():
+        occupied_hexes = set()
+        for chapter in range(3): # TODO num chapters
             chapter_nodes = [
-                sortie_node
-                for sortie_node in self.sortie_nodes
+                sortie_node for sortie_node in self.sortie_nodes
                 if sortie_node.chapter == chapter
             ]
-            occupied_hexes = set()
             for sortie_node in chapter_nodes:
                 occupied_hexes.update(sortie_node.hexes)
+        
+        sortie_props = []
+        for chapter in range(3): # TODO num chapters
+            chapter_nodes = [
+                sortie_node for sortie_node in self.sortie_nodes
+                if sortie_node.chapter == chapter
+            ]
 
             if len(occupied_hexes) <= 1:
                 continue
@@ -320,18 +322,19 @@ class SortieSelectionMenu:
             count = self.get_prop_count(len(chapter_nodes))
             prop_keys = ["lighthouse", "shipwreck"] + ["island"] * count + ["rocks"] * count
 
-            candidate_hexes = sorted({
-                (q + dq, r + dr)
-                for q, r in occupied_hexes
-                for dq, dr in HEX_DIRECTIONS
-                if (q + dq, r + dr) not in occupied_hexes
-            })
+            candidate_hexes = set()
+            for sortie_node in chapter_nodes:
+                for q, r in sortie_node.hexes:
+                    candidate_hexes |= adjacent_hexes(q, r, 2)
+            candidate_hexes -= occupied_hexes
+            candidate_hexes = sorted(candidate_hexes)
 
             rng.shuffle(prop_keys)
             rng.shuffle(candidate_hexes)
             for prop_key, (q, r) in zip(prop_keys, candidate_hexes):
                 position = pygame.Vector2(hex_to_pixel(q, r, SortieNode.SIZE))
                 sortie_props.append(SortieProp(prop_key, position))
+                occupied_hexes.add((q, r))
 
         return sorted(sortie_props, key=lambda prop: prop.position.y)
 
@@ -448,8 +451,6 @@ class SortieSelectionMenu:
     def draw(self, surface, font_registry):
         self.draw_waves(surface)
 
-        self.exit_sortie_selection_menu_button.draw(surface, font_registry)
-
         compass_rose = DataFiles.sprites["user_interface"]["compass_rose"]
         compass_rose_rect = compass_rose.get_rect()
         compass_rose_rect.bottom = Box.BOTTOM_OF_SCREEN
@@ -488,7 +489,7 @@ class SortieSelectionMenu:
 
             font_registry["big_pixel"].render(
                 surface,
-                "rewards",
+                "first clear rewards",
                 (self.selected_sortie_info_panel.left + Box.PADDING, title_card_rect.bottom + Box.PADDING),
                 Color.WHITE,
                 1,
@@ -496,7 +497,7 @@ class SortieSelectionMenu:
             )
 
             rewards = DataFiles.sortie_data[self.selected_sortie_node.index]["rewards"]
-            for i, reward in enumerate(rewards):
+            for i, (reward, count) in enumerate(rewards.items()):
                 rect = get_rect(
                     width=Box.WIDTH, height=Box.HEIGHT,
                     left=self.selected_sortie_info_panel.left + Box.PADDING + (i%3)*(Box.WIDTH+Box.PADDING),
@@ -504,3 +505,7 @@ class SortieSelectionMenu:
                 )
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
                 surface.blit(DataFiles.get_entity_sprite(reward), rect)
+                count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
+                font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+        self.exit_sortie_selection_menu_button.draw(surface, font_registry)
