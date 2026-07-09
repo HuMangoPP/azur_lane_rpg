@@ -81,8 +81,11 @@ class SortieNode:
     def draw(self, surface):
         fill, outline, icon = self.get_styling()
         polygon = [point + self.center for point in self.polygon]
-        pygame.draw.polygon(surface, fill, polygon)
-        pygame.draw.polygon(surface, outline, polygon, width=(1+int(self.hovered))*Box.OUTLINE_WIDTH)
+        if self.hovered:
+            pygame.draw.polygon(surface, outline, polygon)
+        else:
+            pygame.draw.polygon(surface, fill, polygon)
+        pygame.draw.polygon(surface, outline, polygon, width=Box.OUTLINE_WIDTH)
         
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)

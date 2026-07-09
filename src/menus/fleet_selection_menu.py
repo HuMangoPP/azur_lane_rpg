@@ -29,14 +29,30 @@ class FleetSelectionMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
-        num_rows = 2
+        num_rows = 3
         num_rects_in_row = 4
-        row_index_offset = (num_rects_in_row-1) / 2
+        self.dossier_overlay = get_rect(
+            width=num_rects_in_row*(Box.WIDTH + Box.PADDING) + 4*Box.PADDING,
+            height=num_rows*(Box.HEIGHT + Box.PADDING) + 3*Box.PADDING + Box.HEIGHT,
+            right=Box.RIGHT_OF_SCREEN,
+            centery=screen_y(0.5)
+        )
+        self.dossier_bg = get_rect(
+            width=self.dossier_overlay.width,
+            height=self.dossier_overlay.height - Box.HEIGHT,
+            left=self.dossier_overlay.left,
+            bottom=self.dossier_overlay.bottom
+        )
+        self.dossier_page = get_rect(
+            width=self.dossier_bg.width - 2*Box.PADDING,
+            height=self.dossier_bg.height - 2*Box.PADDING,
+            center=self.dossier_bg.center
+        )
         self.available_shipgirl_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=(Box.WIDTH+Box.PADDING)*(i%num_rects_in_row-row_index_offset) + screen_x(0.75),
-                centery=(Box.HEIGHT+Box.PADDING)*(i//num_rects_in_row-row_index_offset) + screen_y(0.5)
+                left=self.dossier_page.left+Box.PADDING+(i%num_rects_in_row)*(Box.WIDTH+Box.PADDING),
+                top=self.dossier_page.top+Box.PADDING+(i//num_rects_in_row)*(Box.HEIGHT+Box.PADDING)
             ) for i in range(num_rows * num_rects_in_row)
         ]
 
@@ -115,6 +131,70 @@ class FleetSelectionMenu:
             "backup fleet",
             (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[0].top - Box.PADDING - banner_height / 2)
         )
+
+    def draw_dossier_overlay(self, surface, font_registry):
+        pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
+        tab_rect = get_rect(
+            width=48, height=32,
+            left=self.dossier_bg.left,
+            bottom=self.dossier_bg.top
+        )
+        tab_polygon = [
+            tab_rect.bottomleft,
+            tab_rect.topleft,
+            tab_rect.topright,
+            pygame.Vector2(tab_rect.bottomright) + pygame.Vector2(16, 0),
+        ]
+        pygame.draw.polygon(surface, Color.DOSSIER, tab_polygon)
+
+        misaligned_pages = [
+            (-5, pygame.Vector2(-8, 6), (224, 218, 201)),
+            (4, pygame.Vector2(6, -4), (235, 229, 212)),
+            (-2, pygame.Vector2(3, 5), (244, 239, 224)),
+        ]
+        for rotated_angle, offset, color in misaligned_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
+            )
+
+        sticky_tabs = [
+            (-7, 46, "yellow"),
+            (-5, 137, "green"),
+            (-12, 183, "pink")
+        ]
+        for sticky_tab_offsetx, sticky_tab_offsety, sticky_tab_color in sticky_tabs:
+            sticky_tab_sprite = DataFiles.sprites["props"][f"sticky_tab_{sticky_tab_color}"]
+            sticky_tab_rect = sticky_tab_sprite.get_rect()
+            sticky_tab_rect.centerx = self.dossier_page.left + sticky_tab_offsetx
+            sticky_tab_rect.centery = self.dossier_page.top + sticky_tab_offsety
+            surface.blit(sticky_tab_sprite, sticky_tab_rect)
+
+        pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
+
+        for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
+            portrait = DataFiles.get_entity_sprite(shipgirl.name)
+            portrait_rect = portrait.get_rect()
+            portrait_rect.center = rect.center
+            surface.blit(portrait, portrait_rect)
+            pygame.draw.rect(surface, Color.BLACK, rect, width=Box.OUTLINE_WIDTH)
+
+        paperclip_sprite = DataFiles.sprites["props"]["paperclip"]
+        paperclip_rect = paperclip_sprite.get_rect()
+        paperclip_rect.left = self.dossier_bg.left - 4 # TODO paper clip offset
+        paperclip_rect.top = self.dossier_bg.top
+        surface.blit(paperclip_sprite, paperclip_rect)
+
+        classified_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["classified"], 1.5)
+        classified_rect = classified_sprite.get_rect()
+        classified_rect.topright = self.dossier_bg.topright
+        surface.blit(classified_sprite, classified_rect)
+
+        coffee_ring_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["coffee_ring"], 1.5)
+        coffee_ring_rect = coffee_ring_sprite.get_rect()
+        coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
+        surface.blit(coffee_ring_sprite, coffee_ring_rect)
 
     def _drop_shipgirl(self, slot_shipgirls, slots, event):
         for i, slot in enumerate(slots):
@@ -205,12 +285,7 @@ class FleetSelectionMenu:
         self.backup_fleet_ribbon.draw(surface, font_registry)
         self.primary_fleet_ribbon.draw(surface, font_registry)
 
-        for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            portrait = DataFiles.get_entity_sprite(shipgirl.name)
-            portrait_rect = portrait.get_rect()
-            portrait_rect.center = rect.center
-            surface.blit(portrait, portrait_rect)
+        self.draw_dossier_overlay(surface, font_registry)
 
         for slot, shipgirl in zip(self.fleet_slots, self.menu_manager.player_fleet.shipgirls):
             if shipgirl is None:
