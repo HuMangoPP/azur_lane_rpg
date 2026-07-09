@@ -114,6 +114,26 @@ class FleetSelectionMenu:
             (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[0].top - Box.PADDING - banner_height / 2)
         )
 
+    def _drop_shipgirl(self, slot_shipgirls, slots, event):
+        for i, slot in enumerate(slots):
+            if not slot.collidepoint(event.pos):
+                continue
+            if self.selected_shipgirl_index_from_fleet is not None:
+                self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = slot_shipgirls[i]
+                if self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] is not None:
+                    self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet].rect.center = self.fleet_slots[self.selected_shipgirl_index_from_fleet].center
+            if self.selected_shipgirl_index_from_backup is not None:
+                self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = slot_shipgirls[i]
+                if self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] is not None:
+                    self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup].rect.center = self.backup_fleet_slots[self.selected_shipgirl_index_from_backup].center
+            slot_shipgirls[i] = self.selected_shipgirl
+            self.selected_shipgirl.rect.center = slots[i].center
+            self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+            self.selected_shipgirl.facing_left = False
+            self.selected_shipgirl = None
+            return True
+        return False
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -138,41 +158,18 @@ class FleetSelectionMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 click = False
                 if self.selected_shipgirl is not None:
-                    for i, slot in enumerate(self.fleet_slots):
-                        if not slot.collidepoint(event.pos):
-                            continue
-                        click = True
-                        if self.selected_shipgirl_index_from_fleet is not None:
-                            self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = self.menu_manager.player_fleet.shipgirls[i]
-                            if self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] is not None:
-                                self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet].rect.center = self.fleet_slots[self.selected_shipgirl_index_from_fleet].center
-                        if self.selected_shipgirl_index_from_backup is not None:
-                            self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = self.menu_manager.player_fleet.shipgirls[i]
-                            if self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] is not None:
-                                self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup].rect.center = self.backup_fleet_slots[self.selected_shipgirl_index_from_backup].center
-                        self.menu_manager.player_fleet.shipgirls[i] = self.selected_shipgirl
-                        self.selected_shipgirl.rect.center = self.fleet_slots[i].center
-                        self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-                        self.selected_shipgirl.facing_left = False
-                        self.selected_shipgirl = None
+                    click = self._drop_shipgirl(self.menu_manager.player_fleet.shipgirls, self.fleet_slots, event)
+                    click = click or self._drop_shipgirl(self.menu_manager.player_fleet.backups, self.backup_fleet_slots, event)
                 if self.selected_shipgirl is not None:
-                    for i, slot in enumerate(self.backup_fleet_slots):
+                    for _, slot in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
                         if not slot.collidepoint(event.pos):
                             continue
-                        click = True
                         if self.selected_shipgirl_index_from_fleet is not None:
-                            self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = self.menu_manager.player_fleet.backups[i]
-                            if self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] is not None:
-                                self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet].rect.center = self.fleet_slots[self.selected_shipgirl_index_from_fleet].center
+                            self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = None
                         if self.selected_shipgirl_index_from_backup is not None:
-                            self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = self.menu_manager.player_fleet.backups[i]
-                            if self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] is not None:
-                                self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup].rect.center = self.backup_fleet_slots[self.selected_shipgirl_index_from_backup].center
-                        self.menu_manager.player_fleet.backups[i] = self.selected_shipgirl
-                        self.selected_shipgirl.rect.center = self.backup_fleet_slots[i].center
-                        self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-                        self.selected_shipgirl.facing_left = False
+                            self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = None
                         self.selected_shipgirl = None
+                        click = True
 
                 self.mouse_start_drag = None
                 click = (
