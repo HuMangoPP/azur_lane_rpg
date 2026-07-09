@@ -7,14 +7,38 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.quests_data import first_sortie_quest
+from src.menus.sortie_selection_menu import ChapterNameRibbon
 
 from live2d.live2d import Live2D
+
+
+class FleetNameRibbon(ChapterNameRibbon):
+    def __init__(self, text, position):
+        self.text = text
+        self.position = pygame.Vector2(position)
+
+    def get_rect(self, font_registry):
+        width = self.get_width(font_registry)
+        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
+        return get_rect(width=width, height=height, center=self.position)
+
 
 class FleetSelectionMenu:
     SLOT_SIZE = 96 # TODO
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
+
+        num_rows = 2
+        num_rects_in_row = 4
+        row_index_offset = (num_rects_in_row-1) / 2
+        self.available_shipgirl_rects = [
+            get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=(Box.WIDTH+Box.PADDING)*(i%num_rects_in_row-row_index_offset) + screen_x(0.75),
+                centery=(Box.HEIGHT+Box.PADDING)*(i//num_rects_in_row-row_index_offset) + screen_y(0.5)
+            ) for i in range(num_rows * num_rects_in_row)
+        ]
 
         self.mouse_start_drag = None
         self.selected_shipgirl_index_from_fleet = None
@@ -80,6 +104,15 @@ class FleetSelectionMenu:
                 bottom=self.fleet_slots[0].top-2*Box.PADDING
             ) for slot_index in range(num_fleet_slots)
         ]
+        banner_height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
+        self.primary_fleet_ribbon = FleetNameRibbon(
+            "primary fleet",
+            (self.fleet_slots[1].centerx, self.fleet_slots[0].bottom + Box.PADDING + banner_height / 2)
+        )
+        self.backup_fleet_ribbon = FleetNameRibbon(
+            "backup fleet",
+            (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[0].top - Box.PADDING - banner_height / 2)
+        )
 
     def update(self, dt, events):
         for event in events:
@@ -88,7 +121,7 @@ class FleetSelectionMenu:
                 self.mouse_start_drag = None
                 self.selected_shipgirl_index_from_fleet = None
                 self.selected_shipgirl_index_from_backup = None
-                for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.menu_manager.available_shipgirl_rects):
+                for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
                     if rect.collidepoint(event.pos) and not self.menu_manager.player_fleet.in_fleet(shipgirl):
                         self.mouse_start_drag = event.pos
                         self.selected_shipgirl = shipgirl
@@ -167,8 +200,10 @@ class FleetSelectionMenu:
 
         self.start_sortie_button.draw(surface, font_registry)
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
+        self.backup_fleet_ribbon.draw(surface, font_registry)
+        self.primary_fleet_ribbon.draw(surface, font_registry)
 
-        for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.menu_manager.available_shipgirl_rects):
+        for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
             pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             portrait = DataFiles.get_entity_sprite(shipgirl.name)
             portrait_rect = portrait.get_rect()

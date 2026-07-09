@@ -24,13 +24,6 @@ class MenuManager:
         self.siren_fleet = SirenFleet()
 
         self.available_shipgirls = [Shipgirl(shipgirl_name, True) for shipgirl_name in DataFiles.save_file["shipgirls"]]
-        self.available_shipgirl_rects = [
-            get_rect( # TODO
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=(Box.WIDTH+Box.PADDING)*(i%4-1.5) + screen_x(0.75),
-                centery=(Box.HEIGHT+Box.PADDING)*(i//4-1.5) + screen_y(0.5)
-            ) for i in range(6)
-        ]
 
         self.menu_register = {
             self.PORT: PortMenu(self),
