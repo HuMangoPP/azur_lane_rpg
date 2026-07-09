@@ -77,8 +77,10 @@ class PortMenu:
                 active=False,
                 background_styling={
                     "background_color": Color.BLACK,
-                    "background_img": DataFiles.sprites["user_interface"][f"{faction}_big"]
-                }
+                    "background_img": DataFiles.sprites["user_interface"][f"{faction}_big"],
+                    "opacity": 160
+                },
+                hover_styling={"opacity": 200}
             )
             for i, faction in enumerate(factions)
         ]

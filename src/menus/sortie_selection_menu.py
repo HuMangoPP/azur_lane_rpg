@@ -325,7 +325,8 @@ class SortieSelectionMenu:
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
                 "opacity": 160
-            }
+            },
+            hover_styling={"opacity": 200}
         )
 
         num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
@@ -456,9 +457,13 @@ class SortieSelectionMenu:
                 else:
                     self.mousedown = True
             if event.type == pygame.MOUSEMOTION:
-                if self.mousedown and self.selected_sortie_node is None:
-                    movement = pygame.Vector2(event.rel)
-                    SortieNode.center += movement
+                self.start_sortie_button.hover(event.pos)
+
+                if self.selected_sortie_node is None:
+                    self.exit_sortie_selection_menu_button.hover(event.pos)
+                    if self.mousedown:
+                        movement = pygame.Vector2(event.rel)
+                        SortieNode.center += movement
             if event.type == pygame.MOUSEBUTTONUP:
                 if self.mousedown:
                     self.mousedown = False
@@ -495,10 +500,13 @@ class SortieSelectionMenu:
 
                         if sortie_node.cleared:
                             self.start_sortie_button.background_color = Color.CLEARED_ZONE_FILL
+                            self.start_sortie_button.hover_background_color = Color.CLEARED_ZONE_OUTLINE
                         elif sortie_node.unlocked:
                             self.start_sortie_button.background_color = Color.UNCLEARED_ZONE_FILL
+                            self.start_sortie_button.hover_background_color = Color.UNCLEARED_ZONE_OUTLINE
                         else:
                             self.start_sortie_button.background_color = Color.LOCKED_ZONE_FILL
+                            self.start_sortie_button.hover_background_color = Color.LOCKED_ZONE_OUTLINE
                 else:
                     if not self.selected_sortie_info_panel.collidepoint(event.pos):
                         self.selected_sortie_node.hovered = False

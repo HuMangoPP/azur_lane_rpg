@@ -67,7 +67,8 @@ class FleetSelectionMenu:
                 "text": "start",
                 "text_align": (2/3, 1/2),
                 "text_color": Color.WHITE
-            }
+            },
+            hover_styling={"background_color": Color.HOVER_START_SORTIE_BUTTON}
         )
 
         def exit_fleet_selection_menu():
@@ -83,7 +84,8 @@ class FleetSelectionMenu:
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
                 "opacity": 160
-            }
+            },
+            hover_styling={"opacity": 200}
         )
 
         num_fleet_slots = len(self.menu_manager.player_fleet.shipgirls)
@@ -136,6 +138,9 @@ class FleetSelectionMenu:
 
     def update(self, dt, events):
         for event in events:
+            if event.type == pygame.MOUSEMOTION:
+                self.exit_fleet_selection_menu_button.hover(event.pos)
+                self.start_sortie_button.hover(event.pos)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.selected_shipgirl = None
                 self.mouse_start_drag = None

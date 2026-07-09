@@ -117,7 +117,8 @@ class EquipmentMenu:
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
                 "opacity": 160
-            }
+            },
+            hover_styling={"opacity": 200}
         )
 
         self.shipgirl_x = None
@@ -220,6 +221,8 @@ class EquipmentMenu:
                 if self.exit_equipment_menu_button.click(event.pos):
                     DataFiles.sfx["click"].play()
             if event.type == pygame.MOUSEMOTION:
+                self.exit_equipment_menu_button.hover(event.pos)
+                
                 for equipment, rect in zip(equippable, self.equippable_rects):
                     if rect.collidepoint(event.pos):
                         self.hovered_equipment = equipment
