@@ -67,17 +67,14 @@ class Color:
     CLEARED_ZONE_FILL = (32, 176, 171)
     CLEARED_ZONE_FILL_HOVER = (24, 222, 215)
     CLEARED_ZONE_OUTLINE = (0, 222, 214)
-    CLEARED_ZONE_GLOW = (148, 255, 251)
 
     UNCLEARED_ZONE_FILL = (40, 84, 181)
     UNCLEARED_ZONE_FILL_HOVER = (41, 99, 227)
     UNCLEARED_ZONE_OUTLINE = (38, 106, 255)
-    UNCLEARED_ZONE_GLOW = (107, 153, 255)
 
     LOCKED_ZONE_FILL = (97, 36, 59)
     LOCKED_ZONE_FILL_HOVER = (125, 30, 66)
     LOCKED_ZONE_OUTLINE = (143, 30, 73)
-    LOCKED_ZONE_GLOW = (189, 89, 127)
 
     OCEAN_BLUE = (21, 53, 122)
     OCEAN_SHADOW = (0, 16, 71)
@@ -293,9 +290,9 @@ def create_sortie_node_selection_glow(sprite_key, color):
     glow = pygame.transform.smoothscale(glow, (math.ceil(Box.WIDTH * 3**(1/2)/2), Box.HEIGHT))
     DataFiles.sprites["sortie_selection"][sprite_key] = glow
 
-create_sortie_node_selection_glow("cleared_node_selection_glow", Color.CLEARED_ZONE_GLOW)
-create_sortie_node_selection_glow("uncleared_node_selection_glow", Color.UNCLEARED_ZONE_GLOW)
-create_sortie_node_selection_glow("locked_node_selection_glow", Color.LOCKED_ZONE_GLOW)
+create_sortie_node_selection_glow("cleared_node_selection_glow", Color.CLEARED_ZONE_OUTLINE)
+create_sortie_node_selection_glow("uncleared_node_selection_glow", Color.UNCLEARED_ZONE_OUTLINE)
+create_sortie_node_selection_glow("locked_node_selection_glow", Color.LOCKED_ZONE_OUTLINE)
 
 lightbulb_light = pygame.Surface((64, 64))
 pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)

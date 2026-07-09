@@ -53,23 +53,20 @@ class SortieNode:
             return (
                 Color.CLEARED_ZONE_FILL,
                 Color.CLEARED_ZONE_OUTLINE,
-                Color.CLEARED_ZONE_GLOW,
                 DataFiles.sprites["user_interface"]["cleared"],
             )
         elif self.unlocked:
             fill = Color.UNCLEARED_ZONE_FILL
             outline = Color.UNCLEARED_ZONE_OUTLINE
-            glow = Color.UNCLEARED_ZONE_GLOW
             if len(self.hexes) > 1:
                 icon = DataFiles.sprites["user_interface"]["boss"]
             else:
                 icon = DataFiles.sprites["user_interface"]["uncleared"]
-            return fill, outline, glow, icon
+            return fill, outline, icon
         else:
             return (
                 Color.LOCKED_ZONE_FILL,
                 Color.LOCKED_ZONE_OUTLINE,
-                Color.LOCKED_ZONE_GLOW,
                 DataFiles.sprites["user_interface"]["locked"],
             )
 
@@ -82,25 +79,16 @@ class SortieNode:
             return DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
 
     def draw(self, surface):
-        fill, outline, _, icon = self.get_styling()
+        fill, outline, icon = self.get_styling()
         polygon = [point + self.center for point in self.polygon]
         pygame.draw.polygon(surface, fill, polygon)
-        pygame.draw.polygon(surface, outline, polygon, width=Box.OUTLINE_WIDTH)
+        pygame.draw.polygon(surface, outline, polygon, width=(1+int(self.hovered))*Box.OUTLINE_WIDTH)
         
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
             icon_rect = icon.get_rect()
             icon_rect.center = pygame.Vector2(x,y) + self.center
             surface.blit(icon, icon_rect)
-
-    def draw_hover_effect(self, surface):
-        if not self.hovered:
-            return
-
-        _, outline, glow, _ = self.get_styling()
-        polygon = [point + self.center for point in self.polygon]
-        pygame.draw.polygon(surface, outline, polygon, width=2*Box.OUTLINE_WIDTH)
-        pygame.draw.polygon(surface, glow, polygon, width=Box.OUTLINE_WIDTH)
 
     def draw_selection_effect(self, surface):
         glow = self.get_selection_glow_sprite()
@@ -110,9 +98,9 @@ class SortieNode:
             glow_rect.midbottom = pygame.Vector2(x, y) + self.center
             surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
 
-        _, _, glow, icon = self.get_styling()
+        _, outline, icon = self.get_styling()
         polygon = [point + self.center for point in self.polygon]
-        pygame.draw.polygon(surface, glow, polygon)
+        pygame.draw.polygon(surface, outline, polygon)
         
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
@@ -436,9 +424,6 @@ class SortieSelectionMenu:
         for _, drawable in sorted(drawables, key=lambda item: item[0]):
             drawable.draw(surface)
 
-        for sortie_node in self.sortie_nodes:
-            sortie_node.draw_hover_effect(surface)
-
         if self.selected_sortie_node is not None:
             self.selected_sortie_node.draw_selection_effect(surface)
 
@@ -480,7 +465,7 @@ class SortieSelectionMenu:
                             continue
                         click = True
                         self.selected_sortie_node = sortie_node
-                        self.selected_sortie_node.hovered = True
+                        self.selected_sortie_node.hovered = False
 
                         rx = -100 # get x value of rightmost hex
                         cy = 0 # get average y value of all hexes
