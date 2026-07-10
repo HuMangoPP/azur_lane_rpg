@@ -28,8 +28,26 @@ class Cloud:
         rect.top = self.y
         surface.blit(self.sprite, rect)
 
+class BackgroundProp:
+    def __init__(self, sprite_name, x, top, draw_index):
+        self.sprite = DataFiles.sprites["background"][sprite_name]
+        self.x = x
+        self.top = top
+        self.draw_index = draw_index
+
+    def draw(self, surface):
+        rect = self.sprite.get_rect()
+        rect.centerx = self.x
+        rect.top = self.top
+        surface.blit(self.sprite, rect)
+
 class Background:
     Y_GAP = 48
+    PROP_COUNTS = {
+        "island": 2,
+        "rocks": 2,
+    }
+
     def __init__(self):
         num_waves = DataFiles.sprites["background"]["num_waves"]
         self.wave_ys = [
@@ -44,6 +62,31 @@ class Background:
         self.cloud_timer = 0
         self.cloud_spawn_time = 0
         self.clouds = []
+        self.props = self.create_props(num_waves)
+
+    def create_props(self, num_waves):
+        prop_names = [
+            prop_name
+            for prop_name, count in self.PROP_COUNTS.items()
+            for _ in range(count)
+        ]
+        random.shuffle(prop_names)
+
+        edge_padding = 96
+        width = screen_x(1)
+        slot_width = width / len(prop_names)
+        props = []
+        for i, prop_name in enumerate(prop_names):
+            draw_index = 0
+            slot_center = slot_width * (i + 0.5)
+            x = random.uniform(
+                max(edge_padding, slot_center - slot_width * 0.35),
+                min(width - edge_padding, slot_center + slot_width * 0.35)
+            )
+            top = self.wave_ys[draw_index] - 16
+            props.append(BackgroundProp(prop_name, x, top, draw_index))
+
+        return sorted(props, key=lambda prop: (prop.draw_index, prop.top))
     
     def update(self, dt):
         num_waves = DataFiles.sprites["background"]["num_waves"]
@@ -72,7 +115,7 @@ class Background:
             self.cloud_timer = 0
             self.cloud_spawn_time = random.uniform(5, 10)
     
-    def draw(self, surface, font_registry, shipgirl=None, player_fleet=None, siren_fleet=None):
+    def draw(self, surface, font_registry, player_fleet=None, siren_fleet=None):
         sky_surf = DataFiles.sprites["background"]["sky"]
         sky_surf_rect = sky_surf.get_rect()
         sky_surf_rect.top = 0
@@ -89,21 +132,29 @@ class Background:
             siren_draw_indices = siren_fleet.get_draw_indices()
         else:
             siren_draw_indices = None
+        
+        if player_fleet is not None:
+            shipgirl_draw_indices = player_fleet.get_draw_indices()
+        else:
+            shipgirl_draw_indices = None
 
         num_waves = DataFiles.sprites["background"]["num_waves"]
         num_wave_reps = 5
         wave_rep_offset = (num_wave_reps-1)/2
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
-            if i == (num_waves-1)/2:
-                if shipgirl is not None:
-                    shipgirl.draw(surface, font_registry)
-                if player_fleet is not None:
-                    player_fleet.draw_shipgirl(surface, font_registry)
+            if shipgirl_draw_indices is not None:
+                for draw_index, shipgirl in shipgirl_draw_indices:
+                    if i == draw_index:
+                        shipgirl.draw(surface, font_registry) 
             
             if siren_draw_indices is not None:
                 for draw_index, siren in siren_draw_indices:
                     if i == draw_index:
                         siren.draw(surface, font_registry) 
+
+            for prop in self.props:
+                if i == prop.draw_index:
+                    prop.draw(surface)
 
             wave = DataFiles.sprites["background"][f"wave{i}"]
             wave_rect = wave.get_rect()

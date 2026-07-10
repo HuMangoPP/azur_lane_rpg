@@ -529,6 +529,18 @@ class PlayerFleet:
             if shipgirl is not None:
                 shipgirl.battle_component.draw(surface, font_registry, shipgirl.rect, vfx_manager)
 
+    def get_draw_indices(self):
+        fixed_draw_indices = [1, 3, 5]
+        return [
+            (fixed_index, shipgirl)
+            for fixed_index, shipgirl in zip(fixed_draw_indices, self.shipgirls)
+            if shipgirl is not None
+        ] + [
+            (fixed_index, shipgirl)
+            for fixed_index, shipgirl in zip(fixed_draw_indices, self.backups)
+            if shipgirl is not None
+        ]
+
 class SirenFleet:
     SLOT_SIZE = 96 # TODO
 
@@ -567,12 +579,12 @@ class SirenFleet:
         
         front_offset = (len(self._front)-1)/2
         for i, siren in enumerate(self._front):
-            siren.rect.centerx = screen_x(0.8) - self.SLOT_SIZE + (i-front_offset)*self.SLOT_SIZE/2
+            siren.rect.centerx = screen_x(0.75) - self.SLOT_SIZE + (i-front_offset)*self.SLOT_SIZE/2
             siren.rect.centery = screen_y(0.5) + (i-front_offset)*self.SLOT_SIZE
         
         back_offset = (len(self._back)-1)/2
         for i, siren in enumerate(self._back): 
-            siren.rect.centerx = screen_x(0.8) + self.SLOT_SIZE + (i-back_offset)*self.SLOT_SIZE/2
+            siren.rect.centerx = screen_x(0.75) + self.SLOT_SIZE + (i-back_offset)*self.SLOT_SIZE/2
             siren.rect.centery = screen_y(0.5) + (i-back_offset)*self.SLOT_SIZE
     
     def end_encounter(self):

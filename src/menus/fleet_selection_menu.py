@@ -104,32 +104,31 @@ class FleetSelectionMenu:
             hover_styling={"opacity": 200}
         )
 
-        num_fleet_slots = len(self.menu_manager.player_fleet.shipgirls)
+        num_fleet_slots = 3 # TODO
         fleet_slot_offset = (num_fleet_slots-1)/2
         self.fleet_slots = [
             get_rect(
                 width=self.SLOT_SIZE, height=self.SLOT_SIZE,
-                centerx=(fleet_slot_offset-slot_index)*self.SLOT_SIZE+screen_x(0.33),
-                centery=screen_y(0.5)
+                centerx=screen_x(0.25) + self.SLOT_SIZE - (slot_index-fleet_slot_offset)*self.SLOT_SIZE/2,
+                centery=screen_y(0.5) + (slot_index-fleet_slot_offset)*self.SLOT_SIZE
             ) for slot_index in range(num_fleet_slots)
         ]
 
-        num_fleet_slots = len(self.menu_manager.player_fleet.backups)
         self.backup_fleet_slots = [
             get_rect(
                 width=self.SLOT_SIZE, height=self.SLOT_SIZE,
-                centerx=-slot_index*self.SLOT_SIZE+self.fleet_slots[1].centerx,
-                bottom=self.fleet_slots[0].top-2*Box.PADDING
-            ) for slot_index in range(num_fleet_slots)
+                centerx=slot.centerx - 2*self.SLOT_SIZE,
+                centery=slot.centery,
+            ) for slot in self.fleet_slots
         ]
         banner_height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
         self.primary_fleet_ribbon = FleetNameRibbon(
-            "primary fleet",
-            (self.fleet_slots[1].centerx, self.fleet_slots[0].bottom + Box.PADDING + banner_height / 2)
+            "primary",
+            (self.fleet_slots[1].centerx, self.fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
         )
         self.backup_fleet_ribbon = FleetNameRibbon(
-            "backup fleet",
-            (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[0].top - Box.PADDING - banner_height / 2)
+            "backup",
+            (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
         )
 
     def draw_dossier_overlay(self, surface, font_registry):
