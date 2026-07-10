@@ -45,9 +45,6 @@ class SortieNode:
         ]
         pygame.draw.polygon(surface, Color.OCEAN_SHADOW, polygon)
 
-    def get_depth(self):
-        return max(point.y for point in self.polygon)
-
     def get_styling(self):
         if self.cleared:
             return (
@@ -188,9 +185,6 @@ class SortieProp:
         rect.center = self.position + SortieNode.center
         return rect
 
-    def get_depth(self):
-        return self.position.y
-
     def draw(self, surface):
         surface.blit(self.sprite, self.get_rect())
 
@@ -321,8 +315,9 @@ class SortieSelectionMenu:
         )
 
         num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        wave_height = DataFiles.sprites["sortie_selection"]["wave"].get_height() / 2
         self.wave_ys = [
-            screen_y(0.5) + 64*(i-(num_waves+2)/2)
+            screen_y(0.5) + wave_height*(i-(num_waves+2)/2)
             for i in range(num_waves)
         ]
         self.wave_timers = [
@@ -360,9 +355,7 @@ class SortieSelectionMenu:
             return 1
         if num_nodes <= 7:
             return 2
-        if num_nodes <= 10:
-            return 3
-        return 4
+        return 3
 
     def create_sortie_props(self):
         occupied_hexes = set()
@@ -372,8 +365,9 @@ class SortieSelectionMenu:
                 if sortie_node.chapter == chapter
             ]
             for sortie_node in chapter_nodes:
-                occupied_hexes.update(sortie_node.hexes)
-        
+                for q, r in sortie_node.hexes:
+                    occupied_hexes |= adjacent_hexes(q, r, 1)
+
         sortie_props = []
         for chapter in range(3): # TODO num chapters
             chapter_nodes = [
@@ -381,17 +375,18 @@ class SortieSelectionMenu:
                 if sortie_node.chapter == chapter
             ]
 
-            if len(occupied_hexes) <= 1:
+            if len(chapter_nodes) <= 1:
                 continue
 
             rng = random.Random(f"sortie-selection-props-chapter-{chapter}")
             count = self.get_prop_count(len(chapter_nodes))
-            prop_keys = ["lighthouse", "shipwreck"] + ["island"] * count + ["rocks"] * count
+            num_islands = 5 # TODO
+            prop_keys = [f"island{index}" for index in range(num_islands)] * count + ["lighthouse", "shipwreck"]
 
             candidate_hexes = set()
             for sortie_node in chapter_nodes:
                 for q, r in sortie_node.hexes:
-                    candidate_hexes |= adjacent_hexes(q, r, 2)
+                    candidate_hexes |= adjacent_hexes(q, r, 3)
             candidate_hexes -= occupied_hexes
             candidate_hexes = sorted(candidate_hexes)
 
@@ -410,25 +405,11 @@ class SortieSelectionMenu:
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
             wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
             wave_rect = wave.get_rect()
-            wave_rect.top = wave_y + 8 * math.sin(2 * wave_timer)
-            centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
+            wave_rect.top = wave_y + 4 * math.sin(2 * wave_timer) # TODO
+            centerx = 32 * math.sin(wave_timer) + screen_x(0.5)
             for j in range(num_wave_reps):
                 wave_rect.centerx = centerx + wave_rect.width * (j - wave_rep_offset)
                 surface.blit(wave, wave_rect)
-
-    def draw_nodes_and_props(self, surface):
-        for sortie_node in self.sortie_nodes:
-            sortie_node.draw_shadow(surface)
-
-        drawables = [
-            *[(sortie_node.get_depth(), sortie_node) for sortie_node in self.sortie_nodes],
-            *[(sortie_prop.get_depth(), sortie_prop) for sortie_prop in self.sortie_props],
-        ]
-        for _, drawable in sorted(drawables, key=lambda item: item[0]):
-            drawable.draw(surface)
-
-        if self.selected_sortie_node is not None:
-            self.selected_sortie_node.draw_selection_effect(surface)
 
     def update(self, dt, events):
         for event in events:
@@ -527,7 +508,16 @@ class SortieSelectionMenu:
         compass_rose_rect.left = Box.LEFT_OF_SCREEN
         surface.blit(compass_rose, compass_rose_rect)
 
-        self.draw_nodes_and_props(surface)
+        for sortie_prop in self.sortie_props:
+            sortie_prop.draw(surface)
+
+        for sortie_node in self.sortie_nodes:
+            sortie_node.draw_shadow(surface)
+        for sortie_node in self.sortie_nodes:
+            sortie_node.draw(surface)
+
+        if self.selected_sortie_node is not None:
+            self.selected_sortie_node.draw_selection_effect(surface)
         
         for fog in self.fogs:
             fog.draw(surface)

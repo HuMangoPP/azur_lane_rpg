@@ -249,14 +249,17 @@
 		"lighthouse": { "left": 512, "top": 384, "width": 128, "height": 128 }
 	},
 	"sortie_selection": {
-		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 },
-		"island": { "left": 0, "top": 128, "width": 64, "height": 64 },
-		"rocks": { "left": 64, "top": 128, "width": 64, "height": 64 },
-		"shipwreck": { "left": 128, "top": 128, "width": 64, "height": 64 },
-		"lighthouse": { "left": 192, "top": 128, "width": 64, "height": 64 },
-		"name_left": { "left": 0, "top": 192, "width": 64, "height": 64 },
-		"name_middle": { "left": 64, "top": 192, "width": 64, "height": 64 },
-		"name_right": { "left": 128, "top": 192, "width": 64, "height": 64 }
+		"wave": { "left": 256, "top": 64, "width": 256, "height": 64 },
+		"island0": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"island1": { "left": 64, "top": 128, "width": 64, "height": 64 },
+		"island2": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"island3": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"island4": { "left": 256, "top": 128, "width": 64, "height": 64 },
+		"lighthouse": { "left": 0, "top": 192, "width": 64, "height": 64 },
+		"shipwreck": { "left": 64, "top": 192, "width": 64, "height": 64 },
+		"name_left": { "left": 256, "top": 0, "width": 64, "height": 64 },
+		"name_middle": { "left": 320, "top": 0, "width": 64, "height": 64 },
+		"name_right": { "left": 384, "top": 0, "width": 64, "height": 64 }
 	},
 	"equipment_menu": {
 		"blueprint": { "left": 0, "top": 0, "width": 448, "height": 288 },
