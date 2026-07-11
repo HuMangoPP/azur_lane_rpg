@@ -259,14 +259,13 @@ def create_sortie_selection_wave_sprite(wave_index, wave_color):
     higher_wave.set_colorkey((255,0,0))
     DataFiles.sprites["sortie_selection"][f"wave{wave_index}"] = higher_wave
 
-num_waves = 19
-DataFiles.sprites["sortie_selection"]["num_waves"] = num_waves
+num_waves = 9
+DataFiles.sprites["sortie_selection"]["num_wave_sprites"] = num_waves
 base_hue = 0.65
-for wave_index in range(DataFiles.sprites["sortie_selection"]["num_waves"]):
+for wave_index in range(num_waves):
     t = wave_index / (num_waves- 1)
-    s = 4*(t-0.5)**2
-    saturation = 0.5 + s*0.3
-    value = 1.0 - s*0.3
+    saturation = 0.5 + t*0.2
+    value = 1.0 - t*0.2
 
     r, g, b = colorsys.hsv_to_rgb(base_hue, saturation, value)
     wave_color = (int(r*255), int(g*255), int(b*255))

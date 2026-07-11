@@ -7,9 +7,14 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 
+
+def anchor():
+    return pygame.Vector2(screen_x(1), screen_y(1)) - SortieNode.center
+
+
 class SortieNode:
     SIZE = 32
-    center = pygame.Vector2(screen_x(0.15), screen_y(0.75))
+    center = pygame.Vector2(screen_x(0.5), screen_y(0.5))
 
     def __init__(self, index, sortie_info):
         self.chapter = sortie_info["chapter"]
@@ -24,7 +29,7 @@ class SortieNode:
 
     def hover(self, mouse_pos):
         mouse_x, mouse_y = mouse_pos
-        hx, hy = pixel_to_hex(mouse_x - self.center.x, mouse_y - self.center.y, self.SIZE)
+        hx, hy = pixel_to_hex(mouse_x - anchor().x, mouse_y - anchor().y, self.SIZE)
         self.hovered = self.unlocked and (hx, hy) in self.hexes
 
     def select(self, mouse_pos):
@@ -32,7 +37,7 @@ class SortieNode:
             return False
 
         mouse_x, mouse_y = mouse_pos
-        hx, hy = pixel_to_hex(mouse_x - self.center.x, mouse_y - self.center.y, self.SIZE)
+        hx, hy = pixel_to_hex(mouse_x - anchor().x, mouse_y - anchor().y, self.SIZE)
         if (hx, hy) not in self.hexes:
             return False
         
@@ -40,7 +45,7 @@ class SortieNode:
 
     def draw_shadow(self, surface):
         polygon = [
-            point + self.center + pygame.Vector2(self.SIZE/4,self.SIZE/2)
+            point + anchor() + pygame.Vector2(self.SIZE/4,self.SIZE/2)
             for point in self.polygon
         ]
         pygame.draw.polygon(surface, Color.OCEAN_SHADOW, polygon)
@@ -77,7 +82,7 @@ class SortieNode:
 
     def draw(self, surface):
         fill, outline, icon = self.get_styling()
-        polygon = [point + self.center for point in self.polygon]
+        polygon = [point + anchor() for point in self.polygon]
         if self.hovered:
             pygame.draw.polygon(surface, outline, polygon)
         else:
@@ -87,7 +92,7 @@ class SortieNode:
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
             icon_rect = icon.get_rect()
-            icon_rect.center = pygame.Vector2(x,y) + self.center
+            icon_rect.center = pygame.Vector2(x,y) + anchor()
             surface.blit(icon, icon_rect)
 
     def draw_selection_effect(self, surface):
@@ -95,17 +100,17 @@ class SortieNode:
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
             glow_rect = glow.get_rect()
-            glow_rect.midbottom = pygame.Vector2(x, y) + self.center
+            glow_rect.midbottom = pygame.Vector2(x, y) + anchor()
             surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
 
         _, outline, icon = self.get_styling()
-        polygon = [point + self.center for point in self.polygon]
+        polygon = [point + anchor() for point in self.polygon]
         pygame.draw.polygon(surface, outline, polygon)
         
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
             icon_rect = icon.get_rect()
-            icon_rect.center = pygame.Vector2(x,y) + self.center
+            icon_rect.center = pygame.Vector2(x,y) + anchor()
             surface.blit(icon, icon_rect)
 
 class Fog:
@@ -159,7 +164,7 @@ class Fog:
         for centroid, cloud_index, cloud_timer in zip(self.centroids, self.cloud_indices, self.cloud_timers):
             center = (
                 centroid
-                + SortieNode.center
+                + anchor()
                 + pygame.Vector2(16*math.sin(cloud_timer), 4*math.sin(2*cloud_timer))
             )
 
@@ -182,7 +187,7 @@ class SortieProp:
 
     def get_rect(self):
         rect = self.sprite.get_rect()
-        rect.center = self.position + SortieNode.center
+        rect.center = self.position + anchor()
         return rect
 
     def draw(self, surface):
@@ -219,7 +224,7 @@ class ChapterNameRibbon:
     def get_rect(self, font_registry):
         width = self.get_width(font_registry)
         height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
-        return get_rect(width=width, height=height, center=self.position + SortieNode.center)
+        return get_rect(width=width, height=height, center=self.position + anchor())
 
     def draw(self, surface, font_registry):
         left = DataFiles.sprites["sortie_selection"]["name_left"]
@@ -314,16 +319,11 @@ class SortieSelectionMenu:
             hover_styling={"opacity": 200}
         )
 
-        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
+        num_waves = 36
+        self.wave_indices = random.choices(list(range(DataFiles.sprites["sortie_selection"]["num_wave_sprites"])), k=num_waves)
         wave_height = DataFiles.sprites["sortie_selection"]["wave"].get_height() / 2
-        self.wave_ys = [
-            screen_y(0.5) + wave_height*(i-(num_waves+2)/2)
-            for i in range(num_waves)
-        ]
-        self.wave_timers = [
-            math.radians(random.randint(0, 359))
-            for _ in range(num_waves)
-        ]
+        self.wave_ys = [wave_height * (i - num_waves + 8) for i in range(num_waves)]
+        self.wave_timers = [math.radians(random.randint(0, 359)) for _ in range(num_waves)]
         self.chapter_name_ribbons = self.create_chapter_name_ribbons()
         self.sortie_props = self.create_sortie_props()
 
@@ -400,19 +400,24 @@ class SortieSelectionMenu:
         return sorted(sortie_props, key=lambda prop: prop.position.y)
 
     def draw_waves(self, surface):
-        num_wave_reps = 5
-        wave_rep_offset = (num_wave_reps - 1) / 2
-        for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
-            wave = DataFiles.sprites["sortie_selection"][f"wave{i}"]
-            wave_rect = wave.get_rect()
-            wave_rect.top = wave_y + 4 * math.sin(2 * wave_timer) # TODO
-            centerx = 32 * math.sin(wave_timer) + screen_x(0.5)
-            for j in range(num_wave_reps):
-                wave_rect.centerx = centerx + wave_rect.width * (j - wave_rep_offset)
-                surface.blit(wave, wave_rect)
+        num_wave_reps = 10
+        for wave_index, wave_y, wave_timer in  zip(self.wave_indices, self.wave_ys, self.wave_timers):
+            wave_sprite = DataFiles.sprites["sortie_selection"][f"wave{wave_index}"]
+            wave_rect = wave_sprite.get_rect()
+            wave_rect.top = wave_y + 4 * math.sin(2 * wave_timer) + anchor().y
+            if wave_rect.bottom < 0 or wave_rect.top > screen_y(1):
+                continue
+            centerx = 32 * math.sin(wave_timer) + anchor().x - screen_x(0.5)
+            for i in range(num_wave_reps):
+                wave_rect.centerx = centerx + wave_rect.width * i
+                if wave_rect.right < 0 or wave_rect.left > screen_x(1):
+                    continue
+                surface.blit(wave_sprite, wave_rect)
 
     def update(self, dt, events):
         for event in events:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                print(SortieNode.center)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.exit_sortie_selection_menu_button.rect.collidepoint(event.pos):
                     continue
@@ -432,7 +437,11 @@ class SortieSelectionMenu:
                     self.exit_sortie_selection_menu_button.hover(event.pos)
                     if self.mousedown:
                         movement = pygame.Vector2(event.rel)
-                        SortieNode.center += movement
+                        SortieNode.center -= movement
+                        SortieNode.center = pygame.Vector2( # TODO
+                            min(max(screen_x(0.5), SortieNode.center.x), 1822),
+                            max(min(screen_y(0.5), SortieNode.center.y), -305)
+                        )
             if event.type == pygame.MOUSEBUTTONUP:
                 if self.mousedown:
                     self.mousedown = False
@@ -460,8 +469,8 @@ class SortieSelectionMenu:
                                 rx = x
                             cy += y / n_hexes
                             
-                        self.selected_sortie_info_panel.left = rx + SortieNode.center.x + SortieNode.SIZE + Box.PADDING
-                        self.selected_sortie_info_panel.centery = cy + SortieNode.center.y
+                        self.selected_sortie_info_panel.left = rx + anchor().x + SortieNode.SIZE + Box.PADDING
+                        self.selected_sortie_info_panel.centery = cy + anchor().y
 
                         self.start_sortie_button.active = True
                         self.start_sortie_button.rect.centerx = self.selected_sortie_info_panel.centerx
@@ -490,23 +499,13 @@ class SortieSelectionMenu:
                     for sortie_node in self.sortie_nodes:
                         sortie_node.hover(event.pos)
 
-        num_waves = DataFiles.sprites["sortie_selection"]["num_waves"]
-        self.wave_timers = [
-            (wave_timer + (i+1)/num_waves*dt)%math.radians(360)
-            for i, wave_timer in enumerate(self.wave_timers)
-        ]
+        self.wave_timers = [(wave_timer + dt) % math.radians(360) for wave_timer in self.wave_timers]
 
         for fog in self.fogs:
             fog.update(dt)
 
     def draw(self, surface, font_registry):
         self.draw_waves(surface)
-
-        compass_rose = DataFiles.sprites["user_interface"]["compass_rose"]
-        compass_rose_rect = compass_rose.get_rect()
-        compass_rose_rect.bottom = Box.BOTTOM_OF_SCREEN
-        compass_rose_rect.left = Box.LEFT_OF_SCREEN
-        surface.blit(compass_rose, compass_rose_rect)
 
         for sortie_prop in self.sortie_props:
             sortie_prop.draw(surface)
@@ -570,5 +569,11 @@ class SortieSelectionMenu:
                 surface.blit(DataFiles.get_entity_sprite(reward), rect)
                 count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
                 font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+        compass_rose = DataFiles.sprites["user_interface"]["compass_rose"]
+        compass_rose_rect = compass_rose.get_rect()
+        compass_rose_rect.bottom = Box.BOTTOM_OF_SCREEN
+        compass_rose_rect.left = Box.LEFT_OF_SCREEN
+        surface.blit(compass_rose, compass_rose_rect)
 
         self.exit_sortie_selection_menu_button.draw(surface, font_registry)
