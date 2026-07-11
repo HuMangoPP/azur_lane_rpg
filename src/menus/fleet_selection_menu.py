@@ -2,7 +2,7 @@ import math
 import pygame
 import random
 
-from engine.util import get_rect
+from engine.util import get_rect, get_vec
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -93,17 +93,18 @@ class FleetSelectionMenu:
             hover_styling={"opacity": 200}
         )
 
+        slot_size = 64
         self.fleet_slots = [
             get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=screen_x(0.25) - (slot_index-1)*Box.WIDTH/4,
-                centery=self.Y_ALIGN + (slot_index-1)*(Box.HEIGHT + Box.PADDING)
+                width=slot_size, height=slot_size,
+                centerx=screen_x(0.25) - (slot_index-1)*slot_size/4,
+                centery=self.Y_ALIGN + (slot_index-1)*(slot_size + Box.PADDING)
             ) for slot_index in range(3)
         ]
         self.backup_fleet_slots = [
             get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=slot.centerx - 2*Box.WIDTH,
+                width=slot_size, height=slot_size,
+                centerx=slot.centerx - 1.5*slot_size,
                 centery=slot.centery,
             ) for slot in self.fleet_slots
         ]
@@ -237,17 +238,6 @@ class FleetSelectionMenu:
             num_encounters, scale, offset = self.path
             startx = screen_x(0.5)
             endx = screen_x(0.8)
-            for i in range(num_encounters):
-                t = i / (num_encounters-1)
-                s = math.sin(scale*t + offset)
-                pygame.draw.circle(
-                    surface,
-                    Color.WHITE, 
-                    ((endx-startx)*t + startx, screen_y(0.2)*s + self.Y_ALIGN),
-                    Box.WIDTH/2,
-                    width=Box.OUTLINE_WIDTH
-                )
-            
             num_dots = 30
             for i in range(num_dots):
                 t = i / (num_dots-1) * 2 - 0.5
@@ -257,6 +247,22 @@ class FleetSelectionMenu:
                     ((endx-startx)*t + startx, screen_y(0.2)*s + self.Y_ALIGN),
                     4,
                 )
+
+            for i in range(num_encounters):
+                t = i / (num_encounters-1)
+                s = math.sin(scale*t + offset)
+                icon = DataFiles.sprites["user_interface"]["uncleared"]
+                icon_rect = icon.get_rect()
+                icon_rect.centerx = (endx-startx)*t + startx
+                icon_rect.centery = screen_y(0.2)*s + self.Y_ALIGN
+                glow = DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
+                glow_rect = glow.get_rect()
+                glow_rect.midbottom = icon_rect.center
+                surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
+                polygon = [pygame.Vector2(icon_rect.center) + get_vec(Box.WIDTH/2, math.radians(30 + i * 60)) for i in range(6)]
+                pygame.draw.polygon(surface, Color.LOCKED_ZONE_FILL_HOVER, polygon)
+                pygame.draw.polygon(surface, Color.WHITE, polygon, width=Box.OUTLINE_WIDTH)
+                surface.blit(icon, icon_rect)
         
         for slot, shipgirl in zip(
             self.fleet_slots + self.backup_fleet_slots,

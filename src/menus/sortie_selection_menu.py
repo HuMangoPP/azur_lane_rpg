@@ -13,7 +13,7 @@ def anchor():
 
 
 class SortieNode:
-    SIZE = 32
+    SIZE = Box.WIDTH/2
     center = pygame.Vector2(screen_x(0.5), screen_y(0.5))
 
     def __init__(self, index, sortie_info):
