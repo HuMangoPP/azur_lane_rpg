@@ -193,35 +193,15 @@ class SortieProp:
     def draw(self, surface):
         surface.blit(self.sprite, self.get_rect())
 
-class ChapterNameRibbon:
+
+class NameRibbon:
     PADDING_X = 24
     FONT_SCALE = 1
-    CHAPTER_NAMES = [
-        "training exercise",
-        "patrol route",
-        "crimson reef",
-        "stormy sea",
-        "mirror sea"
-    ]
-
-    def __init__(self, chapter, sortie_nodes):
-        if chapter < len(self.CHAPTER_NAMES):
-            self.text = self.CHAPTER_NAMES[chapter]
-        else:
-            self.text = f"chapter {chapter}"
-        self.position = self.get_position(sortie_nodes)
-
-    def get_position(self, sortie_nodes):
-        hex_positions = []
-        for sortie_node in sortie_nodes:
-            for q, r in sortie_node.hexes:
-                hex_positions.append(pygame.Vector2(hex_to_pixel(q, r, SortieNode.SIZE)))
-
-        left = min(position.x for position in hex_positions)
-        right = max(position.x for position in hex_positions)
-        bottom = max(position.y for position in hex_positions)
-        return pygame.Vector2((left + right) / 2, bottom + 3 * SortieNode.SIZE)
-
+    
+    def __init__(self, position, name):
+        self.text = name
+        self.position = pygame.Vector2(position)
+    
     def get_width(self, font_registry):
         left = DataFiles.sprites["sortie_selection"]["name_left"]
         right = DataFiles.sprites["sortie_selection"]["name_right"]
@@ -259,6 +239,38 @@ class ChapterNameRibbon:
 
         text_pos = pygame.Vector2(rect.centerx, rect.centery)
         font_registry["handwritten"].render(surface, self.text, text_pos, Color.BLACK, self.FONT_SCALE, style="center")
+
+class ChapterNameRibbon:
+    CHAPTER_NAMES = [
+        "training exercise",
+        "patrol route",
+        "crimson reef",
+        "stormy sea",
+        "mirror sea"
+    ]
+
+    def __init__(self, chapter, sortie_nodes):
+        if chapter < len(self.CHAPTER_NAMES):
+            text = self.CHAPTER_NAMES[chapter]
+        else:
+            text = f"chapter {chapter}"
+        position = self.get_position(sortie_nodes)
+
+        self.ribbon = NameRibbon(position, text)
+
+    def get_position(self, sortie_nodes):
+        hex_positions = []
+        for sortie_node in sortie_nodes:
+            for q, r in sortie_node.hexes:
+                hex_positions.append(pygame.Vector2(hex_to_pixel(q, r, SortieNode.SIZE)))
+
+        left = min(position.x for position in hex_positions)
+        right = max(position.x for position in hex_positions)
+        bottom = max(position.y for position in hex_positions)
+        return pygame.Vector2((left + right) / 2, bottom + 3 * SortieNode.SIZE)
+
+    def draw(self, surface, font_registry):
+        self.ribbon.draw(surface, font_registry)
 
 
 class Background:
@@ -407,11 +419,20 @@ class SortieSelectionMenu:
             for chapter in range(4)
         ]
 
-        # TODO
+        # TODO WIP: update styling for these, maybe make them parametrized paths so they look better
         self.path_points = {
             1: [(116.0, -86.0), (105.0, -98.0), (91.0, -107.0), (74.0, -116.0), (60.0, -121.0), (46.0, -126.0), (32.0, -137.0), (20.0, -151.0), (15.0, -168.0), (14.0, -188.0), (15.0, -208.0), (22.0, -227.0), (33.0, -242.0), (45.0, -252.0), (65.0, -258.0), (88.0, -263.0), (106.0, -257.0), (126.0, -247.0), (136.0, -228.0), (144.0, -214.0), (148.0, -198.0), (158.0, -183.0), (169.0, -174.0)],
             2: [(576.0, -147.0), (582.0, -127.0), (584.0, -111.0), (588.0, -95.0), (605.0, -80.0), (623.0, -72.0), (642.0, -67.0), (668.0, -65.0), (692.0, -69.0), (710.0, -78.0), (721.0, -91.0), (730.0, -109.0), (730.0, -130.0), (720.0, -150.0), (709.0, -168.0), (695.0, -180.0), (683.0, -195.0), (674.0, -216.0)]
         }
+
+        # TODO WIP: create sprites for these and actually decorate these areas with the appropriate props
+        self.sea_location_labels = [
+            NameRibbon((-42, -431), "stormy"),
+            NameRibbon((747, 69), "glaciers"),
+            NameRibbon((670, -618), "glaciers"),
+            NameRibbon((1588, -169), "stormy"),
+            NameRibbon((1658, -587), "stormy"),
+        ]
 
     def get_chapters(self):
         return sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
@@ -588,6 +609,9 @@ class SortieSelectionMenu:
 
         for chapter_name_ribbon in self.chapter_name_ribbons:
             chapter_name_ribbon.draw(surface, font_registry)
+        
+        for location_ribbon in self.sea_location_labels:
+            location_ribbon.draw(surface, font_registry)
         
         if self.selected_sortie_node is not None:
             pygame.draw.rect(surface, Color.BLACK, self.selected_sortie_info_panel)
