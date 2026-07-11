@@ -1,5 +1,3 @@
-import math
-import random
 import pygame
 
 from engine.util import get_rect
@@ -7,7 +5,7 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.quests_data import first_sortie_quest
-from src.menus.sortie_selection_menu import ChapterNameRibbon
+from src.menus.sortie_selection_menu import ChapterNameRibbon, Background
 
 from live2d.live2d import Live2D
 
@@ -130,6 +128,8 @@ class FleetSelectionMenu:
             "backup",
             (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
         )
+
+        self.background = Background()
 
     def draw_dossier_overlay(self, surface, font_registry):
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
@@ -274,10 +274,10 @@ class FleetSelectionMenu:
             if shipgirl is not None:
                 shipgirl.animate(dt)
 
-        self.menu_manager.background.update(dt)
+        self.background.update(dt)
 
     def draw(self, surface, font_registry):
-        self.menu_manager.background.draw(surface, font_registry, player_fleet=self.menu_manager.player_fleet)
+        self.background.draw(surface)
 
         self.start_sortie_button.draw(surface, font_registry)
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
@@ -293,7 +293,11 @@ class FleetSelectionMenu:
         for slot, shipgirl in zip(self.backup_fleet_slots, self.menu_manager.player_fleet.backups):
             if shipgirl is None:
                 pygame.draw.rect(surface, Color.WHITE, slot, width=Box.OUTLINE_WIDTH)
+
+        self.menu_manager.player_fleet.draw_shipgirl(surface, font_registry)
         
+        self.background.draw_markings(surface, font_registry)
+
         mpos = pygame.mouse.get_pos()
         if self.mouse_start_drag is not None:
             pygame.draw.line(surface, Color.WHITE, self.mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)

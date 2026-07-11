@@ -260,6 +260,72 @@ class ChapterNameRibbon:
         text_pos = pygame.Vector2(rect.centerx, rect.centery)
         font_registry["handwritten"].render(surface, self.text, text_pos, Color.BLACK, self.FONT_SCALE, style="center")
 
+
+class Background:
+    def __init__(self):
+        num_waves = 36
+        self.wave_indices = random.choices(list(range(DataFiles.sprites["sortie_selection"]["num_wave_sprites"])), k=num_waves)
+        wave_height = DataFiles.sprites["sortie_selection"]["wave"].get_height() / 2
+        self.wave_ys = [wave_height * (i - num_waves + 8) for i in range(num_waves)]
+        self.wave_timers = [math.radians(random.randint(0, 359)) for _ in range(num_waves)]
+
+    def update(self, dt):
+        self.wave_timers = [(wave_timer + dt) % math.radians(360) for wave_timer in self.wave_timers]
+
+    def draw(self, surface):
+        num_wave_reps = 10
+        for wave_index, wave_y, wave_timer in  zip(self.wave_indices, self.wave_ys, self.wave_timers):
+            wave_sprite = DataFiles.sprites["sortie_selection"][f"wave{wave_index}"]
+            wave_rect = wave_sprite.get_rect()
+            wave_rect.top = wave_y + 4 * math.sin(2 * wave_timer) + anchor().y
+            if wave_rect.bottom < 0 or wave_rect.top > screen_y(1):
+                continue
+            centerx = 32 * math.sin(wave_timer) + anchor().x - screen_x(0.5)
+            for i in range(num_wave_reps):
+                wave_rect.centerx = centerx + wave_rect.width * i
+                if wave_rect.right < 0 or wave_rect.left > screen_x(1):
+                    continue
+                surface.blit(wave_sprite, wave_rect)
+
+    def draw_markings(self, surface, font_registry):
+        compass_rose = DataFiles.sprites["sortie_selection"]["compass_rose"]
+        compass_rose_rect = compass_rose.get_rect()
+        compass_rose_rect.bottom = Box.BOTTOM_OF_SCREEN
+        compass_rose_rect.left = Box.LEFT_OF_SCREEN
+        surface.blit(compass_rose, compass_rose_rect)
+
+        map_scale = DataFiles.sprites["sortie_selection"]["map_scale"]
+        map_scale_rect = map_scale.get_rect()
+        map_scale_rect.bottom = Box.BOTTOM_OF_SCREEN
+        map_scale_rect.left = compass_rose_rect.right + Box.PADDING
+        surface.blit(map_scale, map_scale_rect)
+
+        for dist, x in zip([0, 50, 100, 200], [
+            map_scale_rect.left,
+            map_scale_rect.left + map_scale_rect.width * 0.25,
+            map_scale_rect.left + map_scale_rect.width * 0.5,
+            map_scale_rect.left + map_scale_rect.width
+        ]):
+            font_registry["big_pixel"].render(
+                surface,
+                str(dist),
+                pygame.Vector2(x, map_scale_rect.top - 10),
+                Color.WHITE,
+                1,
+                style="center",
+                outline_color=Color.BLACK
+            )
+        font_registry["big_pixel"].render(
+            surface,
+            "kilometers",
+            pygame.Vector2(map_scale_rect.right + Box.PADDING, map_scale_rect.centery),
+            Color.WHITE,
+            1,
+            style="centerleft",
+            outline_color=Color.BLACK
+        )
+
+
 class SortieSelectionMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -328,11 +394,7 @@ class SortieSelectionMenu:
             hover_styling={"opacity": 200}
         )
 
-        num_waves = 36
-        self.wave_indices = random.choices(list(range(DataFiles.sprites["sortie_selection"]["num_wave_sprites"])), k=num_waves)
-        wave_height = DataFiles.sprites["sortie_selection"]["wave"].get_height() / 2
-        self.wave_ys = [wave_height * (i - num_waves + 8) for i in range(num_waves)]
-        self.wave_timers = [math.radians(random.randint(0, 359)) for _ in range(num_waves)]
+        self.background = Background()
         self.chapter_name_ribbons = self.create_chapter_name_ribbons()
         self.sortie_props = self.create_sortie_props()
 
@@ -407,21 +469,6 @@ class SortieSelectionMenu:
                 occupied_hexes.add((q, r))
 
         return sorted(sortie_props, key=lambda prop: prop.position.y)
-
-    def draw_waves(self, surface):
-        num_wave_reps = 10
-        for wave_index, wave_y, wave_timer in  zip(self.wave_indices, self.wave_ys, self.wave_timers):
-            wave_sprite = DataFiles.sprites["sortie_selection"][f"wave{wave_index}"]
-            wave_rect = wave_sprite.get_rect()
-            wave_rect.top = wave_y + 4 * math.sin(2 * wave_timer) + anchor().y
-            if wave_rect.bottom < 0 or wave_rect.top > screen_y(1):
-                continue
-            centerx = 32 * math.sin(wave_timer) + anchor().x - screen_x(0.5)
-            for i in range(num_wave_reps):
-                wave_rect.centerx = centerx + wave_rect.width * i
-                if wave_rect.right < 0 or wave_rect.left > screen_x(1):
-                    continue
-                surface.blit(wave_sprite, wave_rect)
 
     def update(self, dt, events):
         for event in events:
@@ -508,13 +555,12 @@ class SortieSelectionMenu:
                     for sortie_node in self.sortie_nodes:
                         sortie_node.hover(event.pos)
 
-        self.wave_timers = [(wave_timer + dt) % math.radians(360) for wave_timer in self.wave_timers]
-
+        self.background.update(dt)
         for fog in self.fogs:
             fog.update(dt)
 
     def draw(self, surface, font_registry):
-        self.draw_waves(surface)
+        self.background.draw(surface)
 
         for sortie_prop in self.sortie_props:
             sortie_prop.draw(surface)
@@ -526,7 +572,7 @@ class SortieSelectionMenu:
 
         if self.selected_sortie_node is not None:
             self.selected_sortie_node.draw_selection_effect(surface)
-        
+
         for fog in self.fogs:
             fog.draw(surface)
 
@@ -579,41 +625,6 @@ class SortieSelectionMenu:
                 count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
                 font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        compass_rose = DataFiles.sprites["sortie_selection"]["compass_rose"]
-        compass_rose_rect = compass_rose.get_rect()
-        compass_rose_rect.bottom = Box.BOTTOM_OF_SCREEN
-        compass_rose_rect.left = Box.LEFT_OF_SCREEN
-        surface.blit(compass_rose, compass_rose_rect)
-
-        map_scale = DataFiles.sprites["sortie_selection"]["map_scale"]
-        map_scale_rect = map_scale.get_rect()
-        map_scale_rect.bottom = Box.BOTTOM_OF_SCREEN
-        map_scale_rect.left = compass_rose_rect.right + Box.PADDING
-        surface.blit(map_scale, map_scale_rect)
-
-        for dist, x in zip([0, 50, 100, 200], [
-            map_scale_rect.left,
-            map_scale_rect.left + map_scale_rect.width * 0.25,
-            map_scale_rect.left + map_scale_rect.width * 0.5,
-            map_scale_rect.left + map_scale_rect.width
-        ]):
-            font_registry["big_pixel"].render(
-                surface,
-                str(dist),
-                pygame.Vector2(x, map_scale_rect.top - 10),
-                Color.WHITE,
-                1,
-                style="center",
-                outline_color=Color.BLACK
-            )
-        font_registry["big_pixel"].render(
-            surface,
-            "kilometers",
-            pygame.Vector2(map_scale_rect.right + Box.PADDING, map_scale_rect.centery),
-            Color.WHITE,
-            1,
-            style="centerleft",
-            outline_color=Color.BLACK
-        )
+        self.background.draw_markings(surface, font_registry)
 
         self.exit_sortie_selection_menu_button.draw(surface, font_registry)

@@ -1,6 +1,4 @@
-from engine.util import get_rect
-
-from src.constants import DataFiles, Box, screen_x, screen_y
+from src.constants import DataFiles
 from src.shipgirls import Shipgirl, PlayerFleet, SirenFleet
 
 from src.menus.port_menu import PortMenu
@@ -8,7 +6,6 @@ from src.menus.equipment_menu import EquipmentMenu
 from src.menus.sortie_selection_menu import SortieSelectionMenu
 from src.menus.fleet_selection_menu import FleetSelectionMenu
 from src.menus.encounter_menu import EncounterMenu
-from src.menus.background import Background
 from src.menus.quests import QuestManager
 from src.menus.quests_data import quests
 
@@ -33,8 +30,6 @@ class MenuManager:
             self.ENCOUNTER: EncounterMenu(self),
         }
         self.current_menu = self.port_menu
-
-        self.background = Background()
 
         self.quest_manager = QuestManager()
         for quest in quests:
