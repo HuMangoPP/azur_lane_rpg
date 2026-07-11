@@ -331,6 +331,25 @@ class EncounterMenu:
         self.fast_forward = False
         self.slow_down = False
 
+        slot_size = 96
+        num_fleet_slots = 3
+        fleet_slot_offset = (num_fleet_slots-1)/2
+        self.fleet_slots = [
+            get_rect(
+                width=slot_size, height=slot_size,
+                centerx=screen_x(0.25) + slot_size - (slot_index-fleet_slot_offset)*slot_size/2,
+                centery=screen_y(0.5) + (slot_index-fleet_slot_offset)*slot_size
+            ) for slot_index in range(num_fleet_slots)
+        ]
+
+        self.backup_fleet_slots = [
+            get_rect(
+                width=slot_size, height=slot_size,
+                centerx=slot.centerx - 2*slot_size,
+                centery=slot.centery,
+            ) for slot in self.fleet_slots
+        ]
+
         self.background = Background()
 
     def begin_sortie(self):
