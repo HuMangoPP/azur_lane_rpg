@@ -407,6 +407,12 @@ class SortieSelectionMenu:
             for chapter in range(4)
         ]
 
+        # TODO
+        self.path_points = {
+            1: [(116.0, -86.0), (105.0, -98.0), (91.0, -107.0), (74.0, -116.0), (60.0, -121.0), (46.0, -126.0), (32.0, -137.0), (20.0, -151.0), (15.0, -168.0), (14.0, -188.0), (15.0, -208.0), (22.0, -227.0), (33.0, -242.0), (45.0, -252.0), (65.0, -258.0), (88.0, -263.0), (106.0, -257.0), (126.0, -247.0), (136.0, -228.0), (144.0, -214.0), (148.0, -198.0), (158.0, -183.0), (169.0, -174.0)],
+            2: [(576.0, -147.0), (582.0, -127.0), (584.0, -111.0), (588.0, -95.0), (605.0, -80.0), (623.0, -72.0), (642.0, -67.0), (668.0, -65.0), (692.0, -69.0), (710.0, -78.0), (721.0, -91.0), (730.0, -109.0), (730.0, -130.0), (720.0, -150.0), (709.0, -168.0), (695.0, -180.0), (683.0, -195.0), (674.0, -216.0)]
+        }
+
     def get_chapters(self):
         return sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
 
@@ -473,8 +479,6 @@ class SortieSelectionMenu:
 
     def update(self, dt, events):
         for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                print(SortieNode.center)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.exit_sortie_selection_menu_button.rect.collidepoint(event.pos):
                     continue
@@ -562,6 +566,11 @@ class SortieSelectionMenu:
 
     def draw(self, surface, font_registry):
         self.background.draw(surface)
+
+        for chapter in range(DataFiles.save_file["chapter_progress"]+1):
+            path_points = self.path_points.get(chapter, [])
+            for point in path_points:
+                pygame.draw.circle(surface, Color.WHITE, point + anchor(), 4)
 
         for sortie_prop in self.sortie_props:
             sortie_prop.draw(surface)
