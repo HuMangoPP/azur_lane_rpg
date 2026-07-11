@@ -196,10 +196,19 @@ class SortieProp:
 class ChapterNameRibbon:
     PADDING_X = 24
     FONT_SCALE = 1
+    CHAPTER_NAMES = [
+        "training exercise",
+        "patrol route",
+        "crimson reef",
+        "stormy sea",
+        "mirror sea"
+    ]
 
     def __init__(self, chapter, sortie_nodes):
-        self.chapter = chapter
-        self.text = f"chapter {chapter}"
+        if chapter < len(self.CHAPTER_NAMES):
+            self.text = self.CHAPTER_NAMES[chapter]
+        else:
+            self.text = f"chapter {chapter}"
         self.position = self.get_position(sortie_nodes)
 
     def get_position(self, sortie_nodes):
