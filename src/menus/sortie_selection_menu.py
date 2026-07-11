@@ -352,6 +352,7 @@ class SortieSelectionMenu:
 
         def start_sortie():
             self.menu_manager.current_menu = self.menu_manager.fleet_selection_menu
+            self.menu_manager.fleet_selection_menu.generate_path(self.selected_sortie_node.index)
             self.menu_manager.encounter_menu.current_sortie = self.selected_sortie_node.index
             self.menu_manager.encounter_menu.current_encounter = 0
             self.menu_manager.player_fleet.clear_fleet()

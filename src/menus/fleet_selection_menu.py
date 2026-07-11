@@ -1,4 +1,6 @@
+import math
 import pygame
+import random
 
 from engine.util import get_rect
 from engine.button import Button
@@ -22,7 +24,7 @@ class FleetNameRibbon(ChapterNameRibbon):
 
 
 class FleetSelectionMenu:
-    SLOT_SIZE = 96 # TODO
+    Y_ALIGN = screen_y(0.33)
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -102,34 +104,58 @@ class FleetSelectionMenu:
             hover_styling={"opacity": 200}
         )
 
-        num_fleet_slots = 3 # TODO
-        fleet_slot_offset = (num_fleet_slots-1)/2
         self.fleet_slots = [
             get_rect(
-                width=self.SLOT_SIZE, height=self.SLOT_SIZE,
-                centerx=screen_x(0.25) + self.SLOT_SIZE - (slot_index-fleet_slot_offset)*self.SLOT_SIZE/2,
-                centery=screen_y(0.5) + (slot_index-fleet_slot_offset)*self.SLOT_SIZE
-            ) for slot_index in range(num_fleet_slots)
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=screen_x(0.25) - (slot_index-1)*Box.WIDTH/4,
+                centery=self.Y_ALIGN + (slot_index-1)*(Box.HEIGHT + Box.PADDING)
+            ) for slot_index in range(3)
         ]
-
         self.backup_fleet_slots = [
             get_rect(
-                width=self.SLOT_SIZE, height=self.SLOT_SIZE,
-                centerx=slot.centerx - 2*self.SLOT_SIZE,
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=slot.centerx - 2*Box.WIDTH,
                 centery=slot.centery,
             ) for slot in self.fleet_slots
         ]
-        banner_height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
-        self.primary_fleet_ribbon = FleetNameRibbon(
-            "primary",
-            (self.fleet_slots[1].centerx, self.fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
-        )
-        self.backup_fleet_ribbon = FleetNameRibbon(
-            "backup",
-            (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
-        )
+
+        # num_fleet_slots = 3 # TODO
+        # fleet_slot_offset = (num_fleet_slots-1)/2
+        # self.fleet_slots = [
+        #     get_rect(
+        #         width=self.SLOT_SIZE, height=self.SLOT_SIZE,
+        #         centerx=screen_x(0.25) + self.SLOT_SIZE - (slot_index-fleet_slot_offset)*self.SLOT_SIZE/2,
+        #         centery=screen_y(0.5) + (slot_index-fleet_slot_offset)*self.SLOT_SIZE
+        #     ) for slot_index in range(num_fleet_slots)
+        # ]
+
+        # self.backup_fleet_slots = [
+        #     get_rect(
+        #         width=self.SLOT_SIZE, height=self.SLOT_SIZE,
+        #         centerx=slot.centerx - 2*self.SLOT_SIZE,
+        #         centery=slot.centery,
+        #     ) for slot in self.fleet_slots
+        # ]
+        # banner_height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
+        # self.primary_fleet_ribbon = FleetNameRibbon(
+        #     "primary",
+        #     (self.fleet_slots[1].centerx, self.fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
+        # )
+        # self.backup_fleet_ribbon = FleetNameRibbon(
+        #     "backup",
+        #     (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
+        # )
+
+        self.path = None
 
         self.background = Background()
+
+    def generate_path(self, sortie_index):
+        num_encounters = len(DataFiles.sortie_data[sortie_index]["encounters"])
+        scale = math.radians(random.randint(180, 359))
+        offset = math.radians(random.randint(0, 359))
+
+        self.path = (num_encounters, scale, offset)
 
     def draw_dossier_overlay(self, surface, font_registry):
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
@@ -220,40 +246,40 @@ class FleetSelectionMenu:
             if event.type == pygame.MOUSEMOTION:
                 self.exit_fleet_selection_menu_button.hover(event.pos)
                 self.start_sortie_button.hover(event.pos)
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                self.selected_shipgirl = None
-                self.mouse_start_drag = None
-                self.selected_shipgirl_index_from_fleet = None
-                self.selected_shipgirl_index_from_backup = None
-                for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
-                    if rect.collidepoint(event.pos) and not self.menu_manager.player_fleet.in_fleet(shipgirl):
-                        self.mouse_start_drag = event.pos
-                        self.selected_shipgirl = shipgirl
-                for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
-                    if shipgirl is not None and shipgirl.rect.collidepoint(event.pos):
-                        self.mouse_start_drag = event.pos
-                        self.selected_shipgirl = shipgirl
-                        self.selected_shipgirl_index_from_fleet = i
-                for i, shipgirl in enumerate(self.menu_manager.player_fleet.backups):
-                    if shipgirl is not None and shipgirl.rect.collidepoint(event.pos):
-                        self.mouse_start_drag = event.pos
-                        self.selected_shipgirl = shipgirl
-                        self.selected_shipgirl_index_from_backup = i
+            # if event.type == pygame.MOUSEBUTTONDOWN:
+            #     self.selected_shipgirl = None
+            #     self.mouse_start_drag = None
+            #     self.selected_shipgirl_index_from_fleet = None
+            #     self.selected_shipgirl_index_from_backup = None
+            #     for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
+            #         if rect.collidepoint(event.pos) and not self.menu_manager.player_fleet.in_fleet(shipgirl):
+            #             self.mouse_start_drag = event.pos
+            #             self.selected_shipgirl = shipgirl
+            #     for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
+            #         if shipgirl is not None and shipgirl.rect.collidepoint(event.pos):
+            #             self.mouse_start_drag = event.pos
+            #             self.selected_shipgirl = shipgirl
+            #             self.selected_shipgirl_index_from_fleet = i
+            #     for i, shipgirl in enumerate(self.menu_manager.player_fleet.backups):
+            #         if shipgirl is not None and shipgirl.rect.collidepoint(event.pos):
+            #             self.mouse_start_drag = event.pos
+            #             self.selected_shipgirl = shipgirl
+            #             self.selected_shipgirl_index_from_backup = i
             if event.type == pygame.MOUSEBUTTONUP:
                 click = False
-                if self.selected_shipgirl is not None:
-                    click = self._drop_shipgirl(self.menu_manager.player_fleet.shipgirls, self.fleet_slots, event)
-                    click = click or self._drop_shipgirl(self.menu_manager.player_fleet.backups, self.backup_fleet_slots, event)
-                if self.selected_shipgirl is not None:
-                    for _, slot in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
-                        if not slot.collidepoint(event.pos):
-                            continue
-                        if self.selected_shipgirl_index_from_fleet is not None:
-                            self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = None
-                        if self.selected_shipgirl_index_from_backup is not None:
-                            self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = None
-                        self.selected_shipgirl = None
-                        click = True
+                # if self.selected_shipgirl is not None:
+                #     click = self._drop_shipgirl(self.menu_manager.player_fleet.shipgirls, self.fleet_slots, event)
+                #     click = click or self._drop_shipgirl(self.menu_manager.player_fleet.backups, self.backup_fleet_slots, event)
+                # if self.selected_shipgirl is not None:
+                #     for _, slot in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
+                #         if not slot.collidepoint(event.pos):
+                #             continue
+                #         if self.selected_shipgirl_index_from_fleet is not None:
+                #             self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = None
+                #         if self.selected_shipgirl_index_from_backup is not None:
+                #             self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = None
+                #         self.selected_shipgirl = None
+                #         click = True
 
                 self.mouse_start_drag = None
                 click = (
@@ -270,31 +296,59 @@ class FleetSelectionMenu:
         else:
             self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 0
 
-        for shipgirl in self.menu_manager.player_fleet.fleet:
-            if shipgirl is not None:
-                shipgirl.animate(dt)
+        # for shipgirl in self.menu_manager.player_fleet.fleet:
+        #     if shipgirl is not None:
+        #         shipgirl.animate(dt)
 
         self.background.update(dt)
 
     def draw(self, surface, font_registry):
         self.background.draw(surface)
 
+        if self.path is not None:
+            num_encounters, scale, offset = self.path
+            startx = screen_x(0.5)
+            endx = screen_x(0.8)
+            for i in range(num_encounters):
+                t = i / (num_encounters-1)
+                s = math.sin(scale*t + offset)
+                pygame.draw.circle(
+                    surface,
+                    Color.WHITE, 
+                    ((endx-startx)*t + startx, screen_y(0.2)*s + self.Y_ALIGN),
+                    Box.WIDTH/2,
+                    width=Box.OUTLINE_WIDTH
+                )
+            
+            num_dots = 30
+            for i in range(num_dots):
+                t = i / (num_dots-1) * 2 - 0.5
+                s = math.sin(scale*t + offset)
+                pygame.draw.circle(
+                    surface, Color.WHITE,
+                    ((endx-startx)*t + startx, screen_y(0.2)*s + self.Y_ALIGN),
+                    4,
+                )
+        
+        for slot in self.fleet_slots + self.backup_fleet_slots:
+            pygame.draw.rect(surface, Color.WHITE, slot, width=Box.OUTLINE_WIDTH)
+        
         self.start_sortie_button.draw(surface, font_registry)
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
-        self.backup_fleet_ribbon.draw(surface, font_registry)
-        self.primary_fleet_ribbon.draw(surface, font_registry)
+        # self.backup_fleet_ribbon.draw(surface, font_registry)
+        # self.primary_fleet_ribbon.draw(surface, font_registry)
 
-        self.draw_dossier_overlay(surface, font_registry)
+        # self.draw_dossier_overlay(surface, font_registry)
 
-        for slot, shipgirl in zip(self.fleet_slots, self.menu_manager.player_fleet.shipgirls):
-            if shipgirl is None:
-                pygame.draw.rect(surface, Color.WHITE, slot, width=Box.OUTLINE_WIDTH)
+        # for slot, shipgirl in zip(self.fleet_slots, self.menu_manager.player_fleet.shipgirls):
+        #     if shipgirl is None:
+        #         pygame.draw.rect(surface, Color.WHITE, slot, width=Box.OUTLINE_WIDTH)
         
-        for slot, shipgirl in zip(self.backup_fleet_slots, self.menu_manager.player_fleet.backups):
-            if shipgirl is None:
-                pygame.draw.rect(surface, Color.WHITE, slot, width=Box.OUTLINE_WIDTH)
+        # for slot, shipgirl in zip(self.backup_fleet_slots, self.menu_manager.player_fleet.backups):
+        #     if shipgirl is None:
+        #         pygame.draw.rect(surface, Color.WHITE, slot, width=Box.OUTLINE_WIDTH)
 
-        self.menu_manager.player_fleet.draw_shipgirl(surface, font_registry)
+        # self.menu_manager.player_fleet.draw_shipgirl(surface, font_registry)
         
         self.background.draw_markings(surface, font_registry)
 
