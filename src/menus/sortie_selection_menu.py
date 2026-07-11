@@ -579,10 +579,41 @@ class SortieSelectionMenu:
                 count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
                 font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        compass_rose = DataFiles.sprites["user_interface"]["compass_rose"]
+        compass_rose = DataFiles.sprites["sortie_selection"]["compass_rose"]
         compass_rose_rect = compass_rose.get_rect()
         compass_rose_rect.bottom = Box.BOTTOM_OF_SCREEN
         compass_rose_rect.left = Box.LEFT_OF_SCREEN
         surface.blit(compass_rose, compass_rose_rect)
+
+        map_scale = DataFiles.sprites["sortie_selection"]["map_scale"]
+        map_scale_rect = map_scale.get_rect()
+        map_scale_rect.bottom = Box.BOTTOM_OF_SCREEN
+        map_scale_rect.left = compass_rose_rect.right + Box.PADDING
+        surface.blit(map_scale, map_scale_rect)
+
+        for dist, x in zip([0, 50, 100, 200], [
+            map_scale_rect.left,
+            map_scale_rect.left + map_scale_rect.width * 0.25,
+            map_scale_rect.left + map_scale_rect.width * 0.5,
+            map_scale_rect.left + map_scale_rect.width
+        ]):
+            font_registry["big_pixel"].render(
+                surface,
+                str(dist),
+                pygame.Vector2(x, map_scale_rect.top - 10),
+                Color.WHITE,
+                1,
+                style="center",
+                outline_color=Color.BLACK
+            )
+        font_registry["big_pixel"].render(
+            surface,
+            "kilometers",
+            pygame.Vector2(map_scale_rect.right + Box.PADDING, map_scale_rect.centery),
+            Color.WHITE,
+            1,
+            style="centerleft",
+            outline_color=Color.BLACK
+        )
 
         self.exit_sortie_selection_menu_button.draw(surface, font_registry)

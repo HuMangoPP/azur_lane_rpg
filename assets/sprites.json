@@ -61,7 +61,6 @@
 		"uncleared": { "left": 32, "top": 64, "width": 32, "height": 32 },
 		"boss": { "left": 64, "top": 64, "width": 32, "height": 32 },
 		"locked": { "left": 128, "top": 96, "width": 32, "height": 32 },
-		"compass_rose": { "left": 192, "top": 0, "width": 128, "height": 128 },
 
 		"shell_attack": { "left": 96, "top": 64, "width": 32, "height": 32 },
 		"torp_attack": { "left": 96, "top": 64, "width": 32, "height": 32 },
@@ -259,7 +258,9 @@
 		"shipwreck": { "left": 64, "top": 192, "width": 64, "height": 64 },
 		"name_left": { "left": 256, "top": 0, "width": 64, "height": 64 },
 		"name_middle": { "left": 320, "top": 0, "width": 64, "height": 64 },
-		"name_right": { "left": 384, "top": 0, "width": 64, "height": 64 }
+		"name_right": { "left": 384, "top": 0, "width": 64, "height": 64 },
+		"compass_rose": { "left": 0, "top": 0, "width": 128, "height": 128 },
+		"map_scale": { "left": 128, "top": 0, "width": 128, "height": 8 }
 	},
 	"equipment_menu": {
 		"blueprint": { "left": 0, "top": 0, "width": 448, "height": 288 },
