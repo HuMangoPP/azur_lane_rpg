@@ -2,7 +2,7 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, pixel_to_hex, hex_to_pixel, get_cluster_edges, adjacent_hexes
+from engine.util import get_rect, get_vec, pixel_to_hex, hex_to_pixel, get_cluster_edges, adjacent_hexes
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -419,11 +419,10 @@ class SortieSelectionMenu:
             for chapter in range(4)
         ]
 
-        # TODO WIP: update styling for these, maybe make them parametrized paths so they look better
-        self.path_points = {
-            1: [(116.0, -86.0), (105.0, -98.0), (91.0, -107.0), (74.0, -116.0), (60.0, -121.0), (46.0, -126.0), (32.0, -137.0), (20.0, -151.0), (15.0, -168.0), (14.0, -188.0), (15.0, -208.0), (22.0, -227.0), (33.0, -242.0), (45.0, -252.0), (65.0, -258.0), (88.0, -263.0), (106.0, -257.0), (126.0, -247.0), (136.0, -228.0), (144.0, -214.0), (148.0, -198.0), (158.0, -183.0), (169.0, -174.0)],
-            2: [(576.0, -147.0), (582.0, -127.0), (584.0, -111.0), (588.0, -95.0), (605.0, -80.0), (623.0, -72.0), (642.0, -67.0), (668.0, -65.0), (692.0, -69.0), (710.0, -78.0), (721.0, -91.0), (730.0, -109.0), (730.0, -130.0), (720.0, -150.0), (709.0, -168.0), (695.0, -180.0), (683.0, -195.0), (674.0, -216.0)]
-        }
+        self.paths = {}
+        self.generate_paths()
+        self.test_checkpoints = []
+        self.path = []
 
         # TODO WIP: create sprites for these and actually decorate these areas with the appropriate props
         self.sea_location_labels = [
@@ -433,6 +432,63 @@ class SortieSelectionMenu:
             NameRibbon((1588, -169), "stormy"),
             NameRibbon((1658, -587), "stormy"),
         ]
+
+    def generate_paths(self):
+        # if len(self.test_checkpoints) < 2:
+        #     print("need at least two checkpoints")
+        #     return
+        
+        checkpoint_groups = {
+            1: [(127.0, -93.0), (117.0, -125.0), (81.0, -135.0), (99.0, -113.0), (122.0, -173.0), (148.0, -202.0), (172.0, -181.0)],
+            2: [(579.0, -145.0), (594.0, -116.0), (600.0, -77.0), (576.0, -54.0), (567.0, -85.0), (653.0, -73.0), (710.0, -65.0), (729.0, -125.0), (715.0, -181.0)]
+        }
+
+        for chapter, checkpoints in checkpoint_groups.items():
+            checkpoints = [pygame.Vector2(checkpoint) for checkpoint in checkpoints]
+            step = 1
+            record_every = 10
+            record_every_counter = record_every
+            relpos = checkpoints[1] - checkpoints[0]
+            angle = math.atan2(relpos.y, relpos.x)
+            pos = checkpoints[0]
+            path = [pos]
+            for checkpoint in checkpoints[1:]:
+                to_target = checkpoint - pos
+
+                if math.atan2(to_target.y, to_target.x) == angle:
+                    turn_amount = 0
+                else:
+                    normal = get_vec(1, angle + math.radians(90))
+                    dot_product = normal * to_target
+                    radius = to_target.length_squared() / (2 * abs(dot_product))
+                    turn_amount = step / radius
+
+                while to_target.length() > 5:
+                    pos = pos + get_vec(step, angle)
+                    if record_every_counter == 0:
+                        path.append(pos)
+                        record_every_counter = record_every
+                    else:
+                        record_every_counter -= 1
+                    left_side = get_vec(1, angle - math.radians(90))
+                    to_target = checkpoint - pos
+                    dot_product = left_side * to_target
+                    if dot_product > 0:
+                        new_angle = angle - turn_amount
+                    else:
+                        new_angle = angle + turn_amount
+                    angle = new_angle
+                    new_left_side = get_vec(1, angle - math.radians(90))
+                    new_dot_product = new_left_side * to_target
+                    if (
+                        (dot_product > 0 and new_dot_product <= 0)
+                        or (dot_product <= 0 and new_dot_product > 0)
+                    ):
+                        angle = math.atan2(to_target.y, to_target.x)
+            if record_every_counter < 10:
+                pos = pos + get_vec(record_every_counter, angle)
+                path.append(pos)
+            self.paths[chapter] = path
 
     def get_chapters(self):
         return sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
@@ -500,7 +556,20 @@ class SortieSelectionMenu:
 
     def update(self, dt, events):
         for event in events:
+            # if event.type == pygame.KEYDOWN:
+            #     if event.key == pygame.K_DELETE:
+            #         self.test_checkpoints = self.test_checkpoints[:-1]
+            #     if event.key == pygame.K_r:
+            #         print([tuple(point) for point in self.test_checkpoints])
+            #         self.test_checkpoints = []
+            #         self.path = []
+            #     if event.key == pygame.K_g:
+            #         self.generate_paths()
+            #     if event.key == pygame.K_c:
+            #         self.path = []
             if event.type == pygame.MOUSEBUTTONDOWN:
+                # self.test_checkpoints.append(pygame.Vector2(event.pos) - anchor())
+                
                 if self.exit_sortie_selection_menu_button.rect.collidepoint(event.pos):
                     continue
                 if self.start_sortie_button.rect.collidepoint(event.pos):
@@ -589,9 +658,16 @@ class SortieSelectionMenu:
         self.background.draw(surface)
 
         for chapter in range(DataFiles.save_file["chapter_progress"]+1):
-            path_points = self.path_points.get(chapter, [])
-            for point in path_points:
-                pygame.draw.circle(surface, Color.WHITE, point + anchor(), 4)
+            path = self.paths.get(chapter, [])
+            for point in path:
+                pygame.draw.circle(surface, Color.WHITE, point + anchor(), 3)
+
+        # if self.path:
+        #     for point in self.path:
+        #         pygame.draw.circle(surface, Color.WHITE, point + anchor(), 3)
+        # else:
+        #     for point in self.test_checkpoints:
+        #         pygame.draw.circle(surface, Color.WHITE, point + anchor(), 5)
 
         for sortie_prop in self.sortie_props:
             sortie_prop.draw(surface)

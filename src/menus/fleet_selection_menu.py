@@ -24,7 +24,7 @@ class FleetNameRibbon(NameRibbon):
 
 
 class FleetSelectionMenu:
-    Y_ALIGN = screen_y(0.33)
+    Y_ALIGN = screen_y(0.3)
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -144,7 +144,7 @@ class FleetSelectionMenu:
             encounter_counter -= 1
 
             if encounter_counter > 1:
-                straight_distance = random.uniform(120, 150)
+                straight_distance = random.uniform(80, 150)
             else:
                 straight_distance = random.uniform(20, 40)
         circle_center = land_pos + get_vec(radius, launch_angle)
@@ -192,12 +192,11 @@ class FleetSelectionMenu:
                     or (dot_product <= 0 and new_dot_product > 0)
                 ):
                     angle = math.atan2(to_target.y, to_target.x)
-        if record_every_counter < 10:
+        if record_every_counter < record_every:
             pos = pos + get_vec(record_every_counter, angle)
             self.path.append(pos)
         if len(self.path_hexes) < num_encounters:
             self.path_hexes.append(pos)
-        print(self.path_hexes)
 
     def draw_tray_overlay(self, surface, font_registry):
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.tray_overlay)
