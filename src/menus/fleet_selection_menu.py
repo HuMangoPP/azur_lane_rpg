@@ -7,12 +7,12 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.quests_data import first_sortie_quest
-from src.menus.sortie_selection_menu import ChapterNameRibbon, Background
+from src.menus.sortie_selection_menu import NameRibbon, Background
 
 from live2d.live2d import Live2D
 
 
-class FleetNameRibbon(ChapterNameRibbon):
+class FleetNameRibbon(NameRibbon):
     def __init__(self, text, position):
         self.text = text
         self.position = pygame.Vector2(position)
@@ -120,16 +120,84 @@ class FleetSelectionMenu:
             (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
         )
 
-        self.path = None
+        self.path = []
+        self.path_hexes = []
 
         self.background = Background()
 
     def generate_path(self, sortie_index):
         num_encounters = len(DataFiles.sortie_data[sortie_index]["encounters"])
-        scale = math.radians(random.randint(180, 359))
-        offset = math.radians(random.randint(0, 359))
+        encounter_counter = num_encounters
+        radius = 48
+        sign = random.choice([1, -1])
+        straight_distance = random.uniform(10, 30)
+        launch_angle = sign * math.radians(90)
+        land_pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
+        checkpoints = [land_pos]
+        while encounter_counter > 0:
+            circle_center = land_pos + get_vec(radius, launch_angle)
+            launch_angle = sign * math.radians(random.uniform(5, 15))
+            launch_pos = circle_center + get_vec(radius, launch_angle)
+            land_pos = launch_pos + get_vec(straight_distance, launch_angle + sign * math.radians(90))
+            checkpoints.extend([launch_pos, land_pos])
+            sign *= -1
+            encounter_counter -= 1
 
-        self.path = (num_encounters, scale, offset)
+            if encounter_counter > 1:
+                straight_distance = random.uniform(120, 150)
+            else:
+                straight_distance = random.uniform(20, 40)
+        circle_center = land_pos + get_vec(radius, launch_angle)
+        end_pos = circle_center + get_vec(radius, -sign * math.radians(90))
+        checkpoints.append(end_pos)
+
+        step = 1
+        record_every = 20
+        record_every_counter = record_every
+        turn_amount = step / radius
+        angle = 0.0
+        pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
+        draw_hex = False
+        self.path = [pos]
+        self.path_hexes = []
+        for checkpoint in checkpoints:
+            to_target = checkpoint - pos
+            while to_target.length() > 5:
+                pos = pos + get_vec(step, angle)
+                if record_every_counter == 0:
+                    if draw_hex:
+                        self.path_hexes.append(pos)
+                        draw_hex = False
+                    self.path.append(pos)
+                    record_every_counter = record_every
+                else:
+                    record_every_counter -= 1
+                left_side = get_vec(1, angle - math.radians(90))
+                to_target = checkpoint - pos
+                dot_product = left_side * to_target
+                if dot_product > 0:
+                    new_angle = angle - turn_amount
+                else:
+                    new_angle = angle + turn_amount
+                if (
+                    (angle < 0 and new_angle >= 0)
+                    or (angle > 0 and new_angle < 0)
+                ):
+                    draw_hex = True
+                angle = new_angle
+                new_left_side = get_vec(1, angle - math.radians(90))
+                new_dot_product = new_left_side * to_target
+                if (
+                    (dot_product > 0 and new_dot_product <= 0)
+                    or (dot_product <= 0 and new_dot_product > 0)
+                ):
+                    angle = math.atan2(to_target.y, to_target.x)
+        if record_every_counter < 10:
+            pos = pos + get_vec(record_every_counter, angle)
+            self.path.append(pos)
+        if len(self.path_hexes) < num_encounters:
+            self.path_hexes.append(pos)
+        print(self.path_hexes)
 
     def draw_tray_overlay(self, surface, font_registry):
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.tray_overlay)
@@ -235,36 +303,21 @@ class FleetSelectionMenu:
     def draw(self, surface, font_registry):
         self.background.draw(surface)
 
-        if self.path is not None:
-            num_encounters, scale, offset = self.path
-            startx = screen_x(0.5)
-            endx = screen_x(0.8)
-            # TODO WIP: refine path styling
-            num_dots = 30
-            for i in range(num_dots):
-                t = i / (num_dots-1) * 2 - 0.5
-                s = math.sin(scale*t + offset)
-                pygame.draw.circle(
-                    surface, Color.WHITE,
-                    ((endx-startx)*t + startx, screen_y(0.2)*s + self.Y_ALIGN),
-                    4,
-                )
+        for point in self.path:
+            pygame.draw.circle(surface, Color.WHITE, point, 4)
 
-            for i in range(num_encounters):
-                t = i / (num_encounters-1)
-                s = math.sin(scale*t + offset)
-                icon = DataFiles.sprites["user_interface"]["uncleared"]
-                icon_rect = icon.get_rect()
-                icon_rect.centerx = (endx-startx)*t + startx
-                icon_rect.centery = screen_y(0.2)*s + self.Y_ALIGN
-                glow = DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
-                glow_rect = glow.get_rect()
-                glow_rect.midbottom = icon_rect.center
-                surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
-                polygon = [pygame.Vector2(icon_rect.center) + get_vec(Box.WIDTH/2, math.radians(30 + i * 60)) for i in range(6)]
-                pygame.draw.polygon(surface, Color.LOCKED_ZONE_FILL_HOVER, polygon)
-                pygame.draw.polygon(surface, Color.WHITE, polygon, width=Box.OUTLINE_WIDTH)
-                surface.blit(icon, icon_rect)
+        for point in self.path_hexes:
+            icon = DataFiles.sprites["user_interface"]["uncleared"]
+            icon_rect = icon.get_rect()
+            icon_rect.center = point
+            glow = DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
+            glow_rect = glow.get_rect()
+            glow_rect.midbottom = icon_rect.center
+            surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
+            polygon = [pygame.Vector2(icon_rect.center) + get_vec(Box.WIDTH/2, math.radians(30 + i * 60)) for i in range(6)]
+            pygame.draw.polygon(surface, Color.LOCKED_ZONE_FILL_HOVER, polygon)
+            pygame.draw.polygon(surface, Color.WHITE, polygon, width=Box.OUTLINE_WIDTH)
+            surface.blit(icon, icon_rect)
         
         # TODO WIP: make marker sprites
         for slot, shipgirl in zip(
