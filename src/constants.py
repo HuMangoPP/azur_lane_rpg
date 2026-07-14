@@ -5,7 +5,7 @@ import pygame
 
 from engine.util import get_vec
 
-TEMP_SCREEN_SIZE = pygame.Vector2(960, 540) # TODO
+TEMP_SCREEN_SIZE = pygame.Vector2(960, 540)
 FPS = 60
 
 def screen_x(t):

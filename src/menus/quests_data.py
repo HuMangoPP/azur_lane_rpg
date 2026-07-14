@@ -286,7 +286,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
         else:
             center_fleet_slot = menu_manager.fleet_selection_menu.fleet_slots[1]
             rect = get_rect(
-                width=3*96 + 2*Box.PADDING, # TODO
+                width=3*96 + 2*Box.PADDING, # TODO magic number
                 height=96 + 2*Box.PADDING,
                 center=center_fleet_slot.center
             )

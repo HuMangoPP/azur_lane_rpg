@@ -355,7 +355,8 @@ class ShipgirlBattleComponent:
         if not self.is_player:
             return
 
-        center = pygame.Vector2(rect.centerx, rect.top-50) # TODO
+        # TODO clean up magic numbers
+        center = pygame.Vector2(rect.centerx, rect.top-50)
         inner_radius = 16
         outer_radius = 32
         start_angle = -90
@@ -373,7 +374,7 @@ class ShipgirlBattleComponent:
         surface.blit(attack_icon, attack_icon_rect)
 
 class Shipgirl:
-    SPRITE_SIZE = 96 # TODO
+    SPRITE_SIZE = 96 # TODO get this from the actual sprite?
 
     def __init__(self, name, is_player):
         if is_player:
@@ -413,15 +414,15 @@ class Shipgirl:
             self.sprite.set_animation(Live2D.IDLE_ANIMATION)
         else:
             to_target = self.wander_target - self.pos
-            if to_target.length() < 10: # TODO
+            if to_target.length() < 10: # TODO clean up
                 self.wander_target = pygame.Vector2(
                     random.uniform(Decorations.floor_rect.left, Decorations.floor_rect.right),
                     random.uniform(Decorations.floor_rect.top, Decorations.floor_rect.bottom)
                 )
-                self.pause_time = random.uniform(1, 3) # TODO
+                self.pause_time = random.uniform(1, 3) # TODO clean up magic numbers
             else:
                 direction = to_target.normalize()
-                self.pos += direction * 50 * dt # TODO
+                self.pos += direction * 50 * dt # TODO clean up magic numbers
                 if direction.x >= 0:
                     self.facing_left = False
                 else:
@@ -542,7 +543,7 @@ class PlayerFleet:
         ]
 
 class SirenFleet:
-    SLOT_SIZE = 96 # TODO
+    SLOT_SIZE = Shipgirl.SPRITE_SIZE
 
     def __init__(self):
         self._front = []
@@ -577,15 +578,16 @@ class SirenFleet:
         for siren in self.fleet:
             siren.battle_component.active = True
         
+        slot_size = siren.SPRITE_SIZE
         front_offset = (len(self._front)-1)/2
         for i, siren in enumerate(self._front):
-            siren.rect.centerx = screen_x(0.75) - self.SLOT_SIZE + (i-front_offset)*self.SLOT_SIZE/2
-            siren.rect.centery = screen_y(0.5) + (i-front_offset)*self.SLOT_SIZE
+            siren.rect.centerx = screen_x(0.75) - slot_size + (i-front_offset)*slot_size/2
+            siren.rect.centery = screen_y(0.5) + (i-front_offset)*slot_size
         
         back_offset = (len(self._back)-1)/2
         for i, siren in enumerate(self._back): 
-            siren.rect.centerx = screen_x(0.75) + self.SLOT_SIZE + (i-back_offset)*self.SLOT_SIZE/2
-            siren.rect.centery = screen_y(0.5) + (i-back_offset)*self.SLOT_SIZE
+            siren.rect.centerx = screen_x(0.75) + slot_size + (i-back_offset)*slot_size/2
+            siren.rect.centery = screen_y(0.5) + (i-back_offset)*slot_size
     
     def end_encounter(self):
         for siren in self.fleet:

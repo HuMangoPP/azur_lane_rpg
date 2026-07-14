@@ -889,7 +889,7 @@ class PortMenu:
 
         paperclip_sprite = DataFiles.sprites["props"]["paperclip"]
         paperclip_rect = paperclip_sprite.get_rect()
-        paperclip_rect.left = self.dossier_bg.left - 4 # TODO paper clip offset
+        paperclip_rect.left = self.dossier_bg.left - 4 # TODO paper clip offset magic number
         paperclip_rect.top = self.dossier_bg.top
         surface.blit(paperclip_sprite, paperclip_rect)
 
@@ -980,7 +980,7 @@ class PortMenu:
             drop_rates = selected_siren["drops"]
             icons = [(drop, str(drop_rate)) for drop, drop_rate in drop_rates.items()]
             rewards_header = "drops"
-            info = { # TODO scale by level
+            info = { # TODO scale stats by siren level
                 "hull_type": selected_siren.get("hull_type"),
                 "max_hp": selected_siren["max_hp"][0],
                 "evasion": selected_siren["evasion"][0],
@@ -1035,7 +1035,7 @@ class PortMenu:
                 "shell_type": selected_equipment.get("shell_type"),
             }
 
-        icon_size = 32 # TODO
+        icon_size = Box.WIDTH / 2
         stats_divider_y = blueprint_highlight_icon.bottom + Box.PADDING + font_height/2
         rewards_divider_y = blueprint_icons[0].top - Box.PADDING - font_height/2
         draw_blueprint_divider("stats", stats_divider_y)
@@ -1070,7 +1070,7 @@ class PortMenu:
 
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
-        pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
+        pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment magic number
         pencil_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
 
         ruler_sprite = DataFiles.sprites["props"]["ruler"]
@@ -1081,7 +1081,7 @@ class PortMenu:
 
         compass_sprite = DataFiles.sprites["props"]["compass"]
         compass_rect = compass_sprite.get_rect()
-        compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment
+        compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment magic number
         compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
         surface.blit(compass_sprite, compass_rect)
         self.draw_sticky_note_overlay(surface, font_registry)
@@ -1146,13 +1146,13 @@ class PortMenu:
         warehouse_decoration_top = self.warehouse_overlay.top - Box.WIDTH/8
         corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
         corner_rope_rect = corner_rope_sprite.get_rect()
-        corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH/8 # TODO
+        corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH/8 # TODO magic number
         corner_rope_rect.top = warehouse_decoration_top
         surface.blit(corner_rope_sprite, corner_rope_rect)
 
         big_corner_rope_sprite = DataFiles.sprites["props"]["big_corner_rope"]
         big_corner_rope_rect = big_corner_rope_sprite.get_rect()
-        big_corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH/8 # TODO
+        big_corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH/8 # TODO magic number
         big_corner_rope_rect.top = warehouse_decoration_top
         surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
 
@@ -1230,7 +1230,7 @@ class PortMenu:
             coin_rect.top = self.clipboard_page.top + Box.PADDING
 
             for _ in range(coin_count):
-                coin_rect.y -= 6 # TODO decoration coin height
+                coin_rect.y -= 6 # TODO decoration coin height magic number
                 surface.blit(coin_sprite, coin_rect)
         pygame.draw.lines(
             surface,
@@ -1242,8 +1242,8 @@ class PortMenu:
                 clipboard_clip_rect.bottomright,
                 clipboard_clip_rect.topright
             ],
-            width=4
-        ) # TODO width
+            width=4 # TODO magic number
+        )
         font_registry["big_pixel"].render(surface, self.overlay_selected_entity, clipboard_name_pos, Color.BLACK, 1, style="center")
         surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), clipboard_highlight_icon)
         pygame.draw.rect(surface, Color.BLACK, clipboard_highlight_icon, width=Box.OUTLINE_WIDTH)
@@ -1254,7 +1254,7 @@ class PortMenu:
             desc = DataFiles.decoration_store[self.overlay_selected_entity]["description"]
         
         desc_topleft = pygame.Vector2(
-            self.clipboard_page.left + Box.PADDING + Box.WIDTH/4, # TODO fix alignment
+            self.clipboard_page.left + Box.PADDING + Box.WIDTH/4, # TODO fix alignment magic number
             clipboard_highlight_icon.bottom + Box.PADDING + Box.HEIGHT/4
         )
         desc_text_boxwidth = self.clipboard_page.width - 2*Box.PADDING - Box.WIDTH/2
@@ -1353,7 +1353,7 @@ class PortMenu:
 
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
-        pencil_rect.right = self.clipboard_page.right + Box.WIDTH/4 # TODO alignment
+        pencil_rect.right = self.clipboard_page.right + Box.WIDTH/4 # TODO alignment magic number
         pencil_rect.bottom = self.clipboard_page.bottom + Box.HEIGHT/2
         surface.blit(pencil_sprite, pencil_rect)
 
@@ -1366,7 +1366,7 @@ class PortMenu:
             random.uniform(Decorations.floor_rect.left, Decorations.floor_rect.right),
             random.uniform(Decorations.floor_rect.top, Decorations.floor_rect.bottom)
         )
-        shipgirl.pause_time = random.uniform(1, 3) # TODO
+        shipgirl.pause_time = random.uniform(1, 3) # TODO magic number
 
     def decoration_has_interacting_shipgirl(self, tilepos_anchor):
         tilepos_anchor = tuple(tilepos_anchor)
@@ -1738,7 +1738,7 @@ class PortMenu:
             True, False
         )
         big_corner_rope_rect = big_corner_rope_sprite.get_rect()
-        big_corner_rope_rect.left = self.decoration_depot_overlay.left - Box.WIDTH/8 # TODO
+        big_corner_rope_rect.left = self.decoration_depot_overlay.left - Box.WIDTH/8 # TODO magic number
         big_corner_rope_rect.top = depot_decoration_top
         surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
 

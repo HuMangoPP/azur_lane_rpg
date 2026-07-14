@@ -186,12 +186,12 @@ class EquipmentMenu:
             self.shipgirl_pause_time -= dt
             self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
         elif abs(self.target_shipgirl_x - self.selected_shipgirl.rect.centerx) < 10:
-            self.shipgirl_pause_time = random.uniform(1, 3)
+            self.shipgirl_pause_time = random.uniform(1, 3) # TODO clean up magic number
             self.target_shipgirl_x = random.uniform(Box.LEFT_OF_SCREEN, Box.RIGHT_OF_SCREEN)
         else:
             relx = self.target_shipgirl_x - self.selected_shipgirl.rect.centerx
             direction = relx / abs(relx)
-            self.shipgirl_x += direction * 50 * dt # TODO
+            self.shipgirl_x += direction * 50 * dt # TODO clean up magic number
             self.selected_shipgirl.facing_left = direction < 0
             self.selected_shipgirl.sprite.set_animation(Live2D.WALK_ANIMATION)
         self.selected_shipgirl.rect.centerx = self.shipgirl_x
@@ -231,7 +231,7 @@ class EquipmentMenu:
                     self.hovered_equipment = None
 
     def draw(self, surface, font_registry):
-        # TODO
+        # TODO clean up magic numbers
         floor_color = (71, 71, 71)
         wall_color = 105, 105, 105
         surface.fill(wall_color)
@@ -486,7 +486,7 @@ class EquipmentMenu:
         )
         paperclip_rect = paperclip_sprite.get_rect()
         paperclip_rect.right = self.dossier_page.right
-        paperclip_rect.top = self.dossier_bg.top - 4 # TODO paper clip offset
+        paperclip_rect.top = self.dossier_bg.top - 4 # TODO paper clip offset magic number
         surface.blit(paperclip_sprite, paperclip_rect)
         
         misaligned_blueprint_pages = [
@@ -527,7 +527,7 @@ class EquipmentMenu:
 
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
-        pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment
+        pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment magic number
         pencil_rect.bottom = self.blueprint_page.bottom
 
         ruler_sprite = DataFiles.sprites["props"]["ruler"]
@@ -538,7 +538,7 @@ class EquipmentMenu:
 
         compass_sprite = DataFiles.sprites["props"]["compass"]
         compass_rect = compass_sprite.get_rect()
-        compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment
+        compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment magic number
         compass_rect.bottom = self.blueprint_page.bottom
         surface.blit(compass_sprite, compass_rect)
         

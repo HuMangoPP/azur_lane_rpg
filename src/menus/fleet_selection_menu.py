@@ -29,7 +29,7 @@ class FleetSelectionMenu:
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
-        # TODO WIP: update tray styling
+        # TODO update tray styling
         num_rows = 2
         num_rects_in_row = 6
         self.tray_overlay = get_rect(
@@ -318,7 +318,7 @@ class FleetSelectionMenu:
             pygame.draw.polygon(surface, Color.WHITE, polygon, width=Box.OUTLINE_WIDTH)
             surface.blit(icon, icon_rect)
         
-        # TODO WIP: make marker sprites
+        # TODO make marker sprites
         for slot, shipgirl in zip(
             self.fleet_slots + self.backup_fleet_slots,
             self.menu_manager.player_fleet.shipgirls + self.menu_manager.player_fleet.backups

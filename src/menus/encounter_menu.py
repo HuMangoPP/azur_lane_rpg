@@ -379,7 +379,8 @@ class EncounterMenu:
         self.retreat_button.active = True
 
         encounter_data = sortie_data["encounters"][self.current_encounter]
-        self.menu_manager.siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in encounter_data["front"]] # TODO
+        # TODO update the naming convention
+        self.menu_manager.siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in encounter_data["front"]]
         self.menu_manager.siren_fleet._back = [Shipgirl(siren_name, False) for siren_name in encounter_data["back"]]
         for siren in self.menu_manager.siren_fleet.fleet:
             siren.facing_left = True
@@ -643,7 +644,8 @@ class EncounterMenu:
                     continue
                 if siren.rect.collidepoint(mpos):
                     if self.selected_shipgirl.battle_component.hull_type in self.MELEE_SHIPS:
-                        if siren in self.menu_manager.siren_fleet.front: # TODO
+                        # TODO clean up magic numbers
+                        if siren in self.menu_manager.siren_fleet.front:
                             color = (50,200,50)
                         else:
                             color = (200,50,50)

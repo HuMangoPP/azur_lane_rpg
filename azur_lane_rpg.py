@@ -69,7 +69,8 @@ while running:
     for quest in menu_manager.quest_manager.started_quests.values():
         quest.completed = quest.completed or quest.completion_criteria(menu_manager)
 
-    display.fill((50,20,20)) # TODO
+    # TODO clean up magic numbers
+    display.fill((50,20,20))
     menu_manager.current_menu.draw(display, font_registry)
     for quest in menu_manager.quest_manager.started_quests.values():
         if quest.started and not quest.completed:
@@ -88,9 +89,6 @@ while running:
 
 DataFiles.bgm["lofi_loop"].stop()
 pygame.quit()
-
-with open("data/sortie_selection_details.json", "w") as f:
-    json.dump(DataFiles.sortie_selection_details, f, indent=4)
 
 for shipgirl in menu_manager.available_shipgirls:
     DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp

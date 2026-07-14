@@ -421,42 +421,6 @@ class SortieSelectionMenu:
         self.paths = {}
         self.generate_paths()
 
-        # self.prop_hex = [0, 0]
-        # self.prop_index = 0
-        # self.prop_keys = [
-        #     "port_ne",
-        #     "port_se",
-        #     "port_sw",
-        #     "port_nw",
-        #     "lighthouse",
-        #     "island1",
-        #     "island2",
-        #     "island3",
-        #     "island4",
-        #     "island5",
-        #     "isle1",
-        #     "isle2",
-        #     "isle3",
-        #     "isle4",
-        #     "isle5",
-        #     "archipelago",
-        #     "atoll",
-        #     "mountain1",
-        #     "mountain2",
-        #     "volcano",
-        #     "storm1",
-        #     "storm2",
-        #     "hurricane",
-        #     "whirlpool",
-        #     "tides",
-        #     "glacier1",
-        #     "glacier2",
-        #     "glacier3",
-        #     "glacier4",
-        #     "glacier5",
-        # ]
-
-        # TODO WIP: create sprites for these and actually decorate these areas with the appropriate props
         self.sea_location_labels = [
             NameRibbon((-42, -431), "stormy"),
             NameRibbon((747, 69), "glaciers"),
@@ -530,30 +494,6 @@ class SortieSelectionMenu:
 
     def update(self, dt, events):
         for event in events:
-            # if event.type == pygame.KEYDOWN:
-            #     if event.key == pygame.K_SPACE:
-            #         if self.prop_hex in [prop_info["hex"] for prop_info in DataFiles.sortie_selection_details["props"]]:
-            #             DataFiles.sortie_selection_details["props"] = [
-            #                 prop_info
-            #                 for prop_info in DataFiles.sortie_selection_details["props"]
-            #                 if prop_info["hex"] != self.prop_hex
-            #             ]
-            #         else:
-            #             DataFiles.sortie_selection_details["props"].append(
-            #                 {"prop": self.prop_keys[self.prop_index], "hex": self.prop_hex.copy()}
-            #             )
-            #     if event.key == pygame.K_d:
-            #         self.prop_index = (self.prop_index - 1) % len(self.prop_keys)
-            #     if event.key == pygame.K_f:
-            #         self.prop_index = (self.prop_index + 1) % len(self.prop_keys)
-            #     if event.key == pygame.K_UP:
-            #         self.prop_hex[1] -= 1
-            #     if event.key == pygame.K_DOWN:
-            #         self.prop_hex[1] += 1
-            #     if event.key == pygame.K_LEFT:
-            #         self.prop_hex[0] -= 1
-            #     if event.key == pygame.K_RIGHT:
-            #         self.prop_hex[0] += 1
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.exit_sortie_selection_menu_button.rect.collidepoint(event.pos):
                     continue
@@ -574,7 +514,7 @@ class SortieSelectionMenu:
                     if self.mousedown:
                         movement = pygame.Vector2(event.rel)
                         SortieNode.center -= movement
-                        SortieNode.center = pygame.Vector2( # TODO
+                        SortieNode.center = pygame.Vector2( # TODO create better bounds / magic number
                             min(max(screen_x(0.5), SortieNode.center.x), 1822),
                             max(min(screen_y(0.5), SortieNode.center.y), -305)
                         )
@@ -655,14 +595,6 @@ class SortieSelectionMenu:
                 + anchor()
             )
             surface.blit(prop, prop_rect)
-
-        # prop = DataFiles.sprites["sortie_selection"][self.prop_keys[self.prop_index]]
-        # prop_rect = prop.get_rect()
-        # prop_rect.center = (
-        #     pygame.Vector2(hex_to_pixel(*self.prop_hex, SortieNode.SIZE))
-        #     + anchor()
-        # )
-        # surface.blit(prop, prop_rect)
 
         for sortie_node in self.sortie_nodes:
             sortie_node.draw_shadow(surface)
