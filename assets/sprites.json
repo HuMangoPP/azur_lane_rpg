@@ -249,16 +249,47 @@
 	},
 	"sortie_selection": {
 		"wave": { "left": 256, "top": 64, "width": 256, "height": 64 },
-		"island0": { "left": 0, "top": 128, "width": 64, "height": 64 },
-		"island1": { "left": 64, "top": 128, "width": 64, "height": 64 },
-		"island2": { "left": 128, "top": 128, "width": 64, "height": 64 },
-		"island3": { "left": 192, "top": 128, "width": 64, "height": 64 },
-		"island4": { "left": 256, "top": 128, "width": 64, "height": 64 },
-		"lighthouse": { "left": 0, "top": 192, "width": 64, "height": 64 },
-		"shipwreck": { "left": 64, "top": 192, "width": 64, "height": 64 },
+
+		"port_ne": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"port_se": { "left": 64, "top": 128, "width": 64, "height": 64 },
+		"port_sw": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"port_nw": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"lighthouse": { "left": 256, "top": 128, "width": 64, "height": 64 },
+
+		"island1": { "left": 0, "top": 192, "width": 64, "height": 64 },
+		"island2": { "left": 64, "top": 192, "width": 64, "height": 64 },
+		"island3": { "left": 128, "top": 192, "width": 64, "height": 64 },
+		"island4": { "left": 192, "top": 192, "width": 64, "height": 64 },
+		"island5": { "left": 256, "top": 192, "width": 64, "height": 64 },
+
+		"isle1": { "left": 0, "top": 256, "width": 64, "height": 64 },
+		"isle2": { "left": 64, "top": 256, "width": 64, "height": 64 },
+		"isle3": { "left": 128, "top": 256, "width": 64, "height": 64 },
+		"isle4": { "left": 192, "top": 256, "width": 64, "height": 64 },
+		"isle5": { "left": 256, "top": 256, "width": 64, "height": 64 },
+
+		"archipelago": { "left": 0, "top": 320, "width": 64, "height": 64 },
+		"atoll": { "left": 64, "top": 320, "width": 64, "height": 64 },
+		"mountain1": { "left": 128, "top": 320, "width": 64, "height": 64 },
+		"mountain2": { "left": 192, "top": 320, "width": 64, "height": 64 },
+		"volcano": { "left": 256, "top": 320, "width": 64, "height": 64 },
+
+		"storm1": { "left": 0, "top": 384, "width": 64, "height": 64 },
+		"storm2": { "left": 64, "top": 384, "width": 64, "height": 64 },
+		"hurricane": { "left": 128, "top": 384, "width": 64, "height": 64 },
+		"whirlpool": { "left": 192, "top": 384, "width": 64, "height": 64 },
+		"tides": { "left": 256, "top": 384, "width": 64, "height": 64 },
+
+		"glacier1": { "left": 0, "top": 448, "width": 64, "height": 64 },
+		"glacier2": { "left": 64, "top": 448, "width": 64, "height": 64 },
+		"glacier3": { "left": 128, "top": 448, "width": 64, "height": 64 },
+		"glacier4": { "left": 192, "top": 448, "width": 64, "height": 64 },
+		"glacier5": { "left": 256, "top": 448, "width": 64, "height": 64 },
+
 		"name_left": { "left": 256, "top": 0, "width": 64, "height": 64 },
 		"name_middle": { "left": 320, "top": 0, "width": 64, "height": 64 },
 		"name_right": { "left": 384, "top": 0, "width": 64, "height": 64 },
+
 		"compass_rose": { "left": 0, "top": 0, "width": 128, "height": 128 },
 		"map_scale": { "left": 128, "top": 0, "width": 128, "height": 8 }
 	},

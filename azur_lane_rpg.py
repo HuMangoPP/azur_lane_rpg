@@ -89,6 +89,9 @@ while running:
 DataFiles.bgm["lofi_loop"].stop()
 pygame.quit()
 
+with open("data/sortie_selection_details.json", "w") as f:
+    json.dump(DataFiles.sortie_selection_details, f, indent=4)
+
 for shipgirl in menu_manager.available_shipgirls:
     DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
 

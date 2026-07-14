@@ -159,6 +159,9 @@ class DataFiles:
     
     with open("data/item_descriptions.json") as f:
         item_descriptions = json.load(f)
+    
+    with open("data/sortie_selection_details.json") as f:
+        sortie_selection_details = json.load(f)
 
     sprites = load_sprites()
     sfx = load_sound(master_file="sfx.json", file_ext="wav")

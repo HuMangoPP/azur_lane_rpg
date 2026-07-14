@@ -409,7 +409,6 @@ class SortieSelectionMenu:
 
         self.background = Background()
         self.chapter_name_ribbons = self.create_chapter_name_ribbons()
-        self.sortie_props = self.create_sortie_props()
 
         self.fogs = [
             Fog(
@@ -421,8 +420,41 @@ class SortieSelectionMenu:
 
         self.paths = {}
         self.generate_paths()
-        self.test_checkpoints = []
-        self.path = []
+
+        # self.prop_hex = [0, 0]
+        # self.prop_index = 0
+        # self.prop_keys = [
+        #     "port_ne",
+        #     "port_se",
+        #     "port_sw",
+        #     "port_nw",
+        #     "lighthouse",
+        #     "island1",
+        #     "island2",
+        #     "island3",
+        #     "island4",
+        #     "island5",
+        #     "isle1",
+        #     "isle2",
+        #     "isle3",
+        #     "isle4",
+        #     "isle5",
+        #     "archipelago",
+        #     "atoll",
+        #     "mountain1",
+        #     "mountain2",
+        #     "volcano",
+        #     "storm1",
+        #     "storm2",
+        #     "hurricane",
+        #     "whirlpool",
+        #     "tides",
+        #     "glacier1",
+        #     "glacier2",
+        #     "glacier3",
+        #     "glacier4",
+        #     "glacier5",
+        # ]
 
         # TODO WIP: create sprites for these and actually decorate these areas with the appropriate props
         self.sea_location_labels = [
@@ -434,16 +466,7 @@ class SortieSelectionMenu:
         ]
 
     def generate_paths(self):
-        # if len(self.test_checkpoints) < 2:
-        #     print("need at least two checkpoints")
-        #     return
-        
-        checkpoint_groups = {
-            1: [(127.0, -93.0), (117.0, -125.0), (81.0, -135.0), (99.0, -113.0), (122.0, -173.0), (148.0, -202.0), (172.0, -181.0)],
-            2: [(579.0, -145.0), (594.0, -116.0), (600.0, -77.0), (576.0, -54.0), (567.0, -85.0), (653.0, -73.0), (710.0, -65.0), (729.0, -125.0), (715.0, -181.0)]
-        }
-
-        for chapter, checkpoints in checkpoint_groups.items():
+        for chapter, checkpoints in DataFiles.sortie_selection_details["checkpoints"].items():
             checkpoints = [pygame.Vector2(checkpoint) for checkpoint in checkpoints]
             step = 1
             record_every = 10
@@ -488,7 +511,7 @@ class SortieSelectionMenu:
             if record_every_counter < 10:
                 pos = pos + get_vec(record_every_counter, angle)
                 path.append(pos)
-            self.paths[chapter] = path
+            self.paths[int(chapter)] = path
 
     def get_chapters(self):
         return sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
@@ -505,71 +528,33 @@ class SortieSelectionMenu:
             ribbons.append(ChapterNameRibbon(chapter, chapter_nodes))
         return ribbons
 
-    def get_prop_count(self, num_nodes):
-        if num_nodes <= 4:
-            return 1
-        if num_nodes <= 7:
-            return 2
-        return 3
-
-    def create_sortie_props(self):
-        occupied_hexes = set()
-        for chapter in range(3): # TODO num chapters
-            chapter_nodes = [
-                sortie_node for sortie_node in self.sortie_nodes
-                if sortie_node.chapter == chapter
-            ]
-            for sortie_node in chapter_nodes:
-                for q, r in sortie_node.hexes:
-                    occupied_hexes |= adjacent_hexes(q, r, 1)
-
-        sortie_props = []
-        for chapter in range(3): # TODO num chapters
-            chapter_nodes = [
-                sortie_node for sortie_node in self.sortie_nodes
-                if sortie_node.chapter == chapter
-            ]
-
-            if len(chapter_nodes) <= 1:
-                continue
-
-            rng = random.Random(f"sortie-selection-props-chapter-{chapter}")
-            count = self.get_prop_count(len(chapter_nodes))
-            num_islands = 5 # TODO
-            prop_keys = [f"island{index}" for index in range(num_islands)] * count + ["lighthouse", "shipwreck"]
-
-            candidate_hexes = set()
-            for sortie_node in chapter_nodes:
-                for q, r in sortie_node.hexes:
-                    candidate_hexes |= adjacent_hexes(q, r, 3)
-            candidate_hexes -= occupied_hexes
-            candidate_hexes = sorted(candidate_hexes)
-
-            rng.shuffle(prop_keys)
-            rng.shuffle(candidate_hexes)
-            for prop_key, (q, r) in zip(prop_keys, candidate_hexes):
-                position = pygame.Vector2(hex_to_pixel(q, r, SortieNode.SIZE))
-                sortie_props.append(SortieProp(prop_key, position))
-                occupied_hexes.add((q, r))
-
-        return sorted(sortie_props, key=lambda prop: prop.position.y)
-
     def update(self, dt, events):
         for event in events:
             # if event.type == pygame.KEYDOWN:
-            #     if event.key == pygame.K_DELETE:
-            #         self.test_checkpoints = self.test_checkpoints[:-1]
-            #     if event.key == pygame.K_r:
-            #         print([tuple(point) for point in self.test_checkpoints])
-            #         self.test_checkpoints = []
-            #         self.path = []
-            #     if event.key == pygame.K_g:
-            #         self.generate_paths()
-            #     if event.key == pygame.K_c:
-            #         self.path = []
+            #     if event.key == pygame.K_SPACE:
+            #         if self.prop_hex in [prop_info["hex"] for prop_info in DataFiles.sortie_selection_details["props"]]:
+            #             DataFiles.sortie_selection_details["props"] = [
+            #                 prop_info
+            #                 for prop_info in DataFiles.sortie_selection_details["props"]
+            #                 if prop_info["hex"] != self.prop_hex
+            #             ]
+            #         else:
+            #             DataFiles.sortie_selection_details["props"].append(
+            #                 {"prop": self.prop_keys[self.prop_index], "hex": self.prop_hex.copy()}
+            #             )
+            #     if event.key == pygame.K_d:
+            #         self.prop_index = (self.prop_index - 1) % len(self.prop_keys)
+            #     if event.key == pygame.K_f:
+            #         self.prop_index = (self.prop_index + 1) % len(self.prop_keys)
+            #     if event.key == pygame.K_UP:
+            #         self.prop_hex[1] -= 1
+            #     if event.key == pygame.K_DOWN:
+            #         self.prop_hex[1] += 1
+            #     if event.key == pygame.K_LEFT:
+            #         self.prop_hex[0] -= 1
+            #     if event.key == pygame.K_RIGHT:
+            #         self.prop_hex[0] += 1
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # self.test_checkpoints.append(pygame.Vector2(event.pos) - anchor())
-                
                 if self.exit_sortie_selection_menu_button.rect.collidepoint(event.pos):
                     continue
                 if self.start_sortie_button.rect.collidepoint(event.pos):
@@ -662,15 +647,22 @@ class SortieSelectionMenu:
             for point in path:
                 pygame.draw.circle(surface, Color.WHITE, point + anchor(), 3)
 
-        # if self.path:
-        #     for point in self.path:
-        #         pygame.draw.circle(surface, Color.WHITE, point + anchor(), 3)
-        # else:
-        #     for point in self.test_checkpoints:
-        #         pygame.draw.circle(surface, Color.WHITE, point + anchor(), 5)
+        for prop_info in DataFiles.sortie_selection_details["props"]:
+            prop = DataFiles.sprites["sortie_selection"][prop_info["prop"]]
+            prop_rect = prop.get_rect()
+            prop_rect.center = (
+                pygame.Vector2(hex_to_pixel(*prop_info["hex"], SortieNode.SIZE))
+                + anchor()
+            )
+            surface.blit(prop, prop_rect)
 
-        for sortie_prop in self.sortie_props:
-            sortie_prop.draw(surface)
+        # prop = DataFiles.sprites["sortie_selection"][self.prop_keys[self.prop_index]]
+        # prop_rect = prop.get_rect()
+        # prop_rect.center = (
+        #     pygame.Vector2(hex_to_pixel(*self.prop_hex, SortieNode.SIZE))
+        #     + anchor()
+        # )
+        # surface.blit(prop, prop_rect)
 
         for sortie_node in self.sortie_nodes:
             sortie_node.draw_shadow(surface)

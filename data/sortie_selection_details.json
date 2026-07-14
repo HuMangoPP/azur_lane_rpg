@@ -1,0 +1,178 @@
+{
+	"checkpoints": {
+		"1": [
+			[127.0, -93.0],
+			[117.0, -125.0],
+			[81.0, -135.0],
+			[99.0, -113.0],
+			[122.0, -173.0],
+			[148.0, -202.0],
+			[172.0, -181.0]
+		],
+		"2": [
+			[579.0, -145.0],
+			[594.0, -116.0],
+			[600.0, -77.0],
+			[576.0, -54.0],
+			[567.0, -85.0],
+			[653.0, -73.0],
+			[710.0, -65.0],
+			[729.0, -125.0],
+			[715.0, -181.0]
+		]
+	},
+	"props": [
+		{
+			"prop": "port_ne",
+			"hex": [-2, 1]
+		},
+		{
+			"prop": "port_se",
+			"hex": [1, -2]
+		},
+		{
+			"prop": "port_sw",
+			"hex": [6, 0]
+		},
+		{
+			"prop": "port_nw",
+			"hex": [4, 2]
+		},
+		{
+			"prop": "lighthouse",
+			"hex": [1, 3]
+		},
+		{
+			"prop": "island3",
+			"hex": [7, -6]
+		},
+		{
+			"prop": "island4",
+			"hex": [11, -1]
+		},
+		{
+			"prop": "island1",
+			"hex": [11, -7]
+		},
+		{
+			"prop": "island2",
+			"hex": [15, -2]
+		},
+		{
+			"prop": "island5",
+			"hex": [17, -9]
+		},
+		{
+			"prop": "isle1",
+			"hex": [20, -4]
+		},
+		{
+			"prop": "isle2",
+			"hex": [20, -9]
+		},
+		{
+			"prop": "isle3",
+			"hex": [23, -12]
+		},
+		{
+			"prop": "isle4",
+			"hex": [25, -5]
+		},
+		{
+			"prop": "isle5",
+			"hex": [27, -8]
+		},
+		{
+			"prop": "archipelago",
+			"hex": [29, -14]
+		},
+		{
+			"prop": "atoll",
+			"hex": [34, -15]
+		},
+		{
+			"prop": "mountain1",
+			"hex": [33, -10]
+		},
+		{
+			"prop": "mountain2",
+			"hex": [32, -6]
+		},
+		{
+			"prop": "volcano",
+			"hex": [26, -16]
+		},
+		{
+			"prop": "isle5",
+			"hex": [3, -7]
+		},
+		{
+			"prop": "isle4",
+			"hex": [8, -11]
+		},
+		{
+			"prop": "isle3",
+			"hex": [2, -11]
+		},
+		{
+			"prop": "island4",
+			"hex": [26, -1]
+		},
+		{
+			"prop": "island1",
+			"hex": [32, -2]
+		},
+		{
+			"prop": "island2",
+			"hex": [-4, -2]
+		},
+		{
+			"prop": "island3",
+			"hex": [-2, -8]
+		},
+		{
+			"prop": "island5",
+			"hex": [20, 1]
+		},
+		{
+			"prop": "glacier5",
+			"hex": [15, -12]
+		},
+		{
+			"prop": "glacier3",
+			"hex": [22, -13]
+		},
+		{
+			"prop": "glacier2",
+			"hex": [22, -16]
+		},
+		{
+			"prop": "glacier1",
+			"hex": [16, -15]
+		},
+		{
+			"prop": "glacier4",
+			"hex": [19, -14]
+		},
+		{
+			"prop": "glacier4",
+			"hex": [16, 2]
+		},
+		{
+			"prop": "glacier5",
+			"hex": [14, 4]
+		},
+		{
+			"prop": "glacier3",
+			"hex": [10, 4]
+		},
+		{
+			"prop": "glacier2",
+			"hex": [6, 4]
+		},
+		{
+			"prop": "glacier1",
+			"hex": [11, 1]
+		}
+	]
+}
