@@ -25,6 +25,8 @@ class FleetNameRibbon(NameRibbon):
 
 class FleetSelectionMenu:
     Y_ALIGN = screen_y(0.3)
+    PATH_DASH_LENGTH = 16
+    PATH_DASH_WIDTH = 4
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -152,13 +154,13 @@ class FleetSelectionMenu:
         checkpoints.append(end_pos)
 
         step = 1
-        record_every = 20
+        record_every = 30
         record_every_counter = record_every
         turn_amount = step / radius
         angle = 0.0
         pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
         draw_hex = False
-        self.path = [pos]
+        self.path = [(pos, angle)]
         self.path_hexes = []
         for checkpoint in checkpoints:
             to_target = checkpoint - pos
@@ -168,7 +170,7 @@ class FleetSelectionMenu:
                     if draw_hex:
                         self.path_hexes.append(pos)
                         draw_hex = False
-                    self.path.append(pos)
+                    self.path.append((pos, angle))
                     record_every_counter = record_every
                 else:
                     record_every_counter -= 1
@@ -194,7 +196,7 @@ class FleetSelectionMenu:
                     angle = math.atan2(to_target.y, to_target.x)
         if record_every_counter < record_every:
             pos = pos + get_vec(record_every_counter, angle)
-            self.path.append(pos)
+            self.path.append((pos, angle))
         if len(self.path_hexes) < num_encounters:
             self.path_hexes.append(pos)
 
@@ -302,8 +304,20 @@ class FleetSelectionMenu:
     def draw(self, surface, font_registry):
         self.background.draw(surface)
 
-        for point in self.path:
-            pygame.draw.circle(surface, Color.WHITE, point, 4)
+        for point, angle in self.path:
+            dash_offset = get_vec(self.PATH_DASH_LENGTH / 2, angle)
+            dash_width_offset = get_vec(self.PATH_DASH_WIDTH / 2, angle + math.radians(90))
+            dash_polygon = [
+                point + dash_offset + dash_width_offset,
+                point - dash_offset + dash_width_offset,
+                point - dash_offset - dash_width_offset,
+                point + dash_offset - dash_width_offset,
+            ]
+            pygame.draw.polygon(
+                surface,
+                Color.WHITE,
+                dash_polygon
+            )
 
         for point in self.path_hexes:
             icon = DataFiles.sprites["user_interface"]["uncleared"]

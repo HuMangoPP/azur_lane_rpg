@@ -339,6 +339,9 @@ class Background:
 
 
 class SortieSelectionMenu:
+    PATH_DASH_LENGTH = 8
+    PATH_DASH_WIDTH = 3
+
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
@@ -433,12 +436,12 @@ class SortieSelectionMenu:
         for chapter, checkpoints in DataFiles.sortie_selection_details["checkpoints"].items():
             checkpoints = [pygame.Vector2(checkpoint) for checkpoint in checkpoints]
             step = 1
-            record_every = 10
+            record_every = 16
             record_every_counter = record_every
             relpos = checkpoints[1] - checkpoints[0]
             angle = math.atan2(relpos.y, relpos.x)
             pos = checkpoints[0]
-            path = [pos]
+            path = [(pos, angle)]
             for checkpoint in checkpoints[1:]:
                 to_target = checkpoint - pos
 
@@ -453,7 +456,7 @@ class SortieSelectionMenu:
                 while to_target.length() > 5:
                     pos = pos + get_vec(step, angle)
                     if record_every_counter == 0:
-                        path.append(pos)
+                        path.append((pos, angle))
                         record_every_counter = record_every
                     else:
                         record_every_counter -= 1
@@ -474,7 +477,7 @@ class SortieSelectionMenu:
                         angle = math.atan2(to_target.y, to_target.x)
             if record_every_counter < 10:
                 pos = pos + get_vec(record_every_counter, angle)
-                path.append(pos)
+                path.append((pos, angle))
             self.paths[int(chapter)] = path
 
     def get_chapters(self):
@@ -584,8 +587,21 @@ class SortieSelectionMenu:
 
         for chapter in range(DataFiles.save_file["chapter_progress"]+1):
             path = self.paths.get(chapter, [])
-            for point in path:
-                pygame.draw.circle(surface, Color.WHITE, point + anchor(), 3)
+            for point, angle in path:
+                center = point + anchor()
+                dash_offset = get_vec(self.PATH_DASH_LENGTH / 2, angle)
+                dash_width_offset = get_vec(self.PATH_DASH_WIDTH / 2, angle + math.radians(90))
+                dash_polygon = [
+                    center + dash_offset + dash_width_offset,
+                    center - dash_offset + dash_width_offset,
+                    center - dash_offset - dash_width_offset,
+                    center + dash_offset - dash_width_offset,
+                ]
+                pygame.draw.polygon(
+                    surface,
+                    Color.WHITE,
+                    dash_polygon
+                )
 
         for prop_info in DataFiles.sortie_selection_details["props"]:
             prop = DataFiles.sprites["sortie_selection"][prop_info["prop"]]
