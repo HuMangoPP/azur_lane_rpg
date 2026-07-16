@@ -62,6 +62,7 @@ class FleetSelectionMenu:
             self.menu_manager.current_menu = self.menu_manager.encounter_menu
             self.start_sortie_button.active = False
             
+            self._position_shipgirls_for_battle()
             self.menu_manager.player_fleet.begin_sortie()
             self.menu_manager.encounter_menu.begin_sortie()
 
@@ -260,29 +261,51 @@ class FleetSelectionMenu:
             surface.blit(portrait, portrait_rect)
             pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, rect, width=2*Box.OUTLINE_WIDTH)
 
-    def _drop_shipgirl(self, slot_shipgirls, portrait_slots, shipgirl_slots, event):
-        for i, slot in enumerate(portrait_slots):
+    def _position_shipgirls_for_battle(self):
+        for shipgirl, slot in zip(
+            self.menu_manager.player_fleet.shipgirls,
+            self.menu_manager.encounter_menu.fleet_slots,
+        ):
+            if shipgirl is not None:
+                shipgirl.rect.center = slot.center
+                shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+                shipgirl.facing_left = False
+
+        for shipgirl, slot in zip(
+            self.menu_manager.player_fleet.backups,
+            self.menu_manager.encounter_menu.backup_fleet_slots,
+        ):
+            if shipgirl is not None:
+                shipgirl.rect.center = slot.center
+                shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+                shipgirl.facing_left = False
+
+    def _align_shipgirl_with_fleet_selection_slot(self, shipgirl, slot):
+        if shipgirl is not None:
+            shipgirl.rect.centerx = slot.centerx
+            shipgirl.rect.bottom = slot.centery
+            shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+            shipgirl.facing_left = False
+
+    def _drop_shipgirl(self, slot_shipgirls, marker_slots, event):
+        for i, slot in enumerate(marker_slots):
             if not slot.collidepoint(event.pos):
                 continue
             if self.selected_shipgirl_index_from_fleet is not None:
                 self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = slot_shipgirls[i]
-                if slot_shipgirls[i] is not None:
-                    slot_shipgirls[i].rect.center = (
-                        self.menu_manager.encounter_menu.fleet_slots[self.selected_shipgirl_index_from_fleet].center
-                    )
+                self._align_shipgirl_with_fleet_selection_slot(
+                    slot_shipgirls[i],
+                    self.fleet_slots[self.selected_shipgirl_index_from_fleet],
+                )
             if self.selected_shipgirl_index_from_backup is not None:
                 self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = slot_shipgirls[i]
-                if slot_shipgirls[i] is not None:
-                    slot_shipgirls[i].rect.center = (
-                        self.menu_manager.encounter_menu.backup_fleet_slots[self.selected_shipgirl_index_from_backup].center
-                    )
+                self._align_shipgirl_with_fleet_selection_slot(
+                    slot_shipgirls[i],
+                    self.backup_fleet_slots[self.selected_shipgirl_index_from_backup],
+                )
             slot_shipgirls[i] = self.selected_shipgirl
-            self.selected_shipgirl.rect.center = shipgirl_slots[i].center
-            self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-            self.selected_shipgirl.facing_left = False
-            self.selected_shipgirl = None
+            self._align_shipgirl_with_fleet_selection_slot(self.selected_shipgirl, slot)
             return True
-        self.selected_shipgirl = None
         return False
 
     def update(self, dt, events):
@@ -315,15 +338,14 @@ class FleetSelectionMenu:
                     click = self._drop_shipgirl(
                         self.menu_manager.player_fleet.shipgirls,
                         self.fleet_slots,
-                        self.menu_manager.encounter_menu.fleet_slots,
                         event
                     )
                     click = click or self._drop_shipgirl(
                         self.menu_manager.player_fleet.backups,
                         self.backup_fleet_slots,
-                        self.menu_manager.encounter_menu.backup_fleet_slots,
                         event
                     )
+                    self.selected_shipgirl = None
                 if self.selected_shipgirl is not None:
                     for _, slot in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
                         if not slot.collidepoint(event.pos):
@@ -352,8 +374,16 @@ class FleetSelectionMenu:
 
         self.background.update(dt)
 
+        for shipgirl in self.menu_manager.player_fleet.shipgirls:
+            if shipgirl is not None:
+                shipgirl.animate(dt)
+        for shipgirl in self.menu_manager.player_fleet.backups:
+            if shipgirl is not None:
+                shipgirl.animate(dt)
+
     def draw(self, surface, font_registry):
         self.background.draw(surface)
+        mpos = pygame.mouse.get_pos()
 
         for point, angle in self.path:
             dash_offset = get_vec(self.PATH_DASH_LENGTH / 2, angle)
@@ -382,8 +412,7 @@ class FleetSelectionMenu:
             pygame.draw.polygon(surface, Color.LOCKED_ZONE_FILL_HOVER, polygon)
             pygame.draw.polygon(surface, Color.WHITE, polygon, width=Box.OUTLINE_WIDTH)
             surface.blit(icon, icon_rect)
-        
-        # TODO make marker sprites
+
         for slot, shipgirl in zip(
             self.fleet_slots + self.backup_fleet_slots,
             self.menu_manager.player_fleet.shipgirls + self.menu_manager.player_fleet.backups
@@ -395,11 +424,15 @@ class FleetSelectionMenu:
                 self._draw_dashed_rect(surface, slot, dash_length=6, dash_width=2)
 
             if shipgirl is not None:
-                portrait = DataFiles.sprites["fleet_selection"][shipgirl.name]
-                portrait = pygame.transform.flip(portrait, flip_x=True, flip_y=False)
-                portrait_rect = portrait.get_rect()
-                portrait_rect.center = slot.center
-                surface.blit(portrait, portrait_rect)
+                marker_key = "blank" if slot.collidepoint(mpos) else shipgirl.name
+                marker = DataFiles.sprites["fleet_selection"][marker_key]
+                if marker_key != "blank":
+                    marker = pygame.transform.flip(marker, flip_x=True, flip_y=False)
+                marker_rect = marker.get_rect()
+                marker_rect.center = slot.center
+                surface.blit(marker, marker_rect)
+                if marker_key == "blank":
+                    shipgirl.draw(surface, font_registry)
             elif self.selected_shipgirl is not None:
                 anchor_sprite = DataFiles.sprites["user_interface"]["start_sortie"]
                 anchor_rect = anchor_sprite.get_rect()
@@ -418,6 +451,5 @@ class FleetSelectionMenu:
         
         self.background.draw_markings(surface, font_registry)
 
-        mpos = pygame.mouse.get_pos()
         if self.mouse_start_drag is not None:
             pygame.draw.line(surface, Color.WHITE, self.mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)
