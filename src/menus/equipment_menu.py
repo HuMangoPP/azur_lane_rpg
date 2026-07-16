@@ -240,7 +240,6 @@ class EquipmentMenu:
             width=screen_x(1), height=Box.HEIGHT,
             left=0, top=self.equipment_depot.bottom
         )
-        # pygame.draw.rect(surface, (84, 56, 35), workshop_floor)
         pygame.draw.rect(surface, floor_color, workshop_floor)
 
         workshop_wall = get_rect(

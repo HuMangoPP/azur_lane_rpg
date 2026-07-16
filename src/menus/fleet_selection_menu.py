@@ -27,6 +27,9 @@ class FleetSelectionMenu:
     Y_ALIGN = screen_y(0.3)
     PATH_DASH_LENGTH = 16
     PATH_DASH_WIDTH = 4
+    TRAY_WOOD_COLOR = (116, 79, 52)
+    TRAY_BEZEL_COLOR = (153, 108, 74)
+    TRAY_WOOD_GRAIN_SEED = 1
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -151,6 +154,27 @@ class FleetSelectionMenu:
                 pygame.draw.line(surface, color, dash_start, dash_end, width=dash_width)
                 distance += 2 * dash_length
 
+    def draw_tray_wood_grain(self, surface, tray_rect):
+        grain_rng = random.Random(self.TRAY_WOOD_GRAIN_SEED)
+        y = tray_rect.top
+
+        while y < tray_rect.bottom:
+            band_height = min(grain_rng.randint(4, 24), tray_rect.bottom - y)
+            color_offset = grain_rng.randint(-14, 14)
+            color = (
+                max(0, min(255, self.TRAY_WOOD_COLOR[0] + color_offset)),
+                max(0, min(255, self.TRAY_WOOD_COLOR[1] + color_offset // 2)),
+                max(0, min(255, self.TRAY_WOOD_COLOR[2] + color_offset // 3)),
+            )
+            band_rect = get_rect(
+                width=tray_rect.width,
+                height=band_height,
+                left=tray_rect.left,
+                top=y
+            )
+            pygame.draw.rect(surface, color, band_rect)
+            y += band_height
+
     def generate_path(self, sortie_index):
         num_encounters = len(DataFiles.sortie_data[sortie_index]["encounters"])
         encounter_counter = num_encounters
@@ -225,7 +249,8 @@ class FleetSelectionMenu:
             self.path_hexes.append(pos)
 
     def draw_tray_overlay(self, surface, font_registry):
-        pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.tray_overlay)
+        self.draw_tray_wood_grain(surface, self.tray_overlay)
+        pygame.draw.rect(surface, self.TRAY_BEZEL_COLOR, self.tray_overlay, width=6*Box.OUTLINE_WIDTH)
 
         for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
