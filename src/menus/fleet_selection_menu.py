@@ -100,32 +100,56 @@ class FleetSelectionMenu:
         self.fleet_slots = [
             get_rect(
                 width=slot_size, height=slot_size,
-                centerx=screen_x(0.25) - (slot_index-1)*slot_size/4,
+                centerx=screen_x(0.25) + 1.5 * slot_size - (slot_index-1)*slot_size/4,
                 centery=self.Y_ALIGN + (slot_index-1)*(slot_size + Box.PADDING)
             ) for slot_index in range(3)
         ]
         self.backup_fleet_slots = [
             get_rect(
                 width=slot_size, height=slot_size,
-                centerx=slot.centerx - 1.5*slot_size,
+                centerx=slot.centerx - 3.5 * slot_size,
                 centery=slot.centery,
             ) for slot in self.fleet_slots
         ]
 
+        self.primary_fleet_box = self.fleet_slots[0].unionall(self.fleet_slots[1:]).inflate(Box.WIDTH, Box.HEIGHT)
+        self.backup_fleet_box = self.backup_fleet_slots[0].unionall(self.backup_fleet_slots[1:]).inflate(Box.WIDTH, Box.HEIGHT)
+
         banner_height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
         self.primary_fleet_ribbon = FleetNameRibbon(
             "primary",
-            (self.fleet_slots[1].centerx, self.fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
+            (self.primary_fleet_box.centerx, self.primary_fleet_box.bottom + Box.PADDING + banner_height / 2)
         )
         self.backup_fleet_ribbon = FleetNameRibbon(
             "backup",
-            (self.backup_fleet_slots[1].centerx, self.backup_fleet_slots[-1].bottom + Box.PADDING + banner_height / 2)
+            (self.backup_fleet_box.centerx, self.backup_fleet_box.bottom + Box.PADDING + banner_height / 2)
         )
 
         self.path = []
         self.path_hexes = []
 
         self.background = Background()
+
+    def _draw_dashed_rect(self, surface, rect, color = Color.WHITE, dash_length = PATH_DASH_LENGTH, dash_width = PATH_DASH_WIDTH):
+        for start, end in [
+            (rect.topleft, rect.topright),
+            (rect.topright, rect.bottomright),
+            (rect.bottomright, rect.bottomleft),
+            (rect.bottomleft, rect.topleft),
+        ]:
+            start = pygame.Vector2(start)
+            end = pygame.Vector2(end)
+            edge = end - start
+            edge_length = edge.length()
+            if edge_length == 0:
+                continue
+            direction = edge / edge_length
+            distance = 0
+            while distance < edge_length:
+                dash_start = start + direction * distance
+                dash_end = start + direction * min(distance + dash_length, edge_length)
+                pygame.draw.line(surface, color, dash_start, dash_end, width=dash_width)
+                distance += 2 * dash_length
 
     def generate_path(self, sortie_index):
         num_encounters = len(DataFiles.sortie_data[sortie_index]["encounters"])
@@ -204,11 +228,12 @@ class FleetSelectionMenu:
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.tray_overlay)
 
         for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
-            portrait = DataFiles.get_entity_sprite(shipgirl.name)
+            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
+            portrait = DataFiles.sprites["fleet_selection"][shipgirl.name]
             portrait_rect = portrait.get_rect()
             portrait_rect.center = rect.center
             surface.blit(portrait, portrait_rect)
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, rect, width=2*Box.OUTLINE_WIDTH)
 
     def _drop_shipgirl(self, slot_shipgirls, portrait_slots, shipgirl_slots, event):
         for i, slot in enumerate(portrait_slots):
@@ -232,6 +257,7 @@ class FleetSelectionMenu:
             self.selected_shipgirl.facing_left = False
             self.selected_shipgirl = None
             return True
+        self.selected_shipgirl = None
         return False
 
     def update(self, dt, events):
@@ -337,13 +363,26 @@ class FleetSelectionMenu:
             self.fleet_slots + self.backup_fleet_slots,
             self.menu_manager.player_fleet.shipgirls + self.menu_manager.player_fleet.backups
         ):
+            if self.selected_shipgirl is not None:
+                # TODO make custom colors
+                pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_GLOW, slot)
+                # TODO dash value magic numbers
+                self._draw_dashed_rect(surface, slot, dash_length=6, dash_width=2)
+
             if shipgirl is not None:
-                portrait = pygame.transform.flip(DataFiles.get_entity_sprite(shipgirl.name), flip_x=True, flip_y=False)
+                portrait = DataFiles.sprites["fleet_selection"][shipgirl.name]
+                portrait = pygame.transform.flip(portrait, flip_x=True, flip_y=False)
                 portrait_rect = portrait.get_rect()
                 portrait_rect.center = slot.center
                 surface.blit(portrait, portrait_rect)
-            pygame.draw.rect(surface, Color.WHITE, slot, width=Box.OUTLINE_WIDTH)
+            elif self.selected_shipgirl is not None:
+                anchor_sprite = DataFiles.sprites["user_interface"]["start_sortie"]
+                anchor_rect = anchor_sprite.get_rect()
+                anchor_rect.center = slot.center
+                surface.blit(anchor_sprite, anchor_rect)
         
+        self._draw_dashed_rect(surface, self.backup_fleet_box)
+        self._draw_dashed_rect(surface, self.primary_fleet_box)
         self.backup_fleet_ribbon.draw(surface, font_registry)
         self.primary_fleet_ribbon.draw(surface, font_registry)
 

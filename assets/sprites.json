@@ -293,6 +293,15 @@
 		"compass_rose": { "left": 0, "top": 0, "width": 128, "height": 128 },
 		"map_scale": { "left": 128, "top": 0, "width": 128, "height": 8 }
 	},
+	"fleet_selection": {
+		"laffey": { "left": 0, "top": 0, "width": 64, "height": 64 },
+		"san_diego": { "left": 64, "top": 0, "width": 64, "height": 64 },
+		"guam": { "left": 128, "top": 0, "width": 64, "height": 64 },
+		"new_jersey": { "left": 192, "top": 0, "width": 64, "height": 64 },
+		"albacore": { "left": 256, "top": 0, "width": 64, "height": 64 },
+		"enterprise": { "left": 320, "top": 0, "width": 64, "height": 64 },
+		"blank": { "left": 384, "top": 0, "width": 64, "height": 64 }
+	},
 	"equipment_menu": {
 		"blueprint": { "left": 0, "top": 0, "width": 448, "height": 288 },
 		"table": { "left": 0, "top": 288, "width": 128, "height": 64 },
