@@ -424,12 +424,18 @@ class FleetSelectionMenu:
                 self._draw_dashed_rect(surface, slot, dash_length=6, dash_width=2)
 
             if shipgirl is not None:
-                marker_key = "blank" if slot.collidepoint(mpos) else shipgirl.name
+                marker_hovered = slot.collidepoint(mpos)
+                marker_key = "blank" if marker_hovered else shipgirl.name
                 marker = DataFiles.sprites["fleet_selection"][marker_key]
                 if marker_key != "blank":
                     marker = pygame.transform.flip(marker, flip_x=True, flip_y=False)
                 marker_rect = marker.get_rect()
                 marker_rect.center = slot.center
+                if marker_hovered:
+                    glow = DataFiles.sprites["fleet_selection"]["marker_selection_glow"]
+                    glow_rect = glow.get_rect()
+                    glow_rect.midbottom = marker_rect.center
+                    surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
                 surface.blit(marker, marker_rect)
                 if marker_key == "blank":
                     shipgirl.draw(surface, font_registry)

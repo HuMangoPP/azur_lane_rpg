@@ -296,6 +296,29 @@ create_sortie_node_selection_glow("cleared_node_selection_glow", Color.CLEARED_Z
 create_sortie_node_selection_glow("uncleared_node_selection_glow", Color.UNCLEARED_ZONE_OUTLINE)
 create_sortie_node_selection_glow("locked_node_selection_glow", Color.LOCKED_ZONE_OUTLINE)
 
+fleet_marker_selection_glow_top_width = math.ceil(2 * Box.WIDTH)
+fleet_marker_selection_glow_bottom_width = math.ceil(0.75 * Box.WIDTH)
+fleet_marker_selection_glow_size = (fleet_marker_selection_glow_top_width, math.ceil(1.5 * Box.HEIGHT))
+fleet_marker_selection_glow = pygame.Surface(fleet_marker_selection_glow_size)
+fleet_marker_selection_glow_color = tuple(c // 2 for c in Color.BLUEPRINT_SLOT_BORDER_GLOW)
+fleet_marker_selection_glow_top_fade = math.ceil(fleet_marker_selection_glow_size[1] * 1.0)
+for y in range(fleet_marker_selection_glow_size[1]):
+    y_ratio = y / (fleet_marker_selection_glow_size[1] - 1)
+    cone_width = round(
+        fleet_marker_selection_glow_top_width
+        - (fleet_marker_selection_glow_top_width - fleet_marker_selection_glow_bottom_width) * y_ratio
+    )
+    top_blend = min(1, y / fleet_marker_selection_glow_top_fade)
+    glow_color = tuple(math.ceil(c * top_blend) for c in fleet_marker_selection_glow_color)
+    left = (fleet_marker_selection_glow_size[0] - cone_width) // 2
+    pygame.draw.line(
+        fleet_marker_selection_glow,
+        glow_color,
+        (left, y),
+        (left + cone_width - 1, y)
+    )
+DataFiles.sprites["fleet_selection"]["marker_selection_glow"] = fleet_marker_selection_glow
+
 lightbulb_light = pygame.Surface((64, 64))
 pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)
 DataFiles.sprites["equipment_menu"]["lightbulb_light"] = lightbulb_light
