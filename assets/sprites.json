@@ -290,6 +290,8 @@
 		"name_middle": { "left": 320, "top": 0, "width": 64, "height": 64 },
 		"name_right": { "left": 384, "top": 0, "width": 64, "height": 64 },
 
+		"arrow": {"left": 320, "top": 128, "width": 64, "height": 64},
+
 		"compass_rose": { "left": 0, "top": 0, "width": 128, "height": 128 },
 		"map_scale": { "left": 128, "top": 0, "width": 128, "height": 8 }
 	},

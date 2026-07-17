@@ -113,6 +113,14 @@ class SortieNode:
             icon_rect.center = pygame.Vector2(x,y) + anchor()
             surface.blit(icon, icon_rect)
 
+    def get_bounding_rect(self):
+        points = [point + anchor() for point in self.polygon]
+        left = min(point.x for point in points)
+        right = max(point.x for point in points)
+        top = min(point.y for point in points)
+        bottom = max(point.y for point in points)
+        return pygame.Rect(left, top, right - left, bottom - top)
+
 class Fog:
     def __init__(self, sortie_nodes, disperse=False):
         self.centroids = []
@@ -676,5 +684,19 @@ class SortieSelectionMenu:
                 font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
         self.background.draw_markings(surface, font_registry)
+
+        current_sortie_node = next(
+            (
+                sortie_node for sortie_node in self.sortie_nodes
+                if sortie_node.unlocked and not sortie_node.cleared
+            ),
+            None
+        )
+        if current_sortie_node is not None:
+            arrow = DataFiles.sprites["sortie_selection"]["arrow"]
+            arrow_rect = arrow.get_rect()
+            arrow_rect.midbottom = current_sortie_node.get_bounding_rect().midtop
+            surface.blit(arrow, arrow_rect)
+
 
         self.exit_sortie_selection_menu_button.draw(surface, font_registry)
