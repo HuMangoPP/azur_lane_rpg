@@ -56,7 +56,7 @@ class Color:
     BLUEPRINT_PAGE = (56, 88, 162)
     BLUEPRINT_PAGE_BACK = (24, 48, 103)
     BLUEPRINT_PAGE_GLOW = (102, 148, 255)
-    BLUEPRINT_SLOT_BORDER_GLOW = (204, 220, 255)
+    BLUEPRINT_SLOT_BORDER_GLOW = (51, 55, 64)
     STICKY_NOTE = (255, 232, 126)
     STICKY_NOTE_BACK = (224, 188, 71)
     STICKY_NOTE_OUTLINE = (169, 126, 41)
@@ -300,7 +300,7 @@ fleet_marker_selection_glow_top_width = math.ceil(2 * Box.WIDTH)
 fleet_marker_selection_glow_bottom_width = math.ceil(0.75 * Box.WIDTH)
 fleet_marker_selection_glow_size = (fleet_marker_selection_glow_top_width, math.ceil(1.5 * Box.HEIGHT))
 fleet_marker_selection_glow = pygame.Surface(fleet_marker_selection_glow_size)
-fleet_marker_selection_glow_color = tuple(c // 2 for c in Color.BLUEPRINT_SLOT_BORDER_GLOW)
+fleet_marker_selection_glow_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
 fleet_marker_selection_glow_top_fade = math.ceil(fleet_marker_selection_glow_size[1] * 1.0)
 for y in range(fleet_marker_selection_glow_size[1]):
     y_ratio = y / (fleet_marker_selection_glow_size[1] - 1)

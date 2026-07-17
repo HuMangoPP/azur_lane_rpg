@@ -431,14 +431,19 @@ class FleetSelectionMenu:
                     marker = pygame.transform.flip(marker, flip_x=True, flip_y=False)
                 marker_rect = marker.get_rect()
                 marker_rect.center = slot.center
+                surface.blit(marker, marker_rect)
+                if marker_key == "blank":
+                    shipgirl.draw(surface, font_registry, alpha=160)
+                # TODO ad hoc solution right now with the sprite, need to figure out if
+                # there is a programmatic way to fix this issue
+                # the issue right now is that if the blank marker has the same color for
+                # the face, then the glow add blending will cause the upper half of the
+                # marker to be brighter than the lower half
                 if marker_hovered:
                     glow = DataFiles.sprites["fleet_selection"]["marker_selection_glow"]
                     glow_rect = glow.get_rect()
                     glow_rect.midbottom = marker_rect.center
                     surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
-                surface.blit(marker, marker_rect)
-                if marker_key == "blank":
-                    shipgirl.draw(surface, font_registry)
             elif self.selected_shipgirl is not None:
                 anchor_sprite = DataFiles.sprites["user_interface"]["start_sortie"]
                 anchor_rect = anchor_sprite.get_rect()

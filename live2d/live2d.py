@@ -203,9 +203,19 @@ class Live2D:
                 self.set_rotation(part, walk_animation[0] * anim_t[walk_animation[1]])
             self.set_offset("torso", pygame.Vector2(0, 5 * sint_sq))
 
-    def draw(self, surface, x, y, flipx):
-        root = pygame.Vector2(x, y)
+    def draw(self, surface, x, y, flipx, alpha=255):
+        alpha = int(max(0, min(255, alpha)))
+        root = pygame.Vector2(LAYER_SIZE, LAYER_SIZE)
+
+        sprite_surf = pygame.Surface((2*LAYER_SIZE, 2*LAYER_SIZE))
+        sprite_surf.fill((255, 0, 0))
+        sprite_surf.set_colorkey((255, 0, 0))
 
         for part in self.DRAW_ORDER:
             if part in self.parts:
-                self.parts[part].draw(surface, root, flipx)
+                self.parts[part].draw(sprite_surf, root, flipx)
+
+        sprite_surf.set_alpha(alpha)
+        sprite_rect = sprite_surf.get_rect()
+        sprite_rect.center = (x, y)
+        surface.blit(sprite_surf, sprite_rect)

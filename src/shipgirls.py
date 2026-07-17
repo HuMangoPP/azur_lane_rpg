@@ -434,10 +434,10 @@ class Shipgirl:
     def animate(self, dt):
         self.sprite.update(dt)
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface, font_registry, alpha=255):
         shake_amt = 4
         shake_offset = shake_amt * math.sin(4*math.radians(360)*self.battle_component.shake_time)
-        self.sprite.draw(surface, self.rect.centerx + shake_offset, self.rect.centery, not self.facing_left)
+        self.sprite.draw(surface, self.rect.centerx + shake_offset, self.rect.centery, not self.facing_left, alpha=alpha)
 
 class PlayerFleet:
     def __init__(self):
