@@ -8,6 +8,7 @@ from engine.button import Button
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
 from src.shipgirls import Shipgirl
 from src.vfx import VFXManager
+from src.menus.fleet_selection_menu import FleetNameRibbon
 from src.menus.quests_data import (
     first_sortie_quest,
     construct_shipgirl_quest,
@@ -307,7 +308,10 @@ class EncounterMenu:
             }
         )
 
-        self.end_sortie_text_pos = pygame.Vector2(screen_x(0.5), screen_y(0.25))
+        self.end_encounter_banner = FleetNameRibbon(
+            pygame.Vector2(screen_x(0.5), screen_y(0.1)),
+            "victory"
+        )
         self.encounter_end_flag = True
 
         self.drops = []
@@ -606,21 +610,11 @@ class EncounterMenu:
             )
         
         if self.next_encounter_button.active:
-            font_size = 2
             if not self.menu_manager.player_fleet.afloat:
-                end_text = "you lose"
-            elif not self.menu_manager.siren_fleet.afloat:
-                end_text = "you win"
-            banner_surf = pygame.Surface((
-                len(end_text)*font_size*font_registry["big_pixel"].font_width + 2*Box.PADDING, 
-                font_size*font_registry["big_pixel"].font_height + 2*Box.PADDING
-            ))
-            banner_surf.fill(Color.BLACK)
-            banner_surf.set_alpha(160)
-            banner_rect = banner_surf.get_rect()
-            banner_rect.center = self.end_sortie_text_pos
-            surface.blit(banner_surf, banner_rect)
-            font_registry["big_pixel"].render(surface, end_text, self.end_sortie_text_pos, Color.WHITE, font_size, style="center")
+                self.end_encounter_banner.text = "defeat"
+            else:
+                self.end_encounter_banner.text = "victory"
+            self.end_encounter_banner.draw(surface, font_registry)
 
         mpos = pygame.mouse.get_pos()
         if self.mouse_start_drag is not None:

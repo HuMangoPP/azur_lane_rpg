@@ -13,7 +13,7 @@ from live2d.live2d import Live2D
 
 
 class FleetNameRibbon(NameRibbon):
-    def __init__(self, text, position):
+    def __init__(self, position, text):
         self.text = text
         self.position = pygame.Vector2(position)
 
@@ -121,12 +121,12 @@ class FleetSelectionMenu:
 
         banner_height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
         self.primary_fleet_ribbon = FleetNameRibbon(
+            (self.primary_fleet_box.centerx, self.primary_fleet_box.bottom + Box.PADDING + banner_height / 2),
             "primary",
-            (self.primary_fleet_box.centerx, self.primary_fleet_box.bottom + Box.PADDING + banner_height / 2)
         )
         self.backup_fleet_ribbon = FleetNameRibbon(
+            (self.backup_fleet_box.centerx, self.backup_fleet_box.bottom + Box.PADDING + banner_height / 2),
             "backup",
-            (self.backup_fleet_box.centerx, self.backup_fleet_box.bottom + Box.PADDING + banner_height / 2)
         )
 
         self.path = []
