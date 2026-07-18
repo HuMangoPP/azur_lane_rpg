@@ -220,7 +220,12 @@
 	},
 	"encounter": {
 		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 },
-		"aircraft": { "left": 32, "top": 0, "width": 48, "height": 48 }
+		"aircraft": { "left": 0, "top": 16, "width": 48, "height": 48 },
+
+		"needle": { "left": 56, "top": 0, "width": 8, "height": 64 },
+		"gauge": { "left": 64, "top": 0, "width": 64, "height": 64 },
+
+		"smoke": { "left": 128, "top": 0, "width": 64, "height": 64 }
 	},
 	"background": {
 		"wave0": { "left": 0, "top": 0, "width": 256, "height": 128 },
@@ -290,7 +295,7 @@
 		"name_middle": { "left": 320, "top": 0, "width": 64, "height": 64 },
 		"name_right": { "left": 384, "top": 0, "width": 64, "height": 64 },
 
-		"arrow": {"left": 320, "top": 128, "width": 64, "height": 64},
+		"arrow": { "left": 320, "top": 128, "width": 64, "height": 64 },
 
 		"compass_rose": { "left": 0, "top": 0, "width": 128, "height": 128 },
 		"map_scale": { "left": 128, "top": 0, "width": 128, "height": 8 }

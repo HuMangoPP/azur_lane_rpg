@@ -3,11 +3,41 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, draw_annulus
+from engine.util import get_rect, get_vec, draw_annulus
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y, Decorations
 from src.vfx import shell_position, SHELL_SCALE
 from live2d.live2d import Live2D
+
+class Smoke:
+    def __init__(self):
+        num_smoke = 4
+        self.offsets = [
+            get_vec(random.uniform(16, 32), math.radians(random.randint(0, 359)))
+            for _ in range(num_smoke)
+        ]
+        self.smoke_timers = [
+            math.radians(random.randint(0, 359))
+            for _ in range(num_smoke)
+        ]
+    
+    def update(self, dt):
+        self.smoke_timers = [
+            (smoke_timer + dt)%math.radians(360)
+            for smoke_timer in self.smoke_timers
+        ]
+    
+    def draw(self, surface, rect):
+        center = pygame.Vector2(rect.center)
+        smoke_sprite = DataFiles.sprites["encounter"]["smoke"]
+        smoke_rect = smoke_sprite.get_rect()
+        for offset, smoke_timer in zip(self.offsets, self.smoke_timers):
+            smoke_rect.center = (
+                center
+                + offset
+                + pygame.Vector2(16*math.sin(smoke_timer), 8*math.sin(2*smoke_timer))
+            )
+            surface.blit(smoke_sprite, smoke_rect)
 
 class DummyTarget:
     def __init__(self, menu_manager):
@@ -63,6 +93,8 @@ class ShipgirlBattleComponent:
         self.level_timer = 0
 
         self.shake_time = 0
+
+        self.evasion_smoke = Smoke()
 
     def shake(self):
         self.shake_time = 0.5
@@ -123,12 +155,12 @@ class ShipgirlBattleComponent:
             self.shake()
 
     def _deal_damage(self, target, vfx_manager):
-        target.battle_component.evasion_gauge += target.battle_component.stat("evasion") / 1000
         if target.battle_component.evasion_gauge >= 1:
             target.battle_component.evasion_gauge -= 1
             vfx_manager.spawn_miss_counter(target.rect.midtop)
             return False
         else:
+            target.battle_component.evasion_gauge += target.battle_component.stat("evasion") / 1000
             weapon_config = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {})
             shell_type = self.shell_type()
             damage = self.stat("firepower")
@@ -223,6 +255,9 @@ class ShipgirlBattleComponent:
         self._update_ignite(dt, rect, vfx_manager)
         if self.ignite_ticks > 0:
             vfx_manager.spawn_fire(rect)
+        
+        if self.evasion_gauge >= 1:
+            self.evasion_smoke.update(dt)
 
         if self.attack_timer > 0:
             start_pos = pygame.Vector2(rect.center)
@@ -343,6 +378,9 @@ class ShipgirlBattleComponent:
         
         if self.attack_timer > 0:
             self._draw_attack(surface, rect, vfx_manager)
+
+        if self.evasion_gauge >= 1:
+            self.evasion_smoke.draw(surface, rect)
         
         bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, top=rect.bottom+Box.PADDING)
         bar_fill = get_rect(
@@ -372,6 +410,18 @@ class ShipgirlBattleComponent:
         attack_icon_rect = attack_icon.get_rect()
         attack_icon_rect.center = center
         surface.blit(attack_icon, attack_icon_rect)
+
+        # gauge_sprite = DataFiles.sprites["encounter"]["gauge"]
+        # gauge_rect = gauge_sprite.get_rect()
+        # gauge_rect.centerx = rect.centerx
+        # gauge_rect.bottom = rect.top - Box.PADDING
+        # surface.blit(gauge_sprite, gauge_rect)
+        # sweep_angle = 120
+        # needle_angle = sweep_angle - (1 - self.cooldown_timer) * 2 * sweep_angle
+        # needle_sprite = pygame.transform.rotate(DataFiles.sprites["encounter"]["needle"], needle_angle)
+        # needle_rect = needle_sprite.get_rect()
+        # needle_rect.center = gauge_rect.center
+        # surface.blit(needle_sprite, needle_rect)
 
 class Shipgirl:
     SPRITE_SIZE = 96 # TODO get this from the actual sprite?

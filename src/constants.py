@@ -164,6 +164,7 @@ class DataFiles:
         sortie_selection_details = json.load(f)
 
     sprites = load_sprites()
+    sprites["encounter"]["smoke"].set_alpha(128)
     sfx = load_sound(master_file="sfx.json", file_ext="wav")
     bgm = load_sound(master_file="bgm.json", file_ext="ogg")
 
