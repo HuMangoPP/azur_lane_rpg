@@ -431,6 +431,31 @@ class ShipgirlBattleComponent:
         attack_icon_rect.center = center
         surface.blit(attack_icon, attack_icon_rect)
 
+        if self.target is not None:
+            dash_length = 8
+            dash_width = 2
+            start_pos = pygame.Vector2(rect.center)
+            curr_pos = start_pos
+            end_pos = pygame.Vector2(self.target.rect.center)
+            parallel = (end_pos - start_pos).normalize()
+            perpendicular = pygame.Vector2(parallel.y, -parallel.x)
+            polygon = [
+                dash_width/2 * perpendicular,
+                dash_width/2 * perpendicular + dash_length * parallel,
+                -dash_width/2 * perpendicular + dash_length * parallel,
+                -dash_width/2 * perpendicular,
+            ]
+            for _ in range(100):
+                pygame.draw.polygon(
+                    surface,
+                    Color.WHITE,
+                    [curr_pos + point for point in polygon]
+                )
+                if (end_pos - curr_pos).length() < 2 * dash_length:
+                    break
+                curr_pos += 2 * dash_length * parallel
+
+
 class Shipgirl:
     SPRITE_SIZE = 96 # TODO get this from the actual sprite?
 
