@@ -251,10 +251,27 @@
 		"cloud8": { "left": 256, "top": 768, "width": 128, "height": 128 },
 		"cloud9": { "left": 384, "top": 768, "width": 128, "height": 128 },
 
-		"island": { "left": 512, "top": 0, "width": 128, "height": 128 },
-		"rocks": { "left": 512, "top": 128, "width": 128, "height": 128 },
-		"shipwreck": { "left": 512, "top": 256, "width": 128, "height": 128 },
-		"lighthouse": { "left": 512, "top": 384, "width": 128, "height": 128 }
+		"left_landmarks": {
+			"left": 512,
+			"top": 0,
+			"width": 128,
+			"height": 256,
+			"rotation": 90
+		},
+		"right_landmarks": {
+			"left": 512,
+			"top": 256,
+			"width": 128,
+			"height": 256,
+			"rotation": 90
+		},
+		"middle_landmarks": {
+			"left": 512,
+			"top": 512,
+			"width": 128,
+			"height": 384,
+			"rotation": 90
+		}
 	},
 	"sortie_selection": {
 		"wave": { "left": 256, "top": 64, "width": 256, "height": 64 },

@@ -57,10 +57,6 @@ class BackgroundProp:
 
 class Background:
     Y_GAP = 48
-    PROP_COUNTS = {
-        "island": 2,
-        "rocks": 2,
-    }
 
     def __init__(self):
         num_waves = DataFiles.sprites["background"]["num_waves"]
@@ -76,31 +72,6 @@ class Background:
         self.cloud_timer = 0
         self.cloud_spawn_time = 0
         self.clouds = []
-        self.props = self.create_props(num_waves)
-
-    def create_props(self, num_waves):
-        prop_names = [
-            prop_name
-            for prop_name, count in self.PROP_COUNTS.items()
-            for _ in range(count)
-        ]
-        random.shuffle(prop_names)
-
-        edge_padding = 96
-        width = screen_x(1)
-        slot_width = width / len(prop_names)
-        props = []
-        for i, prop_name in enumerate(prop_names):
-            draw_index = 0
-            slot_center = slot_width * (i + 0.5)
-            x = random.uniform(
-                max(edge_padding, slot_center - slot_width * 0.35),
-                min(width - edge_padding, slot_center + slot_width * 0.35)
-            )
-            top = self.wave_ys[draw_index] - 16
-            props.append(BackgroundProp(prop_name, x, top, draw_index))
-
-        return sorted(props, key=lambda prop: (prop.draw_index, prop.top))
 
     def update(self, dt):
         num_waves = DataFiles.sprites["background"]["num_waves"]
@@ -152,6 +123,24 @@ class Background:
         else:
             shipgirl_draw_indices = None
 
+        left_landmarks = DataFiles.sprites["background"]["left_landmarks"]
+        left_landmarks_rect = left_landmarks.get_rect()
+        left_landmarks_rect.left = screen_x(0)
+        left_landmarks_rect.centery = self.wave_ys[0]
+        surface.blit(left_landmarks, left_landmarks_rect)
+
+        middle_landmarks = DataFiles.sprites["background"]["middle_landmarks"]
+        middle_landmarks_rect = middle_landmarks.get_rect()
+        middle_landmarks_rect.centerx = screen_x(0.5)
+        middle_landmarks_rect.centery = self.wave_ys[0]
+        surface.blit(middle_landmarks, middle_landmarks_rect)
+        
+        right_landmarks = DataFiles.sprites["background"]["right_landmarks"]
+        right_landmarks_rect = right_landmarks.get_rect()
+        right_landmarks_rect.right = screen_x(1)
+        right_landmarks_rect.centery = self.wave_ys[0]
+        surface.blit(right_landmarks, right_landmarks_rect)
+
         num_waves = DataFiles.sprites["background"]["num_waves"]
         num_wave_reps = 5
         wave_rep_offset = (num_wave_reps-1)/2
@@ -166,14 +155,11 @@ class Background:
                     if i == draw_index:
                         siren.draw(surface, font_registry)
 
-            for prop in self.props:
-                if i == prop.draw_index:
-                    prop.draw(surface)
-
+            move_amt = i / num_waves
             wave = DataFiles.sprites["background"][f"wave{i}"]
             wave_rect = wave.get_rect()
-            wave_rect.top = wave_y + 8 * math.sin(2*wave_timer)
-            centerx = 64 * math.sin(wave_timer) + screen_x(0.5)
+            wave_rect.top = wave_y + 4 * (move_amt + 1) * math.sin(2*wave_timer)
+            centerx = 64 * (move_amt + 1) * math.sin(wave_timer) + screen_x(0.5)
             for j in range(num_wave_reps):
                 wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
                 surface.blit(wave, wave_rect)
