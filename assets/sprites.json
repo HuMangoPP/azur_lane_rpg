@@ -222,8 +222,12 @@
 		"torpedo": { "left": 0, "top": 0, "width": 32, "height": 8 },
 		"aircraft": { "left": 0, "top": 16, "width": 48, "height": 48 },
 
-		"needle": { "left": 56, "top": 0, "width": 8, "height": 64 },
-		"gauge": { "left": 64, "top": 0, "width": 64, "height": 64 },
+		"needle": { "left": 60, "top": 0, "width": 4, "height": 32 },
+		"gauge": { "left": 64, "top": 0, "width": 32, "height": 32 },
+
+		"reticle": { "left": 64, "top": 32, "width": 32, "height": 32 },
+
+		"star": { "left": 96, "top": 0, "width": 16, "height": 16 },
 
 		"smoke": { "left": 128, "top": 0, "width": 64, "height": 64 }
 	},

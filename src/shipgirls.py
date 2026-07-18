@@ -367,11 +367,37 @@ class ShipgirlBattleComponent:
             )
             pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
             pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
+            pygame.draw.rect(surface, Color.BLACK, bar_background, width=1)
+            star_icon = DataFiles.sprites["encounter"]["star"]
+            star_rect = star_icon.get_rect()
+            star_rect.center = bar_background.midleft
+            surface.blit(star_icon, star_rect)
+            font_registry["big_pixel"].render(
+                surface,
+                str(self.last_level),
+                star_rect.center,
+                Color.WHITE,
+                1,
+                style="center",
+                outline_color=Color.BLACK
+            )
 
         if self.level_timer > 0:
             t = 1 - self.level_timer
             y = rect.top - rect.height * t
             font_registry["big_pixel"].render(surface, "level up!", (rect.centerx, y), Color.WHITE, 1, style="center")
+
+        bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, top=rect.bottom+Box.PADDING)
+        hp_pct = self.hp / self.stat("max_hp")
+        if hp_pct > 0:
+            bar_fill = get_rect(
+                width=bar_width*hp_pct, height=bar_background.height,
+                left=bar_background.left, top=bar_background.top
+            )
+            bar_color = (50,200,50) if self.is_player > 0.5 else (200,50,50)
+            pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
+            pygame.draw.rect(surface, bar_color, bar_fill)
+            pygame.draw.rect(surface, Color.BLACK, bar_background, width=1)
 
         if not self.active:
             return
@@ -381,26 +407,20 @@ class ShipgirlBattleComponent:
 
         if self.evasion_gauge >= 1:
             self.evasion_smoke.draw(surface, rect)
-        
-        bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, top=rect.bottom+Box.PADDING)
-        bar_fill = get_rect(
-            width=bar_width*self.hp/self.stat("max_hp"), height=bar_background.height,
-            left=bar_background.left, top=bar_background.top
-        )
-        pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
-        pygame.draw.rect(surface, Color.WHITE, bar_fill)
 
         if not self.is_player:
             return
 
         # TODO clean up magic numbers
-        center = pygame.Vector2(rect.centerx, rect.top-50)
-        inner_radius = 16
-        outer_radius = 32
+        inner_radius = 12
+        outer_radius = 24
+        center = pygame.Vector2(rect.centerx, rect.top-Box.PADDING-outer_radius)
         start_angle = -90
         stop_angle = start_angle + (1 - self.cooldown_timer) * 360
         color = (50,200,50) if self.target is not None else (200,50,50)
+        draw_annulus(surface, Color.EXP_BAR_BG, center, inner_radius, outer_radius, 0, 360)
         draw_annulus(surface, color, center, inner_radius, outer_radius, start_angle, stop_angle)
+        pygame.draw.circle(surface, Color.BLACK, center, outer_radius+1, width=1)
         if self.hull_type == "CV":
             attack_icon = DataFiles.sprites["user_interface"]["air_attack"]
         elif self.hull_type == "SS":
@@ -410,18 +430,6 @@ class ShipgirlBattleComponent:
         attack_icon_rect = attack_icon.get_rect()
         attack_icon_rect.center = center
         surface.blit(attack_icon, attack_icon_rect)
-
-        # gauge_sprite = DataFiles.sprites["encounter"]["gauge"]
-        # gauge_rect = gauge_sprite.get_rect()
-        # gauge_rect.centerx = rect.centerx
-        # gauge_rect.bottom = rect.top - Box.PADDING
-        # surface.blit(gauge_sprite, gauge_rect)
-        # sweep_angle = 120
-        # needle_angle = sweep_angle - (1 - self.cooldown_timer) * 2 * sweep_angle
-        # needle_sprite = pygame.transform.rotate(DataFiles.sprites["encounter"]["needle"], needle_angle)
-        # needle_rect = needle_sprite.get_rect()
-        # needle_rect.center = gauge_rect.center
-        # surface.blit(needle_sprite, needle_rect)
 
 class Shipgirl:
     SPRITE_SIZE = 96 # TODO get this from the actual sprite?

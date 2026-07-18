@@ -410,7 +410,7 @@ class EncounterMenu:
                         )
                         and shipgirl.rect.collidepoint(event.pos)
                     ):
-                        self.mouse_start_drag = event.pos
+                        self.mouse_start_drag = shipgirl.rect.center
                         self.selected_shipgirl = shipgirl
                         self.selected_shipgirl_index = i
                         self.selected_shipgirl.battle_component.target = None
@@ -652,8 +652,8 @@ class EncounterMenu:
                     else:
                         color = (50,200,50)
                     
-                    inner_radius = 16
-                    outer_radius = 32
+                    inner_radius = 12
+                    outer_radius = 24
                     annulus = pygame.Surface((2*outer_radius, 2*outer_radius))
                     annulus.fill((0,0,0))
                     pygame.draw.circle(annulus, color, (outer_radius, outer_radius), outer_radius)
