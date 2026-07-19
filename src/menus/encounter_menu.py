@@ -150,11 +150,13 @@ class Background:
                 for draw_index, shipgirl in shipgirl_draw_indices:
                     if i == draw_index:
                         shipgirl.draw(surface, font_registry)
+                        shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
 
             if siren_draw_indices is not None:
                 for draw_index, siren in siren_draw_indices:
                     if i == draw_index:
                         siren.draw(surface, font_registry)
+                        siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
 
             move_amt = i / num_waves
             wave = DataFiles.sprites["background"][f"wave{i}"]
@@ -164,7 +166,6 @@ class Background:
             for j in range(num_wave_reps):
                 wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
                 surface.blit(wave, wave_rect)
-
 
 class Drop:
     def __init__(self, item, pos):
@@ -551,8 +552,8 @@ class EncounterMenu:
     def draw(self, surface, font_registry):
         self.background.draw(surface, font_registry, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
 
-        self.menu_manager.player_fleet.draw_battle_component(surface, font_registry, self.vfx_manager)
-        self.menu_manager.siren_fleet.draw_battle_component(surface, font_registry, self.vfx_manager)
+        self.menu_manager.player_fleet.draw_battle_effects(surface, self.vfx_manager)
+        self.menu_manager.siren_fleet.draw_battle_effects(surface, self.vfx_manager)
         self.vfx_manager.draw(surface, font_registry)
 
         self.next_encounter_button.draw(surface, font_registry)

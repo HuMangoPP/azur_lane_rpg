@@ -355,66 +355,111 @@ class ShipgirlBattleComponent:
         shell_rect.center = shell_pos
         surface.blit(shell_sprite, shell_rect)
 
-    def draw(self, surface, font_registry, rect, vfx_manager):
+    def draw_battlestation(self, surface, font_registry, rect):
+        if self.is_player:
+            rigging_sprite = DataFiles.sprites["encounter"]["shipgirl_rigging"]
+            rigging_rect = rigging_sprite.get_rect()
+            rigging_rect.left = rect.left
+            rigging_rect.centery = rect.centery + rigging_rect.height/3
+            battlestation_glow = DataFiles.sprites["encounter"]["shipgirl_battlestation_glow"]
+            battlestation_glow_rect = battlestation_glow.get_rect()
+            battlestation_glow_rect.centerx = rigging_rect.centerx - Box.WIDTH/4
+        else:
+            rigging_sprite = DataFiles.sprites["encounter"]["siren_rigging"]
+            rigging_rect = rigging_sprite.get_rect()
+            rigging_rect.right = rect.right
+            rigging_rect.centery = rect.centery + rigging_rect.height/3
+            battlestation_glow = DataFiles.sprites["encounter"]["siren_battlestation_glow"]
+            battlestation_glow_rect = battlestation_glow.get_rect()
+            battlestation_glow_rect.centerx = rigging_rect.centerx + Box.WIDTH/4
+        battlestation_glow_rect.bottom = rigging_rect.centery
+        surface.blit(rigging_sprite, rigging_rect)
+        surface.blit(battlestation_glow, battlestation_glow_rect, special_flags=pygame.BLEND_RGB_ADD)
+        # TODO cleanup magic numbers
+        if self.is_player:
+            battlestation_surf = pygame.Surface((48 + 64 + 4*Box.PADDING, 48 + 2*Box.PADDING))
+            battlestation_rect = battlestation_surf.get_rect()
+        else:
+            battlestation_surf = pygame.Surface((64 + 2*Box.PADDING, 16 + 2*Box.PADDING))
+            battlestation_rect = battlestation_surf.get_rect()
+        battlestation_rect.midbottom = battlestation_glow_rect.midtop
+        battlestation_surf.fill([c//3 for c in Color.BLUEPRINT_SLOT_BORDER_GLOW])
+        surface.blit(battlestation_surf, battlestation_rect, special_flags=pygame.BLEND_RGB_ADD)
+
+        hp_pct = self.hp / self.stat("max_hp")
+        if hp_pct > 0:
+            hull_sprite = pygame.transform.flip(
+                DataFiles.sprites["encounter"]["hull"],
+                flip_x=not self.is_player, flip_y=False
+            )
+            hull_rect = hull_sprite.get_rect()
+            if self.is_player:
+                hull_rect.right = battlestation_rect.right - Box.PADDING
+                hull_rect.bottom = battlestation_rect.centery - Box.PADDING/2
+            else:
+                hull_rect.centerx = battlestation_rect.centerx
+                hull_rect.centery = battlestation_rect.centery
+            hull_back = pygame.Surface(hull_sprite.get_size())
+            hull_back.fill(Color.EXP_BAR_BG)
+            hull_back.blit(hull_sprite)
+            hull_back.set_colorkey((255,0,0))
+            surface.blit(hull_back, hull_rect)
+            
+            hull_fill = pygame.Surface(hull_sprite.get_size())
+            hull_fill.fill((0, 255, 205) if self.is_player else (255, 0, 50))
+            hull_fill.blit(hull_sprite)
+            missing_hp_rect = get_rect(width=hull_rect.width * (1 - hp_pct), height=hull_rect.height, left=0, top=0)
+            if self.is_player:
+                missing_hp_rect.right = hull_rect.width
+            pygame.draw.rect(hull_fill, (255,0,0), missing_hp_rect)
+            hull_fill.set_colorkey((255,0,0))
+            surface.blit(hull_fill, hull_rect)
+
+        if not self.is_player:
+            return
+        
         bar_width = 64
         bar_height = 8
-        if self.exp_timer > 0:
-            exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
-            bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, bottom=rect.top-Box.PADDING)
-            bar_fill = get_rect(
-                width=bar_width*Stats.level_progress(exp_animation), height=bar_background.height,
-                left=bar_background.left, top=bar_background.top
-            )
-            pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
-            pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
-            pygame.draw.rect(surface, Color.BLACK, bar_background, width=1)
-            star_icon = DataFiles.sprites["encounter"]["star"]
-            star_rect = star_icon.get_rect()
-            star_rect.center = bar_background.midleft
-            surface.blit(star_icon, star_rect)
-            font_registry["big_pixel"].render(
-                surface,
-                str(self.last_level),
-                star_rect.center,
-                Color.WHITE,
-                1,
-                style="center",
-                outline_color=Color.BLACK
-            )
+        exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
+        bar_background = get_rect(
+            width=bar_width, height=bar_height,
+            right=battlestation_rect.right - Box.PADDING,
+            top=battlestation_rect.centery + Box.PADDING/2
+        )
+        bar_fill = get_rect(
+            width=bar_width*Stats.level_progress(exp_animation), height=bar_background.height,
+            left=bar_background.left, top=bar_background.top
+        )
+        pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
+        pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
+        pygame.draw.rect(surface, Color.BLACK, bar_background, width=1)
+        star_icon = DataFiles.sprites["encounter"]["star"]
+        star_rect = star_icon.get_rect()
+        star_rect.center = bar_background.midleft
+        surface.blit(star_icon, star_rect)
+        font_registry["big_pixel"].render(
+            surface,
+            str(self.last_level),
+            star_rect.center,
+            Color.WHITE,
+            1,
+            style="center",
+            outline_color=Color.BLACK
+        )
 
         if self.level_timer > 0:
             t = 1 - self.level_timer
             y = rect.top - rect.height * t
-            font_registry["big_pixel"].render(surface, "level up!", (rect.centerx, y), Color.WHITE, 1, style="center")
-
-        bar_background = get_rect(width=bar_width, height=bar_height, centerx=rect.centerx, top=rect.bottom+Box.PADDING)
-        hp_pct = self.hp / self.stat("max_hp")
-        if hp_pct > 0:
-            bar_fill = get_rect(
-                width=bar_width*hp_pct, height=bar_background.height,
-                left=bar_background.left, top=bar_background.top
-            )
-            bar_color = (50,200,50) if self.is_player > 0.5 else (200,50,50)
-            pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
-            pygame.draw.rect(surface, bar_color, bar_fill)
-            pygame.draw.rect(surface, Color.BLACK, bar_background, width=1)
-
-        if not self.active:
-            return
+            font_registry["big_pixel"].render(surface,"level up!",(rect.centerx, y),Color.WHITE,1,style="center")
         
-        if self.attack_timer > 0:
-            self._draw_attack(surface, rect, vfx_manager)
-
-        if self.evasion_gauge >= 1:
-            self.evasion_smoke.draw(surface, rect)
-
-        if not self.is_player:
-            return
-
         # TODO clean up magic numbers
         inner_radius = 12
         outer_radius = 24
-        center = pygame.Vector2(rect.centerx, rect.top-Box.PADDING-outer_radius)
+        center = (
+            pygame.Vector2(battlestation_rect.topleft)
+            + pygame.Vector2(outer_radius, outer_radius)
+            + pygame.Vector2(Box.PADDING, Box.PADDING)
+        )
         start_angle = -90
         stop_angle = start_angle + (1 - self.cooldown_timer) * 360
         color = (50,200,50) if self.target is not None else (200,50,50)
@@ -431,6 +476,19 @@ class ShipgirlBattleComponent:
         attack_icon_rect.center = center
         surface.blit(attack_icon, attack_icon_rect)
 
+    def draw_effects(self, surface, rect, vfx_manager):
+        if not self.active:
+            return
+        
+        if self.attack_timer > 0:
+            self._draw_attack(surface, rect, vfx_manager)
+
+        if self.evasion_gauge >= 1:
+            self.evasion_smoke.draw(surface, rect)
+
+        if not self.is_player:
+            return
+        
         if self.target is not None:
             dash_length = 8
             dash_width = 2
@@ -454,7 +512,6 @@ class ShipgirlBattleComponent:
                 if (end_pos - curr_pos).length() < 2 * dash_length:
                     break
                 curr_pos += 2 * dash_length * parallel
-
 
 class Shipgirl:
     SPRITE_SIZE = 96 # TODO get this from the actual sprite?
@@ -605,13 +662,13 @@ class PlayerFleet:
             if shipgirl is not None:
                 shipgirl.draw(surface, font_registry)
     
-    def draw_battle_component(self, surface, font_registry, vfx_manager):
+    def draw_battle_effects(self, surface, vfx_manager):
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
-                shipgirl.battle_component.draw(surface, font_registry, shipgirl.rect, vfx_manager)
+                shipgirl.battle_component.draw_effects(surface, shipgirl.rect, vfx_manager)
         for shipgirl in self.backups:
             if shipgirl is not None:
-                shipgirl.battle_component.draw(surface, font_registry, shipgirl.rect, vfx_manager)
+                shipgirl.battle_component.draw_effects(surface, shipgirl.rect, vfx_manager)
 
     def get_draw_indices(self):
         fixed_draw_indices = [1, 3, 5]
@@ -719,6 +776,6 @@ class SirenFleet:
         
         return draw_indices
 
-    def draw_battle_component(self, surface, font_registry, vfx_manager):
+    def draw_battle_effects(self, surface, vfx_manager):
         for siren in self.fleet:
-            siren.battle_component.draw(surface, font_registry, siren.rect, vfx_manager)
+            siren.battle_component.draw_effects(surface, siren.rect, vfx_manager)

@@ -165,6 +165,7 @@ class DataFiles:
 
     sprites = load_sprites()
     sprites["encounter"]["smoke"].set_alpha(128)
+    sprites["encounter"]["hull"].set_colorkey((255,255,255))
     sfx = load_sound(master_file="sfx.json", file_ext="wav")
     bgm = load_sound(master_file="bgm.json", file_ext="ogg")
 
@@ -319,6 +320,50 @@ for y in range(fleet_marker_selection_glow_size[1]):
         (left + cone_width - 1, y)
     )
 DataFiles.sprites["fleet_selection"]["marker_selection_glow"] = fleet_marker_selection_glow
+
+battlestation_glow_top_width = math.ceil(48 + 64 + 3*Box.PADDING)
+battlestation_glow_bottom_width = 2
+battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT/1.5))
+battlestation_glow = pygame.Surface(battlestation_glow_size)
+battlestation_glow_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
+for y in range(battlestation_glow_size[1]):
+    y_ratio = y / (battlestation_glow_size[1] - 1)
+    cone_width = round(
+        battlestation_glow_top_width
+        - (battlestation_glow_top_width - battlestation_glow_bottom_width) * y_ratio
+    )
+    top_blend = min(1, (0.5 + y_ratio)/1.5)
+    glow_color = tuple(math.ceil(c * top_blend) for c in battlestation_glow_color)
+    left = (battlestation_glow_size[0] - cone_width) // 2
+    pygame.draw.line(
+        battlestation_glow,
+        glow_color,
+        (left, y),
+        (left + cone_width - 1, y)
+    )
+DataFiles.sprites["encounter"]["shipgirl_battlestation_glow"] = battlestation_glow
+
+battlestation_glow_top_width = math.ceil(64 + 2*Box.PADDING)
+battlestation_glow_bottom_width = 2
+battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT/1.5))
+battlestation_glow = pygame.Surface(battlestation_glow_size)
+battlestation_glow_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
+for y in range(battlestation_glow_size[1]):
+    y_ratio = y / (battlestation_glow_size[1] - 1)
+    cone_width = round(
+        battlestation_glow_top_width
+        - (battlestation_glow_top_width - battlestation_glow_bottom_width) * y_ratio
+    )
+    top_blend = min(1, (0.5 + y_ratio)/1.5)
+    glow_color = tuple(math.ceil(c * top_blend) for c in battlestation_glow_color)
+    left = (battlestation_glow_size[0] - cone_width) // 2
+    pygame.draw.line(
+        battlestation_glow,
+        glow_color,
+        (left, y),
+        (left + cone_width - 1, y)
+    )
+DataFiles.sprites["encounter"]["siren_battlestation_glow"] = battlestation_glow
 
 lightbulb_light = pygame.Surface((64, 64))
 pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)
