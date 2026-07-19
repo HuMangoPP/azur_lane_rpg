@@ -218,7 +218,8 @@ class EncounterMenu:
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
                 "opacity": 160
-            }
+            },
+            hover_styling={"opacity": 200}
         )
 
         def open_reward_cache():
@@ -283,7 +284,8 @@ class EncounterMenu:
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
                 "opacity": 160
-            }
+            },
+            hover_styling={"opacity": 200}
         )
 
         def retreat():
@@ -306,7 +308,8 @@ class EncounterMenu:
                 "background_color": Color.BLACK,
                 "background_img": button_sprite,
                 "opacity": 160
-            }
+            },
+            hover_styling={"opacity": 200}
         )
 
         self.end_encounter_banner = FleetNameRibbon(
@@ -388,6 +391,10 @@ class EncounterMenu:
 
     def update(self, dt, events):
         for event in events:
+            if event.type == pygame.MOUSEMOTION:
+                self.next_encounter_button.hover(event.pos)
+                self.retreat_button.hover(event.pos)
+                self.return_to_port_button.hover(event.pos)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
                     if (
