@@ -21,6 +21,9 @@ PART_NAMES = [
     "headpiece"
 ]
 
+ANIMATION_NAMES = ["idle", "walk", "attack", "sink"]
+
+
 class Live2DPart:
     def __init__(self, image, pivot):
         self.image = image
@@ -137,11 +140,14 @@ class Live2D:
         "headpiece": "head",
     }
 
-    IDLE_ANIMATION = 0
-    WALK_ANIMATION = 1
+    IDLE_ANIMATION = "idle"
+    WALK_ANIMATION = "walk"
+    ATTACK_ANIMATION = "attack"
+    SINK_ANIMATION = "sink"
 
-    ANIMATION_SPEED = 0.8
+    ANIMATION_SPEED = 1.0
     NUM_FRAMES = 12
+    KEYFRAME_DURATION = 0.25
 
     def __init__(self, model_file):
         self.t = 0
@@ -153,7 +159,7 @@ class Live2D:
 
         self.parts = {}
         for part in PART_NAMES:
-            part_data = self.model_dict[part]
+            part_data = self.model_dict["parts"][part]
             image = cache.parts[model_file][part]
             self.parts[part] = Live2DPart(image, part_data["pivot"])
         
@@ -168,7 +174,7 @@ class Live2D:
     
     def set_offset(self, part, offset):
         if part in self.parts:
-            self.parts[part].offset = offset
+            self.parts[part].offset = pygame.Vector2(offset)
     
     def set_animation(self, animation):
         if self.animation != animation:
@@ -176,34 +182,64 @@ class Live2D:
             self.t = 0
 
     def update(self, dt):
-        self.t = (self.t + self.ANIMATION_SPEED * dt) % 1
-        t = math.radians(360 * self.t)
-        sint = math.sin(t)
-        one_plus_sint = 0.5 * (1 + sint)
-        sint_sq = sint ** 2
-        anim_t = {
-            "sint": sint,
-            "one_plus_sint": one_plus_sint,
-            "sint_sq": sint_sq
-        }
-        if self.animation == self.IDLE_ANIMATION:
-            for part in PART_NAMES:
-                part_data = self.model_dict[part]
-                idle_animation = part_data["idle"]
-                if idle_animation[1] is None:
-                    continue
-                self.set_rotation(part, idle_animation[0] * anim_t[idle_animation[1]])
-            self.set_offset("torso", pygame.Vector2(0, 5 * one_plus_sint))
-        elif self.animation == self.WALK_ANIMATION:
-            for part in PART_NAMES:
-                part_data = self.model_dict[part]
-                walk_animation = part_data["walk"]
-                if walk_animation[1] is None:
-                    continue
-                self.set_rotation(part, walk_animation[0] * anim_t[walk_animation[1]])
-            self.set_offset("torso", pygame.Vector2(0, 5 * sint_sq))
+        keyframes = [keyframe for keyframe in self.model_dict["animations"][self.animation]]
+        if len(keyframes) == 1:
+            self.t = 0
+        else:
+            self.t = (
+                (self.t + self.ANIMATION_SPEED * dt)
+                % (keyframes[-1]["keyframe"] * self.KEYFRAME_DURATION)
+            )
+
+    def update_offset_and_rotation(self):
+        for part in PART_NAMES:
+            keyframes = [
+                keyframe for keyframe in self.model_dict["animations"][self.animation]
+                if part in keyframe
+            ]
+            if not keyframes:
+                self.set_offset(part, [0, 0])
+                self.set_rotation(part, 0)
+                continue
+            
+            if keyframes[0]["keyframe"] != 0:
+                keyframes = (
+                    [{"keyframe": 0, part: {"offset": [0, 0], "rotation": 0}}]
+                    + keyframes
+                )
+
+            keyframe_t = self.t / self.KEYFRAME_DURATION
+            prev_keyframe_index = max(
+                keyframe["keyframe"] for keyframe in keyframes
+                if keyframe["keyframe"] <= keyframe_t
+            )
+            next_keyframe_index = min(
+                keyframe["keyframe"] for keyframe in keyframes
+                if keyframe["keyframe"] >= keyframe_t
+            )
+            if prev_keyframe_index == next_keyframe_index:
+                keyframe = next(keyframe for keyframe in keyframes if keyframe["keyframe"] == prev_keyframe_index)
+                self.set_offset(part, keyframe[part]["offset"])
+                self.set_rotation(part, keyframe[part]["rotation"])
+            else:
+                prev_keyframe = next(keyframe for keyframe in keyframes if keyframe["keyframe"] == prev_keyframe_index)
+                next_keyframe = next(keyframe for keyframe in keyframes if keyframe["keyframe"] == next_keyframe_index)
+                s = (
+                    (keyframe_t - prev_keyframe["keyframe"])
+                    / (next_keyframe["keyframe"] - prev_keyframe["keyframe"])
+                )
+                self.set_offset(
+                    part,
+                    pygame.Vector2(prev_keyframe[part]["offset"]).lerp(pygame.Vector2(next_keyframe[part]["offset"]), s)
+                )
+                self.set_rotation(
+                    part,
+                    (1 - s) * prev_keyframe[part]["rotation"] + s * next_keyframe[part]["rotation"]
+                )
 
     def draw(self, surface, x, y, flipx, alpha=255):
+        self.update_offset_and_rotation()
+
         alpha = int(max(0, min(255, alpha)))
         root = pygame.Vector2(LAYER_SIZE, LAYER_SIZE)
 
