@@ -182,52 +182,53 @@ class Live2D:
             self.t = 0
 
     def update(self, dt):
-        keyframes = [keyframe for keyframe in self.model_dict["animations"][self.animation]]
-        if len(keyframes) == 1:
+        keyframes = self.model_dict["animations"][self.animation]
+        if len(keyframes.keys()) == 1:
             self.t = 0
         else:
+            max_keyframe_index = max(int(keyframe_index) for keyframe_index in keyframes.keys())
             self.t = (
                 (self.t + self.ANIMATION_SPEED * dt)
-                % (keyframes[-1]["keyframe"] * self.KEYFRAME_DURATION)
+                % (max_keyframe_index * self.KEYFRAME_DURATION)
             )
 
     def update_offset_and_rotation(self):
+        master_keyframes = {keyframe_index: keyframe for keyframe_index, keyframe in self.model_dict["animations"][self.animation].items()}
+        for keyframe_index, keyframe in master_keyframes.items():
+            if (copy_index := keyframe.get("copy")) is not None:
+                master_keyframes[keyframe_index] = master_keyframes[copy_index]
+        
         for part in PART_NAMES:
-            keyframes = [
-                keyframe for keyframe in self.model_dict["animations"][self.animation]
-                if part in keyframe
-            ]
+            keyframes = {keyframe_index: keyframe for keyframe_index, keyframe in master_keyframes.items() if part in keyframe}
             if not keyframes:
                 self.set_offset(part, [0, 0])
                 self.set_rotation(part, 0)
                 continue
             
-            if keyframes[0]["keyframe"] != 0:
-                keyframes = (
-                    [{"keyframe": 0, part: {"offset": [0, 0], "rotation": 0}}]
-                    + keyframes
-                )
+            if "0" not in keyframes:
+                keyframes["0"] = {part: {"offset": [0, 0], "rotation": 0}}
 
             keyframe_t = self.t / self.KEYFRAME_DURATION
             prev_keyframe_index = max(
-                keyframe["keyframe"] for keyframe in keyframes
-                if keyframe["keyframe"] <= keyframe_t
+                int(keyframe_index) for keyframe_index in keyframes.keys()
+                if int(keyframe_index) <= keyframe_t
             )
             next_keyframe_index = min(
-                keyframe["keyframe"] for keyframe in keyframes
-                if keyframe["keyframe"] >= keyframe_t
+                int(keyframe_index) for keyframe_index in keyframes.keys()
+                if int(keyframe_index) >= keyframe_t
             )
             if prev_keyframe_index == next_keyframe_index:
-                keyframe = next(keyframe for keyframe in keyframes if keyframe["keyframe"] == prev_keyframe_index)
+                keyframe = keyframes[str(prev_keyframe_index)]
                 self.set_offset(part, keyframe[part]["offset"])
                 self.set_rotation(part, keyframe[part]["rotation"])
             else:
-                prev_keyframe = next(keyframe for keyframe in keyframes if keyframe["keyframe"] == prev_keyframe_index)
-                next_keyframe = next(keyframe for keyframe in keyframes if keyframe["keyframe"] == next_keyframe_index)
+                prev_keyframe = keyframes[str(prev_keyframe_index)]
+                next_keyframe = keyframes[str(next_keyframe_index)]
                 s = (
-                    (keyframe_t - prev_keyframe["keyframe"])
-                    / (next_keyframe["keyframe"] - prev_keyframe["keyframe"])
+                    (keyframe_t - prev_keyframe_index)
+                    / (next_keyframe_index - prev_keyframe_index)
                 )
+                s = (1 + math.sin(math.radians(180) * (s - 0.5))) / 2
                 self.set_offset(
                     part,
                     pygame.Vector2(prev_keyframe[part]["offset"]).lerp(pygame.Vector2(next_keyframe[part]["offset"]), s)

@@ -49,82 +49,103 @@
 		}
 	},
 	"animations": {
-		"idle": [
-			{
-				"keyframe": 0,
-				"right_arm": {
-					"offset": [0, 0],
-					"rotation": 5
-				},
-				"torso": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"left_arm": {
-					"offset": [0, 0],
-					"rotation": -5
-				}
-			},
-			{
-				"keyframe": 2,
-				"right_arm": {
-					"offset": [0, 0],
-					"rotation": 15
-				},
+		"idle": {
+			"0": {
 				"torso": {
 					"offset": [0, 5],
 					"rotation": 0
 				},
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": 10
+				},
+				"right_arm": {
+					"offset": [0, 0],
+					"rotation": 15
+				},
 				"left_arm": {
 					"offset": [0, 0],
 					"rotation": -15
-				}
-			},
-			{
-				"keyframe": 6,
-				"right_arm": {
-					"offset": [0, 0],
-					"rotation": 0
 				},
-				"torso": {
-					"offset": [0.0, -5],
-					"rotation": 0
-				},
-				"left_arm": {
+				"right_leg": {
 					"offset": [0, 0],
-					"rotation": 0
-				}
-			},
-			{
-				"keyframe": 8,
-				"right_arm": {
+					"rotation": 10
+				},
+				"left_leg": {
+					"offset": [0, 0],
+					"rotation": -10
+				},
+				"right_hair": {
 					"offset": [0, 0],
 					"rotation": 5
 				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": -5
+				}
+			},
+			"4": {
 				"torso": {
+					"offset": [0, -5],
+					"rotation": 0
+				},
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": -10
+				},
+				"right_arm": {
 					"offset": [0, 0],
 					"rotation": 0
 				},
 				"left_arm": {
 					"offset": [0, 0],
-					"rotation": -5
+					"rotation": 0
+				},
+				"right_leg": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_leg": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": 0
 				}
+			},
+			"8": {
+				"copy": "0"
 			}
-		],
-		"walk": [
-			{
-				"keyframe": 0
-			}
-		],
-		"attack": [
-			{
-				"keyframe": 0
-			}
-		],
-		"sink": [
-			{
-				"keyframe": 0
-			}
-		]
+		},
+		"walk": {
+			"0": {}
+		},
+		"attack": {
+			"0": {}
+		},
+		"sink": {
+			"0": {}
+		}
 	}
 }
