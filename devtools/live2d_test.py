@@ -1,32 +1,44 @@
+import argparse
+import os
+import sys
+
 import pygame
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from live2d.live2d import Live2D
 
-pygame.init()
-screen = pygame.display.set_mode((200,200))
-clock = pygame.time.Clock()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Preview a shipgirl Live2D animation.")
+    parser.add_argument("shipgirl", help="Shipgirl name, matching live2d/<shipgirl>.json")
+    parser.add_argument("animation_key", help="Animation key, one of [idle, walk, attack, sink]")
+    args = parser.parse_args()
 
-l2d = Live2D("live2d/laffey/model.json")
-l2d.set_animation(Live2D.WALK_ANIMATION)
+    pygame.init()
+    screen = pygame.display.set_mode((200,200))
+    clock = pygame.time.Clock()
 
-running = True
-while running:
-    clock.tick()
-    dt = clock.get_time() / 1000
+    l2d = Live2D(f"live2d/{args.shipgirl}.json")
+    l2d.set_animation(args.animation_key)
 
-    pygame.display.set_caption(f"{clock.get_fps()}")
+    running = True
+    while running:
+        clock.tick()
+        dt = clock.get_time() / 1000
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            running = False
-        
-    l2d.update(dt)
+        pygame.display.set_caption(f"{clock.get_fps()}")
 
-    screen.fill((0,0,0))
-    l2d.draw(screen, 0.5*screen.get_width(), 0.5*screen.get_height(), False)
-    pygame.display.flip()
-
-pygame.quit()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
             
+        l2d.update(dt)
+
+        screen.fill((0,0,0))
+        l2d.draw(screen, 0.5*screen.get_width(), 0.5*screen.get_height(), False)
+        pygame.display.flip()
+
+    pygame.quit()
+                

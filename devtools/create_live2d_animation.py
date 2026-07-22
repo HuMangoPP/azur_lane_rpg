@@ -279,7 +279,7 @@ def draw_timeline(surface, font, selected_keyframe_index, live2d_time):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Preview a shipgirl Live2D animation.")
+    parser = argparse.ArgumentParser(description="Edit a shipgirl Live2D animation.")
     parser.add_argument("shipgirl", help="Shipgirl name, matching live2d/<shipgirl>.json")
     args = parser.parse_args()
 
