@@ -145,7 +145,7 @@ class Live2D:
     ATTACK_ANIMATION = "attack"
     SINK_ANIMATION = "sink"
 
-    ANIMATION_SPEED = 1.0
+    ANIMATION_SPEED = 0.8
     NUM_FRAMES = 12
     KEYFRAME_DURATION = 0.25
 
