@@ -25,6 +25,16 @@ PART_NAMES = [
 
 ANIMATION_NAMES = ["idle", "walk", "attack", "sink"]
 SHARED_ANIMATIONS_FILE = os.path.join(os.path.dirname(__file__), "shared_animations.json")
+KEYFRAMES_KEY = "keyframes"
+NO_LOOP_KEY = "no_loop"
+
+
+def animation_keyframes(animation):
+    return animation.get(KEYFRAMES_KEY, {})
+
+
+def animation_should_not_loop(animation):
+    return animation.get(NO_LOOP_KEY, False) is True
 
 
 def resolve_animation_copies(keyframes):
@@ -53,16 +63,22 @@ def resolve_animation_copies(keyframes):
     return resolved_keyframes
 
 
-def merge_animation_keyframes(shared_keyframes, model_keyframes):
-    merged_keyframes = resolve_animation_copies(shared_keyframes)
-    model_keyframes = resolve_animation_copies(model_keyframes)
+def merge_animations(shared_animation, model_animation):
+    merged_keyframes = resolve_animation_copies(animation_keyframes(shared_animation))
+    resolved_model_keyframes = resolve_animation_copies(animation_keyframes(model_animation))
+    merged_animation = {KEYFRAMES_KEY: merged_keyframes}
 
-    for keyframe_index, model_keyframe in model_keyframes.items():
+    if NO_LOOP_KEY in shared_animation:
+        merged_animation[NO_LOOP_KEY] = shared_animation[NO_LOOP_KEY]
+    if NO_LOOP_KEY in model_animation:
+        merged_animation[NO_LOOP_KEY] = model_animation[NO_LOOP_KEY]
+
+    for keyframe_index, model_keyframe in resolved_model_keyframes.items():
         merged_keyframe = merged_keyframes.setdefault(keyframe_index, {})
         for part, part_animation in model_keyframe.items():
             merged_keyframe[part] = deepcopy(part_animation)
 
-    return merged_keyframes
+    return merged_animation
 
 
 class Live2DPart:
@@ -81,30 +97,20 @@ class Live2DPart:
         else:
             return self.rotation + self.parent_part.get_rotation()
 
-    def get_offset(self):
+    def get_pivot_offset(self):
         if self.parent_part is None:
-            return self.offset
-        else:
-            return self.offset + self.parent_part.get_offset()
+            return self.pivot + self.offset
 
-    def rotate_on_pivot(self):
+        parent_pivot_offset = self.parent_part.get_pivot_offset()
+        parent_rotation = self.parent_part.get_rotation()
+        parent_relative_pivot = self.pivot - self.parent_part.pivot + self.offset
+        return parent_pivot_offset + parent_relative_pivot.rotate(-parent_rotation)
+
+    def draw(self, surface, root_pos, flipx):
         rotation = self.get_rotation()
         rotated = pygame.transform.rotate(self.image, rotation)
         rotated_pivot = self.pivot.rotate(-rotation)
-        return rotated, self.pivot - rotated_pivot
-
-    def align_to_parent(self):
-        if self.parent_part is None:
-            return pygame.Vector2(0,0)
-        else:
-            parent_rel = self.pivot - self.parent_part.pivot
-            rotated_parent_rel = parent_rel.rotate(-self.parent_part.get_rotation())
-            return rotated_parent_rel - parent_rel
-
-    def draw(self, surface, root_pos, flipx):
-        rotated, rotation_offset = self.rotate_on_pivot()
-        parent_offset = self.align_to_parent()
-        draw_offset = rotation_offset + parent_offset + self.get_offset()
+        draw_offset = self.get_pivot_offset() - rotated_pivot
         if flipx:
             rotated = pygame.transform.flip(rotated, True, False)
             draw_offset.x = -draw_offset.x
@@ -237,29 +243,32 @@ class Live2D:
             self.t = 0
 
     def update(self, dt):
-        keyframes = self.animations.get(self.animation, {})
+        animation = self.animations.get(self.animation, {})
+        keyframes = animation_keyframes(animation)
         if len(keyframes.keys()) <= 1:
             self.t = 0
         else:
             max_keyframe_index = max(int(keyframe_index) for keyframe_index in keyframes.keys())
-            self.t = (
-                (self.t + self.ANIMATION_SPEED * dt)
-                % (max_keyframe_index * self.KEYFRAME_DURATION)
-            )
+            duration = max_keyframe_index * self.KEYFRAME_DURATION
+            next_t = self.t + self.ANIMATION_SPEED * dt
+            if animation_should_not_loop(animation):
+                self.t = min(next_t, duration)
+            else:
+                self.t = next_t % duration
 
     def refresh_animations(self):
         shared_animations = cache.get_shared_animations()
         model_animations = self.model_dict.get("animations", {})
         animations = {}
         for animation in set(shared_animations.keys()) | set(model_animations.keys()):
-            animations[animation] = merge_animation_keyframes(
+            animations[animation] = merge_animations(
                 shared_animations.get(animation, {}),
                 model_animations.get(animation, {})
             )
         self.animations = animations
 
     def update_offset_and_rotation(self):
-        master_keyframes = self.animations.get(self.animation, {})
+        master_keyframes = animation_keyframes(self.animations.get(self.animation, {}))
         max_keyframe_index = max((int(keyframe_index) for keyframe_index in master_keyframes.keys()), default=0)
         
         for part in PART_NAMES:

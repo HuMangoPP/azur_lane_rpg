@@ -42,8 +42,7 @@ def model_path_for(shipgirl):
 
 
 def default_keyframe_animation():
-    keyframe = {"keyframe": 0}
-    return {"0": {}}
+    return {"keyframes": {"0": {}}}
 
 
 def default_part_animation():
@@ -105,7 +104,7 @@ def screen_to_model_pos(surface, pos):
 def get_part_pivot_model_pos(live2d, part_name):
     part = live2d.parts[part_name]
     root = pygame.Vector2(LAYER_SIZE, LAYER_SIZE)
-    return root + part.align_to_parent() + part.get_offset() + part.pivot
+    return root + part.get_pivot_offset()
 
 
 def get_part_pivot_pos(surface, live2d, part_name):
@@ -136,7 +135,8 @@ def current_animation_key(animation_index):
 
 
 def get_or_create_keyframe(live2d, part, animation_key, keyframe_index):
-    keyframes = live2d.model_dict["animations"].setdefault(animation_key, default_keyframe_animation())
+    animation = live2d.model_dict["animations"].setdefault(animation_key, default_keyframe_animation())
+    keyframes = animation.setdefault("keyframes", {"0": {}})
 
     if str(keyframe_index) in keyframes:
         keyframe = keyframes[str(keyframe_index)].setdefault(part, default_part_animation())
@@ -150,7 +150,8 @@ def get_or_create_keyframe(live2d, part, animation_key, keyframe_index):
 
 
 def reset_keyframe(live2d, part, animation_key, selected_keyframe_index, edit_mode):
-    keyframes = live2d.model_dict["animations"].setdefault(animation_key, default_keyframe_animation())
+    animation = live2d.model_dict["animations"].setdefault(animation_key, default_keyframe_animation())
+    keyframes = animation.setdefault("keyframes", {"0": {}})
 
     if edit_mode == "rotate":
         keyframe = get_or_create_keyframe(live2d, part, animation_key, selected_keyframe_index)
@@ -162,12 +163,12 @@ def reset_keyframe(live2d, part, animation_key, selected_keyframe_index, edit_mo
         keyframe = keyframes["0"]
         keyframe.pop(part)
     else:
-        live2d.model_dict["animations"][animation_key] = {
+        animation["keyframes"] = {
             keyframe_index: keyframe for keyframe_index, keyframe in keyframes.items()
             if keyframe_index != selected_keyframe_index
         }
-        if not live2d.model_dict["animations"][animation_key]:
-            live2d.model_dict["animations"][animation_key] = default_keyframe_animation()
+        if not animation["keyframes"]:
+            animation["keyframes"] = {"0": {}}
     live2d.refresh_animations()
 
 

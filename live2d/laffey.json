@@ -50,138 +50,142 @@
 	},
 	"animations": {
 		"idle": {
-			"0": {
-				"bangs": {
-					"offset": [0, 0],
-					"rotation": 5
+			"keyframes": {
+				"0": {
+					"bangs": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"left_hair": {
+						"offset": [0, 0],
+						"rotation": -5
+					},
+					"right_bangs": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"left_bangs": {
+						"offset": [0, 0],
+						"rotation": -5
+					}
 				},
-				"right_hair": {
-					"offset": [0, 0],
-					"rotation": 5
+				"2": {
+					"bangs": {
+						"offset": [0, 0],
+						"rotation": -5
+					},
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					},
+					"left_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					},
+					"right_bangs": {
+						"offset": [0, 0],
+						"rotation": 0
+					},
+					"left_bangs": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
 				},
-				"left_hair": {
-					"offset": [0, 0],
-					"rotation": -5
-				},
-				"right_bangs": {
-					"offset": [0, 0],
-					"rotation": 5
-				},
-				"left_bangs": {
-					"offset": [0, 0],
-					"rotation": -5
+				"4": {
+					"copy": "0"
 				}
-			},
-			"2": {
-				"bangs": {
-					"offset": [0, 0],
-					"rotation": -5
-				},
-				"right_hair": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"left_hair": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"right_bangs": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"left_bangs": {
-					"offset": [0, 0],
-					"rotation": 0
-				}
-			},
-			"4": {
-				"copy": "0"
 			}
 		},
 		"walk": {
-			"0": {
-				"bangs": {
-					"offset": [0, 0],
-					"rotation": 5
+			"keyframes": {
+				"0": {
+					"bangs": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"left_hair": {
+						"offset": [0, 0],
+						"rotation": -5
+					},
+					"right_bangs": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"left_bangs": {
+						"offset": [0, 0],
+						"rotation": -5
+					}
 				},
-				"back_torso": {
-					"offset": [0, 0],
-					"rotation": 5
+				"1": {
+					"bangs": {
+						"offset": [0, 0],
+						"rotation": 0
+					},
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": 0
+					},
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					},
+					"left_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					},
+					"right_bangs": {
+						"offset": [0, 0],
+						"rotation": 0
+					},
+					"left_bangs": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
 				},
-				"right_hair": {
-					"offset": [0, 0],
-					"rotation": 5
+				"2": {
+					"bangs": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"left_hair": {
+						"offset": [0, 0],
+						"rotation": -5
+					},
+					"right_bangs": {
+						"offset": [0, 0],
+						"rotation": 5
+					},
+					"left_bangs": {
+						"offset": [0, 0],
+						"rotation": -5
+					}
 				},
-				"left_hair": {
-					"offset": [0, 0],
-					"rotation": -5
+				"3": {
+					"copy": "1"
 				},
-				"right_bangs": {
-					"offset": [0, 0],
-					"rotation": 5
-				},
-				"left_bangs": {
-					"offset": [0, 0],
-					"rotation": -5
+				"4": {
+					"copy": "0"
 				}
-			},
-			"1": {
-				"bangs": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"back_torso": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"right_hair": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"left_hair": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"right_bangs": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"left_bangs": {
-					"offset": [0, 0],
-					"rotation": 0
-				}
-			},
-			"2": {
-				"bangs": {
-					"offset": [0, 0],
-					"rotation": 5
-				},
-				"back_torso": {
-					"offset": [0, 0],
-					"rotation": 5
-				},
-				"right_hair": {
-					"offset": [0, 0],
-					"rotation": 5
-				},
-				"left_hair": {
-					"offset": [0, 0],
-					"rotation": -5
-				},
-				"right_bangs": {
-					"offset": [0, 0],
-					"rotation": 5
-				},
-				"left_bangs": {
-					"offset": [0, 0],
-					"rotation": -5
-				}
-			},
-			"3": {
-				"copy": "1"
-			},
-			"4": {
-				"copy": "0"
 			}
 		}
 	}

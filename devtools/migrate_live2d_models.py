@@ -21,6 +21,10 @@ PART_NAMES = [
     "back_hair",
     "headpiece",
 ]
+
+ANIMATION_METADATA_KEYS = {"keyframes", "no_loop"}
+
+
 def load_json(path):
     with path.open("r") as f:
         return json.load(f)
@@ -34,6 +38,34 @@ def save_json(path, data):
 
 def is_model_file(data):
     return isinstance(data, dict) and "spritesheet" in data
+
+
+def migrate_animation(animation):
+    if not isinstance(animation, dict):
+        return {"keyframes": {"0": {}}}
+
+    migrated = {}
+    keyframes = animation.get("keyframes")
+    if not isinstance(keyframes, dict):
+        keyframes = {
+            key: value for key, value in animation.items()
+            if key not in ANIMATION_METADATA_KEYS
+        }
+
+    migrated["keyframes"] = keyframes
+    if "no_loop" in animation:
+        migrated["no_loop"] = animation["no_loop"]
+    return migrated
+
+
+def migrate_animations(animations):
+    if not isinstance(animations, dict):
+        return {}
+
+    return {
+        animation_key: migrate_animation(animation)
+        for animation_key, animation in animations.items()
+    }
 
 
 def migrate_model(data):
@@ -56,9 +88,7 @@ def migrate_model(data):
         parts[part_name] = {"pivot": part_data.get("pivot", [0, 0])}
 
     migrated["parts"] = parts
-    migrated["animations"] = data.get("animations", {})
-    if not isinstance(migrated["animations"], dict):
-        migrated["animations"] = {}
+    migrated["animations"] = migrate_animations(data.get("animations", {}))
 
     return migrated
 
@@ -85,6 +115,12 @@ def needs_migration(data):
         part_data = data.get(part_name)
         if isinstance(part_data, dict) and "pivot" in part_data:
             return True
+
+    animations = data.get("animations")
+    if isinstance(animations, dict):
+        for animation in animations.values():
+            if isinstance(animation, dict) and "keyframes" not in animation:
+                return True
 
     return False
 
