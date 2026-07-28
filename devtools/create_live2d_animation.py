@@ -162,10 +162,12 @@ def get_or_create_keyframe(live2d, part, animation_key, keyframe_index):
 
     if str(keyframe_index) in keyframes:
         keyframe = keyframes[str(keyframe_index)].setdefault(part, default_part_animation())
+        live2d.refresh_animations()
         return keyframe[part]
 
     keyframe = {part: default_part_animation()}
     keyframes[str(keyframe_index)] = keyframe
+    live2d.refresh_animations()
     return keyframe[part]
 
 
@@ -188,16 +190,19 @@ def reset_keyframe(live2d, part, animation_key, selected_keyframe_index, edit_mo
         }
         if not live2d.model_dict["animations"][animation_key]:
             live2d.model_dict["animations"][animation_key] = default_keyframe_animation()
+    live2d.refresh_animations()
 
 
 def set_part_keyframe_offset(live2d, part, keyframe, offset):
     keyframe.setdefault(part, default_part_animation())
     keyframe[part]["offset"] = [offset.x, offset.y]
+    live2d.refresh_animations()
 
 
 def set_part_keyframe_rotation(live2d, part, keyframe, rotation):
     keyframe.setdefault(part, default_part_animation())
     keyframe[part]["rotation"] = rotation
+    live2d.refresh_animations()
 
 
 def draw_text(surface, font, text, pos, color=TEXT_COLOR):

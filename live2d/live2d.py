@@ -1,5 +1,7 @@
 import json
 import math
+import os
+from copy import deepcopy
 import pygame
 
 LAYER_SIZE = 96
@@ -22,6 +24,45 @@ PART_NAMES = [
 ]
 
 ANIMATION_NAMES = ["idle", "walk", "attack", "sink"]
+SHARED_ANIMATIONS_FILE = os.path.join(os.path.dirname(__file__), "shared_animations.json")
+
+
+def resolve_animation_copies(keyframes):
+    resolved_keyframes = {}
+
+    def resolve_keyframe(keyframe_index, seen=None):
+        if keyframe_index in resolved_keyframes:
+            return deepcopy(resolved_keyframes[keyframe_index])
+
+        # Infinite loop guard
+        if seen is None:
+            seen = set()
+        if keyframe_index in seen:
+            return {}
+        seen.add(keyframe_index)
+
+        keyframe = keyframes.get(keyframe_index, {})
+        if (copy_index := keyframe.get("copy")) is not None:
+            resolved_keyframes[keyframe_index] = resolve_keyframe(copy_index, seen)
+        else:
+            resolved_keyframes[keyframe_index] = deepcopy(keyframe)
+        return deepcopy(resolved_keyframes[keyframe_index])
+
+    for keyframe_index in keyframes:
+        resolve_keyframe(keyframe_index)
+    return resolved_keyframes
+
+
+def merge_animation_keyframes(shared_keyframes, model_keyframes):
+    merged_keyframes = resolve_animation_copies(shared_keyframes)
+    model_keyframes = resolve_animation_copies(model_keyframes)
+
+    for keyframe_index, model_keyframe in model_keyframes.items():
+        merged_keyframe = merged_keyframes.setdefault(keyframe_index, {})
+        for part, part_animation in model_keyframe.items():
+            merged_keyframe[part] = deepcopy(part_animation)
+
+    return merged_keyframes
 
 
 class Live2DPart:
@@ -75,6 +116,19 @@ class Cache:
     def __init__(self):
         self.model_dicts = {}
         self.parts = {}
+        self.shared_animations = None
+
+    def get_shared_animations(self):
+        if self.shared_animations is not None:
+            return self.shared_animations
+
+        if not os.path.exists(SHARED_ANIMATIONS_FILE):
+            self.shared_animations = {}
+            return self.shared_animations
+
+        with open(SHARED_ANIMATIONS_FILE) as f:
+            self.shared_animations = json.load(f)
+        return self.shared_animations
 
     def get_model_dict(self, model_file):
         if model_file in self.model_dicts:
@@ -156,6 +210,7 @@ class Live2D:
         self.animation = self.IDLE_ANIMATION
 
         self.model_dict = cache.get_model_dict(model_file)
+        self.refresh_animations()
 
         self.parts = {}
         for part in PART_NAMES:
@@ -182,8 +237,8 @@ class Live2D:
             self.t = 0
 
     def update(self, dt):
-        keyframes = self.model_dict["animations"][self.animation]
-        if len(keyframes.keys()) == 1:
+        keyframes = self.animations.get(self.animation, {})
+        if len(keyframes.keys()) <= 1:
             self.t = 0
         else:
             max_keyframe_index = max(int(keyframe_index) for keyframe_index in keyframes.keys())
@@ -192,14 +247,27 @@ class Live2D:
                 % (max_keyframe_index * self.KEYFRAME_DURATION)
             )
 
+    def refresh_animations(self):
+        shared_animations = cache.get_shared_animations()
+        model_animations = self.model_dict.get("animations", {})
+        animations = {}
+        for animation in set(shared_animations.keys()) | set(model_animations.keys()):
+            animations[animation] = merge_animation_keyframes(
+                shared_animations.get(animation, {}),
+                model_animations.get(animation, {})
+            )
+        self.animations = animations
+
     def update_offset_and_rotation(self):
-        master_keyframes = {keyframe_index: keyframe for keyframe_index, keyframe in self.model_dict["animations"][self.animation].items()}
-        for keyframe_index, keyframe in master_keyframes.items():
-            if (copy_index := keyframe.get("copy")) is not None:
-                master_keyframes[keyframe_index] = master_keyframes[copy_index]
+        master_keyframes = self.animations.get(self.animation, {})
+        max_keyframe_index = max((int(keyframe_index) for keyframe_index in master_keyframes.keys()), default=0)
         
         for part in PART_NAMES:
-            keyframes = {keyframe_index: keyframe for keyframe_index, keyframe in master_keyframes.items() if part in keyframe}
+            keyframes = {
+                keyframe_index: keyframe
+                for keyframe_index, keyframe in master_keyframes.items()
+                if part in keyframe
+            }
             if not keyframes:
                 self.set_offset(part, [0, 0])
                 self.set_rotation(part, 0)
@@ -207,6 +275,8 @@ class Live2D:
             
             if "0" not in keyframes:
                 keyframes["0"] = {part: {"offset": [0, 0], "rotation": 0}}
+            if str(max_keyframe_index) not in keyframes:
+                keyframes[str(max_keyframe_index)] = {part: deepcopy(keyframes["0"][part])}
 
             keyframe_t = self.t / self.KEYFRAME_DURATION
             prev_keyframe_index = max(

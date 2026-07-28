@@ -51,29 +51,9 @@
 	"animations": {
 		"idle": {
 			"0": {
-				"torso": {
-					"offset": [0, 5],
-					"rotation": 0
-				},
 				"bangs": {
 					"offset": [0, 0],
 					"rotation": 5
-				},
-				"right_arm": {
-					"offset": [0, 0],
-					"rotation": 15
-				},
-				"left_arm": {
-					"offset": [0, 0],
-					"rotation": -15
-				},
-				"right_leg": {
-					"offset": [0, 0],
-					"rotation": 10
-				},
-				"left_leg": {
-					"offset": [0, 0],
-					"rotation": -10
 				},
 				"right_hair": {
 					"offset": [0, 0],
@@ -93,29 +73,9 @@
 				}
 			},
 			"2": {
-				"torso": {
-					"offset": [0, -5],
-					"rotation": 0
-				},
 				"bangs": {
 					"offset": [0, 0],
 					"rotation": -5
-				},
-				"right_arm": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"left_arm": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"right_leg": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
-				"left_leg": {
-					"offset": [0, 0],
-					"rotation": 0
 				},
 				"right_hair": {
 					"offset": [0, 0],
@@ -140,10 +100,6 @@
 		},
 		"walk": {
 			"0": {
-				"torso": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
 				"bangs": {
 					"offset": [0, 0],
 					"rotation": 5
@@ -167,29 +123,9 @@
 				"left_bangs": {
 					"offset": [0, 0],
 					"rotation": -5
-				},
-				"right_arm": {
-					"offset": [0, 0],
-					"rotation": -15
-				},
-				"left_arm": {
-					"offset": [0, 0],
-					"rotation": 15
-				},
-				"right_leg": {
-					"offset": [0, 0],
-					"rotation": 30
-				},
-				"left_leg": {
-					"offset": [0, 0],
-					"rotation": -30
 				}
 			},
 			"1": {
-				"torso": {
-					"offset": [0, -8],
-					"rotation": 0
-				},
 				"bangs": {
 					"offset": [0, 0],
 					"rotation": 0
@@ -216,10 +152,6 @@
 				}
 			},
 			"2": {
-				"torso": {
-					"offset": [0, 0],
-					"rotation": 0
-				},
 				"bangs": {
 					"offset": [0, 0],
 					"rotation": 5
@@ -243,22 +175,6 @@
 				"left_bangs": {
 					"offset": [0, 0],
 					"rotation": -5
-				},
-				"right_arm": {
-					"offset": [0, 0],
-					"rotation": 15
-				},
-				"left_arm": {
-					"offset": [0, 0],
-					"rotation": -15
-				},
-				"right_leg": {
-					"offset": [0, 0],
-					"rotation": -30
-				},
-				"left_leg": {
-					"offset": [0, 0],
-					"rotation": 30
 				}
 			},
 			"3": {
@@ -267,12 +183,6 @@
 			"4": {
 				"copy": "0"
 			}
-		},
-		"attack": {
-			"0": {}
-		},
-		"sink": {
-			"0": {}
 		}
 	}
 }
