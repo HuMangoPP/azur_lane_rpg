@@ -1,79 +1,52 @@
 {
 	"spritesheet": "live2d/explorer.png",
 	"colorkey": [255, 0, 0],
-	"back_torso": {
-		"pivot": [34, 42],
-		"idle": [0, null],
-		"walk": [0, null]
+	"parts": {
+		"bangs": {
+			"pivot": [42, 23]
+		},
+		"right_bangs": {
+			"pivot": [61, 24]
+		},
+		"right_hair": {
+			"pivot": [65, 23]
+		},
+		"left_bangs": {
+			"pivot": [31, 26]
+		},
+		"top_head": {
+			"pivot": [45, 20]
+		},
+		"head": {
+			"pivot": [45, 51]
+		},
+		"right_arm": {
+			"pivot": [53, 54]
+		},
+		"torso": {
+			"pivot": [45, 60]
+		},
+		"left_arm": {
+			"pivot": [40, 54]
+		},
+		"right_leg": {
+			"pivot": [51, 70]
+		},
+		"left_leg": {
+			"pivot": [42, 70]
+		},
+		"left_hair": {
+			"pivot": [32, 23]
+		},
+		"back_torso": {
+			"pivot": [34, 42]
+		},
+		"back_hair": {
+			"pivot": [48, 24]
+		},
+		"headpiece": {
+			"pivot": [0, 0]
+		}
 	},
-	"left_leg": {
-		"pivot": [42, 70],
-		"idle": [-10, "one_plus_sint"],
-		"walk": [30, "sint"]
-	},
-	"right_leg": {
-		"pivot": [51, 70],
-		"idle": [10, "one_plus_sint"],
-		"walk": [-30, "sint"]
-	},
-	"torso": {
-		"pivot": [45, 60],
-		"idle": [0, null],
-		"walk": [0, null]
-	},
-	"left_arm": {
-		"pivot": [40, 54],
-		"idle": [-15, "one_plus_sint"],
-		"walk": [-15, "sint"]
-	},
-	"right_arm": {
-		"pivot": [53, 54],
-		"idle": [15, "one_plus_sint"],
-		"walk": [15, "sint"]
-	},
-	"back_hair": {
-		"pivot": [48, 24],
-		"idle": [0, null],
-		"walk": [-5, "sint"]
-	},
-	"head": {
-		"pivot": [45, 51],
-		"idle": [0, null],
-		"walk": [0, null]
-	},
-	"top_head": {
-		"pivot": [45, 20],
-		"idle": [0, null],
-		"walk": [0, null]
-	},
-	"left_hair": {
-		"pivot": [32, 23],
-		"idle": [-5, "one_plus_sint"],
-		"walk": [-5, "sint_sq"]
-	},
-	"left_bangs": {
-		"pivot": [31, 26],
-		"idle": [-5, "one_plus_sint"],
-		"walk": [-5, "sint_sq"]
-	},
-	"right_hair": {
-		"pivot": [65, 23],
-		"idle": [5, "one_plus_sint"],
-		"walk": [5, "sint_sq"]
-	},
-	"right_bangs": {
-		"pivot": [61, 24],
-		"idle": [5, "one_plus_sint"],
-		"walk": [5, "sint_sq"]
-	},
-	"bangs": {
-		"pivot": [42, 23],
-		"idle": [5, "sint"],
-		"walk": [5, "sint_sq"]
-	},
-	"headpiece": {
-		"pivot": [0, 0],
-		"idle": [0, null],
-		"walk": [0, null]
-	}
+	"animations": {}
 }

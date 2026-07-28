@@ -1,0 +1,136 @@
+import argparse
+import json
+from pathlib import Path
+
+
+MODEL_DIR = Path("live2d")
+PART_NAMES = [
+    "bangs",
+    "right_bangs",
+    "right_hair",
+    "left_bangs",
+    "top_head",
+    "head",
+    "right_arm",
+    "torso",
+    "left_arm",
+    "right_leg",
+    "left_leg",
+    "left_hair",
+    "back_torso",
+    "back_hair",
+    "headpiece",
+]
+def load_json(path):
+    with path.open("r") as f:
+        return json.load(f)
+
+
+def save_json(path, data):
+    with path.open("w") as f:
+        json.dump(data, f, indent=4)
+        f.write("\n")
+
+
+def is_model_file(data):
+    return isinstance(data, dict) and "spritesheet" in data
+
+
+def migrate_model(data):
+    migrated = {}
+
+    for key, value in data.items():
+        if key in PART_NAMES or key in {"parts", "animations"}:
+            continue
+        migrated[key] = value
+
+    existing_parts = data.get("parts", {})
+    if not isinstance(existing_parts, dict):
+        existing_parts = {}
+
+    parts = {}
+    for part_name in PART_NAMES:
+        part_data = existing_parts.get(part_name, data.get(part_name, {}))
+        if not isinstance(part_data, dict):
+            part_data = {}
+        parts[part_name] = {"pivot": part_data.get("pivot", [0, 0])}
+
+    migrated["parts"] = parts
+    migrated["animations"] = data.get("animations", {})
+    if not isinstance(migrated["animations"], dict):
+        migrated["animations"] = {}
+
+    return migrated
+
+
+def needs_migration(data):
+    if not is_model_file(data):
+        return False
+
+    if "parts" not in data or "animations" not in data:
+        return True
+
+    parts = data.get("parts")
+    if not isinstance(parts, dict):
+        return True
+
+    for part_name in PART_NAMES:
+        part_data = parts.get(part_name)
+        if not isinstance(part_data, dict):
+            return True
+        if set(part_data.keys()) != {"pivot"}:
+            return True
+
+    for part_name in PART_NAMES:
+        part_data = data.get(part_name)
+        if isinstance(part_data, dict) and "pivot" in part_data:
+            return True
+
+    return False
+
+
+def migrate_file(path, dry_run=False):
+    data = load_json(path)
+    if not is_model_file(data):
+        return "skipped"
+    if not needs_migration(data):
+        return "unchanged"
+
+    if not dry_run:
+        save_json(path, migrate_model(data))
+    return "migrated"
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Migrate Live2D model JSON files to the parts/animations schema."
+    )
+    parser.add_argument(
+        "--model-dir",
+        default=MODEL_DIR,
+        type=Path,
+        help="Directory containing Live2D JSON files.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print what would be migrated without writing files.",
+    )
+    args = parser.parse_args()
+
+    counts = {"migrated": 0, "unchanged": 0, "skipped": 0}
+    for path in sorted(args.model_dir.glob("*.json")):
+        status = migrate_file(path, args.dry_run)
+        counts[status] += 1
+        print(f"{status}: {path}")
+
+    print(
+        "Done: "
+        f"{counts['migrated']} migrated, "
+        f"{counts['unchanged']} unchanged, "
+        f"{counts['skipped']} skipped."
+    )
+
+
+if __name__ == "__main__":
+    main()

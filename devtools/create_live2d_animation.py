@@ -3,12 +3,14 @@ import json
 import math
 import os
 import sys
+from pathlib import Path
 
 import pygame
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from live2d.live2d import LAYER_SIZE, PART_NAMES, Live2D
+from migrate_live2d_models import migrate_file
 
 
 ANIMATIONS = [
@@ -46,30 +48,6 @@ def default_keyframe_animation():
 
 def default_part_animation():
     return {"offset": [0, 0], "rotation": 0}
-
-
-def migrate_model(model_path):
-    with open(model_path, "r") as f:
-        model = json.load(f)
-
-    if "parts" in model and "animations" in model:
-        return
-
-    migrated = {
-        "spritesheet": model["spritesheet"],
-        "colorkey": model["colorkey"],
-        "parts": {},
-        "animations": {},
-    }
-
-    for part in PART_NAMES:
-        part_data = model.get(part, {})
-        migrated["parts"][part] = {"pivot": part_data.get("pivot", [0, 0])}
-
-    for animation_key in ANIMATIONS:
-        migrated["animations"][animation_key] = default_keyframe_animation()
-    
-    save_model(model_path, migrated)
 
 
 def save_model(model_path, model):
@@ -291,7 +269,7 @@ def main():
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Could not find Live2D model: {model_path}")
 
-    migrate_model(model_path)
+    migrate_file(Path(model_path))
 
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
