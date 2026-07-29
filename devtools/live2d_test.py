@@ -36,7 +36,7 @@ if __name__ == "__main__":
             
         l2d.update(dt)
 
-        screen.fill((0,0,0))
+        screen.fill((255,0,0))
         l2d.draw(screen, 0.5*screen.get_width(), 0.5*screen.get_height(), False)
         pygame.display.flip()
 

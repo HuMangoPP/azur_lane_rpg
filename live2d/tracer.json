@@ -48,5 +48,33 @@
 			"pivot": [0, 0]
 		}
 	},
-	"animations": {}
+	"animations": {
+		"idle": {
+			"keyframes": {
+				"0": {
+					"right_hair": {
+					"offset": [0, 0],
+					"rotation": 10
+					},
+					"left_hair": {
+						"offset": [0, 0],
+						"rotation": -10
+					}
+				},
+				"2": {
+					"right_hair": {
+					"offset": [0, 0],
+					"rotation": -5
+					},
+					"left_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"4": {
+					"copy": "0"
+				}
+			}
+		}
+	}
 }

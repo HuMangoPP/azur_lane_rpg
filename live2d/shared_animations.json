@@ -21,6 +21,30 @@
 				"left_leg": {
 					"offset": [0, 0],
 					"rotation": -10
+				},
+				"right_hair": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"back_torso": {
+					"offset": [0, 0],
+					"rotation": 5
 				}
 			},
 			"2": {
@@ -41,6 +65,30 @@
 					"rotation": 0
 				},
 				"left_leg": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"back_torso": {
 					"offset": [0, 0],
 					"rotation": 0
 				}
