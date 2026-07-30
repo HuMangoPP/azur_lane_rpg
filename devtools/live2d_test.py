@@ -33,6 +33,8 @@ if __name__ == "__main__":
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                l2d.t = 0
             
         l2d.update(dt)
 
