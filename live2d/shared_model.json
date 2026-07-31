@@ -1,0 +1,29 @@
+{
+    "top_head": {
+        "pivot": [0, 0]
+    },
+    "head": {
+        "pivot": [45, 51]
+    },
+    "right_arm": {
+        "pivot": [54, 55]
+    },
+    "torso": {
+        "pivot": [45, 60]
+    },
+    "left_arm": {
+        "pivot": [40, 55]
+    },
+    "right_thigh": {
+        "pivot": [51, 70]
+    },
+    "left_thigh": {
+        "pivot": [42, 70]
+    },
+    "left_leg": {
+        "pivot": [42, 75]
+    },
+    "right_leg": {
+        "pivot": [51, 75]
+    }
+}

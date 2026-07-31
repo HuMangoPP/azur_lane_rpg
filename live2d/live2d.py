@@ -15,15 +15,18 @@ PART_NAMES = [
     "right_arm",
     "torso",
     "left_arm",
-    "right_leg",
-    "left_leg",
+    "right_thigh",
+    "left_thigh",
     "left_hair",
     "back_torso",
     "back_hair",
-    "headpiece"
+    "headpiece",
+    "left_leg",
+    "right_leg",
 ]
 
 ANIMATION_NAMES = ["idle", "walk", "attack", "sink"]
+SHARED_MODEL_FILE = os.path.join(os.path.dirname(__file__), "shared_model.json")
 SHARED_ANIMATIONS_FILE = os.path.join(os.path.dirname(__file__), "shared_animations.json")
 KEYFRAMES_KEY = "keyframes"
 NO_LOOP_KEY = "no_loop"
@@ -81,6 +84,23 @@ def merge_animations(shared_animation, model_animation):
     return merged_animation
 
 
+def model_parts(model_dict):
+    parts = model_dict.get("parts", {})
+    if isinstance(parts, dict):
+        return parts
+    return {}
+
+
+def merge_model_parts(shared_parts, model_specific_parts):
+    merged_parts = {}
+    for part in PART_NAMES:
+        part_data = {"pivot": [0, 0]}
+        part_data.update(deepcopy(shared_parts.get(part, {})))
+        part_data.update(deepcopy(model_specific_parts.get(part, {})))
+        merged_parts[part] = part_data
+    return merged_parts
+
+
 class Live2DPart:
     def __init__(self, image, pivot):
         self.image = image
@@ -122,7 +142,21 @@ class Cache:
     def __init__(self):
         self.model_dicts = {}
         self.parts = {}
+        self.shared_model_parts = None
         self.shared_animations = None
+
+    def get_shared_model_parts(self):
+        if self.shared_model_parts is not None:
+            return self.shared_model_parts
+
+        if not os.path.exists(SHARED_MODEL_FILE):
+            self.shared_model_parts = {}
+            return self.shared_model_parts
+
+        with open(SHARED_MODEL_FILE) as f:
+            shared_model = json.load(f)
+        self.shared_model_parts = model_parts(shared_model) or shared_model
+        return self.shared_model_parts
 
     def get_shared_animations(self):
         if self.shared_animations is not None:
@@ -161,13 +195,19 @@ class Cache:
 
         return model_dict
 
+    def get_resolved_model_parts(self, model_file):
+        model_dict = self.get_model_dict(model_file)
+        return merge_model_parts(self.get_shared_model_parts(), model_parts(model_dict))
+
 cache = Cache()
 
 class Live2D:
     DRAW_ORDER = [
         "back_hair",
         "back_torso",
+        "left_thigh",
         "left_leg",
+        "right_thigh",
         "right_leg",
         "left_hair",
         "left_arm",
@@ -185,8 +225,10 @@ class Live2D:
     CONNECTIONS = {
         "back_hair": "head",
         "back_torso": "torso",
-        "left_leg": "torso",
-        "right_leg": "torso",
+        "left_thigh": "torso",
+        "left_leg": "left_thigh",
+        "right_thigh": "torso",
+        "right_leg": "right_thigh",
         "torso": None,
         "left_arm": "torso",
         "head": "torso",
@@ -216,11 +258,12 @@ class Live2D:
         self.animation = self.IDLE_ANIMATION
 
         self.model_dict = cache.get_model_dict(model_file)
+        self.model_parts = cache.get_resolved_model_parts(model_file)
         self.refresh_animations()
 
         self.parts = {}
         for part in PART_NAMES:
-            part_data = self.model_dict["parts"][part]
+            part_data = self.model_parts[part]
             image = cache.parts[model_file][part]
             self.parts[part] = Live2DPart(image, part_data["pivot"])
         

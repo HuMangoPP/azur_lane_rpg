@@ -1,26 +1,14 @@
+import os
+import sys
 import argparse
 import json
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from live2d.live2d import PART_NAMES
 
 MODEL_DIR = Path("live2d")
-PART_NAMES = [
-    "bangs",
-    "right_bangs",
-    "right_hair",
-    "left_bangs",
-    "top_head",
-    "head",
-    "right_arm",
-    "torso",
-    "left_arm",
-    "right_leg",
-    "left_leg",
-    "left_hair",
-    "back_torso",
-    "back_hair",
-    "headpiece",
-]
 
 ANIMATION_METADATA_KEYS = {"keyframes", "no_loop"}
 

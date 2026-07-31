@@ -14,27 +14,6 @@
 		"left_bangs": {
 			"pivot": [29, 24]
 		},
-		"top_head": {
-			"pivot": [45, 20]
-		},
-		"head": {
-			"pivot": [45, 51]
-		},
-		"right_arm": {
-			"pivot": [53, 54]
-		},
-		"torso": {
-			"pivot": [45, 60]
-		},
-		"left_arm": {
-			"pivot": [40, 54]
-		},
-		"right_leg": {
-			"pivot": [51, 70]
-		},
-		"left_leg": {
-			"pivot": [42, 70]
-		},
 		"left_hair": {
 			"pivot": [26, 21]
 		},

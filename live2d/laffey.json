@@ -9,37 +9,16 @@
 			"pivot": [65, 20]
 		},
 		"right_hair": {
-			"pivot": [55, 23]
+			"pivot": [67, 22]
 		},
 		"left_bangs": {
 			"pivot": [34, 23]
 		},
-		"top_head": {
-			"pivot": [45, 20]
-		},
-		"head": {
-			"pivot": [45, 51]
-		},
-		"right_arm": {
-			"pivot": [53, 54]
-		},
-		"torso": {
-			"pivot": [45, 60]
-		},
-		"left_arm": {
-			"pivot": [40, 54]
-		},
-		"right_leg": {
-			"pivot": [51, 70]
-		},
-		"left_leg": {
-			"pivot": [42, 70]
-		},
 		"left_hair": {
-			"pivot": [28, 20]
+			"pivot": [28, 23]
 		},
 		"back_torso": {
-			"pivot": [34, 42]
+			"pivot": [47, 64]
 		},
 		"back_hair": {
 			"pivot": [0, 0]

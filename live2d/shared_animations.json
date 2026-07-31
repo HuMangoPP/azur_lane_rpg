@@ -14,11 +14,11 @@
 					"offset": [0, 0],
 					"rotation": -15
 				},
-				"right_leg": {
+				"right_thigh": {
 					"offset": [0, 0],
 					"rotation": 10
 				},
-				"left_leg": {
+				"left_thigh": {
 					"offset": [0, 0],
 					"rotation": -10
 				},
@@ -60,11 +60,11 @@
 					"offset": [0, 0],
 					"rotation": 0
 				},
-				"right_leg": {
+				"right_thigh": {
 					"offset": [0, 0],
 					"rotation": 0
 				},
-				"left_leg": {
+				"left_thigh": {
 					"offset": [0, 0],
 					"rotation": 0
 				},
@@ -113,11 +113,11 @@
 					"offset": [0, 0],
 					"rotation": 15
 				},
-				"right_leg": {
+				"right_thigh": {
 					"offset": [0, 0],
 					"rotation": 30
 				},
-				"left_leg": {
+				"left_thigh": {
 					"offset": [0, 0],
 					"rotation": -30
 				},
@@ -173,11 +173,11 @@
 					"offset": [0, 0],
 					"rotation": -15
 				},
-				"right_leg": {
+				"right_thigh": {
 					"offset": [0, 0],
 					"rotation": -30
 				},
-				"left_leg": {
+				"left_thigh": {
 					"offset": [0, 0],
 					"rotation": 30
 				},
@@ -233,11 +233,11 @@
 					"offset": [0, 0],
 					"rotation": 0
 				},
-				"right_leg": {
+				"right_thigh": {
 					"offset": [0, 0],
 					"rotation": 0
 				},
-				"left_leg": {
+				"left_thigh": {
 					"offset": [0, 0],
 					"rotation": 0
 				},
@@ -287,11 +287,11 @@
 					"offset": [0, 0],
 					"rotation": -120
 				},
-				"right_leg": {
+				"right_thigh": {
 					"offset": [0, 0],
 					"rotation": 15
 				},
-				"left_leg": {
+				"left_thigh": {
 					"offset": [0, 0],
 					"rotation": 5
 				},
@@ -341,11 +341,11 @@
 					"offset": [0, 0],
 					"rotation": 15
 				},
-				"right_leg": {
+				"right_thigh": {
 					"offset": [0, 0],
 					"rotation": 30
 				},
-				"left_leg": {
+				"left_thigh": {
 					"offset": [0, 0],
 					"rotation": 0
 				},

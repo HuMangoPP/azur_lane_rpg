@@ -1,36 +1,22 @@
+import os
 import sys
 import math
 import pygame
 
-parts = [
-    "bangs",
-    "right_bangs",
-    "right_hair",
-    "left_bangs",
-    "top_head",
-    "head",
-    "right_arm",
-    "torso",
-    "left_arm",
-    "right_leg",
-    "left_leg",
-    "left_hair",
-    "back_torso",
-    "back_hair",
-    "headpiece"
-]
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from live2d.live2d import LAYER_SIZE, PART_NAMES
 
 pygame.init()
 
 screen = pygame.display.set_mode((100,100))
 
-layer_size = 96
 num_layers_per_row = 4
-spritesheet = pygame.Surface((layer_size * num_layers_per_row, layer_size * math.ceil(len(parts) / num_layers_per_row)))
+spritesheet = pygame.Surface((LAYER_SIZE * num_layers_per_row, LAYER_SIZE * math.ceil(len(PART_NAMES) / num_layers_per_row)))
 spritesheet.fill((255,0,0))
-for i, part in enumerate(parts):
-    x = (i % num_layers_per_row) * layer_size
-    y = (i // num_layers_per_row) * layer_size
+for i, part in enumerate(PART_NAMES):
+    x = (i % num_layers_per_row) * LAYER_SIZE
+    y = (i // num_layers_per_row) * LAYER_SIZE
     layer = pygame.image.load(f"assets/l2d_files/{part}.png").convert()
     spritesheet.blit(layer, (x, y))
 
