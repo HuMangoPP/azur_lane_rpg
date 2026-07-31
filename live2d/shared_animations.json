@@ -117,9 +117,17 @@
 					"offset": [0, 0],
 					"rotation": 30
 				},
+				"right_leg": {
+					"offset": [0, 0],
+					"rotation": 10
+				},
 				"left_thigh": {
 					"offset": [0, 0],
 					"rotation": -30
+				},
+				"left_leg": {
+					"offset": [0, 0],
+					"rotation": 0
 				},
 				"bangs": {
 					"offset": [0, 0],
@@ -158,6 +166,14 @@
 				"torso": {
 					"offset": [0, -5],
 					"rotation": 0
+				},
+				"right_leg": {
+					"offset": [0, 0],
+					"rotation": 30
+				},
+				"left_leg": {
+					"offset": [0, 0],
+					"rotation": 0
 				}
 			},
 			"2": {
@@ -177,9 +193,17 @@
 					"offset": [0, 0],
 					"rotation": -30
 				},
+				"right_leg": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
 				"left_thigh": {
 					"offset": [0, 0],
 					"rotation": 30
+				},
+				"left_leg": {
+					"offset": [0, 0],
+					"rotation": 15
 				},
 				"bangs": {
 					"offset": [0, 0],
@@ -215,7 +239,18 @@
 				}
 			},
 			"3": {
-				"copy": "1"
+				"torso": {
+					"offset": [0, -5],
+					"rotation": 0
+				},
+				"right_leg": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_leg": {
+					"offset": [0, 0],
+					"rotation": 45
+				}
 			},
 			"4": {
 				"copy": "0"
