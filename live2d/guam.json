@@ -48,5 +48,16 @@
 			"pivot": [0, 0]
 		}
 	},
-	"animations": {}
+	"animations": {
+		"attack": {
+			"keyframes": {
+				"4": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": -30
+					}
+				}
+			}
+		}
+	}
 }
