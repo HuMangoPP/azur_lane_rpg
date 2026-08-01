@@ -244,27 +244,28 @@ class EncounterMenu:
         )
 
         def return_to_port():
-            new_sortie_progress = self.current_sortie + 1
-            if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
-                DataFiles.save_file["sortie_progress"] = new_sortie_progress
-                if new_sortie_progress == 3:
-                    self.menu_manager.quest_manager.quests[craft_weapon_quest.quest_id] = craft_weapon_quest
-                    DataFiles.save_file["quests"][craft_weapon_quest.quest_id] = "new"
-                if new_sortie_progress == 4:
-                    self.menu_manager.quest_manager.quests[buy_decoration_quest.quest_id] = buy_decoration_quest
-                    DataFiles.save_file["quests"][buy_decoration_quest.quest_id] = "new"
+            if self.end_encounter_banner.text == "victory":
+                new_sortie_progress = self.current_sortie + 1
+                if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
+                    DataFiles.save_file["sortie_progress"] = new_sortie_progress
+                    if new_sortie_progress == 3:
+                        self.menu_manager.quest_manager.quests[craft_weapon_quest.quest_id] = craft_weapon_quest
+                        DataFiles.save_file["quests"][craft_weapon_quest.quest_id] = "new"
+                    if new_sortie_progress == 4:
+                        self.menu_manager.quest_manager.quests[buy_decoration_quest.quest_id] = buy_decoration_quest
+                        DataFiles.save_file["quests"][buy_decoration_quest.quest_id] = "new"
 
-            new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
-            if DataFiles.save_file["chapter_progress"] < new_chapter_progress:
-                DataFiles.save_file["chapter_progress"] = new_chapter_progress
-                self.menu_manager.sortie_selection_menu.fogs[new_chapter_progress].disperse = True
-            
-            self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
-            self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True
-            self.menu_manager.port_menu.update_encountered_sirens()
-            
-            for drop in self.drops:
-                DataFiles.save_file["inventory"][drop.item] = DataFiles.save_file["inventory"].get(drop.item, 0) + 1
+                new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
+                if DataFiles.save_file["chapter_progress"] < new_chapter_progress:
+                    DataFiles.save_file["chapter_progress"] = new_chapter_progress
+                    self.menu_manager.sortie_selection_menu.fogs[new_chapter_progress].disperse = True
+                
+                self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
+                self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True
+                self.menu_manager.port_menu.update_encountered_sirens()
+                
+                for drop in self.drops:
+                    DataFiles.save_file["inventory"][drop.item] = DataFiles.save_file["inventory"].get(drop.item, 0) + 1
 
             self.menu_manager.current_menu = self.menu_manager.port_menu
             DataFiles.sfx["waves"].fadeout(3000)
@@ -312,10 +313,7 @@ class EncounterMenu:
             hover_styling={"opacity": 200}
         )
 
-        self.end_encounter_banner = FleetNameRibbon(
-            pygame.Vector2(screen_x(0.5), screen_y(0.1)),
-            "victory"
-        )
+        self.end_encounter_banner = FleetNameRibbon(pygame.Vector2(screen_x(0.5), screen_y(0.1)), "")
         self.encounter_end_flag = True
 
         self.drops = []
@@ -530,6 +528,7 @@ class EncounterMenu:
         if self.encounter_end_flag:
             if not self.menu_manager.player_fleet.afloat:
                 self.encounter_end_flag = False
+                self.end_encounter_banner.text = "defeat"
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()
                 self.return_to_port_button.active = True
@@ -537,6 +536,7 @@ class EncounterMenu:
 
             if not self.menu_manager.siren_fleet.afloat:
                 self.encounter_end_flag = False
+                self.end_encounter_banner.text = "victory"
                 for siren in self.menu_manager.siren_fleet.fleet:
                     siren_reward_exp = Stats.stat(
                         siren.battle_component.exp,
@@ -617,11 +617,7 @@ class EncounterMenu:
                 style="center"
             )
         
-        if self.next_encounter_button.active:
-            if not self.menu_manager.player_fleet.afloat:
-                self.end_encounter_banner.text = "defeat"
-            else:
-                self.end_encounter_banner.text = "victory"
+        if self.end_encounter_banner.text:
             self.end_encounter_banner.draw(surface, font_registry)
 
         mpos = pygame.mouse.get_pos()

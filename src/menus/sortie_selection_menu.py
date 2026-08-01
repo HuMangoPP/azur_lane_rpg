@@ -636,6 +636,21 @@ class SortieSelectionMenu:
         
         for location_ribbon in self.sea_location_labels:
             location_ribbon.draw(surface, font_registry)
+
+        self.background.draw_markings(surface, font_registry)
+        
+        current_sortie_node = next(
+            (
+                sortie_node for sortie_node in self.sortie_nodes
+                if sortie_node.unlocked and not sortie_node.cleared
+            ),
+            None
+        )
+        if current_sortie_node is not None:
+            arrow = DataFiles.sprites["sortie_selection"]["arrow"]
+            arrow_rect = arrow.get_rect()
+            arrow_rect.midbottom = current_sortie_node.get_bounding_rect().midtop
+            surface.blit(arrow, arrow_rect)
         
         if self.selected_sortie_node is not None:
             pygame.draw.rect(surface, Color.BLACK, self.selected_sortie_info_panel)
@@ -682,21 +697,5 @@ class SortieSelectionMenu:
                 surface.blit(DataFiles.get_entity_sprite(reward), rect)
                 count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
                 font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-
-        self.background.draw_markings(surface, font_registry)
-
-        current_sortie_node = next(
-            (
-                sortie_node for sortie_node in self.sortie_nodes
-                if sortie_node.unlocked and not sortie_node.cleared
-            ),
-            None
-        )
-        if current_sortie_node is not None:
-            arrow = DataFiles.sprites["sortie_selection"]["arrow"]
-            arrow_rect = arrow.get_rect()
-            arrow_rect.midbottom = current_sortie_node.get_bounding_rect().midtop
-            surface.blit(arrow, arrow_rect)
-
 
         self.exit_sortie_selection_menu_button.draw(surface, font_registry)

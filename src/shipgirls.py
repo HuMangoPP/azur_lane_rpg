@@ -374,6 +374,9 @@ class ShipgirlBattleComponent:
         surface.blit(shell_sprite, shell_rect)
 
     def draw_battlestation(self, surface, font_registry, rect):
+        if self.hp <= 0:
+            return
+
         if self.is_player:
             rigging_sprite = DataFiles.sprites["encounter"]["shipgirl_rigging"]
             rigging_rect = rigging_sprite.get_rect()
@@ -405,33 +408,32 @@ class ShipgirlBattleComponent:
         surface.blit(battlestation_surf, battlestation_rect, special_flags=pygame.BLEND_RGB_ADD)
 
         hp_pct = self.hp / self.stat("max_hp")
-        if hp_pct > 0:
-            hull_sprite = pygame.transform.flip(
-                DataFiles.sprites["encounter"]["hull"],
-                flip_x=not self.is_player, flip_y=False
-            )
-            hull_rect = hull_sprite.get_rect()
-            if self.is_player:
-                hull_rect.right = battlestation_rect.right - Box.PADDING
-                hull_rect.bottom = battlestation_rect.centery - Box.PADDING/2
-            else:
-                hull_rect.centerx = battlestation_rect.centerx
-                hull_rect.centery = battlestation_rect.centery
-            hull_back = pygame.Surface(hull_sprite.get_size())
-            hull_back.fill(Color.EXP_BAR_BG)
-            hull_back.blit(hull_sprite)
-            hull_back.set_colorkey((255,0,0))
-            surface.blit(hull_back, hull_rect)
-            
-            hull_fill = pygame.Surface(hull_sprite.get_size())
-            hull_fill.fill((0, 255, 205) if self.is_player else (255, 0, 50))
-            hull_fill.blit(hull_sprite)
-            missing_hp_rect = get_rect(width=hull_rect.width * (1 - hp_pct), height=hull_rect.height, left=0, top=0)
-            if self.is_player:
-                missing_hp_rect.right = hull_rect.width
-            pygame.draw.rect(hull_fill, (255,0,0), missing_hp_rect)
-            hull_fill.set_colorkey((255,0,0))
-            surface.blit(hull_fill, hull_rect)
+        hull_sprite = pygame.transform.flip(
+            DataFiles.sprites["encounter"]["hull"],
+            flip_x=not self.is_player, flip_y=False
+        )
+        hull_rect = hull_sprite.get_rect()
+        if self.is_player:
+            hull_rect.right = battlestation_rect.right - Box.PADDING
+            hull_rect.bottom = battlestation_rect.centery - Box.PADDING/2
+        else:
+            hull_rect.centerx = battlestation_rect.centerx
+            hull_rect.centery = battlestation_rect.centery
+        hull_back = pygame.Surface(hull_sprite.get_size())
+        hull_back.fill(Color.EXP_BAR_BG)
+        hull_back.blit(hull_sprite)
+        hull_back.set_colorkey((255,0,0))
+        surface.blit(hull_back, hull_rect)
+        
+        hull_fill = pygame.Surface(hull_sprite.get_size())
+        hull_fill.fill((0, 255, 205) if self.is_player else (255, 0, 50))
+        hull_fill.blit(hull_sprite)
+        missing_hp_rect = get_rect(width=hull_rect.width * (1 - hp_pct), height=hull_rect.height, left=0, top=0)
+        if self.is_player:
+            missing_hp_rect.right = hull_rect.width
+        pygame.draw.rect(hull_fill, (255,0,0), missing_hp_rect)
+        hull_fill.set_colorkey((255,0,0))
+        surface.blit(hull_fill, hull_rect)
 
         if not self.is_player:
             return
@@ -604,7 +606,10 @@ class PlayerFleet:
     
     @property
     def afloat(self):
-        return any(shipgirl is not None and shipgirl.battle_component.hp > 0 for shipgirl in self.shipgirls)
+        return any(
+            shipgirl is not None and shipgirl.battle_component.hp > 0
+            for shipgirl in self.shipgirls + self.backups
+        )
 
     @property
     def primary_fleet_size(self):
@@ -668,6 +673,7 @@ class PlayerFleet:
             if shipgirl is not None:
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
+                    shipgirl.sprite.set_animation(Live2D.SINK_ANIMATION)
                 shipgirl.battle_component.update(dt, shipgirl.rect, None, vfx_manager)
 
                 shipgirl.animate(dt)
@@ -759,6 +765,7 @@ class SirenFleet:
         for siren in self.fleet:
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
+                siren.sprite.set_animation(Live2D.SINK_ANIMATION)
             elif siren.battle_component.target is None:
                 if siren.battle_component.target_pref == "highest_hp":
                     siren.battle_component.target = menu_manager.player_fleet.highest_hp

@@ -1,6 +1,6 @@
 {
 	"DD": {
-		"max_hp": [64, 8],
+		"max_hp": [8, 8],
 		"evasion": [220, 22],
 		"firepower": [4, 2],
 		"reload": [250, 25]
