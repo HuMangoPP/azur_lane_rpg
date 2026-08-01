@@ -18,8 +18,19 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((200,200))
     clock = pygame.time.Clock()
 
-    l2d = Live2D(f"live2d/{args.shipgirl}.json")
-    l2d.set_animation(args.animation_key)
+    index = 0
+    if args.shipgirl == "all":
+        l2ds = [
+            Live2D(f"live2d/{filename[:-4]}.json")
+            for filename in os.listdir("live2d/")
+            if filename.endswith(".png")
+        ]
+        for l2d in l2ds:
+            l2d.set_animation(args.animation_key)
+    else:
+        l2ds = [Live2D(f"live2d/{args.shipgirl}.json")]
+        l2ds[0].set_animation(args.animation_key)
+    l2d = l2ds[index]
 
     running = True
     while running:
@@ -35,6 +46,17 @@ if __name__ == "__main__":
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 l2d.t = 0
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                if event.key == pygame.K_r:
+                    l2d.t = 0
+                if event.key == pygame.K_LEFT:
+                    index = (index - 1) % len(l2ds)
+                    l2d = l2ds[index]
+                if event.key == pygame.K_RIGHT:
+                    index = (index + 1) % len(l2ds)
+                    l2d = l2ds[index]
             
         l2d.update(dt)
 

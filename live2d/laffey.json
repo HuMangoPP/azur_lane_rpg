@@ -37,6 +37,16 @@
 					}
 				}
 			}
-		}
+		},
+		"sink": {
+            "keyframes": {
+                "3": {
+                    "back_torso": {
+                        "offset": [0, 0],
+                        "rotation": 60
+                    }
+                }
+            }
+        }
 	}
 }

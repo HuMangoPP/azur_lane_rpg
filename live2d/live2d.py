@@ -312,7 +312,6 @@ class Live2D:
 
     def update_offset_and_rotation(self):
         master_keyframes = animation_keyframes(self.animations.get(self.animation, {}))
-        max_keyframe_index = max((int(keyframe_index) for keyframe_index in master_keyframes.keys()), default=0)
         
         for part in PART_NAMES:
             keyframes = {
@@ -327,8 +326,6 @@ class Live2D:
             
             if "0" not in keyframes:
                 keyframes["0"] = {part: {"offset": [0, 0], "rotation": 0}}
-            if str(max_keyframe_index) not in keyframes:
-                keyframes[str(max_keyframe_index)] = {part: deepcopy(keyframes["0"][part])}
 
             keyframe_t = self.t / self.KEYFRAME_DURATION
             prev_keyframe_index = max(
@@ -336,8 +333,11 @@ class Live2D:
                 if int(keyframe_index) <= keyframe_t
             )
             next_keyframe_index = min(
-                int(keyframe_index) for keyframe_index in keyframes.keys()
-                if int(keyframe_index) >= keyframe_t
+                (
+                    int(keyframe_index) for keyframe_index in keyframes.keys()
+                    if int(keyframe_index) >= keyframe_t
+                ),
+                default=prev_keyframe_index
             )
             if prev_keyframe_index == next_keyframe_index:
                 keyframe = keyframes[str(prev_keyframe_index)]
