@@ -44,9 +44,10 @@ class DummyTarget:
         self.rect = menu_manager.fleet_selection_menu.fleet_slots[1]
 
 class ShipgirlBattleComponent:
-    SHELL_SPEED = 800
-    TORPEDO_SPEED = 200
-    AIRCRAFT_SPEED = 150
+    SHELL_SPEED = 1000
+    TORPEDO_SPEED = 100
+    AIRCRAFT_SPEED = 100
+    SONAR_DISTANCE = 250
 
     def __init__(self, name, is_player):
         self.active = False
@@ -229,6 +230,18 @@ class ShipgirlBattleComponent:
         vfx_manager.spawn_splash_impact(target.rect.center)
         return False, True
 
+    def _spawn_sfx(self):
+        if self.hull_type == "CV":
+            DataFiles.sfx["aircraft"].play()
+            return
+        if self.hull_type == "SS":
+            return
+
+        DataFiles.sfx["boom"].play()
+        zip = DataFiles.sfx["zip"]
+        zip.play(fade_ms=1000)
+        zip.fadeout(1000)
+
     def update(self, dt, rect, fleet, vfx_manager):
         self.shake_time = max(0, self.shake_time - dt)
 
@@ -264,7 +277,11 @@ class ShipgirlBattleComponent:
             target_pos = pygame.Vector2(self.target.rect.center)
             relpos = target_pos - start_pos
             distance = relpos.length()
+            old_distance = self.attack_timer * distance
             self.attack_timer = max(0, self.attack_timer - self.attack_speed()/distance*dt)
+            new_distance = self.attack_timer * distance
+            if self.hull_type in ["SS", "CV"] and old_distance > self.SONAR_DISTANCE >= new_distance:
+                DataFiles.sfx["sonar"].play()
             if self.attack_timer <= 0:
                 if self.target_pref == "all":
                     for shipgirl in fleet.shipgirls:
@@ -293,11 +310,8 @@ class ShipgirlBattleComponent:
 
             self.attack_timer = 1
             self.cooldown_timer = 1
-            DataFiles.sfx["boom"].play()
 
-            zip = DataFiles.sfx["zip"]
-            zip.play(fade_ms=1000)
-            zip.fadeout(1000)
+            self._spawn_sfx()
 
     def _draw_attack(self, surface, rect, vfx_manager):
         t = 1 - self.attack_timer
@@ -306,8 +320,11 @@ class ShipgirlBattleComponent:
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)
             relpos = target_pos - start_pos
-            aircraft_relpos = screen_x(1) * relpos.normalize()
-            distance_ratio = 0.5 * relpos.length() / aircraft_relpos.length()
+            direction = relpos.normalize()
+
+            aircraft_relpos = screen_x(1) * direction
+            torpedo_launch_pos = target_pos - self.SONAR_DISTANCE * direction
+            distance_ratio = (torpedo_launch_pos - start_pos).length() / aircraft_relpos.length()
             aircraft_sprite = pygame.transform.flip(
                 DataFiles.sprites["encounter"]["aircraft"],
                 flip_x=relpos.x < 0,
@@ -317,6 +334,7 @@ class ShipgirlBattleComponent:
             aircraft_height = 128 / (1 + math.exp(-20 * (t-distance_ratio-0.1)))
             aircraft_rect.center = start_pos + aircraft_relpos * t - pygame.Vector2(0, aircraft_height)
             surface.blit(aircraft_sprite, aircraft_rect)
+
 
             if t < distance_ratio:
                 return
