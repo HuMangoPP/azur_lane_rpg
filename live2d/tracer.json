@@ -71,7 +71,7 @@
 		},
 		"attack": {
 			"keyframes": {
-				"4": {
+				"3": {
 					"right_hair": {
 						"offset": [0, 0],
 						"rotation": -30

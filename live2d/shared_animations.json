@@ -259,7 +259,7 @@
 	},
 	"attack": {
 		"keyframes": {
-			"1": {
+			"0": {
 				"right_arm": {
 					"offset": [0, 0],
 					"rotation": 0
@@ -271,6 +271,10 @@
 				"right_thigh": {
 					"offset": [0, 0],
 					"rotation": 0
+				},
+				"right_leg": {
+					"offset": [0, 0],
+					"rotation": 15
 				},
 				"left_thigh": {
 					"offset": [0, 0],
@@ -313,7 +317,7 @@
 					"rotation": 0
 				}
 			},
-			"3": {
+			"2": {
 				"right_arm": {
 					"offset": [0, 0],
 					"rotation": 30
@@ -325,6 +329,10 @@
 				"right_thigh": {
 					"offset": [0, 0],
 					"rotation": 15
+				},
+				"right_leg": {
+					"offset": [0, 0],
+					"rotation": 30
 				},
 				"left_thigh": {
 					"offset": [0, 0],
@@ -367,7 +375,7 @@
 					"rotation": 0
 				}
 			},
-			"4": {
+			"3": {
 				"right_arm": {
 					"offset": [0, 0],
 					"rotation": 30
@@ -378,7 +386,11 @@
 				},
 				"right_thigh": {
 					"offset": [0, 0],
-					"rotation": 30
+					"rotation": 45
+				},
+				"right_leg": {
+					"offset": [0, 0],
+					"rotation": 45
 				},
 				"left_thigh": {
 					"offset": [0, 0],
@@ -410,7 +422,7 @@
 				},
 				"torso": {
 					"offset": [0, 0],
-					"rotation": 5
+					"rotation": 15
 				},
 				"head": {
 					"offset": [0, 0],
@@ -418,7 +430,7 @@
 				},
 				"back_torso": {
 					"offset": [0, 0],
-					"rotation": 15
+					"rotation": 10
 				}
 			},
 			"5": {
