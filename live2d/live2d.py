@@ -299,6 +299,15 @@ class Live2D:
             else:
                 self.t = next_t % duration
 
+    def animation_is_at_end(self):
+        animation = self.animations.get(self.animation, {})
+        if animation_should_not_loop(animation):
+            keyframes = animation_keyframes(animation)
+            max_keyframe_index = max(int(keyframe_index) for keyframe_index in keyframes.keys())
+            duration = max_keyframe_index * self.KEYFRAME_DURATION
+            return self.t == duration
+        return False
+
     def refresh_animations(self):
         shared_animations = cache.get_shared_animations()
         model_animations = self.model_dict.get("animations", {})

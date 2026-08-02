@@ -258,6 +258,7 @@
 		}
 	},
 	"attack": {
+		"no_loop": true,
 		"keyframes": {
 			"0": {
 				"right_arm": {

@@ -81,6 +81,7 @@ class ShipgirlBattleComponent:
 
         self.hp = self.stat("max_hp")
         self.cooldown_timer = 1
+        self.attack_animation = False
         self.attack_timer = 0
         self.target = None
         self.evasion_gauge = 0
@@ -125,6 +126,8 @@ class ShipgirlBattleComponent:
     def reset(self):
         self.hp = self.stat("max_hp")
         self.cooldown_timer = 1
+        self.attack_animation = False
+        self.attack_timer = 0
         self.target = None
         self.evasion_gauge = 0
         self.ignite_timer = 0
@@ -242,6 +245,18 @@ class ShipgirlBattleComponent:
         zip.play(fade_ms=1000)
         zip.fadeout(1000)
 
+    def attack(self, rect, vfx_manager):
+        if not self.attack_animation:
+            return
+        self.cooldown_timer = 1
+        self.attack_animation = False
+        self.attack_timer = 1
+
+        self._spawn_attacking_effects(rect, vfx_manager)
+        self.shake()
+
+        self._spawn_sfx()
+
     def update(self, dt, rect, fleet, vfx_manager):
         self.shake_time = max(0, self.shake_time - dt)
 
@@ -271,6 +286,9 @@ class ShipgirlBattleComponent:
         
         if self.evasion_gauge >= 1:
             self.evasion_smoke.update(dt)
+
+        if self.attack_animation:
+            return
 
         if self.attack_timer > 0:
             start_pos = pygame.Vector2(rect.center)
@@ -305,13 +323,7 @@ class ShipgirlBattleComponent:
         
         self.cooldown_timer = max(0, self.cooldown_timer - self.stat("reload")/1000*dt)
         if self.target is not None and self.cooldown_timer <= 0:
-            self._spawn_attacking_effects(rect, vfx_manager)
-            self.shake()
-
-            self.attack_timer = 1
-            self.cooldown_timer = 1
-
-            self._spawn_sfx()
+            self.attack_animation = True
 
     def _draw_attack(self, surface, rect, vfx_manager):
         t = 1 - self.attack_timer
@@ -674,6 +686,15 @@ class PlayerFleet:
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
                     shipgirl.sprite.set_animation(Live2D.SINK_ANIMATION)
+                elif shipgirl.battle_component.attack_animation:
+                    shipgirl.sprite.set_animation(Live2D.ATTACK_ANIMATION)
+                    if shipgirl.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
+                        shipgirl.battle_component.attack(shipgirl.rect, vfx_manager)
+                elif (
+                    shipgirl.sprite.animation == Live2D.ATTACK_ANIMATION
+                    and shipgirl.sprite.animation_is_at_end()
+                ):
+                    shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
                 shipgirl.battle_component.update(dt, shipgirl.rect, None, vfx_manager)
 
                 shipgirl.animate(dt)
@@ -766,7 +787,17 @@ class SirenFleet:
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
                 siren.sprite.set_animation(Live2D.SINK_ANIMATION)
-            elif siren.battle_component.target is None:
+            elif siren.battle_component.attack_animation:
+                siren.sprite.set_animation(Live2D.ATTACK_ANIMATION)
+                if siren.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
+                    siren.battle_component.attack(siren.rect, vfx_manager)
+            elif (
+                siren.sprite.animation == Live2D.ATTACK_ANIMATION
+                and siren.sprite.animation_is_at_end()
+            ):
+                siren.sprite.set_animation(Live2D.IDLE_ANIMATION)
+
+            if siren.battle_component.target is None:
                 if siren.battle_component.target_pref == "highest_hp":
                     siren.battle_component.target = menu_manager.player_fleet.highest_hp
                 elif siren.battle_component.target_pref == "all":
