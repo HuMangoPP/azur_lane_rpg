@@ -577,6 +577,9 @@ class Shipgirl:
         return self.name
 
     def update(self, dt):
+        if self.sprite.animation == Live2D.BOUNCE_ANIMATION:
+            return
+        
         if self.dragged or self.interacting_decoration is not None:
             self.sprite.set_animation(Live2D.IDLE_ANIMATION)
             return
@@ -690,11 +693,6 @@ class PlayerFleet:
                     shipgirl.sprite.set_animation(Live2D.ATTACK_ANIMATION)
                     if shipgirl.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
                         shipgirl.battle_component.attack(shipgirl.rect, vfx_manager)
-                elif (
-                    shipgirl.sprite.animation == Live2D.ATTACK_ANIMATION
-                    and shipgirl.sprite.animation_is_at_end()
-                ):
-                    shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
                 shipgirl.battle_component.update(dt, shipgirl.rect, None, vfx_manager)
 
                 shipgirl.animate(dt)
@@ -791,10 +789,6 @@ class SirenFleet:
                 siren.sprite.set_animation(Live2D.ATTACK_ANIMATION)
                 if siren.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
                     siren.battle_component.attack(siren.rect, vfx_manager)
-            elif (
-                siren.sprite.animation == Live2D.ATTACK_ANIMATION
-                and siren.sprite.animation_is_at_end()
-            ):
                 siren.sprite.set_animation(Live2D.IDLE_ANIMATION)
 
             if siren.battle_component.target is None:

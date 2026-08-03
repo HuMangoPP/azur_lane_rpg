@@ -1,5 +1,115 @@
 {
 	"idle": {
+		"keyframe_duration": 0.6,
+		"keyframes": {
+			"0": {
+				"torso": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_arm": {
+					"offset": [0, 0],
+					"rotation": 15
+				},
+				"left_arm": {
+					"offset": [0, 0],
+					"rotation": -15
+				},
+				"right_thigh": {
+					"offset": [0, 0],
+					"rotation": 10
+				},
+				"left_thigh": {
+					"offset": [0, 0],
+					"rotation": -10
+				},
+				"right_hair": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"back_torso": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"back_hair": {
+					"offset": [0, 0],
+					"rotation": -5
+				}
+			},
+			"1": {
+				"torso": {
+					"offset": [0, -8],
+					"rotation": 0
+				},
+				"right_arm": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_arm": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_thigh": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_thigh": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"back_torso": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"back_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				}
+			},
+			"2": {
+				"copy": "0"
+			}
+		}
+	},
+	"bounce": {
+		"keyframe_duration": 0.1,
+		"next_animation": "idle",
 		"keyframes": {
 			"0": {
 				"torso": {
@@ -47,7 +157,7 @@
 					"rotation": 5
 				}
 			},
-			"2": {
+			"1": {
 				"torso": {
 					"offset": [0, -8],
 					"rotation": 0
@@ -93,7 +203,19 @@
 					"rotation": 0
 				}
 			},
+			"2": {
+				"copy": "0"
+			},
+			"3": {
+				"copy": "1"
+			},
 			"4": {
+				"copy": "0"
+			},
+			"5": {
+				"copy": "1"
+			},
+			"6": {
 				"copy": "0"
 			}
 		}
@@ -258,7 +380,7 @@
 		}
 	},
 	"attack": {
-		"no_loop": true,
+		"next_animation": "idle",
 		"keyframes": {
 			"0": {
 				"right_arm": {

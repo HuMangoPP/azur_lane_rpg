@@ -6,6 +6,7 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, Decorations
 from src.shipgirls import Shipgirl
+from live2d.live2d import Live2D
 
 def get_decoration_tiles(decoration, direction, tilepos_anchor):
     decoration_info = DataFiles.decoration_store[decoration][direction]
@@ -712,6 +713,7 @@ class PortMenu:
                         DataFiles.sfx["click"].play()
                         self.hovered_shipgirl = shipgirl
                         self.hovered_shipgirl.dragged = True
+                        self.hovered_shipgirl.sprite.set_animation(Live2D.BOUNCE_ANIMATION)
                         self.position_shipgirl_dialogue_options()
                         for option in self.shipgirl_dialogue_options:
                             option.active = True

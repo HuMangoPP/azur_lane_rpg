@@ -25,19 +25,16 @@ PART_NAMES = [
     "right_leg",
 ]
 
-ANIMATION_NAMES = ["idle", "walk", "attack", "sink"]
 SHARED_MODEL_FILE = os.path.join(os.path.dirname(__file__), "shared_model.json")
 SHARED_ANIMATIONS_FILE = os.path.join(os.path.dirname(__file__), "shared_animations.json")
+KEYFRAME_DURATION_KEY = "keyframe_duration"
 KEYFRAMES_KEY = "keyframes"
 NO_LOOP_KEY = "no_loop"
+NEXT_ANIMATION_KEY = "next_animation"
 
 
 def animation_keyframes(animation):
     return animation.get(KEYFRAMES_KEY, {})
-
-
-def animation_should_not_loop(animation):
-    return animation.get(NO_LOOP_KEY, False) is True
 
 
 def resolve_animation_copies(keyframes):
@@ -71,10 +68,11 @@ def merge_animations(shared_animation, model_animation):
     resolved_model_keyframes = resolve_animation_copies(animation_keyframes(model_animation))
     merged_animation = {KEYFRAMES_KEY: merged_keyframes}
 
-    if NO_LOOP_KEY in shared_animation:
-        merged_animation[NO_LOOP_KEY] = shared_animation[NO_LOOP_KEY]
-    if NO_LOOP_KEY in model_animation:
-        merged_animation[NO_LOOP_KEY] = model_animation[NO_LOOP_KEY]
+    for meta_keys in [NO_LOOP_KEY, NEXT_ANIMATION_KEY, KEYFRAME_DURATION_KEY]:
+        if meta_keys in shared_animation:
+            merged_animation[meta_keys] = shared_animation[meta_keys]
+        if meta_keys in model_animation:
+            merged_animation[meta_keys] = model_animation[meta_keys]
 
     for keyframe_index, model_keyframe in resolved_model_keyframes.items():
         merged_keyframe = merged_keyframes.setdefault(keyframe_index, {})
@@ -243,13 +241,14 @@ class Live2D:
     }
 
     IDLE_ANIMATION = "idle"
+    BOUNCE_ANIMATION = "bounce"
     WALK_ANIMATION = "walk"
     ATTACK_ANIMATION = "attack"
     SINK_ANIMATION = "sink"
 
-    ANIMATION_SPEED = 0.8
+    ANIMATION_SPEED = 1.0
     NUM_FRAMES = 12
-    KEYFRAME_DURATION = 0.25
+    KEYFRAME_DURATION = 0.3
 
     def __init__(self, model_file):
         self.t = 0
@@ -292,21 +291,18 @@ class Live2D:
             self.t = 0
         else:
             max_keyframe_index = max(int(keyframe_index) for keyframe_index in keyframes.keys())
-            duration = max_keyframe_index * self.KEYFRAME_DURATION
+            keyframe_duration = animation.get(KEYFRAME_DURATION_KEY, self.KEYFRAME_DURATION)
+            duration = max_keyframe_index * keyframe_duration
             next_t = self.t + self.ANIMATION_SPEED * dt
-            if animation_should_not_loop(animation):
+            if animation.get(NO_LOOP_KEY, False) is True:
                 self.t = min(next_t, duration)
+            elif (new_animation := animation.get(NEXT_ANIMATION_KEY)) is not None:
+                if next_t >= duration:
+                    self.set_animation(new_animation)
+                else:
+                    self.t = next_t
             else:
                 self.t = next_t % duration
-
-    def animation_is_at_end(self):
-        animation = self.animations.get(self.animation, {})
-        if animation_should_not_loop(animation):
-            keyframes = animation_keyframes(animation)
-            max_keyframe_index = max(int(keyframe_index) for keyframe_index in keyframes.keys())
-            duration = max_keyframe_index * self.KEYFRAME_DURATION
-            return self.t == duration
-        return False
 
     def refresh_animations(self):
         shared_animations = cache.get_shared_animations()
@@ -320,7 +316,8 @@ class Live2D:
         self.animations = animations
 
     def update_offset_and_rotation(self):
-        master_keyframes = animation_keyframes(self.animations.get(self.animation, {}))
+        animation = self.animations.get(self.animation, {})
+        master_keyframes = animation_keyframes(animation)
         
         for part in PART_NAMES:
             keyframes = {
@@ -336,7 +333,8 @@ class Live2D:
             if "0" not in keyframes:
                 keyframes["0"] = {part: {"offset": [0, 0], "rotation": 0}}
 
-            keyframe_t = self.t / self.KEYFRAME_DURATION
+            keyframe_duration = animation.get(KEYFRAME_DURATION_KEY, self.KEYFRAME_DURATION)
+            keyframe_t = self.t / keyframe_duration
             prev_keyframe_index = max(
                 int(keyframe_index) for keyframe_index in keyframes.keys()
                 if int(keyframe_index) <= keyframe_t
