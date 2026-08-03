@@ -393,8 +393,7 @@ class PortMenu:
 
         def close_shipgirl_dialogue_options():
             if self.hovered_shipgirl is not None:
-                self.hovered_shipgirl.dragged = False
-                self.release_shipgirl_from_interaction(self.hovered_shipgirl)
+                self.hovered_shipgirl.pick_new_wander_target()
             self.hovered_shipgirl = None
             for option in self.shipgirl_dialogue_options:
                 option.active = False
@@ -703,8 +702,7 @@ class PortMenu:
                             DataFiles.sfx["click"].play()
                         option.active = False
                     if self.hovered_shipgirl is not None:
-                        self.hovered_shipgirl.dragged = False
-                        self.release_shipgirl_from_interaction(self.hovered_shipgirl)
+                        self.hovered_shipgirl.pick_new_wander_target()
                         self.hovered_shipgirl = None
                     continue
 
@@ -712,7 +710,6 @@ class PortMenu:
                     if shipgirl.rect.collidepoint(event.pos):
                         DataFiles.sfx["click"].play()
                         self.hovered_shipgirl = shipgirl
-                        self.hovered_shipgirl.dragged = True
                         self.hovered_shipgirl.sprite.set_animation(Live2D.BOUNCE_ANIMATION)
                         self.position_shipgirl_dialogue_options()
                         for option in self.shipgirl_dialogue_options:
@@ -1362,14 +1359,6 @@ class PortMenu:
     def rotate_decoration_direction(self):
         self.decoration_direction_index = (self.decoration_direction_index + 1) % len(self.DECORATION_DIRECTIONS)
 
-    def release_shipgirl_from_interaction(self, shipgirl):
-        shipgirl.interacting_decoration = None
-        shipgirl.wander_target = pygame.Vector2(
-            random.uniform(Decorations.floor_rect.left, Decorations.floor_rect.right),
-            random.uniform(Decorations.floor_rect.top, Decorations.floor_rect.bottom)
-        )
-        shipgirl.pause_time = random.uniform(1, 3) # TODO magic number
-
     def decoration_has_interacting_shipgirl(self, tilepos_anchor):
         tilepos_anchor = tuple(tilepos_anchor)
         return any(
@@ -1406,7 +1395,8 @@ class PortMenu:
         deleted_decoration = tuple(decoration_data[1])
         for shipgirl in self.menu_manager.available_shipgirls:
             if shipgirl.interacting_decoration == deleted_decoration:
-                self.release_shipgirl_from_interaction(shipgirl)
+                shipgirl.interacting_decoration = None
+                shipgirl.pick_new_wander_target()
 
     def update_decorate_port_menu_overlay(self, events):
         for event in events:
@@ -1453,7 +1443,7 @@ class PortMenu:
                             if shipgirl.rect.collidepoint(event.pos):
                                 self.dragged_shipgirl = shipgirl
                                 self.dragged_shipgirl_offset = shipgirl.pos - pygame.Vector2(event.pos)
-                                shipgirl.dragged = True
+                                shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
                                 shipgirl.interacting_decoration = None
                                 break
 
@@ -1488,9 +1478,9 @@ class PortMenu:
                     continue
 
                 if self.dragged_shipgirl is not None:
-                    self.dragged_shipgirl.dragged = False
                     if not self.snap_shipgirl_to_interactable_decoration(self.dragged_shipgirl):
-                        self.release_shipgirl_from_interaction(self.dragged_shipgirl)
+                        self.dragged_shipgirl.interacting_decoration = None
+                        self.dragged_shipgirl.pick_new_wander_target()
 
                     self.dragged_shipgirl = None
                     self.dragged_shipgirl_offset = None
@@ -1620,7 +1610,8 @@ class PortMenu:
                     self.forklift_pause = 1
 
         for shipgirl in self.menu_manager.available_shipgirls:
-            shipgirl.update(dt)
+            if shipgirl not in [self.hovered_shipgirl, self.dragged_shipgirl]:
+                shipgirl.update(dt)
             shipgirl.animate(dt)
 
     def draw_decoration_mode_overlay(self, surface, font_registry):

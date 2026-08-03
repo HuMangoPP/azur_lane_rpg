@@ -569,18 +569,24 @@ class Shipgirl:
         self.facing_left = False
             
         self.rect = get_rect(width=self.SPRITE_SIZE, height=self.SPRITE_SIZE, centerx=self.pos.x, centery=self.pos.y)
-        self.dragged = False
         self.interacting_decoration = None
         self.battle_component = ShipgirlBattleComponent(name, is_player)
 
     def __repr__(self):
         return self.name
 
+    def pick_new_wander_target(self):
+        self.wander_target = pygame.Vector2(
+            random.uniform(Decorations.floor_rect.left, Decorations.floor_rect.right),
+            random.uniform(Decorations.floor_rect.top, Decorations.floor_rect.bottom)
+        )
+        self.pause_time = random.uniform(1, 3) # TODO clean up magic numbers
+
     def update(self, dt):
         if self.sprite.animation == Live2D.BOUNCE_ANIMATION:
             return
         
-        if self.dragged or self.interacting_decoration is not None:
+        if self.interacting_decoration is not None:
             self.sprite.set_animation(Live2D.IDLE_ANIMATION)
             return
         
@@ -590,11 +596,7 @@ class Shipgirl:
         else:
             to_target = self.wander_target - self.pos
             if to_target.length() < 10: # TODO clean up
-                self.wander_target = pygame.Vector2(
-                    random.uniform(Decorations.floor_rect.left, Decorations.floor_rect.right),
-                    random.uniform(Decorations.floor_rect.top, Decorations.floor_rect.bottom)
-                )
-                self.pause_time = random.uniform(1, 3) # TODO clean up magic numbers
+                self.pick_new_wander_target()
             else:
                 direction = to_target.normalize()
                 self.pos += direction * 50 * dt # TODO clean up magic numbers
