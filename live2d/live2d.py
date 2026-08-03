@@ -242,6 +242,7 @@ class Live2D:
 
     IDLE_ANIMATION = "idle"
     BOUNCE_ANIMATION = "bounce"
+    DRAG_ANIMATION = "drag"
     WALK_ANIMATION = "walk"
     ATTACK_ANIMATION = "attack"
     SINK_ANIMATION = "sink"

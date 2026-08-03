@@ -94,6 +94,33 @@
 				}
 			}
 		},
+		"drag": {
+			"keyframes": {
+				"0": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					},
+					"leftt_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 15
+					},
+					"left_hair": {
+						"offset": [0, 0],
+						"rotation": -15
+					}
+				},
+				"4": {
+					"copy": "0"
+				}
+			}
+		},
 		"walk": {
 			"keyframes": {
 				"2": {

@@ -77,6 +77,25 @@
 					"copy": "0"
 				}
 			}
+		},
+		"drag": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": -15
+					}
+				},
+				"2": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"4": {
+					"copy": "0"
+				}
+			}
 		}
 	}
 }

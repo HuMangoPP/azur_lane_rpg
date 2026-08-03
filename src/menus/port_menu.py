@@ -375,7 +375,6 @@ class PortMenu:
         self.deleting_decoration = False
         self.decoration_depot_drag_offset = None
         self.dragged_shipgirl = None
-        self.dragged_shipgirl_offset = None
         self.moved_decoration_depot_overlay = False
         self.rotated_decoration = False
         self.placed_decoration = False
@@ -1442,8 +1441,7 @@ class PortMenu:
                         for shipgirl in self.menu_manager.available_shipgirls:
                             if shipgirl.rect.collidepoint(event.pos):
                                 self.dragged_shipgirl = shipgirl
-                                self.dragged_shipgirl_offset = shipgirl.pos - pygame.Vector2(event.pos)
-                                shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+                                shipgirl.sprite.set_animation(Live2D.DRAG_ANIMATION)
                                 shipgirl.interacting_decoration = None
                                 break
 
@@ -1457,7 +1455,7 @@ class PortMenu:
                 self.toggle_decoration_mode_button.hover(event.pos)
 
                 if self.dragged_shipgirl is not None:
-                    self.dragged_shipgirl.pos = pygame.Vector2(event.pos) + self.dragged_shipgirl_offset
+                    self.dragged_shipgirl.pos = pygame.Vector2(event.pos)
                     self.dragged_shipgirl.rect.center = self.dragged_shipgirl.pos
                     continue
 
@@ -1483,7 +1481,6 @@ class PortMenu:
                         self.dragged_shipgirl.pick_new_wander_target()
 
                     self.dragged_shipgirl = None
-                    self.dragged_shipgirl_offset = None
                     continue
 
                 if self.decoration_depot_drag_offset is not None:
