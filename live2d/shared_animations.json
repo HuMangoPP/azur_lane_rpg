@@ -221,6 +221,7 @@
 		}
 	},
 	"drag": {
+		"facial_expression": "focused",
 		"keyframes": {
 			"0": {
 				"torso": {
@@ -519,6 +520,7 @@
 		}
 	},
 	"attack": {
+		"facial_expression": "focused",
 		"next_animation": "idle",
 		"keyframes": {
 			"0": {
@@ -701,6 +703,7 @@
 		}
 	},
 	"sink": {
+		"facial_expression": "dizzy",
 		"no_loop": true,
 		"keyframes": {
 			"1": {

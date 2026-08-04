@@ -11,7 +11,7 @@ from live2d.live2d import Live2D
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Preview a shipgirl Live2D animation.")
     parser.add_argument("shipgirl", help="Shipgirl name, matching live2d/<shipgirl>.json")
-    parser.add_argument("animation_key", help="Animation key, one of [idle, walk, attack, sink]")
+    parser.add_argument("animation_key", help="Animation key, one of [idle, bounce, drag, walk, attack, sink]")
     args = parser.parse_args()
 
     pygame.init()

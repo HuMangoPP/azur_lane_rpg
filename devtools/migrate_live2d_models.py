@@ -6,11 +6,24 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from live2d.live2d import PART_NAMES
+from live2d.live2d import (
+    FACIAL_EXPRESSION_KEY,
+    KEYFRAME_DURATION_KEY,
+    KEYFRAMES_KEY,
+    NEXT_ANIMATION_KEY,
+    NO_LOOP_KEY,
+    PART_NAMES,
+)
 
 MODEL_DIR = Path("live2d")
 
-ANIMATION_METADATA_KEYS = {"keyframes", "no_loop"}
+ANIMATION_METADATA_KEYS = {
+    KEYFRAMES_KEY,
+    NO_LOOP_KEY,
+    NEXT_ANIMATION_KEY,
+    KEYFRAME_DURATION_KEY,
+    FACIAL_EXPRESSION_KEY,
+}
 
 
 def load_json(path):
@@ -33,16 +46,17 @@ def migrate_animation(animation):
         return {"keyframes": {"0": {}}}
 
     migrated = {}
-    keyframes = animation.get("keyframes")
+    keyframes = animation.get(KEYFRAMES_KEY)
     if not isinstance(keyframes, dict):
         keyframes = {
             key: value for key, value in animation.items()
             if key not in ANIMATION_METADATA_KEYS
         }
 
-    migrated["keyframes"] = keyframes
-    if "no_loop" in animation:
-        migrated["no_loop"] = animation["no_loop"]
+    migrated[KEYFRAMES_KEY] = keyframes
+    for metadata_key in ANIMATION_METADATA_KEYS - {KEYFRAMES_KEY}:
+        if metadata_key in animation:
+            migrated[metadata_key] = animation[metadata_key]
     return migrated
 
 

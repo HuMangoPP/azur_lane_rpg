@@ -23,7 +23,11 @@ PART_NAMES = [
     "headpiece",
     "left_leg",
     "right_leg",
+    "neutral",
+    "dizzy",
+    "focused"
 ]
+FACIAL_EXPRESSION_PART_NAMES = ("neutral", "dizzy", "focused")
 
 SHARED_MODEL_FILE = os.path.join(os.path.dirname(__file__), "shared_model.json")
 SHARED_ANIMATIONS_FILE = os.path.join(os.path.dirname(__file__), "shared_animations.json")
@@ -31,6 +35,7 @@ KEYFRAME_DURATION_KEY = "keyframe_duration"
 KEYFRAMES_KEY = "keyframes"
 NO_LOOP_KEY = "no_loop"
 NEXT_ANIMATION_KEY = "next_animation"
+FACIAL_EXPRESSION_KEY = "facial_expression"
 
 
 def animation_keyframes(animation):
@@ -68,7 +73,7 @@ def merge_animations(shared_animation, model_animation):
     resolved_model_keyframes = resolve_animation_copies(animation_keyframes(model_animation))
     merged_animation = {KEYFRAMES_KEY: merged_keyframes}
 
-    for meta_keys in [NO_LOOP_KEY, NEXT_ANIMATION_KEY, KEYFRAME_DURATION_KEY]:
+    for meta_keys in [NO_LOOP_KEY, NEXT_ANIMATION_KEY, KEYFRAME_DURATION_KEY, FACIAL_EXPRESSION_KEY]:
         if meta_keys in shared_animation:
             merged_animation[meta_keys] = shared_animation[meta_keys]
         if meta_keys in model_animation:
@@ -129,6 +134,18 @@ class Live2DPart:
         rotated = pygame.transform.rotate(self.image, rotation)
         rotated_pivot = self.pivot.rotate(-rotation)
         draw_offset = self.get_pivot_offset() - rotated_pivot
+        if flipx:
+            rotated = pygame.transform.flip(rotated, True, False)
+            draw_offset.x = -draw_offset.x
+        rect = rotated.get_rect()
+        rect.center = root_pos + draw_offset
+        surface.blit(rotated, rect)
+
+    def draw_with_part_transform(self, surface, root_pos, flipx, transform_part):
+        rotation = transform_part.get_rotation()
+        rotated = pygame.transform.rotate(self.image, rotation)
+        rotated_pivot = transform_part.pivot.rotate(-rotation)
+        draw_offset = transform_part.get_pivot_offset() - rotated_pivot
         if flipx:
             rotated = pygame.transform.flip(rotated, True, False)
             draw_offset.x = -draw_offset.x
@@ -285,6 +302,13 @@ class Live2D:
             self.animation = animation
             self.t = 0
 
+    def get_facial_expression(self):
+        animation = self.animations.get(self.animation, {})
+        expression = animation.get(FACIAL_EXPRESSION_KEY, FACIAL_EXPRESSION_PART_NAMES[0])
+        if expression not in FACIAL_EXPRESSION_PART_NAMES:
+            return FACIAL_EXPRESSION_PART_NAMES[0]
+        return expression
+
     def update(self, dt):
         animation = self.animations.get(self.animation, {})
         keyframes = animation_keyframes(animation)
@@ -381,6 +405,9 @@ class Live2D:
         for part in self.DRAW_ORDER:
             if part in self.parts:
                 self.parts[part].draw(sprite_surf, root, flipx)
+                if part == "head":
+                    expression = self.get_facial_expression()
+                    self.parts[expression].draw_with_part_transform(sprite_surf, root, flipx, self.parts["head"])
 
         sprite_surf.set_alpha(alpha)
         sprite_rect = sprite_surf.get_rect()
