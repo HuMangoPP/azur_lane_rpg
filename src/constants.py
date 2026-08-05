@@ -62,8 +62,6 @@ class Color:
     STICKY_NOTE_OUTLINE = (169, 126, 41)
     STICKY_NOTE_HANDWRITING = (242, 78, 75)
 
-    SKY_BLUE = (100, 195, 255)
-
     CLEARED_ZONE_FILL = (32, 176, 171)
     CLEARED_ZONE_FILL_HOVER = (24, 222, 215)
     CLEARED_ZONE_OUTLINE = (0, 222, 214)
@@ -229,12 +227,6 @@ def create_background_wave_sprite(wave_index):
 DataFiles.sprites["background"]["num_waves"] = 7
 for wave_index in range(DataFiles.sprites["background"]["num_waves"]):
     create_background_wave_sprite(wave_index)
-
-sky_surf = pygame.Surface((1,2))
-sky_surf.set_at((0, 0), (89, 150, 227))
-sky_surf.set_at((0, 1), (150, 197, 255))
-sky_surf_scaled = pygame.transform.smoothscale(sky_surf, (128, 256))
-DataFiles.sprites["background"]["sky"] = sky_surf_scaled
 
 def create_cloud_shadow_sprite(cloud_index):
     cloud = DataFiles.sprites["background"][f"cloud{cloud_index}"]

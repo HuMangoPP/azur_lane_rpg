@@ -59,7 +59,8 @@ class BackgroundProp:
 class Background:
     Y_GAP = 48
 
-    def __init__(self):
+    def __init__(self, sky_colors):
+        self.set_sky_colors(sky_colors)
         num_waves = DataFiles.sprites["background"]["num_waves"]
         self.wave_ys = [
             screen_y(0.5) + self.Y_GAP*(i-num_waves/2)
@@ -73,6 +74,12 @@ class Background:
         self.cloud_timer = 0
         self.cloud_spawn_time = 0
         self.clouds = []
+
+    def set_sky_colors(self, sky_colors):
+        sky_surf = pygame.Surface((1, len(sky_colors)))
+        for y, color in enumerate(sky_colors):
+            sky_surf.set_at((0, y), color)
+        self.sky_surf = pygame.transform.smoothscale(sky_surf, (128, 256))
 
     def update(self, dt):
         num_waves = DataFiles.sprites["background"]["num_waves"]
@@ -102,7 +109,7 @@ class Background:
             self.cloud_spawn_time = random.uniform(5, 10)
 
     def draw(self, surface, font_registry, player_fleet=None, siren_fleet=None):
-        sky_surf = DataFiles.sprites["background"]["sky"]
+        sky_surf = self.sky_surf
         sky_surf_rect = sky_surf.get_rect()
         sky_surf_rect.top = 0
         num_sky_reps = 9
@@ -188,12 +195,27 @@ class Drop:
 
 class EncounterMenu:
     MELEE_SHIPS = ["DD", "CL", "SS"]
+    TIME_WEATHER_STYLES = {
+        "daytime": {
+            "weight": 1,
+            "sky_colors": ((89, 150, 227), (150, 197, 255)),
+        },
+        "nighttime": {
+            "weight": 1,
+            "sky_colors": ((7, 10, 34), (45, 28, 82)),
+        },
+        "stormy": {
+            "weight": 1,
+            "sky_colors": ((40, 57, 83), (82, 95, 111)),
+        },
+    }
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
 
         self.mouse_start_drag = None
 
+        self.time_weather = "daytime"
         self.current_sortie = 0
         self.current_encounter = 0
         self.selected_shipgirl = None
@@ -342,9 +364,23 @@ class EncounterMenu:
             ) for slot in self.fleet_slots
         ]
 
-        self.background = Background()
+        self.background = Background(self.TIME_WEATHER_STYLES[self.time_weather]["sky_colors"])
+
+    def roll_time_weather(self):
+        weather_names = list(self.TIME_WEATHER_STYLES.keys())
+        weather_weights = [
+            self.TIME_WEATHER_STYLES[weather_name]["weight"]
+            for weather_name in weather_names
+        ]
+        self.time_weather = random.choices(weather_names, weights=weather_weights, k=1)[0]
+        self.apply_time_weather_style()
+
+    def apply_time_weather_style(self):
+        weather_style = self.TIME_WEATHER_STYLES[self.time_weather]
+        self.background.set_sky_colors(weather_style["sky_colors"])
 
     def begin_sortie(self):
+        self.roll_time_weather()
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
 
