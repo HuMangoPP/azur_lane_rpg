@@ -791,7 +791,6 @@ class SirenFleet:
                 siren.sprite.set_animation(Live2D.ATTACK_ANIMATION)
                 if siren.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
                     siren.battle_component.attack(siren.rect, vfx_manager)
-                siren.sprite.set_animation(Live2D.IDLE_ANIMATION)
 
             if siren.battle_component.target is None:
                 if siren.battle_component.target_pref == "highest_hp":
