@@ -682,6 +682,7 @@ class PlayerFleet:
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
                 shipgirl.battle_component.target = None
+                shipgirl.battle_component.attack_animation = False
                 shipgirl.battle_component.attack_timer = 0
                 shipgirl.battle_component.active = False
 
@@ -777,6 +778,8 @@ class SirenFleet:
     def end_encounter(self):
         for siren in self.fleet:
             siren.battle_component.target = None
+            siren.battle_component.attack_animation = False
+            siren.battle_component.attack_timer = 0
             siren.battle_component.active = False
 
     def update(self, dt, menu_manager, vfx_manager):

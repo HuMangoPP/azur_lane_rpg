@@ -231,13 +231,7 @@
 		"smoke": { "left": 128, "top": 0, "width": 64, "height": 64 }
 	},
 	"background": {
-		"wave0": { "left": 0, "top": 0, "width": 256, "height": 128 },
-		"wave1": { "left": 0, "top": 128, "width": 256, "height": 128 },
-		"wave2": { "left": 0, "top": 256, "width": 256, "height": 128 },
-		"wave3": { "left": 0, "top": 384, "width": 256, "height": 128 },
-		"wave4": { "left": 0, "top": 512, "width": 256, "height": 128 },
-		"wave5": { "left": 0, "top": 640, "width": 256, "height": 128 },
-		"wave6": { "left": 0, "top": 768, "width": 256, "height": 128 },
+		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 },
 
 		"cloud0": { "left": 256, "top": 0, "width": 256, "height": 128 },
 		"cloud1": { "left": 256, "top": 128, "width": 256, "height": 128 },

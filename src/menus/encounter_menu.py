@@ -59,11 +59,12 @@ class BackgroundProp:
 class Background:
     Y_GAP = 48
 
-    def __init__(self, sky_colors):
+    def __init__(self, sky_colors, wave_sprites):
         self.set_sky_colors(sky_colors)
+        self.wave_sprites = wave_sprites
         num_waves = DataFiles.sprites["background"]["num_waves"]
         self.wave_ys = [
-            screen_y(0.5) + self.Y_GAP*(i-num_waves/2)
+            screen_y(0.5) + self.Y_GAP*(i-num_waves/2) + 8
             for i in range(num_waves)
         ]
         self.wave_timers = [
@@ -80,6 +81,9 @@ class Background:
         for y, color in enumerate(sky_colors):
             sky_surf.set_at((0, y), color)
         self.sky_surf = pygame.transform.smoothscale(sky_surf, (128, 256))
+
+    def set_wave_sprites(self, weather):
+        self.wave_sprites = DataFiles.sprites["background"]["wave_sets"][weather]
 
     def update(self, dt):
         num_waves = DataFiles.sprites["background"]["num_waves"]
@@ -131,22 +135,24 @@ class Background:
         else:
             shipgirl_draw_indices = None
 
+        landmark_y = self.wave_ys[0] - 4
+
         left_landmarks = DataFiles.sprites["background"]["left_landmarks"]
         left_landmarks_rect = left_landmarks.get_rect()
         left_landmarks_rect.left = screen_x(0)
-        left_landmarks_rect.centery = self.wave_ys[0]
+        left_landmarks_rect.centery = landmark_y
         surface.blit(left_landmarks, left_landmarks_rect)
 
         middle_landmarks = DataFiles.sprites["background"]["middle_landmarks"]
         middle_landmarks_rect = middle_landmarks.get_rect()
         middle_landmarks_rect.centerx = screen_x(0.5)
-        middle_landmarks_rect.centery = self.wave_ys[0]
+        middle_landmarks_rect.centery = landmark_y
         surface.blit(middle_landmarks, middle_landmarks_rect)
         
         right_landmarks = DataFiles.sprites["background"]["right_landmarks"]
         right_landmarks_rect = right_landmarks.get_rect()
         right_landmarks_rect.right = screen_x(1)
-        right_landmarks_rect.centery = self.wave_ys[0]
+        right_landmarks_rect.centery = landmark_y
         surface.blit(right_landmarks, right_landmarks_rect)
 
         num_waves = DataFiles.sprites["background"]["num_waves"]
@@ -166,7 +172,7 @@ class Background:
                         siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
 
             move_amt = i / num_waves
-            wave = DataFiles.sprites["background"][f"wave{i}"]
+            wave = self.wave_sprites[i]
             wave_rect = wave.get_rect()
             wave_rect.top = wave_y + 4 * (move_amt + 1) * math.sin(2*wave_timer)
             centerx = 64 * (move_amt + 1) * math.sin(wave_timer) + screen_x(0.5)
@@ -364,7 +370,10 @@ class EncounterMenu:
             ) for slot in self.fleet_slots
         ]
 
-        self.background = Background(self.TIME_WEATHER_STYLES[self.time_weather]["sky_colors"])
+        self.background = Background(
+            self.TIME_WEATHER_STYLES[self.time_weather]["sky_colors"],
+            DataFiles.sprites["background"]["wave_sets"][self.time_weather],
+        )
 
     def roll_time_weather(self):
         weather_names = list(self.TIME_WEATHER_STYLES.keys())
@@ -378,6 +387,7 @@ class EncounterMenu:
     def apply_time_weather_style(self):
         weather_style = self.TIME_WEATHER_STYLES[self.time_weather]
         self.background.set_sky_colors(weather_style["sky_colors"])
+        self.background.set_wave_sprites(self.time_weather)
 
     def begin_sortie(self):
         self.roll_time_weather()
@@ -431,21 +441,20 @@ class EncounterMenu:
                 self.return_to_port_button.hover(event.pos)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
-                    if (
-                        shipgirl is not None
-                        and (
-                            not shipgirl.battle_component.active
-                            or (
-                                shipgirl.battle_component.active
-                                and shipgirl.battle_component.attack_timer <= 0
-                            )
-                        )
-                        and shipgirl.rect.collidepoint(event.pos)
-                    ):
-                        self.mouse_start_drag = shipgirl.rect.center
-                        self.selected_shipgirl = shipgirl
-                        self.selected_shipgirl_index = i
-                        self.selected_shipgirl.battle_component.target = None
+                    if shipgirl is None:
+                        continue
+                    if not shipgirl.battle_component.active:
+                        continue
+                    if shipgirl.battle_component.attack_animation:
+                        continue
+                    if shipgirl.battle_component.attack_timer > 0:
+                        continue
+                    if not shipgirl.rect.collidepoint(event.pos):
+                        continue
+                    self.mouse_start_drag = shipgirl.rect.center
+                    self.selected_shipgirl = shipgirl
+                    self.selected_shipgirl_index = i
+                    self.selected_shipgirl.battle_component.target = None
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
                 click = False

@@ -214,19 +214,42 @@ create_shell_sprite("normal", (255, 242, 97))
 create_shell_sprite("HE", (255, 0, 64))
 create_shell_sprite("AP", (0, 255, 255))
 
-def create_background_wave_sprite(wave_index):
-    wave = DataFiles.sprites["background"][f"wave{wave_index}"]
+def create_background_wave_sprite(wave_color):
+    wave = DataFiles.sprites["background"]["wave"]
     higher_wave = pygame.Surface((wave.get_width(), 2*wave.get_height()))
-    wave_color = wave.get_at((0, wave.get_height()-1))
     higher_wave.fill(wave_color)
-    wave.set_colorkey(wave_color)
+    wave.set_colorkey((255,255,255))
     higher_wave.blit(wave, (0,0))
     higher_wave.set_colorkey((255,0,0))
-    DataFiles.sprites["background"][f"wave{wave_index}"] = higher_wave
+    return higher_wave
 
 DataFiles.sprites["background"]["num_waves"] = 7
-for wave_index in range(DataFiles.sprites["background"]["num_waves"]):
-    create_background_wave_sprite(wave_index)
+background_wave_palettes = {
+    "daytime": {
+        "darkest": (60, 85, 200),
+        "lightest": (114, 136, 241),
+    },
+    "nighttime": {
+        "darkest": (13, 18, 64),
+        "lightest": (56, 50, 128),
+    },
+    "stormy": {
+        "darkest": (43, 72, 91),
+        "lightest": (94, 143, 153),
+    },
+}
+DataFiles.sprites["background"]["wave_sets"] = {}
+for weather, palette in background_wave_palettes.items():
+    DataFiles.sprites["background"]["wave_sets"][weather] = []
+    for wave_index in range(DataFiles.sprites["background"]["num_waves"]):
+        center_index = (DataFiles.sprites["background"]["num_waves"] - 1) / 2
+        t = 1 - abs(wave_index - center_index) / center_index
+        wave_color = tuple(
+            int(dark + (light - dark) * t)
+            for dark, light in zip(palette["darkest"], palette["lightest"])
+        )
+        wave = create_background_wave_sprite(wave_color)
+        DataFiles.sprites["background"]["wave_sets"][weather].append(wave)
 
 def create_cloud_shadow_sprite(cloud_index):
     cloud = DataFiles.sprites["background"][f"cloud{cloud_index}"]
