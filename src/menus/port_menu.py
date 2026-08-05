@@ -1,7 +1,8 @@
+import math
 import random
 import pygame
 
-from engine.util import get_rect
+from engine.util import draw_annulus, get_rect, get_vec
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, Decorations
@@ -37,6 +38,91 @@ def in_tileable_area(tiles):
         and min(tile[1] for tile in tiles) >= 0
         and max(tile[1] for tile in tiles) <= Decorations.NUM_TILES_IN_COL
     )
+
+
+class AnnularSectorButton:
+    SPRITE_SIZE = 96
+    ANGLE_WIDTH = math.radians(60)
+    ANGLE_PADDING = 2
+
+    def __init__(
+        self,
+        callback,
+        active=True,
+        background_styling=None,
+        hover_styling=None,
+        inner_radius=SPRITE_SIZE / 2,
+        outer_radius=SPRITE_SIZE / 2 + Box.WIDTH,
+        angle_width=ANGLE_WIDTH,
+    ):
+        background_styling = background_styling or {}
+        hover_styling = hover_styling or {}
+
+        self.active = active
+        self.callback = callback
+        self.center = pygame.Vector2(0, 0)
+        self.angle = 0
+        self.angle_width = angle_width
+        self.inner_radius = round(inner_radius)
+        self.outer_radius = round(outer_radius)
+
+        self.background_color = background_styling.get("background_color")
+        self.background_img = background_styling.get("background_img")
+        self.opacity = background_styling.get("opacity")
+
+        self.hover_background_color = hover_styling.get("background_color", self.background_color)
+        self.hover_opacity = hover_styling.get("opacity", self.opacity)
+        self.hovered = False
+
+    def contains_point(self, mpos):
+        relpos = pygame.Vector2(mpos) - self.center
+        distance = relpos.length()
+        if distance < self.inner_radius or distance > self.outer_radius:
+            return False
+
+        point_angle = math.atan2(relpos.y, relpos.x)
+        angle_delta = (point_angle - self.angle + math.pi) % (2 * math.pi) - math.pi
+        return abs(angle_delta) <= self.angle_width / 2
+
+    def hover(self, mpos):
+        self.hovered = self.active and self.contains_point(mpos)
+        return self.hovered
+
+    def click(self, mpos):
+        if not self.active or not self.contains_point(mpos):
+            return False
+
+        self.callback()
+        return True
+
+    def draw(self, surface, font_registry):
+        if not self.active:
+            return
+
+        background_color = self.hover_background_color if self.hovered else self.background_color
+        opacity = self.hover_opacity if self.hovered else self.opacity
+        if background_color is not None:
+            wedge_surface = pygame.Surface((2 * self.outer_radius, 2 * self.outer_radius))
+            draw_annulus(
+                wedge_surface,
+                background_color,
+                (self.outer_radius, self.outer_radius),
+                self.inner_radius,
+                self.outer_radius,
+                math.degrees(self.angle - self.angle_width / 2) + self.ANGLE_PADDING,
+                math.degrees(self.angle + self.angle_width / 2) - self.ANGLE_PADDING,
+                resolution=4
+            )
+            if opacity is not None:
+                wedge_surface.set_alpha(opacity)
+            wedge_surface.set_colorkey((0, 0, 0))
+            wedge_rect = wedge_surface.get_rect(center=self.center)
+            surface.blit(wedge_surface, wedge_rect)
+
+        if self.background_img is not None:
+            img_rect = self.background_img.get_rect()
+            img_rect.center = self.center + get_vec((self.inner_radius + self.outer_radius) / 2, self.angle)
+            surface.blit(self.background_img, img_rect)
 
 
 class PortMenu:
@@ -397,9 +483,12 @@ class PortMenu:
             for option in self.shipgirl_dialogue_options:
                 option.active = False
 
+        shipgirl_dialogue_option_data = [
+            (open_equipment_menu, "equip"),
+            (lambda : True, "interact"),
+        ]
         self.shipgirl_dialogue_options = [
-            Button(
-                rect=get_rect(width=Box.WIDTH,height=Box.HEIGHT,left=0,top=0),
+            AnnularSectorButton(
                 callback=callback,
                 active=False,
                 background_styling={
@@ -407,12 +496,9 @@ class PortMenu:
                     "background_img": DataFiles.sprites["user_interface"][sprite],
                     "opacity": 160
                 },
-                hover_styling={"opacity": 200}
+                hover_styling={"opacity": 200},
             )
-            for callback, sprite in zip(
-                [open_equipment_menu, lambda : True, close_shipgirl_dialogue_options],
-                ["equip", "interact", "close"],
-            )
+            for callback, sprite in shipgirl_dialogue_option_data
         ]
 
         self.update_encountered_sirens()
@@ -421,10 +507,13 @@ class PortMenu:
         if self.hovered_shipgirl is None:
             return
 
-        dialogue_options_offset = (len(self.shipgirl_dialogue_options)-1)/2
+        circle_center = pygame.Vector2(self.hovered_shipgirl.rect.center)
+        dialogue_options_offset = (len(self.shipgirl_dialogue_options) - 1) / 2
+        top_angle = math.radians(-90)
         for i, option in enumerate(self.shipgirl_dialogue_options):
-            option.rect.bottom = self.hovered_shipgirl.rect.top
-            option.rect.centerx = self.hovered_shipgirl.rect.centerx + (i - dialogue_options_offset) * (Box.WIDTH + Box.PADDING)
+            angle = top_angle + (i - dialogue_options_offset) * AnnularSectorButton.ANGLE_WIDTH
+            option.center = pygame.Vector2(circle_center)
+            option.angle = angle
 
     def update_camera_drag(self, event):
         if not self.camera_dragging:
@@ -459,7 +548,7 @@ class PortMenu:
         if self.menu_manager.quest_manager.selected_quest is not None:
             return False
 
-        buttons = [
+        rectangular_buttons = [
             self.open_select_sortie_menu_button,
             self.open_depot_overlay_button,
             self.open_shipyard_overlay_button,
@@ -468,9 +557,14 @@ class PortMenu:
             self.open_decoration_store_overlay_button,
             self.toggle_decoration_mode_button,
             *self.choose_faction_buttons,
-            *self.shipgirl_dialogue_options,
         ]
-        if any(button.active and button.rect.collidepoint(pos) for button in buttons):
+        if any(button.active and button.rect.collidepoint(pos) for button in rectangular_buttons):
+            return False
+
+        annular_buttons = [
+            *self.shipgirl_dialogue_options
+        ]
+        if any(button.active and button.contains_point(pos) for button in annular_buttons):
             return False
 
         for i in range(len(self.menu_manager.quest_manager.quests)):
