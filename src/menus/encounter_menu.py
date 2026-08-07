@@ -56,12 +56,65 @@ class BackgroundProp:
         surface.blit(self.sprite, rect)
 
 
+class SeaFoam:
+    FADE_IN_DURATION = 0.5
+    FADE_OUT_DURATION = 1.0
+    HOLD_DURATION = 0.3
+    CREST_X_RATIO = 1 / 4
+
+    def __init__(self, sprite, wave_index, wave_rep_index, moving_left):
+        self.sprite = pygame.transform.flip(sprite, True, False) if moving_left else sprite.copy()
+        self.moving_left = moving_left
+        self.wave_index = wave_index
+        self.wave_rep_index = wave_rep_index
+        self.duration = self.FADE_IN_DURATION + self.HOLD_DURATION + self.FADE_OUT_DURATION
+        self.lifetime = 0
+
+    @property
+    def expired(self):
+        return self.lifetime >= self.duration
+
+    @property
+    def alpha(self):
+        if self.lifetime < self.FADE_IN_DURATION:
+            return int(255 * self.lifetime / self.FADE_IN_DURATION)
+
+        fade_out_start = self.FADE_IN_DURATION + self.HOLD_DURATION
+        if self.lifetime > fade_out_start:
+            fade_out_lifetime = self.lifetime - fade_out_start
+            return int(255 * (1 - fade_out_lifetime / self.FADE_OUT_DURATION))
+
+        return 255
+
+    def update(self, dt):
+        self.lifetime += dt
+
+    def align_rect(self, wave_rect):
+        rect = self.sprite.get_rect()
+        rect.top = wave_rect.top
+        rect.left = wave_rect.left
+        if self.moving_left:
+            rect.left += int(2 * self.sprite.get_width() * self.CREST_X_RATIO - self.sprite.get_width())
+        return rect
+
+    def draw(self, surface, wave_rect):
+        rect = self.align_rect(wave_rect)
+        self.sprite.set_alpha(self.alpha)
+        surface.blit(self.sprite, rect)
+
+
 class Background:
     Y_GAP = 48
+    NUM_WAVE_REPS = 5
+    SEA_FOAM_SPAWN_TIME_RANGE = (0.5, 1)
 
     def __init__(self, sky_colors, wave_sprites):
         self.set_sky_colors(sky_colors)
         self.wave_sprites = wave_sprites
+        self.sea_foam_sprite = DataFiles.sprites["background"]["sea_foam"]
+        self.sea_foam_timer = 0
+        self.sea_foam_spawn_time = random.uniform(*self.SEA_FOAM_SPAWN_TIME_RANGE)
+        self.sea_foams = []
         num_waves = DataFiles.sprites["background"]["num_waves"]
         self.wave_ys = [
             screen_y(0.5) + self.Y_GAP*(i-num_waves/2) + 8
@@ -99,6 +152,25 @@ class Background:
             if cloud.x >= -128
             and cloud.x <= screen_x(1) + 128
         ]
+
+        for sea_foam in self.sea_foams:
+            sea_foam.update(dt)
+        self.sea_foams = [
+            sea_foam for sea_foam in self.sea_foams
+            if not sea_foam.expired
+        ]
+
+        self.sea_foam_timer += dt
+        if self.sea_foam_timer > self.sea_foam_spawn_time:
+            wave_index = random.randrange(num_waves)
+            self.sea_foams.append(SeaFoam(
+                self.sea_foam_sprite,
+                wave_index,
+                random.randrange(self.NUM_WAVE_REPS),
+                math.cos(self.wave_timers[wave_index]) < 0,
+            ))
+            self.sea_foam_timer = 0
+            self.sea_foam_spawn_time = random.uniform(*self.SEA_FOAM_SPAWN_TIME_RANGE)
 
         self.cloud_timer += dt
         if self.cloud_timer > self.cloud_spawn_time:
@@ -156,7 +228,7 @@ class Background:
         surface.blit(right_landmarks, right_landmarks_rect)
 
         num_waves = DataFiles.sprites["background"]["num_waves"]
-        num_wave_reps = 5
+        num_wave_reps = self.NUM_WAVE_REPS
         wave_rep_offset = (num_wave_reps-1)/2
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
             if shipgirl_draw_indices is not None:
@@ -179,6 +251,9 @@ class Background:
             for j in range(num_wave_reps):
                 wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
                 surface.blit(wave, wave_rect)
+                for sea_foam in self.sea_foams:
+                    if sea_foam.wave_index == i and sea_foam.wave_rep_index == j:
+                        sea_foam.draw(surface, wave_rect)
 
 class Drop:
     def __init__(self, item, pos):

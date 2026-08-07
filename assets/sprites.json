@@ -232,6 +232,7 @@
 	},
 	"background": {
 		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 },
+		"sea_foam": { "left": 0, "top": 128, "width": 256, "height": 128 },
 
 		"cloud0": { "left": 256, "top": 0, "width": 256, "height": 128 },
 		"cloud1": { "left": 256, "top": 128, "width": 256, "height": 128 },
