@@ -276,6 +276,18 @@ class Drop:
 
 class EncounterMenu:
     MELEE_SHIPS = ["DD", "CL", "SS"]
+    SHIPGIRL_WAKE_CONFIG = {
+        "upward_bias": -0.4,
+        "spark_chance": 0.6,
+        "spark_duration_range": (0.22, 0.34),
+        "spark_distance_range": (12, 24),
+        "spark_length_range": (12, 24),
+        "spark_width_range": (4, 6),
+        "smoke_chance": 0.25,
+        "smoke_duration_range": (0.28, 0.45),
+        "smoke_distance_range": (8, 16),
+        "smoke_size_range": (16, 24),
+    }
     TIME_WEATHER_STYLES = {
         "daytime": {
             "weight": 1,
@@ -508,6 +520,26 @@ class EncounterMenu:
         else:
             self.encounter_started = True
 
+    def spawn_shipgirl_wakes(self, fleet):
+        for shipgirl in fleet.fleet:
+            if shipgirl is None or shipgirl.battle_component.hp <= 0:
+                continue
+
+            wake_pos = pygame.Vector2(
+                (
+                    shipgirl.rect.centerx
+                    + (-1 if shipgirl.rect.x < screen_x(0.5) else 1)
+                    * random.uniform(-shipgirl.rect.width * 0.1, shipgirl.rect.width * 0.3)
+                ),
+                shipgirl.rect.bottom - random.uniform(11, 16),
+            )
+            torpedo_angle = 0 if shipgirl.rect.x < screen_x(0.5) else math.pi
+            self.vfx_manager.spawn_torpedo_wake(
+                wake_pos,
+                torpedo_angle,
+                **self.SHIPGIRL_WAKE_CONFIG,
+            )
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEMOTION:
@@ -673,6 +705,8 @@ class EncounterMenu:
                 self.next_encounter_button.active = True
                 self.retreat_button.active = False
 
+        self.spawn_shipgirl_wakes(self.menu_manager.player_fleet)
+        self.spawn_shipgirl_wakes(self.menu_manager.siren_fleet)
         self.vfx_manager.update(dt)
         self.background.update(dt)
 

@@ -162,7 +162,7 @@ class Smoke(VFX):
         self.pos = pygame.Vector2(pos)
         self.angle = angle
         self.color = color
-        self.size = size
+        self.size = int(size)
         self.drift_distance = drift_distance
 
     def draw(self, surface, font_registry):
@@ -353,16 +353,33 @@ class VFXManager:
                 pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, size=smoke_size, drift_distance=smoke_distance
             ))
 
-    def spawn_torpedo_wake(self, pos, torpedo_angle):
+    def spawn_torpedo_wake(
+        self,
+        pos,
+        torpedo_angle,
+        upward_bias=-0.35,
+        spark_chance=1.0,
+        spark_duration_range=(0.18, 0.28),
+        spark_distance_range=(14, 26),
+        spark_length_range=(8, 14),
+        spark_width_range=(2, 4),
+        smoke_chance=0.35,
+        smoke_duration_range=(0.25, 0.4),
+        smoke_distance_range=(10, 18),
+        smoke_size_range=(12, 20),
+    ):
+        if random.random() > spark_chance:
+            return
+
         backward_dir = get_vec(1, torpedo_angle + math.pi)
-        wake_dir = (backward_dir + pygame.Vector2(0, -0.35)).normalize()
+        wake_dir = (backward_dir + pygame.Vector2(0, upward_bias)).normalize()
         wake_angle = math.atan2(wake_dir.y, wake_dir.x)
 
         spark_angle = wake_angle + math.radians(random.uniform(-12, 12))
         spark_color = random.choice(TORPEDO_WAKE_COLORS)
-        spark_duration = random.uniform(0.18, 0.28)
-        spark_distance = random.uniform(14, 26)
-        spark_size = (random.uniform(8, 14), random.uniform(2, 4))
+        spark_duration = random.uniform(*spark_duration_range)
+        spark_distance = random.uniform(*spark_distance_range)
+        spark_size = (random.uniform(*spark_length_range), random.uniform(*spark_width_range))
         self.effects.append(Spark(
             pos,
             spark_angle,
@@ -372,13 +389,13 @@ class VFXManager:
             size=spark_size,
         ))
 
-        if random.random() > 0.35:
+        if random.random() > smoke_chance:
             return
         smoke_angle = wake_angle + math.radians(random.uniform(-20, 20))
         smoke_color = random.choice(TORPEDO_WAKE_COLORS)
-        smoke_duration = random.uniform(0.25, 0.4)
-        smoke_distance = random.uniform(10, 18)
-        smoke_size = random.randint(12, 20)
+        smoke_duration = random.uniform(*smoke_duration_range)
+        smoke_distance = random.uniform(*smoke_distance_range)
+        smoke_size = random.uniform(*smoke_size_range)
         self.effects.append(Smoke(
             pos,
             smoke_angle,
