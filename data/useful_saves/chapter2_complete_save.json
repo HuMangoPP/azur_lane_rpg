@@ -60,13 +60,9 @@
 	},
 	"specialized_wisdom_cubes": {},
 	"decoration_depot": {
-		"bed": 0
+		"bed": 3
 	},
-	"decorations": [
-		["bed", [5, 1], "north"],
-		["bed", [7, 1], "north"],
-		["bed", [9, 1], "north"]
-	],
+	"decorations": [],
 	"research_target": null,
 	"sortie_progress": 24,
 	"chapter_progress": 3,

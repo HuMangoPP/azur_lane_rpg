@@ -780,7 +780,7 @@ buy_decoration_quest = Quest(
 decorate_port_pre_quest_dialogue = [
     "Your new decoration is ready to be placed, Commander.",
     "You can customize the port by placing decorations wherever you like.",
-    "If you don't like how something looks, you can remove the decoration or rotate it to a different angle.",
+    "If you don't like how something looks, you can remove the decoration or flip it horizontally.",
     "Try arranging the new decoration until it looks good to you."
 ]
 decorate_port_quest_line = "Place a decoration in the port."
@@ -795,7 +795,7 @@ def decorate_port_completion_criteria(menu_manager):
     port_menu = menu_manager.port_menu
     return (
         port_menu.moved_decoration_depot_overlay
-        and port_menu.rotated_decoration
+        and port_menu.flipped_decoration
         and port_menu.placed_decoration
         and port_menu.removed_decoration
         and len(DataFiles.save_file["decorations"]) > 0
@@ -832,14 +832,10 @@ def _decorate_port_get_placed_decoration_rect():
     if len(DataFiles.save_file["decorations"]) <= 0:
         return None
 
-    decoration, tilepos_anchor, direction = DataFiles.save_file["decorations"][0]
-    decoration_info = DataFiles.decoration_store[decoration][direction]
-    return get_rect(
-        width=decoration_info["width"] * Decorations.TILESIZE,
-        height=decoration_info["height"] * Decorations.TILESIZE,
-        left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
-        top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
+    decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(
+        DataFiles.save_file["decorations"][0]
     )
+    return Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
 
 def _decorate_port_draw_depot_items(menu_manager, surface, font_registry, text):
     for rect in _decorate_port_get_depot_decoration_rects(menu_manager.port_menu):
@@ -888,10 +884,10 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
                 menu_manager, surface, font_registry,
                 "Pick one decoration from your depot."
             )
-        elif not port_menu.rotated_decoration:
+        elif not port_menu.flipped_decoration:
             draw_tb(
                 surface, font_registry,
-                "Right click to rotate the decoration.",
+                "Right click to flip the decoration.",
                 pygame.mouse.get_pos(),
                 False, False
             )
@@ -949,7 +945,7 @@ def decorate_port_on_start(menu_manager):
     port_menu = menu_manager.port_menu
     port_menu.toggle_decoration_mode_button.active = True
     port_menu.moved_decoration_depot_overlay = False
-    port_menu.rotated_decoration = False
+    port_menu.flipped_decoration = False
     port_menu.placed_decoration = False
     port_menu.removed_decoration = False
 

@@ -1,26 +1,26 @@
 {
 	"bed": {
-		"north": { "width": 2, "height": 2, "snap": [0.5, 0.25] },
-		"east": { "width": 2, "height": 2, "snap": [0.7, 0.4] },
-		"south": { "width": 2, "height": 2, "snap": [0.5, 0.35] },
-		"west": { "width": 2, "height": 2, "snap": [0.3, 0.4] },
+		"width": 2,
+		"height": 2,
 		"interactable": true,
 		"description": "A bed to sleep on."
 	},
 	"chair": {
-		"north": { "width": 1, "height": 1, "snap": [0.5, 0.35] },
-		"east": { "width": 1, "height": 1, "snap": [0.3, 0.4] },
-		"south": { "width": 1, "height": 1, "snap": [0.5, 0.2] },
-		"west": { "width": 1, "height": 1, "snap": [0.7, 0.35] },
+		"width": 1,
+		"height": 1,
 		"interactable": true,
 		"description": "A chair to sit on."
 	},
 	"table": {
-		"north": { "width": 2, "height": 1 },
-		"east": { "width": 1, "height": 2 },
-		"south": { "width": 2, "height": 1 },
-		"west": { "width": 1, "height": 2 },
+		"width": 1,
+		"height": 1,
 		"interactable": false,
 		"description": "A table to sit around."
+	},
+	"test_decoration": {
+		"width": 2,
+		"height": 1,
+		"interactable": false,
+		"description": "for testing"
 	}
 }

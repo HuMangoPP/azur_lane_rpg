@@ -554,10 +554,7 @@ class Shipgirl:
         else:
             self.name = name.split(":")[0]
     
-        self.pos = pygame.Vector2(
-            screen_x(random.random()),
-            screen_y(random.random())
-        )
+        self.pos = self.get_random_floor_pos()
         self.wander_target = self.pos.copy()
         self.pause_time = 0
         if os.path.exists(f"live2d/{self.name}.json"):
@@ -575,11 +572,26 @@ class Shipgirl:
     def __repr__(self):
         return self.name
 
-    def pick_new_wander_target(self):
-        self.wander_target = pygame.Vector2(
-            random.uniform(Decorations.floor_rect.left, Decorations.floor_rect.right),
-            random.uniform(Decorations.floor_rect.top, Decorations.floor_rect.bottom)
+    @staticmethod
+    def get_random_floor_pos():
+        iso_x = random.uniform(0, Decorations.FLOOR_TILES_WIDE)
+        iso_y = random.uniform(0, Decorations.FLOOR_TILES_TALL)
+        target_x = (
+            Decorations.floor_rect.left
+            + Decorations.floor_rect.width / 2
+            + (iso_x - iso_y) * Decorations.ISO_HALF_TILE_WIDTH
         )
+        target_y = (
+            Decorations.floor_rect.top
+            + (iso_x + iso_y) * Decorations.ISO_HALF_TILE_HEIGHT
+        )
+        return pygame.Vector2(
+            target_x,
+            target_y
+        )
+
+    def pick_new_wander_target(self):
+        self.wander_target = self.get_random_floor_pos()
         self.pause_time = random.uniform(1, 3) # TODO clean up magic numbers
 
     def update(self, dt):

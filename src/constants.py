@@ -407,17 +407,126 @@ pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)
 DataFiles.sprites["equipment_menu"]["lightbulb_light"] = lightbulb_light
 
 class Decorations:
-    TILESIZE = 64
-    NUM_TILES_IN_ROW = 2 * int(TEMP_SCREEN_SIZE[0] // TILESIZE)
-    NUM_TILES_IN_COL = 2 * int(TEMP_SCREEN_SIZE[1] // TILESIZE)
+    FLOOR_TILES_WIDE = 20
+    FLOOR_TILES_TALL = 20
+    ISO_TILE_WIDTH = 64
+    ISO_TILE_HEIGHT = 32
+    ISO_HALF_TILE_WIDTH = ISO_TILE_WIDTH // 2
+    ISO_HALF_TILE_HEIGHT = ISO_TILE_HEIGHT // 2
+
+    @staticmethod
+    def unpack_decoration_data(decoration_data):
+        decoration, tilepos_anchor, flipped = decoration_data
+        if not isinstance(flipped, bool):
+            flipped = False
+        return decoration, tilepos_anchor, flipped
+
+    @staticmethod
+    def get_decoration_base_dimensions(decoration, flipped):
+        decoration_info = DataFiles.decoration_store[decoration]
+        width = decoration_info["width"]
+        height = decoration_info["height"]
+        if flipped:
+            return height, width
+        return width, height
+
+    @classmethod
+    def get_decoration_tiles(cls, decoration, flipped, tilepos_anchor):
+        base_width, base_height = cls.get_decoration_base_dimensions(decoration, flipped)
+        decoration_tiles = set()
+        for x in range(base_width):
+            for y in range(base_height):
+                tilepos = (
+                    tilepos_anchor[0] - base_width + x,
+                    tilepos_anchor[1] - base_height + y
+                )
+                decoration_tiles.add(tilepos)
+        return decoration_tiles
+
+    @classmethod
+    def get_isometric_tilepos(cls, screen_pos):
+        rel_x = screen_pos[0] - cls.floor_rect.left - cls.floor_rect.width / 2
+        rel_y = screen_pos[1] - cls.floor_rect.top
+        iso_x = (rel_y / cls.ISO_HALF_TILE_HEIGHT + rel_x / cls.ISO_HALF_TILE_WIDTH) / 2
+        iso_y = (rel_y / cls.ISO_HALF_TILE_HEIGHT - rel_x / cls.ISO_HALF_TILE_WIDTH) / 2
+        return (math.floor(iso_x), math.floor(iso_y))
+
+    @classmethod
+    def get_isometric_tilepos_anchor(cls, screen_pos):
+        tilepos = cls.get_isometric_tilepos(screen_pos)
+        return (tilepos[0] + 1, tilepos[1] + 1)
+
+    @classmethod
+    def get_isometric_floor_pos(cls, tilepos):
+        return pygame.Vector2(
+            cls.floor_rect.left
+            + cls.floor_rect.width / 2
+            + (tilepos[0] - tilepos[1]) * cls.ISO_HALF_TILE_WIDTH,
+            cls.floor_rect.top
+            + (tilepos[0] + tilepos[1]) * cls.ISO_HALF_TILE_HEIGHT
+        )
+
+    @staticmethod
+    def get_decoration_sprite(decoration, flipped):
+        sprite = DataFiles.sprites["decorations"][decoration]
+        if flipped:
+            sprite = pygame.transform.flip(sprite, True, False)
+        return sprite
+
+    @classmethod
+    def get_decoration_sprite_rect(cls, decoration, flipped, tilepos_anchor):
+        base_width, _ = cls.get_decoration_base_dimensions(decoration, flipped)
+        sprite = cls.get_decoration_sprite(decoration, flipped)
+        sprite_rect = sprite.get_rect()
+        anchor_pos = cls.get_isometric_floor_pos(tilepos_anchor)
+        sprite_rect.bottomleft = (
+            anchor_pos.x - base_width * cls.ISO_HALF_TILE_WIDTH,
+            anchor_pos.y
+        )
+        return sprite_rect
+
+    @classmethod
+    def get_decoration_base_polygon(cls, decoration, flipped, tilepos_anchor):
+        base_width, base_height = cls.get_decoration_base_dimensions(decoration, flipped)
+        top_tilepos = (
+            tilepos_anchor[0] - base_width,
+            tilepos_anchor[1] - base_height
+        )
+        left_tilepos = (
+            tilepos_anchor[0] - base_width,
+            tilepos_anchor[1]
+        )
+        right_tilepos = (
+            tilepos_anchor[0],
+            tilepos_anchor[1] - base_height
+        )
+        return [
+            cls.get_isometric_floor_pos(top_tilepos),
+            cls.get_isometric_floor_pos(right_tilepos),
+            cls.get_isometric_floor_pos(tilepos_anchor),
+            cls.get_isometric_floor_pos(left_tilepos),
+        ]
+
+    @classmethod
+    def in_tileable_area(cls, tiles):
+        return (
+            min(tile[0] for tile in tiles) >= 0
+            and max(tile[0] for tile in tiles) < cls.FLOOR_TILES_WIDE
+            and min(tile[1] for tile in tiles) >= 0
+            and max(tile[1] for tile in tiles) < cls.FLOOR_TILES_TALL
+        )
 
     @classmethod
     def create_floor_surf(cls):
-        cls.floor_surf = pygame.Surface((cls.NUM_TILES_IN_ROW*cls.TILESIZE, cls.NUM_TILES_IN_COL*cls.TILESIZE))
-        for i in range(cls.NUM_TILES_IN_ROW):
-            x = i * cls.TILESIZE
-            for j in range(cls.NUM_TILES_IN_COL):
-                y = j * cls.TILESIZE
+        floor_width = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_WIDTH
+        floor_height = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_HEIGHT
+
+        cls.floor_surf = pygame.Surface((floor_width, floor_height), pygame.SRCALPHA)
+        x_offset = (cls.FLOOR_TILES_TALL - 1) * cls.ISO_HALF_TILE_WIDTH
+        for i in range(cls.FLOOR_TILES_WIDE):
+            for j in range(cls.FLOOR_TILES_TALL):
+                x = (i - j) * cls.ISO_HALF_TILE_WIDTH + x_offset
+                y = (i + j) * cls.ISO_HALF_TILE_HEIGHT
                 if (i + j) % 2:
                     tile = DataFiles.sprites["decorations"]["tile_dark"]
                 else:

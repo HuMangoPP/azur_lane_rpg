@@ -9,36 +9,6 @@ from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, Deco
 from src.shipgirls import Shipgirl
 from live2d.live2d import Live2D
 
-def get_decoration_tiles(decoration, direction, tilepos_anchor):
-    decoration_info = DataFiles.decoration_store[decoration][direction]
-    decoration_tiles = set()
-    for x in range(decoration_info["width"]):
-        for y in range(decoration_info["height"]):
-            tilepos = (tilepos_anchor[0]+x, tilepos_anchor[1]+y)
-            decoration_tiles.add(tilepos)
-    return decoration_tiles
-
-def get_decoration_sprite_rect(decoration, direction, tilepos_anchor):
-    decoration_info = DataFiles.decoration_store[decoration][direction]
-    tile_rect = get_rect(
-        width=decoration_info["width"] * Decorations.TILESIZE,
-        height=decoration_info["height"] * Decorations.TILESIZE,
-        left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
-        top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
-    )
-    sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
-    sprite_rect = sprite.get_rect()
-    sprite_rect.bottomleft = tile_rect.bottomleft
-    return sprite_rect
-
-def in_tileable_area(tiles):
-    return (
-        min(tile[0] for tile in tiles) >= 0
-        and max(tile[0] for tile in tiles) < Decorations.NUM_TILES_IN_ROW
-        and min(tile[1] for tile in tiles) >= 0
-        and max(tile[1] for tile in tiles) <= Decorations.NUM_TILES_IN_COL
-    )
-
 
 class AnnularSectorButton:
     SPRITE_SIZE = 96
@@ -132,8 +102,6 @@ class PortMenu:
     SHIPYARD = "shipyard"
     GEAR_LAB = "gear_lab"
     DECORATION_STORE = "decoration_store"
-
-    DECORATION_DIRECTIONS = ["north", "east", "south", "west"]
 
     DECORATION_STAMP_ANIMATION_DURATION = 1
     DECORATION_STAMP_DOWN_TIME = 0.15
@@ -457,12 +425,12 @@ class PortMenu:
             bottom=screen_y(1) - Box.HEIGHT
         )
         self.selected_decoration_in_depot = None
-        self.decoration_direction_index = 0
+        self.decoration_flipped = False
         self.deleting_decoration = False
         self.decoration_depot_drag_offset = None
         self.dragged_shipgirl = None
         self.moved_decoration_depot_overlay = False
-        self.rotated_decoration = False
+        self.flipped_decoration = False
         self.placed_decoration = False
         self.removed_decoration = False
 
@@ -591,16 +559,10 @@ class PortMenu:
             return False
         
         if self.deleting_decoration:
-            clicked_tilepos = (
-                (pos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
-                (pos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
-            )
-            for decoration, tilepos_anchor, direction in DataFiles.save_file["decorations"]:
-                decoration_info = DataFiles.decoration_store[decoration][direction]
-                if (
-                    tilepos_anchor[0] <= clicked_tilepos[0] < tilepos_anchor[0] + decoration_info["width"]
-                    and tilepos_anchor[1] <= clicked_tilepos[1] < tilepos_anchor[1] + decoration_info["height"]
-                ):
+            clicked_tilepos = Decorations.get_isometric_tilepos(pos)
+            for decoration_data in DataFiles.save_file["decorations"]:
+                decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+                if clicked_tilepos in Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor):
                     return False
 
         return not any(shipgirl.rect.collidepoint(pos) for shipgirl in self.menu_manager.available_shipgirls)
@@ -1449,8 +1411,8 @@ class PortMenu:
         pencil_rect.bottom = self.clipboard_page.bottom + Box.HEIGHT/2
         surface.blit(pencil_sprite, pencil_rect)
 
-    def rotate_decoration_direction(self):
-        self.decoration_direction_index = (self.decoration_direction_index + 1) % len(self.DECORATION_DIRECTIONS)
+    def flip_decoration(self):
+        self.decoration_flipped = not self.decoration_flipped
 
     def decoration_has_interacting_shipgirl(self, tilepos_anchor):
         tilepos_anchor = tuple(tilepos_anchor)
@@ -1460,19 +1422,20 @@ class PortMenu:
         )
 
     def snap_shipgirl_to_interactable_decoration(self, shipgirl):
-        for decoration, tilepos_anchor, direction in DataFiles.save_file["decorations"]:
+        for decoration_data in DataFiles.save_file["decorations"]:
+            decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
             decoration_store_info = DataFiles.decoration_store[decoration]
             if not decoration_store_info["interactable"]:
                 continue
 
-            sprite_rect = get_decoration_sprite_rect(decoration, direction, tilepos_anchor)
+            sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
             if not sprite_rect.collidepoint(shipgirl.rect.center):
                 continue
 
             if self.decoration_has_interacting_shipgirl(tilepos_anchor):
                 continue
 
-            snap_x, snap_y = decoration_store_info[direction]["snap"]
+            snap_x, snap_y = decoration_store_info.get("snap", (0.5, 1))
             shipgirl.pos = pygame.Vector2(
                 sprite_rect.left + sprite_rect.width * snap_x,
                 sprite_rect.top + sprite_rect.height * snap_y
@@ -1558,8 +1521,8 @@ class PortMenu:
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 3 and self.selected_decoration_in_depot is not None:
                     DataFiles.sfx["click"].play()
-                    self.rotate_decoration_direction()
-                    self.rotated_decoration = True
+                    self.flip_decoration()
+                    self.flipped_decoration = True
                     continue
 
                 if event.button != 1:
@@ -1618,17 +1581,10 @@ class PortMenu:
                             self.deleting_decoration = not self.deleting_decoration
                             self.selected_decoration_in_depot = None
                 elif self.deleting_decoration:
-                    clicked_tilepos = (
-                        (event.pos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
-                        (event.pos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
-                    )
+                    clicked_tilepos = Decorations.get_isometric_tilepos(event.pos)
                     for decoration_index, decoration_data in enumerate(DataFiles.save_file["decorations"]):
-                        decoration, tilepos_anchor, direction = decoration_data
-                        decoration_info = DataFiles.decoration_store[decoration][direction]
-                        if (
-                            tilepos_anchor[0] <= clicked_tilepos[0] < tilepos_anchor[0] + decoration_info["width"]
-                            and tilepos_anchor[1] <= clicked_tilepos[1] < tilepos_anchor[1] + decoration_info["height"]
-                        ):
+                        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+                        if clicked_tilepos in Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor):
                             DataFiles.sfx["click"].play()
                             self.release_shipgirls_from_deleted_decoration(decoration_data)
                             DataFiles.save_file["decorations"].pop(decoration_index)
@@ -1640,22 +1596,18 @@ class PortMenu:
                 elif self.selected_decoration_in_depot is not None:
                     occupied_tiles = set() # TODO code optimization
                     for decoration_data in DataFiles.save_file["decorations"]:
-                        decoration, tilepos_anchor, direction = decoration_data
-                        occupied_tiles.update(get_decoration_tiles(decoration, direction, tilepos_anchor))
+                        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+                        occupied_tiles.update(Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor))
 
                     decoration = self.selected_decoration_in_depot
-                    direction = self.DECORATION_DIRECTIONS[self.decoration_direction_index]
-                    clicked_tilepos = (
-                        (event.pos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
-                        (event.pos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
-                    )
-                    place_tiles = get_decoration_tiles(decoration, direction, clicked_tilepos)
+                    clicked_tilepos = Decorations.get_isometric_tilepos_anchor(event.pos)
+                    place_tiles = Decorations.get_decoration_tiles(decoration, self.decoration_flipped, clicked_tilepos)
                     if place_tiles.intersection(occupied_tiles):
                         continue
-                    if not in_tileable_area(place_tiles):
+                    if not Decorations.in_tileable_area(place_tiles):
                         continue
                     DataFiles.sfx["click"].play()
-                    DataFiles.save_file["decorations"].append((decoration,clicked_tilepos,direction))
+                    DataFiles.save_file["decorations"].append((decoration, clicked_tilepos, self.decoration_flipped))
                     DataFiles.save_file["decoration_depot"][decoration] -= 1
                     self.placed_decoration = True
                     if DataFiles.save_file["decoration_depot"][decoration] <= 0:
@@ -1708,53 +1660,42 @@ class PortMenu:
     def draw_decoration_mode_overlay(self, surface, font_registry):
         if self.deleting_decoration:
             mpos = pygame.mouse.get_pos()
-            hovered_tilepos = (
-                (mpos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
-                (mpos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
-            )
+            hovered_tilepos = Decorations.get_isometric_tilepos(mpos)
             for decoration_data in DataFiles.save_file["decorations"]:
-                decoration, tilepos_anchor, direction = decoration_data
-                decoration_info = DataFiles.decoration_store[decoration][direction]
-                hovered_decoration_tiles = get_decoration_tiles(decoration, direction, tilepos_anchor)
+                decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+                hovered_decoration_tiles = Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor)
                 if hovered_tilepos in hovered_decoration_tiles:
-                    rect = get_rect(
-                        width=decoration_info["width"] * Decorations.TILESIZE,
-                        height=decoration_info["height"] * Decorations.TILESIZE,
-                        left=Decorations.floor_rect.left + tilepos_anchor[0] * Decorations.TILESIZE,
-                        top=Decorations.floor_rect.top + tilepos_anchor[1] * Decorations.TILESIZE
+                    pygame.draw.polygon(
+                        surface,
+                        Color.RED,
+                        Decorations.get_decoration_base_polygon(decoration, flipped, tilepos_anchor),
+                        width=Box.OUTLINE_WIDTH
                     )
-                    pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
                     break
 
         if self.selected_decoration_in_depot:
             occupied_tiles = set() # TODO code optimization
             for decoration_data in DataFiles.save_file["decorations"]:
-                decoration, tilepos_anchor, direction = decoration_data
-                occupied_tiles.update(get_decoration_tiles(decoration, direction, tilepos_anchor))
+                decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+                occupied_tiles.update(Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor))
 
             decoration = self.selected_decoration_in_depot
-            direction = self.DECORATION_DIRECTIONS[self.decoration_direction_index]
             mpos = pygame.mouse.get_pos()
-            hovered_tilepos = (
-                (mpos[0] - Decorations.floor_rect.left) // Decorations.TILESIZE,
-                (mpos[1] - Decorations.floor_rect.top) // Decorations.TILESIZE
-            )
-            decoration_info = DataFiles.decoration_store[decoration][direction]
-            place_tiles = get_decoration_tiles(decoration, direction, hovered_tilepos)
-            rect = get_rect(
-                width=decoration_info["width"] * Decorations.TILESIZE,
-                height=decoration_info["height"] * Decorations.TILESIZE,
-                left=Decorations.floor_rect.left + hovered_tilepos[0] * Decorations.TILESIZE,
-                top=Decorations.floor_rect.top + hovered_tilepos[1] * Decorations.TILESIZE
-            )
-            sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
-            sprite_rect = sprite.get_rect()
-            sprite_rect.bottomleft = rect.bottomleft
+            hovered_tilepos = Decorations.get_isometric_tilepos_anchor(mpos)
+            place_tiles = Decorations.get_decoration_tiles(decoration, self.decoration_flipped, hovered_tilepos)
+            sprite = Decorations.get_decoration_sprite(decoration, self.decoration_flipped)
+            sprite_rect = Decorations.get_decoration_sprite_rect(decoration, self.decoration_flipped, hovered_tilepos)
             surface.blit(sprite, sprite_rect)
-            if not place_tiles.intersection(occupied_tiles) and in_tileable_area(place_tiles):
-                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            if not place_tiles.intersection(occupied_tiles) and Decorations.in_tileable_area(place_tiles):
+                outline_color = Color.WHITE
             else:
-                pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+                outline_color = Color.RED
+            pygame.draw.polygon(
+                surface,
+                outline_color,
+                Decorations.get_decoration_base_polygon(decoration, self.decoration_flipped, hovered_tilepos),
+                width=Box.OUTLINE_WIDTH
+            )
 
         for shipgirl in self.menu_manager.available_shipgirls:
             shipgirl.draw(surface, font_registry)
@@ -1861,9 +1802,9 @@ class PortMenu:
             key=lambda decoration_data : decoration_data[1][1]
         )
         for decoration_data in decorations:
-            decoration, tilepos_anchor, direction = decoration_data
-            sprite = DataFiles.sprites["decorations"][f"{decoration}_{direction}"]
-            sprite_rect = get_decoration_sprite_rect(decoration, direction, tilepos_anchor)
+            decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+            sprite = Decorations.get_decoration_sprite(decoration, flipped)
+            sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
             surface.blit(sprite, sprite_rect)
 
         if self.is_decorating:
