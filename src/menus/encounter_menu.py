@@ -107,15 +107,41 @@ class SeaFoam:
         surface.blit(self.sprite, rect)
 
 
+class RainDrop:
+    def __init__(self, pos, color, bottom):
+        self.pos = pygame.Vector2(pos)
+        self.color = color
+        self.bottom = bottom
+        self.length = random.uniform(18, 34)
+        self.speed = random.uniform(520, 720)
+        self.angle = math.radians(135 + random.uniform(-6, 6))
+
+    @property
+    def offscreen(self):
+        return self.pos.x < -self.length or self.pos.y > self.bottom + self.length
+
+    def update(self, dt):
+        self.pos += get_vec(self.speed * dt, self.angle)
+
+    def draw(self, surface):
+        end_pos = self.pos + get_vec(self.length, self.angle)
+        pygame.draw.line(surface, self.color, self.pos, end_pos, width=1)
+
+
 class Background:
     Y_GAP = 48
     NUM_WAVE_REPS = 5
     SEA_FOAM_SPAWN_TIME_RANGE = (0.5, 1)
+    RAIN_SPAWN_RATE = 90
 
-    def __init__(self, sky_colors, wave_sprites, cloud_sprites):
+    def __init__(self, sky_colors, wave_sprites, cloud_sprites, rain_colors):
         self.set_sky_colors(sky_colors)
         self.wave_sprites = wave_sprites
         self.cloud_sprites = cloud_sprites
+        self.rain_colors = rain_colors
+        self.raining = False
+        self.rain_drops = []
+        self.rain_spawn_progress = 0
         self.sea_foam_sprite = DataFiles.sprites["background"]["sea_foam"]
         self.sea_foam_timer = 0
         self.sea_foam_spawn_time = random.uniform(*self.SEA_FOAM_SPAWN_TIME_RANGE)
@@ -148,11 +174,38 @@ class Background:
         for cloud in self.clouds:
             cloud.set_cloud_sprites(self.cloud_sprites)
 
+    def set_rain(self, raining, rain_colors):
+        self.raining = raining
+        self.rain_colors = rain_colors
+        if not self.raining:
+            self.rain_drops = []
+            self.rain_spawn_progress = 0
+
     def update(self, dt):
         num_waves = DataFiles.sprites["background"]["num_waves"]
         self.wave_timers = [
             (wave_timer + (i+1)/num_waves*dt)%math.radians(360)
             for i, wave_timer in enumerate(self.wave_timers)
+        ]
+
+        if self.raining:
+            self.rain_spawn_progress += self.RAIN_SPAWN_RATE * dt
+            num_rain_drops = int(self.rain_spawn_progress)
+            self.rain_spawn_progress -= num_rain_drops
+            for _ in range(num_rain_drops):
+                self.rain_drops.append(RainDrop(
+                    (
+                        random.uniform(0, screen_x(1) + screen_y(0.45)),
+                        random.uniform(-screen_y(0.2), 0),
+                    ),
+                    random.choice(self.rain_colors),
+                    random.uniform(screen_y(0.45), self.wave_ys[-1]),
+                ))
+        for rain_drop in self.rain_drops:
+            rain_drop.update(dt)
+        self.rain_drops = [
+            rain_drop for rain_drop in self.rain_drops
+            if not rain_drop.offscreen
         ]
 
         for cloud in self.clouds:
@@ -265,6 +318,9 @@ class Background:
                 for sea_foam in self.sea_foams:
                     if sea_foam.wave_index == i and sea_foam.wave_rep_index == j:
                         sea_foam.draw(surface, wave_rect)
+
+        for rain_drop in self.rain_drops:
+            rain_drop.draw(surface)
 
 class Drop:
     def __init__(self, item, pos):
@@ -492,7 +548,9 @@ class EncounterMenu:
             self.TIME_WEATHER_STYLES[self.time_weather]["sky_colors"],
             DataFiles.sprites["background"]["wave_sets"][self.time_weather],
             DataFiles.sprites["background"]["cloud_sets"][self.time_weather],
+            self.SHIPGIRL_WAKE_COLORS["stormy"],
         )
+        self.apply_time_weather_style()
 
     def roll_time_weather(self):
         weather_names = list(self.TIME_WEATHER_STYLES.keys())
@@ -508,6 +566,10 @@ class EncounterMenu:
         self.background.set_sky_colors(weather_style["sky_colors"])
         self.background.set_wave_sprites(self.time_weather)
         self.background.set_cloud_sprites(self.time_weather)
+        self.background.set_rain(
+            self.time_weather == "stormy",
+            self.SHIPGIRL_WAKE_COLORS["stormy"],
+        )
 
     def begin_sortie(self):
         self.roll_time_weather()
