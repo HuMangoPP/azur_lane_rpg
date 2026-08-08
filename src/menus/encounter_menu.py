@@ -278,7 +278,7 @@ class EncounterMenu:
     MELEE_SHIPS = ["DD", "CL", "SS"]
     SHIPGIRL_WAKE_CONFIG = {
         "upward_bias": -0.4,
-        "spark_chance": 0.6,
+        "spark_chance": 1.0,
         "spark_duration_range": (0.22, 0.34),
         "spark_distance_range": (12, 24),
         "spark_length_range": (12, 24),
@@ -287,6 +287,26 @@ class EncounterMenu:
         "smoke_duration_range": (0.28, 0.45),
         "smoke_distance_range": (8, 16),
         "smoke_size_range": (16, 24),
+    }
+    SHIPGIRL_WAKE_COLORS = {
+        "daytime": [
+            (231, 237, 249),
+            (209, 220, 242),
+            (185, 202, 234),
+            (162, 184, 224),
+        ],
+        "nighttime": [
+            (174, 174, 199),
+            (149, 150, 183),
+            (124, 128, 165),
+            (101, 106, 146),
+        ],
+        "stormy": [
+            (215, 226, 226),
+            (193, 211, 213),
+            (170, 195, 201),
+            (148, 179, 190),
+        ],
     }
     TIME_WEATHER_STYLES = {
         "daytime": {
@@ -534,9 +554,10 @@ class EncounterMenu:
                 shipgirl.rect.bottom - random.uniform(11, 16),
             )
             torpedo_angle = 0 if shipgirl.rect.x < screen_x(0.5) else math.pi
-            self.vfx_manager.spawn_torpedo_wake(
+            self.vfx_manager.spawn_wake(
                 wake_pos,
                 torpedo_angle,
+                wake_colors=self.SHIPGIRL_WAKE_COLORS[self.time_weather],
                 **self.SHIPGIRL_WAKE_CONFIG,
             )
 

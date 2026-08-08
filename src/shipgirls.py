@@ -363,7 +363,7 @@ class ShipgirlBattleComponent:
             torpedo_rect.center = torpedo_pos
             surface.blit(torpedo_sprite, torpedo_rect)
             wake_pos = torpedo_pos - relpos.normalize() * 12
-            vfx_manager.spawn_torpedo_wake(wake_pos, torpedo_angle)
+            vfx_manager.spawn_wake(wake_pos, torpedo_angle)
             return
 
         start_pos = pygame.Vector2(rect.center)

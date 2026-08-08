@@ -353,7 +353,7 @@ class VFXManager:
                 pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, size=smoke_size, drift_distance=smoke_distance
             ))
 
-    def spawn_torpedo_wake(
+    def spawn_wake(
         self,
         pos,
         torpedo_angle,
@@ -367,16 +367,18 @@ class VFXManager:
         smoke_duration_range=(0.25, 0.4),
         smoke_distance_range=(10, 18),
         smoke_size_range=(12, 20),
+        wake_colors=None,
     ):
         if random.random() > spark_chance:
             return
 
+        wake_colors = wake_colors or TORPEDO_WAKE_COLORS
         backward_dir = get_vec(1, torpedo_angle + math.pi)
         wake_dir = (backward_dir + pygame.Vector2(0, upward_bias)).normalize()
         wake_angle = math.atan2(wake_dir.y, wake_dir.x)
 
         spark_angle = wake_angle + math.radians(random.uniform(-12, 12))
-        spark_color = random.choice(TORPEDO_WAKE_COLORS)
+        spark_color = random.choice(wake_colors)
         spark_duration = random.uniform(*spark_duration_range)
         spark_distance = random.uniform(*spark_distance_range)
         spark_size = (random.uniform(*spark_length_range), random.uniform(*spark_width_range))
@@ -392,7 +394,7 @@ class VFXManager:
         if random.random() > smoke_chance:
             return
         smoke_angle = wake_angle + math.radians(random.uniform(-20, 20))
-        smoke_color = random.choice(TORPEDO_WAKE_COLORS)
+        smoke_color = random.choice(wake_colors)
         smoke_duration = random.uniform(*smoke_duration_range)
         smoke_distance = random.uniform(*smoke_distance_range)
         smoke_size = random.uniform(*smoke_size_range)
