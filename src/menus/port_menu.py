@@ -1697,7 +1697,10 @@ class PortMenu:
                 width=Box.OUTLINE_WIDTH
             )
 
-        for shipgirl in self.menu_manager.available_shipgirls:
+        for shipgirl in sorted(
+            self.menu_manager.available_shipgirls,
+            key=lambda shipgirl : shipgirl.rect.bottom
+        ):
             shipgirl.draw(surface, font_registry)
         
         for option in self.shipgirl_dialogue_options:
@@ -1811,7 +1814,10 @@ class PortMenu:
             self.draw_decoration_mode_overlay(surface, font_registry)
             return
 
-        for shipgirl in self.menu_manager.available_shipgirls:
+        for shipgirl in sorted(
+            self.menu_manager.available_shipgirls,
+            key=lambda shipgirl : shipgirl.rect.bottom
+        ):
             shipgirl.draw(surface, font_registry)
         
         for option in self.shipgirl_dialogue_options:
