@@ -60,14 +60,12 @@
 	},
 	"specialized_wisdom_cubes": {},
 	"decoration_depot": {
-		"bed": 1,
-		"chair": 0
+		"bed": 2,
+		"chair": 1
 	},
 	"decorations": [
-		["bed", [4, 9], true],
-		["chair", [7, 6], false],
 		["bed", [6, 7], false],
-		["chair", [3, 10], true]
+		["chair", [4, 7], false]
 	],
 	"research_target": null,
 	"sortie_progress": 24,

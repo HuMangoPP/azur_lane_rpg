@@ -444,6 +444,44 @@ class Decorations:
         return decoration_tiles
 
     @classmethod
+    def get_decoration_top_tilepos(cls, decoration, flipped, tilepos_anchor):
+        base_width, base_height = cls.get_decoration_base_dimensions(decoration, flipped)
+        return (
+            tilepos_anchor[0] - base_width,
+            tilepos_anchor[1] - base_height
+        )
+
+    @classmethod
+    def decoration_is_behind(cls, behind_decoration_data, front_decoration_data):
+        behind_decoration, behind_tilepos_anchor, behind_flipped = cls.unpack_decoration_data(behind_decoration_data)
+        front_decoration, front_tilepos_anchor, front_flipped = cls.unpack_decoration_data(front_decoration_data)
+        behind_tiles = cls.get_decoration_tiles(behind_decoration, behind_flipped, behind_tilepos_anchor)
+        front_tiles = cls.get_decoration_tiles(front_decoration, front_flipped, front_tilepos_anchor)
+        return any(
+            behind_tile[0] <= front_tile[0]
+            and behind_tile[1] <= front_tile[1]
+            for behind_tile in behind_tiles
+            for front_tile in front_tiles
+        )
+
+    @classmethod
+    def compare_decoration_render_order(cls, decoration_data_a, decoration_data_b):
+        a_behind_b = cls.decoration_is_behind(decoration_data_a, decoration_data_b)
+        b_behind_a = cls.decoration_is_behind(decoration_data_b, decoration_data_a)
+        if a_behind_b and not b_behind_a:
+            return -1
+        if b_behind_a and not a_behind_b:
+            return 1
+
+        decoration_a, tilepos_anchor_a, flipped_a = cls.unpack_decoration_data(decoration_data_a)
+        decoration_b, tilepos_anchor_b, flipped_b = cls.unpack_decoration_data(decoration_data_b)
+        top_tilepos_a = cls.get_decoration_top_tilepos(decoration_a, flipped_a, tilepos_anchor_a)
+        top_tilepos_b = cls.get_decoration_top_tilepos(decoration_b, flipped_b, tilepos_anchor_b)
+        fallback_a = (top_tilepos_a[0] + top_tilepos_a[1], top_tilepos_a[1], top_tilepos_a[0])
+        fallback_b = (top_tilepos_b[0] + top_tilepos_b[1], top_tilepos_b[1], top_tilepos_b[0])
+        return (fallback_a > fallback_b) - (fallback_a < fallback_b)
+
+    @classmethod
     def get_isometric_tilepos(cls, screen_pos):
         rel_x = screen_pos[0] - cls.floor_rect.left - cls.floor_rect.width / 2
         rel_y = screen_pos[1] - cls.floor_rect.top
@@ -488,10 +526,7 @@ class Decorations:
     @classmethod
     def get_decoration_base_polygon(cls, decoration, flipped, tilepos_anchor):
         base_width, base_height = cls.get_decoration_base_dimensions(decoration, flipped)
-        top_tilepos = (
-            tilepos_anchor[0] - base_width,
-            tilepos_anchor[1] - base_height
-        )
+        top_tilepos = cls.get_decoration_top_tilepos(decoration, flipped, tilepos_anchor)
         left_tilepos = (
             tilepos_anchor[0] - base_width,
             tilepos_anchor[1]

@@ -1,5 +1,6 @@
 import math
 import random
+import functools
 import pygame
 
 from engine.util import draw_annulus, get_rect, get_vec
@@ -1428,13 +1429,15 @@ class PortMenu:
             if not decoration_store_info["interactable"]:
                 continue
 
-            sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
-            if not sprite_rect.collidepoint(shipgirl.rect.center):
+            shipgirl_tilepos = Decorations.get_isometric_tilepos(shipgirl.rect.center)
+            decoration_tiles = Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor)
+            if shipgirl_tilepos not in decoration_tiles:
                 continue
 
             if self.decoration_has_interacting_shipgirl(tilepos_anchor):
                 continue
 
+            sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
             snap_x, snap_y = decoration_store_info.get("snap", (0.5, 1))
             shipgirl.pos = pygame.Vector2(
                 sprite_rect.left + sprite_rect.width * snap_x,
@@ -1804,7 +1807,7 @@ class PortMenu:
 
         decorations = sorted(
             DataFiles.save_file["decorations"],
-            key=lambda decoration_data : decoration_data[1][1]
+            key=functools.cmp_to_key(Decorations.compare_decoration_render_order)
         )
         for decoration_data in decorations:
             decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
