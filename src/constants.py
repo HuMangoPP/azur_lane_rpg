@@ -266,9 +266,31 @@ def create_cloud_shadow_sprite(cloud_index):
 
     DataFiles.sprites["background"][f"cloud_shadow{cloud_index}"] = cloud_shadow2
 
+def create_cloud_sprite(cloud_index, color):
+    cloud = DataFiles.sprites["background"][f"cloud{cloud_index}"]
+    colored_cloud = pygame.Surface(cloud.get_size())
+    colored_cloud.fill(color)
+    cloud.set_colorkey((255,255,255))
+    colored_cloud.blit(cloud, (0,0))
+    colored_cloud.set_colorkey((255,0,0))
+    cloud.set_colorkey((255,0,0))
+    return colored_cloud
+
 DataFiles.sprites["background"]["num_clouds"] = 10
 for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
     create_cloud_shadow_sprite(cloud_index)
+
+background_cloud_colors = {
+    "daytime": (255, 255, 255),
+    "nighttime": (132, 124, 162),
+    "stormy": (214, 218, 224),
+}
+DataFiles.sprites["background"]["cloud_sets"] = {}
+for weather, cloud_color in background_cloud_colors.items():
+    DataFiles.sprites["background"]["cloud_sets"][weather] = [
+        create_cloud_sprite(cloud_index, cloud_color)
+        for cloud_index in range(DataFiles.sprites["background"]["num_clouds"])
+    ]
 
 def create_sortie_selection_wave_sprite(wave_index, wave_color):
     wave = DataFiles.sprites["sortie_selection"][f"wave"]

@@ -20,12 +20,16 @@ from src.menus.quests_data import (
 class Cloud:
     SHADOW_OFFSET = pygame.Vector2(4, 8)
 
-    def __init__(self, index, x, y, speed):
-        self.sprite = DataFiles.sprites["background"][f"cloud{index}"]
+    def __init__(self, index, x, y, speed, cloud_sprites):
+        self.index = index
+        self.sprite = cloud_sprites[index]
         self.shadow = DataFiles.sprites["background"][f"cloud_shadow{index}"]
         self.x = x
         self.y = y
         self.speed = speed
+
+    def set_cloud_sprites(self, cloud_sprites):
+        self.sprite = cloud_sprites[self.index]
 
     def update(self, dt):
         self.x = self.x + self.speed * dt
@@ -108,9 +112,10 @@ class Background:
     NUM_WAVE_REPS = 5
     SEA_FOAM_SPAWN_TIME_RANGE = (0.5, 1)
 
-    def __init__(self, sky_colors, wave_sprites):
+    def __init__(self, sky_colors, wave_sprites, cloud_sprites):
         self.set_sky_colors(sky_colors)
         self.wave_sprites = wave_sprites
+        self.cloud_sprites = cloud_sprites
         self.sea_foam_sprite = DataFiles.sprites["background"]["sea_foam"]
         self.sea_foam_timer = 0
         self.sea_foam_spawn_time = random.uniform(*self.SEA_FOAM_SPAWN_TIME_RANGE)
@@ -137,6 +142,11 @@ class Background:
 
     def set_wave_sprites(self, weather):
         self.wave_sprites = DataFiles.sprites["background"]["wave_sets"][weather]
+
+    def set_cloud_sprites(self, weather):
+        self.cloud_sprites = DataFiles.sprites["background"]["cloud_sets"][weather]
+        for cloud in self.clouds:
+            cloud.set_cloud_sprites(self.cloud_sprites)
 
     def update(self, dt):
         num_waves = DataFiles.sprites["background"]["num_waves"]
@@ -179,7 +189,8 @@ class Background:
                 random.randint(1, DataFiles.sprites["background"]["num_clouds"])-1,
                 0 if move_right else screen_x(1),
                 random.uniform(-64, 64),
-                random.uniform(32, 64) * (1 if move_right else -1)
+                random.uniform(32, 64) * (1 if move_right else -1),
+                self.cloud_sprites,
             ))
             self.cloud_timer = 0
             self.cloud_spawn_time = random.uniform(5, 10)
@@ -480,6 +491,7 @@ class EncounterMenu:
         self.background = Background(
             self.TIME_WEATHER_STYLES[self.time_weather]["sky_colors"],
             DataFiles.sprites["background"]["wave_sets"][self.time_weather],
+            DataFiles.sprites["background"]["cloud_sets"][self.time_weather],
         )
 
     def roll_time_weather(self):
@@ -495,6 +507,7 @@ class EncounterMenu:
         weather_style = self.TIME_WEATHER_STYLES[self.time_weather]
         self.background.set_sky_colors(weather_style["sky_colors"])
         self.background.set_wave_sprites(self.time_weather)
+        self.background.set_cloud_sprites(self.time_weather)
 
     def begin_sortie(self):
         self.roll_time_weather()
