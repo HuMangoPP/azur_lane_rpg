@@ -599,7 +599,6 @@ class Shipgirl:
             return
         
         if self.interacting_decoration is not None:
-            self.sprite.set_animation(Live2D.IDLE_ANIMATION)
             return
         
         if self.pause_time > 0:

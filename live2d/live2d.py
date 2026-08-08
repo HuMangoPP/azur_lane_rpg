@@ -263,6 +263,8 @@ class Live2D:
     WALK_ANIMATION = "walk"
     ATTACK_ANIMATION = "attack"
     SINK_ANIMATION = "sink"
+    SLEEP_ANIMATION = "sleep"
+    SIT_ANIMATION = "sit"
 
     ANIMATION_SPEED = 1.0
     NUM_FRAMES = 12

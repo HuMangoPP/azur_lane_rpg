@@ -1442,6 +1442,8 @@ class PortMenu:
             )
             shipgirl.rect.center = shipgirl.pos
             shipgirl.interacting_decoration = tuple(tilepos_anchor)
+            shipgirl.sprite.set_animation(decoration_store_info.get("shipgirl_animation", Live2D.IDLE_ANIMATION))
+            shipgirl.facing_left = flipped
             return True
 
         shipgirl.interacting_decoration = None

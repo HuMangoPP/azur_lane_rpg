@@ -901,5 +901,118 @@
 				}
 			}
 		}
+	},
+	"sleep": {
+		"keyframes": {
+			"0": {
+				"torso": {
+					"offset": [0, 0],
+					"rotation": 60
+				}
+			}
+		}
+	},
+	"sit": {
+		"keyframes": {
+			"0": {
+				"torso": {
+					"offset": [-8, 4],
+					"rotation": 0
+				},
+				"right_thigh": {
+					"offset": [0, 0],
+						"rotation": -60
+				},
+				"left_thigh": {
+					"offset": [0, 0],
+						"rotation": -60
+				},
+				"right_leg": {
+					"offset": [0, 0],
+						"rotation": 30
+				},
+				"left_leg": {
+					"offset": [0, 0],
+						"rotation": 60
+				},
+				"back_torso": {
+					"offset": [0, 0],
+					"rotation": -15
+				},
+				"right_arm": {
+					"offset": [0, 0],
+					"rotation": -45
+				},
+				"head": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"right_hair": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"back_hair": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": 5
+				}
+			},
+			"2": {
+				"right_leg": {
+					"offset": [0, 0],
+						"rotation": 60
+				},
+				"left_leg": {
+					"offset": [0, 0],
+						"rotation": 30
+				},
+				"head": {
+					"offset": [0, 0],
+					"rotation": 5
+				},
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"right_hair": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"back_hair": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": -5
+				}
+			},
+			"4": {
+				"copy": "0"
+			}
+		}
 	}
 }
