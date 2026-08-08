@@ -903,16 +903,93 @@
 		}
 	},
 	"sleep": {
+		"facial_expression": "sleepy",
+		"keyframe_duration": 1.2,
 		"keyframes": {
 			"0": {
 				"torso": {
 					"offset": [0, 0],
-					"rotation": 60
+					"rotation": 45
+				},
+				"back_torso": {
+					"offset": [0, 0],
+					"rotation": -5
+				},
+				"right_arm": {
+					"offset": [0, 0],
+					"rotation": -60
+				},
+				"left_arm": {
+					"offset": [0, 0],
+					"rotation": -90
+				},
+				"left_leg": {
+					"offset": [0, 0],
+					"rotation": 45
+				},
+				"head": {
+					"offset": [0, 0],
+					"rotation": 10
+				},
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"back_hair": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": 0
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": 0
 				}
+			},
+			"1": {
+				"bangs": {
+					"offset": [0, 0],
+					"rotation": -10
+				},
+				"right_hair": {
+					"offset": [0, 0],
+					"rotation": -10
+				},
+				"left_hair": {
+					"offset": [0, 0],
+					"rotation": -10
+				},
+				"back_hair": {
+					"offset": [0, 0],
+					"rotation": -10
+				},
+				"right_bangs": {
+					"offset": [0, 0],
+					"rotation": -10
+				},
+				"left_bangs": {
+					"offset": [0, 0],
+					"rotation": -10
+				}
+			},
+			"2": {
+				"copy": "0"
 			}
 		}
 	},
 	"sit": {
+		"facial_expression": "sleepy",
+		"keyframe_duration": 0.6,
 		"keyframes": {
 			"0": {
 				"torso": {
@@ -972,7 +1049,7 @@
 					"rotation": 5
 				}
 			},
-			"2": {
+			"1": {
 				"right_leg": {
 					"offset": [0, 0],
 						"rotation": 60
@@ -1010,7 +1087,7 @@
 					"rotation": -5
 				}
 			},
-			"4": {
+			"2": {
 				"copy": "0"
 			}
 		}

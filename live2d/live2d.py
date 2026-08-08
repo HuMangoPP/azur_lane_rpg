@@ -25,9 +25,10 @@ PART_NAMES = [
     "right_leg",
     "neutral",
     "dizzy",
-    "focused"
+    "focused",
+    "sleepy"
 ]
-FACIAL_EXPRESSION_PART_NAMES = ("neutral", "dizzy", "focused")
+FACIAL_EXPRESSION_PART_NAMES = ["neutral", "dizzy", "focused", "sleepy"]
 
 SHARED_MODEL_FILE = os.path.join(os.path.dirname(__file__), "shared_model.json")
 SHARED_ANIMATIONS_FILE = os.path.join(os.path.dirname(__file__), "shared_animations.json")
