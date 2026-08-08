@@ -133,6 +133,14 @@ class Background:
     NUM_WAVE_REPS = 5
     SEA_FOAM_SPAWN_TIME_RANGE = (0.5, 1)
     RAIN_SPAWN_RATE = 90
+    NUM_STARS = 65
+    STAR_COLORS = [
+        (245, 245, 255),
+        (221, 226, 255),
+        (205, 214, 248),
+    ]
+    MOON_COLOR = (232, 229, 210)
+    MOON_SHADOW_COLOR = (18, 16, 45)
 
     def __init__(self, sky_colors, wave_sprites, cloud_sprites, rain_colors):
         self.set_sky_colors(sky_colors)
@@ -142,6 +150,9 @@ class Background:
         self.raining = False
         self.rain_drops = []
         self.rain_spawn_progress = 0
+        self.night_sky_visible = False
+        self.stars = []
+        self.moon_pos = pygame.Vector2(screen_x(0.36), screen_y(0.12))
         self.sea_foam_sprite = DataFiles.sprites["background"]["sea_foam"]
         self.sea_foam_timer = 0
         self.sea_foam_spawn_time = random.uniform(*self.SEA_FOAM_SPAWN_TIME_RANGE)
@@ -180,6 +191,41 @@ class Background:
         if not self.raining:
             self.rain_drops = []
             self.rain_spawn_progress = 0
+
+    def set_night_sky(self, visible):
+        self.night_sky_visible = visible
+        if self.night_sky_visible:
+            self.generate_stars()
+        else:
+            self.stars = []
+
+    def generate_stars(self):
+        self.stars = []
+        star_bottom = self.wave_ys[0] + 32
+        for _ in range(self.NUM_STARS):
+            self.stars.append((
+                pygame.Vector2(
+                    random.uniform(screen_x(0.03), screen_x(0.97)),
+                    random.uniform(screen_y(0.04), star_bottom),
+                ),
+                random.choice([1, 1, 1, 2]),
+                random.choice(self.STAR_COLORS),
+            ))
+
+    def draw_night_sky(self, surface):
+        if not self.night_sky_visible:
+            return
+
+        moon_radius = 20
+        pygame.draw.circle(surface, self.MOON_COLOR, self.moon_pos, moon_radius)
+        pygame.draw.circle(
+            surface,
+            self.MOON_SHADOW_COLOR,
+            self.moon_pos + pygame.Vector2(moon_radius * 0.36, -moon_radius * 0.36),
+            moon_radius,
+        )
+        for star_pos, star_radius, star_color in self.stars:
+            pygame.draw.circle(surface, star_color, star_pos, star_radius)
 
     def update(self, dt):
         num_waves = DataFiles.sprites["background"]["num_waves"]
@@ -257,6 +303,8 @@ class Background:
         for i in range(num_sky_reps):
             sky_surf_rect.centerx = screen_x(0.5) + sky_surf_rect.width * (i-sky_rep_offset)
             surface.blit(sky_surf, sky_surf_rect)
+
+        self.draw_night_sky(surface)
 
         for cloud in self.clouds:
             cloud.draw(surface)
@@ -570,6 +618,7 @@ class EncounterMenu:
             self.time_weather == "stormy",
             self.SHIPGIRL_WAKE_COLORS["stormy"],
         )
+        self.background.set_night_sky(self.time_weather == "nighttime")
 
     def begin_sortie(self):
         self.roll_time_weather()
