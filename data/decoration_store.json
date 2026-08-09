@@ -21,10 +21,44 @@
 		"interactable": false,
 		"description": "A table to sit around."
 	},
-	"test_decoration": {
+	"couch_double": {
+		"width": 2,
+		"height": 2,
+		"interactable": true,
+		"snap": [0.525, 0.25],
+		"shipgirl_animation": "sit",
+		"description": "A couch to sit on."
+	},
+	"nightstand": {
+		"width": 1,
+		"height": 1,
+		"interactable": false,
+		"description": "A nightstand to put things."
+	},
+	"shelf": {
 		"width": 2,
 		"height": 1,
 		"interactable": false,
-		"description": "for testing"
+		"description": "A shelf to store things."
+	},
+	"tv": {
+		"width": 1,
+		"height": 2,
+		"interactable": false,
+		"description": "A TV to watch."
+	},
+	"desk": {
+		"width": 1,
+		"height": 2,
+		"interactable": false,
+		"description": "A desk to work on."
+	},
+	"couch_single": {
+		"width": 2,
+		"height": 1,
+		"interactable": true,
+		"snap": [0.5, 0.2],
+		"shipgirl_animation": "sit",
+		"description": "A couch to sit on."
 	}
 }

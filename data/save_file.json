@@ -44,7 +44,7 @@
 		"wisdom_cube": 1,
 		"huggy_pillow": 0,
 		"dragon_cannon": 0,
-		"decoration_coin": 5,
+		"decoration_coin": 1,
 		"CA_blueprint": 0,
 		"battle_mech": 0,
 		"metals": 1,
@@ -61,11 +61,20 @@
 	"specialized_wisdom_cubes": {},
 	"decoration_depot": {
 		"bed": 2,
-		"chair": 1
+		"chair": 0,
+		"couch_single": 0,
+		"couch_double": 0,
+		"desk": 0,
+		"tv": 0
 	},
 	"decorations": [
 		["bed", [6, 7], false],
-		["chair", [4, 7], false]
+		["chair", [4, 7], false],
+		["couch_single", [5, 13], false],
+		["couch_double", [5, 12], false],
+		["tv", [7, 13], false],
+		["chair", [9, 5], true],
+		["desk", [9, 6], true]
 	],
 	"research_target": null,
 	"sortie_progress": 24,

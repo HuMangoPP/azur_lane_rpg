@@ -16,6 +16,12 @@
 		"bed": { "left": 256, "top": 64, "width": 64, "height": 64 },
 		"table": { "left": 320, "top": 64, "width": 64, "height": 64 },
 		"chair": { "left": 384, "top": 64, "width": 64, "height": 64 },
+		"couch_double": { "left": 448, "top": 0, "width": 64, "height": 64 },
+		"nightstand": { "left": 448, "top": 64, "width": 64, "height": 64 },
+		"shelf": { "left": 384, "top": 128, "width": 64, "height": 64 },
+		"tv": { "left": 448, "top": 128, "width": 64, "height": 64 },
+		"desk": { "left": 384, "top": 192, "width": 64, "height": 64 },
+		"couch_single": { "left": 448, "top": 192, "width": 64, "height": 64 },
 
 		"DD_blueprint": { "left": 0, "top": 128, "width": 64, "height": 64 },
 		"CL_blueprint": { "left": 64, "top": 128, "width": 64, "height": 64 },
@@ -370,11 +376,41 @@
 			"width": 64,
 			"height": 96
 		},
-		"test_decoration": {
+		"couch_double": {
 			"left": 0,
 			"top": 128,
+			"width": 128,
+			"height": 96
+		},
+		"nightstand": {
+			"left": 128,
+			"top": 96,
+			"width": 64,
+			"height": 64
+		},
+		"shelf": {
+			"left": 128,
+			"top": 160,
 			"width": 96,
-			"height": 48
+			"height": 96
+		},
+		"tv": {
+			"left": 224,
+			"top": 96,
+			"width": 96,
+			"height": 96
+		},
+		"desk": {
+			"left": 256,
+			"top": 0,
+			"width": 96,
+			"height": 96
+		},
+		"couch_single": {
+			"left": 352,
+			"top": 0,
+			"width": 96,
+			"height": 80
 		}
 	}
 }
