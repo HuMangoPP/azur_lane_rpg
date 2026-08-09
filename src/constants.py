@@ -407,8 +407,8 @@ pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)
 DataFiles.sprites["equipment_menu"]["lightbulb_light"] = lightbulb_light
 
 class Decorations:
-    FLOOR_TILES_WIDE = 20
-    FLOOR_TILES_TALL = 20
+    FLOOR_TILES_WIDE = 14
+    FLOOR_TILES_TALL = 14
     ISO_TILE_WIDTH = 64
     ISO_TILE_HEIGHT = 32
     ISO_HALF_TILE_WIDTH = ISO_TILE_WIDTH // 2
@@ -451,12 +451,51 @@ class Decorations:
             tilepos_anchor[1] - base_height
         )
 
+    @staticmethod
+    def is_shipgirl_renderable(renderable):
+        return (
+            hasattr(renderable, "rect")
+            and hasattr(renderable, "SPRITE_SIZE")
+            and hasattr(renderable, "interacting_decoration")
+        )
+
     @classmethod
-    def decoration_is_behind(cls, behind_decoration_data, front_decoration_data):
-        behind_decoration, behind_tilepos_anchor, behind_flipped = cls.unpack_decoration_data(behind_decoration_data)
-        front_decoration, front_tilepos_anchor, front_flipped = cls.unpack_decoration_data(front_decoration_data)
-        behind_tiles = cls.get_decoration_tiles(behind_decoration, behind_flipped, behind_tilepos_anchor)
-        front_tiles = cls.get_decoration_tiles(front_decoration, front_flipped, front_tilepos_anchor)
+    def get_shipgirl_standing_tilepos(cls, shipgirl):
+        return cls.get_isometric_tilepos((
+            shipgirl.rect.centerx,
+            shipgirl.rect.bottom - shipgirl.SPRITE_SIZE / 8
+        ))
+
+    @classmethod
+    def get_render_order_tiles(cls, renderable):
+        if cls.is_shipgirl_renderable(renderable):
+            return {cls.get_shipgirl_standing_tilepos(renderable)}
+
+        decoration, tilepos_anchor, flipped = cls.unpack_decoration_data(renderable)
+        return cls.get_decoration_tiles(decoration, flipped, tilepos_anchor)
+
+    @classmethod
+    def get_render_order_top_tilepos(cls, renderable):
+        if cls.is_shipgirl_renderable(renderable):
+            return cls.get_shipgirl_standing_tilepos(renderable)
+
+        decoration, tilepos_anchor, flipped = cls.unpack_decoration_data(renderable)
+        return cls.get_decoration_top_tilepos(decoration, flipped, tilepos_anchor)
+
+    @classmethod
+    def get_render_order_anchor(cls, renderable):
+        if cls.is_shipgirl_renderable(renderable):
+            if renderable.interacting_decoration is None:
+                return None
+            return tuple(renderable.interacting_decoration)
+
+        _, tilepos_anchor, _ = cls.unpack_decoration_data(renderable)
+        return tuple(tilepos_anchor)
+
+    @classmethod
+    def renderable_is_behind(cls, behind_renderable, front_renderable):
+        behind_tiles = cls.get_render_order_tiles(behind_renderable)
+        front_tiles = cls.get_render_order_tiles(front_renderable)
         return any(
             behind_tile[0] <= front_tile[0]
             and behind_tile[1] <= front_tile[1]
@@ -465,20 +504,35 @@ class Decorations:
         )
 
     @classmethod
-    def compare_decoration_render_order(cls, decoration_data_a, decoration_data_b):
-        a_behind_b = cls.decoration_is_behind(decoration_data_a, decoration_data_b)
-        b_behind_a = cls.decoration_is_behind(decoration_data_b, decoration_data_a)
+    def compare_decoration_render_order(cls, renderable_a, renderable_b):
+        a_is_shipgirl = cls.is_shipgirl_renderable(renderable_a)
+        b_is_shipgirl = cls.is_shipgirl_renderable(renderable_b)
+        anchor_a = cls.get_render_order_anchor(renderable_a)
+        anchor_b = cls.get_render_order_anchor(renderable_b)
+        if a_is_shipgirl != b_is_shipgirl and anchor_a == anchor_b:
+            return 1 if a_is_shipgirl else -1
+
+        a_behind_b = cls.renderable_is_behind(renderable_a, renderable_b)
+        b_behind_a = cls.renderable_is_behind(renderable_b, renderable_a)
         if a_behind_b and not b_behind_a:
             return -1
         if b_behind_a and not a_behind_b:
             return 1
 
-        decoration_a, tilepos_anchor_a, flipped_a = cls.unpack_decoration_data(decoration_data_a)
-        decoration_b, tilepos_anchor_b, flipped_b = cls.unpack_decoration_data(decoration_data_b)
-        top_tilepos_a = cls.get_decoration_top_tilepos(decoration_a, flipped_a, tilepos_anchor_a)
-        top_tilepos_b = cls.get_decoration_top_tilepos(decoration_b, flipped_b, tilepos_anchor_b)
-        fallback_a = (top_tilepos_a[0] + top_tilepos_a[1], top_tilepos_a[1], top_tilepos_a[0])
-        fallback_b = (top_tilepos_b[0] + top_tilepos_b[1], top_tilepos_b[1], top_tilepos_b[0])
+        top_tilepos_a = cls.get_render_order_top_tilepos(renderable_a)
+        top_tilepos_b = cls.get_render_order_top_tilepos(renderable_b)
+        fallback_a = (
+            top_tilepos_a[0] + top_tilepos_a[1],
+            top_tilepos_a[1],
+            top_tilepos_a[0],
+            1 if a_is_shipgirl else 0
+        )
+        fallback_b = (
+            top_tilepos_b[0] + top_tilepos_b[1],
+            top_tilepos_b[1],
+            top_tilepos_b[0],
+            1 if b_is_shipgirl else 0
+        )
         return (fallback_a > fallback_b) - (fallback_a < fallback_b)
 
     @classmethod

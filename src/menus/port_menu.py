@@ -766,7 +766,8 @@ class PortMenu:
                     if shipgirl.rect.collidepoint(event.pos):
                         DataFiles.sfx["click"].play()
                         self.hovered_shipgirl = shipgirl
-                        self.hovered_shipgirl.sprite.set_animation(Live2D.BOUNCE_ANIMATION)
+                        if self.hovered_shipgirl.interacting_decoration is None:
+                            self.hovered_shipgirl.sprite.set_animation(Live2D.BOUNCE_ANIMATION)
                         self.position_shipgirl_dialogue_options()
                         for option in self.shipgirl_dialogue_options:
                             option.active = True
@@ -1415,11 +1416,14 @@ class PortMenu:
     def flip_decoration(self):
         self.decoration_flipped = not self.decoration_flipped
 
-    def decoration_has_interacting_shipgirl(self, tilepos_anchor):
+    def interacting_shipgirl_of_decoration(self, tilepos_anchor):
         tilepos_anchor = tuple(tilepos_anchor)
-        return any(
-            shipgirl.interacting_decoration == tilepos_anchor
-            for shipgirl in self.menu_manager.available_shipgirls
+        return next(
+            (
+                shipgirl for shipgirl in self.menu_manager.available_shipgirls
+                if shipgirl.interacting_decoration == tilepos_anchor
+            ),
+            None
         )
 
     def snap_shipgirl_to_interactable_decoration(self, shipgirl):
@@ -1434,7 +1438,7 @@ class PortMenu:
             if shipgirl_tilepos not in decoration_tiles:
                 continue
 
-            if self.decoration_has_interacting_shipgirl(tilepos_anchor):
+            if self.interacting_shipgirl_of_decoration(tilepos_anchor) is not None:
                 continue
 
             sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
@@ -1702,15 +1706,6 @@ class PortMenu:
                 width=Box.OUTLINE_WIDTH
             )
 
-        for shipgirl in sorted(
-            self.menu_manager.available_shipgirls,
-            key=lambda shipgirl : shipgirl.rect.bottom
-        ):
-            shipgirl.draw(surface, font_registry)
-        
-        for option in self.shipgirl_dialogue_options:
-            option.draw(surface, font_registry)
-
         self.toggle_decoration_mode_button.draw(surface, font_registry)
 
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.decoration_depot_overlay)
@@ -1805,31 +1800,44 @@ class PortMenu:
     def draw(self, surface, font_registry):
         surface.blit(Decorations.floor_surf, Decorations.floor_rect)
 
-        decorations = sorted(
-            DataFiles.save_file["decorations"],
+        interacting_shipgirls_by_decoration = {
+            tuple(shipgirl.interacting_decoration): shipgirl
+            for shipgirl in self.menu_manager.available_shipgirls
+            if shipgirl.interacting_decoration is not None
+        }
+        renderables = list(DataFiles.save_file["decorations"])
+        renderables.extend(
+            shipgirl for shipgirl in self.menu_manager.available_shipgirls
+            if shipgirl.interacting_decoration is None
+        )
+
+        renderables = sorted(
+            renderables,
             key=functools.cmp_to_key(Decorations.compare_decoration_render_order)
         )
-        for decoration_data in decorations:
+        for renderable in renderables:
+            if Decorations.is_shipgirl_renderable(renderable):
+                renderable.draw(surface, font_registry)
+                continue
+
+            decoration_data = renderable
             decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
             sprite = Decorations.get_decoration_sprite(decoration, flipped)
             sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
             surface.blit(sprite, sprite_rect)
 
+            interacting_shipgirl = interacting_shipgirls_by_decoration.get(tuple(tilepos_anchor))
+            if interacting_shipgirl is not None:
+                interacting_shipgirl.draw(surface, font_registry)
+
         if self.is_decorating:
             self.draw_decoration_mode_overlay(surface, font_registry)
             return
-
-        for shipgirl in sorted(
-            self.menu_manager.available_shipgirls,
-            key=lambda shipgirl : shipgirl.rect.bottom
-        ):
-            shipgirl.draw(surface, font_registry)
+        self.toggle_decoration_mode_button.draw(surface, font_registry)
         
         for option in self.shipgirl_dialogue_options:
             option.draw(surface, font_registry)
 
-        self.toggle_decoration_mode_button.draw(surface, font_registry)
-        
         buttons = [
             self.open_depot_overlay_button,
             self.open_intel_center_overlay_button,
