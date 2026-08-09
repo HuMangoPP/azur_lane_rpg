@@ -411,6 +411,18 @@
 			"top": 0,
 			"width": 96,
 			"height": 80
+		},
+		"wallpaper_left": {
+			"left": 0,
+			"top": 256,
+			"width": 448,
+			"height": 128
+		},
+		"wallpaper_right": {
+			"left": 0,
+			"top": 384,
+			"width": 448,
+			"height": 128
 		}
 	}
 }

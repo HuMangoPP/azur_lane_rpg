@@ -611,48 +611,33 @@ class Decorations:
         floor_width = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_WIDTH
         floor_height = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_HEIGHT
         wall_height = cls.WALLPAPER_HEIGHT
-        stripe_width = 24
 
-        left_back_edge_length = math.hypot(
-            cls.FLOOR_TILES_TALL * cls.ISO_HALF_TILE_WIDTH,
-            cls.FLOOR_TILES_TALL * cls.ISO_HALF_TILE_HEIGHT
-        )
-        right_back_edge_length = math.hypot(
-            cls.FLOOR_TILES_WIDE * cls.ISO_HALF_TILE_WIDTH,
-            cls.FLOOR_TILES_WIDE * cls.ISO_HALF_TILE_HEIGHT
-        )
-        wallpaper_width = math.ceil(left_back_edge_length + right_back_edge_length)
-        wallpaper = pygame.Surface((wallpaper_width, wall_height), pygame.SRCALPHA)
-
-        for x in range(wallpaper_width):
-            for y in range(wall_height):
-                stripe_index = (x + y) // stripe_width
-                color = (134, 179, 252) if stripe_index % 2 else (35, 93, 186)
-                wallpaper.set_at((x, y), color)
+        wallpaper_left = DataFiles.sprites["decorations"]["wallpaper_left"]
+        wallpaper_right = DataFiles.sprites["decorations"]["wallpaper_right"]
 
         skewed_height = wall_height + floor_height // 2
-        cls.wallpaper_surf = pygame.Surface((floor_width + 1, skewed_height + 1), pygame.SRCALPHA)
+        skewed_wallpaper = pygame.Surface((floor_width, skewed_height))
+        skewed_wallpaper.fill((255, 0, 0))
+        skewed_wallpaper.set_colorkey((255, 0, 0))
 
-        left_point = pygame.Vector2(0, skewed_height)
-        corner_point = pygame.Vector2(floor_width / 2, wall_height)
-        right_point = pygame.Vector2(floor_width, skewed_height)
+        step = cls.ISO_HALF_TILE_WIDTH // cls.ISO_HALF_TILE_HEIGHT
+        y = floor_height // 2
+        for x in range(0, floor_width // 2, step):
+            skewed_wallpaper.blit(
+                wallpaper_left,
+                (x, y),
+                pygame.Rect(x, 0, step, wall_height)
+            )
+            y -= 1
+        for x in range(0, floor_width // 2, step):
+            skewed_wallpaper.blit(
+                wallpaper_right,
+                (floor_width // 2 + x, y),
+                pygame.Rect(x, 0, step, wall_height)
+            )
+            y += 1
 
-        for source_x in range(wallpaper_width):
-            if source_x < left_back_edge_length:
-                t = source_x / left_back_edge_length
-                bottom_pos = left_point.lerp(corner_point, t)
-            else:
-                t = (source_x - left_back_edge_length) / right_back_edge_length
-                bottom_pos = corner_point.lerp(right_point, t)
-
-            dest_x = round(bottom_pos.x)
-            dest_bottom_y = round(bottom_pos.y)
-            for source_y in range(wall_height):
-                cls.wallpaper_surf.set_at(
-                    (dest_x, dest_bottom_y - wall_height + source_y),
-                    wallpaper.get_at((source_x, source_y))
-                )
-
+        cls.wallpaper_surf = skewed_wallpaper
         cls.wallpaper_rect = cls.wallpaper_surf.get_rect()
         cls.wallpaper_rect.left = cls.floor_rect.left
         cls.wallpaper_rect.top = cls.floor_rect.top - wall_height
@@ -660,8 +645,7 @@ class Decorations:
     @classmethod
     def get_wallpaper_rect(cls):
         wallpaper_rect = cls.wallpaper_surf.get_rect()
-        wallpaper_rect.left = cls.floor_rect.left
-        wallpaper_rect.top = cls.floor_rect.top - cls.WALLPAPER_HEIGHT
+        wallpaper_rect.midbottom = cls.floor_rect.center
         return wallpaper_rect
 
     @classmethod
