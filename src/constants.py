@@ -413,6 +413,7 @@ class Decorations:
     ISO_TILE_HEIGHT = 32
     ISO_HALF_TILE_WIDTH = ISO_TILE_WIDTH // 2
     ISO_HALF_TILE_HEIGHT = ISO_TILE_HEIGHT // 2
+    WALLPAPER_HEIGHT = 128
 
     @staticmethod
     def unpack_decoration_data(decoration_data):
@@ -606,6 +607,64 @@ class Decorations:
         )
 
     @classmethod
+    def create_wallpaper_surf(cls):
+        floor_width = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_WIDTH
+        floor_height = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_HEIGHT
+        wall_height = cls.WALLPAPER_HEIGHT
+        stripe_width = 24
+
+        left_back_edge_length = math.hypot(
+            cls.FLOOR_TILES_TALL * cls.ISO_HALF_TILE_WIDTH,
+            cls.FLOOR_TILES_TALL * cls.ISO_HALF_TILE_HEIGHT
+        )
+        right_back_edge_length = math.hypot(
+            cls.FLOOR_TILES_WIDE * cls.ISO_HALF_TILE_WIDTH,
+            cls.FLOOR_TILES_WIDE * cls.ISO_HALF_TILE_HEIGHT
+        )
+        wallpaper_width = math.ceil(left_back_edge_length + right_back_edge_length)
+        wallpaper = pygame.Surface((wallpaper_width, wall_height), pygame.SRCALPHA)
+
+        for x in range(wallpaper_width):
+            for y in range(wall_height):
+                stripe_index = (x + y) // stripe_width
+                color = (134, 179, 252) if stripe_index % 2 else (35, 93, 186)
+                wallpaper.set_at((x, y), color)
+
+        skewed_height = wall_height + floor_height // 2
+        cls.wallpaper_surf = pygame.Surface((floor_width + 1, skewed_height + 1), pygame.SRCALPHA)
+
+        left_point = pygame.Vector2(0, skewed_height)
+        corner_point = pygame.Vector2(floor_width / 2, wall_height)
+        right_point = pygame.Vector2(floor_width, skewed_height)
+
+        for source_x in range(wallpaper_width):
+            if source_x < left_back_edge_length:
+                t = source_x / left_back_edge_length
+                bottom_pos = left_point.lerp(corner_point, t)
+            else:
+                t = (source_x - left_back_edge_length) / right_back_edge_length
+                bottom_pos = corner_point.lerp(right_point, t)
+
+            dest_x = round(bottom_pos.x)
+            dest_bottom_y = round(bottom_pos.y)
+            for source_y in range(wall_height):
+                cls.wallpaper_surf.set_at(
+                    (dest_x, dest_bottom_y - wall_height + source_y),
+                    wallpaper.get_at((source_x, source_y))
+                )
+
+        cls.wallpaper_rect = cls.wallpaper_surf.get_rect()
+        cls.wallpaper_rect.left = cls.floor_rect.left
+        cls.wallpaper_rect.top = cls.floor_rect.top - wall_height
+
+    @classmethod
+    def get_wallpaper_rect(cls):
+        wallpaper_rect = cls.wallpaper_surf.get_rect()
+        wallpaper_rect.left = cls.floor_rect.left
+        wallpaper_rect.top = cls.floor_rect.top - cls.WALLPAPER_HEIGHT
+        return wallpaper_rect
+
+    @classmethod
     def create_floor_surf(cls):
         floor_width = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_WIDTH
         floor_height = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_HEIGHT
@@ -626,3 +685,4 @@ class Decorations:
         cls.floor_rect.center = (screen_x(0.5), screen_y(0.5))
 
 Decorations.create_floor_surf()
+Decorations.create_wallpaper_surf()

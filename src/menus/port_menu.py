@@ -1798,6 +1798,7 @@ class PortMenu:
             surface.blit(cargo_box_sprite, cargo_box_rect)
 
     def draw(self, surface, font_registry):
+        surface.blit(Decorations.wallpaper_surf, Decorations.get_wallpaper_rect())
         surface.blit(Decorations.floor_surf, Decorations.floor_rect)
 
         interacting_shipgirls_by_decoration = {
