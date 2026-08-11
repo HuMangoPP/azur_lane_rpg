@@ -56,7 +56,14 @@
 		"huggy_pillow": { "left": 0, "top": 384, "width": 64, "height": 64 },
 		"star_blaster": { "left": 64, "top": 384, "width": 64, "height": 64 },
 		"battle_mech": { "left": 128, "top": 384, "width": 64, "height": 64 },
-		"dragon_cannon": { "left": 192, "top": 384, "width": 64, "height": 64 }
+		"dragon_cannon": { "left": 192, "top": 384, "width": 64, "height": 64 },
+
+		"ayanami": { "left": 0, "top": 448, "width": 64, "height": 64 },
+		"shimanto": { "left": 64, "top": 448, "width": 64, "height": 64 },
+		"unzen": { "left": 128, "top": 448, "width": 64, "height": 64 },
+		"musashi": { "left": 192, "top": 448, "width": 64, "height": 64 },
+		"i-404": { "left": 256, "top": 448, "width": 64, "height": 64 },
+		"shinano": { "left": 320, "top": 448, "width": 64, "height": 64 }
 	},
 	"user_interface": {
 		"TB_point_up": { "left": 0, "top": 0, "width": 64, "height": 64 },
