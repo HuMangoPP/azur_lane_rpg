@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/shinano.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [43, 22]
+		},
+		"right_bangs": {
+			"pivot": [59, 25]
+		},
+		"right_hair": {
+			"pivot": [65, 25]
+		},
+		"left_bangs": {
+			"pivot": [31, 26]
+		},
+		"left_hair": {
+			"pivot": [30, 27]
+		},
+		"back_torso": {
+			"pivot": [46, 57]
+		},
+		"back_hair": {
+			"pivot": [47, 20]
+		}
+	},
+	"animations": {}
+}

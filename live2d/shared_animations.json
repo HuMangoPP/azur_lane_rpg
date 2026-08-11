@@ -829,7 +829,7 @@
 				},
 				"back_torso": {
 					"offset": [0, 0],
-					"rotation": 0
+					"rotation": 60
 				},
 				"right_arm": {
 					"offset": [0, 0],

@@ -1,0 +1,47 @@
+{
+    "spritesheet": "live2d/i-404.png",
+    "colorkey": [
+        255,
+        0,
+        0
+    ],
+    "parts": {
+        "bangs": {
+            "pivot": [
+                47,
+                22
+            ]
+        },
+        "right_bangs": {
+            "pivot": [
+                50,
+                17
+            ]
+        },
+        "right_hair": {
+            "pivot": [
+                63,
+                25
+            ]
+        },
+        "left_bangs": {
+            "pivot": [
+                35,
+                19
+            ]
+        },
+        "left_hair": {
+            "pivot": [
+                33,
+                23
+            ]
+        },
+        "back_torso": {
+            "pivot": [
+                46,
+                59
+            ]
+        }
+    },
+    "animations": {}
+}

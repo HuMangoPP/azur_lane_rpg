@@ -1,0 +1,95 @@
+{
+	"spritesheet": "live2d/ayanami.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [43, 23]
+		},
+		"right_bangs": {
+			"pivot": [56, 25]
+		},
+		"right_hair": {
+			"pivot": [65, 25]
+		},
+		"left_bangs": {
+			"pivot": [33, 27]
+		},
+		"left_hair": {
+			"pivot": [31, 28]
+		},
+		"back_hair": {
+			"pivot": [65, 21]
+		}
+	},
+	"animations": {
+		"idle": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"1": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": -5
+					}
+				},
+				"2": {
+					"copy": "0"
+				}
+			}
+		},
+		"bounce": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"1": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": -5
+					}
+				},
+				"2": {
+					"copy": "0"
+				},
+				"3": {
+					"copy": "1"
+				},
+				"4": {
+					"copy": "0"
+				},
+				"5": {
+					"copy": "1"
+				},
+				"6": {
+					"copy": "0"
+				}
+			}
+		},
+		"drag": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": -15
+					}
+				},
+				"2": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"4": {
+					"copy": "0"
+				}
+			}
+		}
+	}
+}

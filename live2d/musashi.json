@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/musashi.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [45, 23]
+		},
+		"right_bangs": {
+			"pivot": [61, 26]
+		},
+		"right_hair": {
+			"pivot": [65, 28]
+		},
+		"left_bangs": {
+			"pivot": [31, 28]
+		},
+		"left_hair": {
+			"pivot": [30, 30]
+		},
+		"back_torso": {
+			"pivot": [46, 59]
+		},
+		"back_hair": {
+			"pivot": [46, 23]
+		}
+	},
+	"animations": {}
+}
