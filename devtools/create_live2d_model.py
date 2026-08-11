@@ -49,6 +49,13 @@ def load_or_create_model(shipgirl):
 
 def save_model(model_path, model):
     with open(model_path, "w") as f:
+        parts_to_remove = []
+        for part_key, part_data in model["parts"].items():
+            if part_data["pivot"] == [0, 0]:
+                parts_to_remove.append(part_key)
+        
+        for part in parts_to_remove:
+            model["parts"].pop(part)
         json.dump(model, f, indent=4)
         f.write("\n")
 
@@ -164,7 +171,7 @@ def main():
     while running:
         dt = clock.tick(60) / 1000
         selected_part = PART_NAMES[selected_index]
-        selected_part_data = model["parts"][selected_part]
+        selected_part_data = model["parts"].setdefault(selected_part, {"pivot": [0, 0]})
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -193,7 +200,7 @@ def main():
                     save_model(model_path, model)
 
         selected_part = PART_NAMES[selected_index]
-        selected_part_data = model["parts"][selected_part]
+        selected_part_data = model["parts"].setdefault(selected_part, {"pivot": [0, 0]})
         live2d.update(dt)
 
         screen.fill((24, 24, 28))

@@ -45,6 +45,7 @@ if __name__ == "__main__":
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                l2d.set_animation(args.animation_key)
                 l2d.t = 0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
