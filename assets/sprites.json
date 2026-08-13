@@ -63,7 +63,14 @@
 		"unzen": { "left": 128, "top": 448, "width": 64, "height": 64 },
 		"musashi": { "left": 192, "top": 448, "width": 64, "height": 64 },
 		"i-404": { "left": 256, "top": 448, "width": 64, "height": 64 },
-		"shinano": { "left": 320, "top": 448, "width": 64, "height": 64 }
+		"shinano": { "left": 320, "top": 448, "width": 64, "height": 64 },
+
+		"z23": { "left": 0, "top": 576, "width": 64, "height": 64 },
+		"emden": { "left": 64, "top": 576, "width": 64, "height": 64 },
+		"hindenburg": { "left": 128, "top": 576, "width": 64, "height": 64 },
+		"bismarck": { "left": 192, "top": 576, "width": 64, "height": 64 },
+		"u-556": { "left": 256, "top": 576, "width": 64, "height": 64 },
+		"fritz_rumey": { "left": 320, "top": 576, "width": 64, "height": 64 }
 	},
 	"user_interface": {
 		"TB_point_up": { "left": 0, "top": 0, "width": 64, "height": 64 },
