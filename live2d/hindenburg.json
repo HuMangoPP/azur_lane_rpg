@@ -1,5 +1,5 @@
 {
-    "spritesheet": "live2d/unzen.png",
+    "spritesheet": "live2d/hindenburg.png",
     "colorkey": [
         255,
         0,
@@ -9,43 +9,43 @@
         "bangs": {
             "pivot": [
                 44,
-                24
+                22
             ]
         },
         "right_bangs": {
             "pivot": [
-                63,
-                28
+                58,
+                23
             ]
         },
         "right_hair": {
             "pivot": [
-                66,
-                25
+                65,
+                27
             ]
         },
         "left_bangs": {
             "pivot": [
-                31,
-                28
+                33,
+                24
             ]
         },
         "left_hair": {
             "pivot": [
-                29,
-                24
+                31,
+                25
+            ]
+        },
+        "back_hair": {
+            "pivot": [
+                47,
+                27
             ]
         },
         "back_torso": {
             "pivot": [
                 46,
-                53
-            ]
-        },
-        "back_hair": {
-            "pivot": [
-                46,
-                24
+                69
             ]
         }
     },

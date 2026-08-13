@@ -1,5 +1,5 @@
 {
-    "spritesheet": "live2d/unzen.png",
+    "spritesheet": "live2d/u-556.png",
     "colorkey": [
         255,
         0,
@@ -8,43 +8,31 @@
     "parts": {
         "bangs": {
             "pivot": [
-                44,
-                24
+                45,
+                23
             ]
         },
         "right_bangs": {
             "pivot": [
-                63,
-                28
+                61,
+                24
             ]
         },
         "right_hair": {
             "pivot": [
                 66,
-                25
+                22
             ]
         },
         "left_bangs": {
             "pivot": [
                 31,
-                28
+                25
             ]
         },
         "left_hair": {
             "pivot": [
-                29,
-                24
-            ]
-        },
-        "back_torso": {
-            "pivot": [
-                46,
-                53
-            ]
-        },
-        "back_hair": {
-            "pivot": [
-                46,
+                30,
                 24
             ]
         }

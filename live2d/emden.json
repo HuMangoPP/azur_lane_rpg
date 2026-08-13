@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/emden.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [45, 21]
+		},
+		"right_bangs": {
+			"pivot": [57, 23]
+		},
+		"right_hair": {
+			"pivot": [65, 25]
+		},
+		"left_bangs": {
+			"pivot": [32, 27]
+		},
+		"left_hair": {
+			"pivot": [31, 28]
+		},
+		"back_torso": {
+			"pivot": [48, 67]
+		},
+		"back_hair": {
+			"pivot": [48, 23]
+		}
+	},
+	"animations": {}
+}
