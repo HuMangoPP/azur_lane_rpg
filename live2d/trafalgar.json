@@ -1,0 +1,47 @@
+{
+    "spritesheet": "live2d/trafalgar.png",
+    "colorkey": [
+        255,
+        0,
+        0
+    ],
+    "parts": {
+        "bangs": {
+            "pivot": [
+                44,
+                20
+            ]
+        },
+        "right_hair": {
+            "pivot": [
+                68,
+                25
+            ]
+        },
+        "left_bangs": {
+            "pivot": [
+                33,
+                19
+            ]
+        },
+        "left_hair": {
+            "pivot": [
+                29,
+                25
+            ]
+        },
+        "back_torso": {
+            "pivot": [
+                46,
+                54
+            ]
+        },
+        "back_hair": {
+            "pivot": [
+                45,
+                20
+            ]
+        }
+    },
+    "animations": {}
+}

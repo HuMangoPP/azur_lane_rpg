@@ -1,0 +1,53 @@
+{
+    "spritesheet": "live2d/lion.png",
+    "colorkey": [
+        255,
+        0,
+        0
+    ],
+    "parts": {
+        "bangs": {
+            "pivot": [
+                43,
+                20
+            ]
+        },
+        "right_bangs": {
+            "pivot": [
+                60,
+                23
+            ]
+        },
+        "right_hair": {
+            "pivot": [
+                67,
+                27
+            ]
+        },
+        "left_bangs": {
+            "pivot": [
+                33,
+                22
+            ]
+        },
+        "left_hair": {
+            "pivot": [
+                29,
+                24
+            ]
+        },
+        "back_torso": {
+            "pivot": [
+                46,
+                52
+            ]
+        },
+        "back_hair": {
+            "pivot": [
+                45,
+                18
+            ]
+        }
+    },
+    "animations": {}
+}

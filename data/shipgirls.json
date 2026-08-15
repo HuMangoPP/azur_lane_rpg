@@ -101,11 +101,11 @@
 		"hull_type": "CV",
 		"class": "implacable"
 	},
-	"HMS_submarine": {
-		"unique_item": "placeholder",
+	"trafalgar": {
+		"unique_item": "knight",
 		"faction": "HMS",
 		"hull_type": "SS",
-		"class": "placeholder"
+		"class": "battle"
 	},
 	"z23": {
 		"unique_item": "raubtier",
