@@ -70,7 +70,14 @@
 		"hindenburg": { "left": 128, "top": 576, "width": 64, "height": 64 },
 		"bismarck": { "left": 192, "top": 576, "width": 64, "height": 64 },
 		"u-556": { "left": 256, "top": 576, "width": 64, "height": 64 },
-		"fritz_rumey": { "left": 320, "top": 576, "width": 64, "height": 64 }
+		"fritz_rumey": { "left": 320, "top": 576, "width": 64, "height": 64 },
+
+		"javelin": { "left": 0, "top": 704, "width": 64, "height": 64 },
+		"plymouth": { "left": 64, "top": 704, "width": 64, "height": 64 },
+		"drake": { "left": 128, "top": 704, "width": 64, "height": 64 },
+		"lion": { "left": 192, "top": 704, "width": 64, "height": 64 },
+		"trafalgar": { "left": 256, "top": 704, "width": 64, "height": 64 },
+		"implacable": { "left": 320, "top": 704, "width": 64, "height": 64 }
 	},
 	"user_interface": {
 		"TB_point_up": { "left": 0, "top": 0, "width": 64, "height": 64 },
