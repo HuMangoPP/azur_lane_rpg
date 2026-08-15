@@ -1,53 +1,28 @@
 {
-    "spritesheet": "live2d/plymouth.png",
-    "colorkey": [
-        255,
-        0,
-        0
-    ],
-    "parts": {
-        "bangs": {
-            "pivot": [
-                44,
-                20
-            ]
-        },
-        "right_bangs": {
-            "pivot": [
-                60,
-                22
-            ]
-        },
-        "right_hair": {
-            "pivot": [
-                66,
-                23
-            ]
-        },
-        "left_bangs": {
-            "pivot": [
-                32,
-                18
-            ]
-        },
-        "left_hair": {
-            "pivot": [
-                30,
-                22
-            ]
-        },
-        "back_torso": {
-            "pivot": [
-                46,
-                65
-            ]
-        },
-        "back_hair": {
-            "pivot": [
-                47,
-                23
-            ]
-        }
-    },
-    "animations": {}
+	"spritesheet": "live2d/plymouth.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [44, 20]
+		},
+		"right_bangs": {
+			"pivot": [60, 22]
+		},
+		"right_hair": {
+			"pivot": [66, 23]
+		},
+		"left_bangs": {
+			"pivot": [32, 18]
+		},
+		"left_hair": {
+			"pivot": [30, 22]
+		},
+		"back_torso": {
+			"pivot": [46, 65]
+		},
+		"back_hair": {
+			"pivot": [47, 23]
+		}
+	},
+	"animations": {}
 }

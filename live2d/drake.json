@@ -1,53 +1,28 @@
 {
-    "spritesheet": "live2d/drake.png",
-    "colorkey": [
-        255,
-        0,
-        0
-    ],
-    "parts": {
-        "bangs": {
-            "pivot": [
-                47,
-                21
-            ]
-        },
-        "right_bangs": {
-            "pivot": [
-                51,
-                22
-            ]
-        },
-        "right_hair": {
-            "pivot": [
-                66,
-                23
-            ]
-        },
-        "left_bangs": {
-            "pivot": [
-                37,
-                21
-            ]
-        },
-        "left_hair": {
-            "pivot": [
-                29,
-                23
-            ]
-        },
-        "back_torso": {
-            "pivot": [
-                46,
-                53
-            ]
-        },
-        "back_hair": {
-            "pivot": [
-                54,
-                14
-            ]
-        }
-    },
-    "animations": {}
+	"spritesheet": "live2d/drake.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [47, 21]
+		},
+		"right_bangs": {
+			"pivot": [51, 22]
+		},
+		"right_hair": {
+			"pivot": [66, 23]
+		},
+		"left_bangs": {
+			"pivot": [37, 21]
+		},
+		"left_hair": {
+			"pivot": [29, 23]
+		},
+		"back_torso": {
+			"pivot": [46, 53]
+		},
+		"back_hair": {
+			"pivot": [54, 14]
+		}
+	},
+	"animations": {}
 }

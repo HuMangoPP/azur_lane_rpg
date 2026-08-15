@@ -1,53 +1,28 @@
 {
-    "spritesheet": "live2d/bismarck.png",
-    "colorkey": [
-        255,
-        0,
-        0
-    ],
-    "parts": {
-        "bangs": {
-            "pivot": [
-                43,
-                23
-            ]
-        },
-        "right_bangs": {
-            "pivot": [
-                59,
-                24
-            ]
-        },
-        "right_hair": {
-            "pivot": [
-                65,
-                27
-            ]
-        },
-        "left_bangs": {
-            "pivot": [
-                30,
-                27
-            ]
-        },
-        "left_hair": {
-            "pivot": [
-                28,
-                27
-            ]
-        },
-        "back_torso": {
-            "pivot": [
-                46,
-                56
-            ]
-        },
-        "back_hair": {
-            "pivot": [
-                48,
-                27
-            ]
-        }
-    },
-    "animations": {}
+	"spritesheet": "live2d/bismarck.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [43, 23]
+		},
+		"right_bangs": {
+			"pivot": [59, 24]
+		},
+		"right_hair": {
+			"pivot": [65, 27]
+		},
+		"left_bangs": {
+			"pivot": [30, 27]
+		},
+		"left_hair": {
+			"pivot": [28, 27]
+		},
+		"back_torso": {
+			"pivot": [46, 56]
+		},
+		"back_hair": {
+			"pivot": [48, 27]
+		}
+	},
+	"animations": {}
 }

@@ -1,47 +1,25 @@
 {
-    "spritesheet": "live2d/z23.png",
-    "colorkey": [
-        255,
-        0,
-        0
-    ],
-    "parts": {
-        "bangs": {
-            "pivot": [
-                45,
-                21
-            ]
-        },
-        "right_bangs": {
-            "pivot": [
-                65,
-                27
-            ]
-        },
-        "right_hair": {
-            "pivot": [
-                67,
-                27
-            ]
-        },
-        "left_bangs": {
-            "pivot": [
-                30,
-                28
-            ]
-        },
-        "left_hair": {
-            "pivot": [
-                28,
-                27
-            ]
-        },
-        "back_torso": {
-            "pivot": [
-                48,
-                64
-            ]
-        }
-    },
-    "animations": {}
+	"spritesheet": "live2d/z23.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [45, 21]
+		},
+		"right_bangs": {
+			"pivot": [65, 27]
+		},
+		"right_hair": {
+			"pivot": [67, 27]
+		},
+		"left_bangs": {
+			"pivot": [30, 28]
+		},
+		"left_hair": {
+			"pivot": [28, 27]
+		},
+		"back_torso": {
+			"pivot": [48, 64]
+		}
+	},
+	"animations": {}
 }

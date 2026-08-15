@@ -19,102 +19,102 @@
 		}
 	},
 	"animations": {
-        "idle": {
-            "keyframes": {
-                "0": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": 5
-                    }
-                },
-                "1": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": 0
-                    }
-                },
-                "2": {
-                    "copy": "0"
-                }
-            }
-        },
-        "bounce": {
-            "keyframes": {
-                "0": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": 5
-                    }
-                },
-                "1": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": 0
-                    }
-                },
-                "2": {
-                    "copy": "0"
-                },
-                "3": {
-                    "copy": "1"
-                },
-                "4": {
-                    "copy": "0"
-                },
-                "5": {
-                    "copy": "1"
-                },
-                "6": {
-                    "copy": "0"
-                }
-            }
-        },
-        "drag": {
-            "keyframes": {
-                "0": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": 0
-                    }
-                },
-                "2": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": 5
-                    }
-                },
-                "4": {
-                    "copy": "0"
-                }
-            }
-        },
-        "sink": {
-            "keyframes": {
-                "1": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": 10
-                    }
-                }, 
-                "2": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": 0
-                    }
-                },
-                "3": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": 5
-                    }
-                },
-                "4": {
-                    "back_hair": {
-                        "offset": [0, 0],
-                        "rotation": -15
-                    }
-                }
-            }
-        }
-    }
+		"idle": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"1": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"copy": "0"
+				}
+			}
+		},
+		"bounce": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"1": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"copy": "0"
+				},
+				"3": {
+					"copy": "1"
+				},
+				"4": {
+					"copy": "0"
+				},
+				"5": {
+					"copy": "1"
+				},
+				"6": {
+					"copy": "0"
+				}
+			}
+		},
+		"drag": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"4": {
+					"copy": "0"
+				}
+			}
+		},
+		"sink": {
+			"keyframes": {
+				"1": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 10
+					}
+				},
+				"2": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"3": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"4": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": -15
+					}
+				}
+			}
+		}
+	}
 }

@@ -1,53 +1,28 @@
 {
-    "spritesheet": "live2d/fritz_rumey.png",
-    "colorkey": [
-        255,
-        0,
-        0
-    ],
-    "parts": {
-        "bangs": {
-            "pivot": [
-                44,
-                22
-            ]
-        },
-        "right_bangs": {
-            "pivot": [
-                58,
-                23
-            ]
-        },
-        "right_hair": {
-            "pivot": [
-                66,
-                28
-            ]
-        },
-        "left_bangs": {
-            "pivot": [
-                33,
-                24
-            ]
-        },
-        "left_hair": {
-            "pivot": [
-                29,
-                27
-            ]
-        },
-        "back_torso": {
-            "pivot": [
-                47,
-                54
-            ]
-        },
-        "back_hair": {
-            "pivot": [
-                46,
-                25
-            ]
-        }
-    },
-    "animations": {}
+	"spritesheet": "live2d/fritz_rumey.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [44, 22]
+		},
+		"right_bangs": {
+			"pivot": [58, 23]
+		},
+		"right_hair": {
+			"pivot": [66, 28]
+		},
+		"left_bangs": {
+			"pivot": [33, 24]
+		},
+		"left_hair": {
+			"pivot": [29, 27]
+		},
+		"back_torso": {
+			"pivot": [47, 54]
+		},
+		"back_hair": {
+			"pivot": [46, 25]
+		}
+	},
+	"animations": {}
 }
