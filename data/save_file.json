@@ -1,15 +1,25 @@
 {
-	"unlocked_factions": [],
+	"unlocked_factions": ["IJN"],
 	"shipgirls": {},
 	"equipment": {},
-	"inventory": {},
-	"specialized_wisdom_cubes": {},
+	"inventory": {
+		"DD_blueprint": 1,
+		"BB_blueprint": 1,
+		"wisdom_cube": 0,
+		"full_burst_javelin": 1,
+		"lions_aegis": 1
+	},
+	"specialized_wisdom_cubes": {
+		"javelin": 0,
+		"lion": 0
+	},
 	"decoration_depot": {},
 	"decorations": [],
 	"research_target": null,
 	"sortie_progress": 0,
 	"chapter_progress": 0,
 	"quests": {
-		"choose_faction": "new"
+		"choose_faction": "completed",
+		"construct_shipgirls": "in_progress"
 	}
 }

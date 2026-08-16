@@ -24,7 +24,7 @@
 		"class": "iowa"
 	},
 	"enterprise": {
-		"unique_item": "20_battle_stars",
+		"unique_item": "twenty_battle_stars",
 		"faction": "USS",
 		"hull_type": "CV",
 		"class": "yorktown"
@@ -42,7 +42,7 @@
 		"class": "fubuki"
 	},
 	"shimanto": {
-		"unique_item": "white_dragon_scale",
+		"unique_item": "white_dragon",
 		"faction": "IJN",
 		"hull_type": "CL",
 		"class": "shimanto"
@@ -54,19 +54,19 @@
 		"class": "unzen"
 	},
 	"musashi": {
-		"unique_item": "shogun",
+		"unique_item": "raiden_shogun",
 		"faction": "IJN",
 		"hull_type": "BB",
 		"class": "yamato"
 	},
 	"shinano": {
-		"unique_item": "dreamweaver_butterfly",
+		"unique_item": "constellation",
 		"faction": "IJN",
 		"hull_type": "CV",
 		"class": "yamato"
 	},
 	"i-404": {
-		"unique_item": "placeholder",
+		"unique_item": "koi_fish",
 		"faction": "IJN",
 		"hull_type": "SS",
 		"class": "i-400"
@@ -84,25 +84,25 @@
 		"class": "plymouth"
 	},
 	"drake": {
-		"unique_item": "flintlock",
+		"unique_item": "privateers_heroism",
 		"faction": "HMS",
 		"hull_type": "CA",
 		"class": "drake"
 	},
 	"lion": {
-		"unique_item": "lionflame",
+		"unique_item": "lions_aegis",
 		"faction": "HMS",
 		"hull_type": "BB",
 		"class": "lion"
 	},
 	"implacable": {
-		"unique_item": "cross",
+		"unique_item": "devils_cross",
 		"faction": "HMS",
 		"hull_type": "CV",
 		"class": "implacable"
 	},
 	"trafalgar": {
-		"unique_item": "knight",
+		"unique_item": "knights_bacinet",
 		"faction": "HMS",
 		"hull_type": "SS",
 		"class": "battle"
@@ -120,7 +120,7 @@
 		"class": "dresden"
 	},
 	"hindenburg": {
-		"unique_item": "devil_horns",
+		"unique_item": "the_devil",
 		"faction": "KMS",
 		"hull_type": "CA",
 		"class": "hindenburg"
@@ -132,13 +132,13 @@
 		"class": "bismarck"
 	},
 	"fritz_rumey": {
-		"unique_item": "dragon",
+		"unique_item": "the_juggernaut",
 		"faction": "KMS",
 		"hull_type": "CV",
 		"class": "fritz_rumey"
 	},
 	"u-556": {
-		"unique_item": "promise",
+		"unique_item": "certificate_of_sponsorship",
 		"faction": "KMS",
 		"hull_type": "SS",
 		"class": "type_vii"
