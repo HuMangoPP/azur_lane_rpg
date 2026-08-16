@@ -368,13 +368,34 @@
 		"map_scale": { "left": 128, "top": 0, "width": 128, "height": 8 }
 	},
 	"fleet_selection": {
+		"blank": { "left": 384, "top": 0, "width": 64, "height": 64 },
 		"laffey": { "left": 0, "top": 0, "width": 64, "height": 64 },
 		"san_diego": { "left": 64, "top": 0, "width": 64, "height": 64 },
 		"guam": { "left": 128, "top": 0, "width": 64, "height": 64 },
 		"new_jersey": { "left": 192, "top": 0, "width": 64, "height": 64 },
 		"albacore": { "left": 256, "top": 0, "width": 64, "height": 64 },
 		"enterprise": { "left": 320, "top": 0, "width": 64, "height": 64 },
-		"blank": { "left": 384, "top": 0, "width": 64, "height": 64 }
+
+		"ayanami": { "left": 0, "top": 64, "width": 64, "height": 64 },
+		"shimanto": { "left": 64, "top": 64, "width": 64, "height": 64 },
+		"unzen": { "left": 128, "top": 64, "width": 64, "height": 64 },
+		"musashi": { "left": 192, "top": 64, "width": 64, "height": 64 },
+		"i-404": { "left": 256, "top": 64, "width": 64, "height": 64 },
+		"shinano": { "left": 320, "top": 64, "width": 64, "height": 64 },
+
+		"z23": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"emden": { "left": 64, "top": 128, "width": 64, "height": 64 },
+		"hindenburg": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"bismarck": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"u-556": { "left": 256, "top": 128, "width": 64, "height": 64 },
+		"fritz_rumey": { "left": 320, "top": 128, "width": 64, "height": 64 },
+
+		"javelin": { "left": 0, "top": 192, "width": 64, "height": 64 },
+		"plymouth": { "left": 64, "top": 192, "width": 64, "height": 64 },
+		"drake": { "left": 128, "top": 192, "width": 64, "height": 64 },
+		"lion": { "left": 192, "top": 192, "width": 64, "height": 64 },
+		"trafalgar": { "left": 256, "top": 192, "width": 64, "height": 64 },
+		"implacable": { "left": 320, "top": 192, "width": 64, "height": 64 }
 	},
 	"equipment_menu": {
 		"blueprint": { "left": 0, "top": 0, "width": 448, "height": 288 },
