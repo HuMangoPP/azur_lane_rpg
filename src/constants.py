@@ -56,7 +56,7 @@ class Color:
     BLUEPRINT_PAGE = (56, 88, 162)
     BLUEPRINT_PAGE_BACK = (24, 48, 103)
     BLUEPRINT_PAGE_GLOW = (102, 148, 255)
-    BLUEPRINT_SLOT_BORDER_GLOW = (51, 55, 64)
+    BLUEPRINT_SLOT_BORDER_GLOW = (204, 220, 255)
     STICKY_NOTE = (255, 232, 126)
     STICKY_NOTE_BACK = (224, 188, 71)
     STICKY_NOTE_OUTLINE = (169, 126, 41)
@@ -92,6 +92,8 @@ class Color:
 
     CLIPBOARD_CLIP = (150, 150, 150)
     CLIPBOARD_CLIP_FRONT = (175, 175, 175)
+
+    HOLOGRAM_GLOW = (51, 55, 64)
 
 class Equipment:
     NUM_EQUIPS = 3
@@ -339,7 +341,7 @@ fleet_marker_selection_glow_top_width = math.ceil(2 * Box.WIDTH)
 fleet_marker_selection_glow_bottom_width = math.ceil(0.75 * Box.WIDTH)
 fleet_marker_selection_glow_size = (fleet_marker_selection_glow_top_width, math.ceil(1.5 * Box.HEIGHT))
 fleet_marker_selection_glow = pygame.Surface(fleet_marker_selection_glow_size)
-fleet_marker_selection_glow_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
+fleet_marker_selection_glow_color = Color.HOLOGRAM_GLOW
 fleet_marker_selection_glow_top_fade = math.ceil(fleet_marker_selection_glow_size[1] * 1.0)
 for y in range(fleet_marker_selection_glow_size[1]):
     y_ratio = y / (fleet_marker_selection_glow_size[1] - 1)
@@ -362,7 +364,7 @@ battlestation_glow_top_width = math.ceil(48 + 64 + 3*Box.PADDING)
 battlestation_glow_bottom_width = 2
 battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT/1.5))
 battlestation_glow = pygame.Surface(battlestation_glow_size)
-battlestation_glow_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
+battlestation_glow_color = Color.HOLOGRAM_GLOW
 for y in range(battlestation_glow_size[1]):
     y_ratio = y / (battlestation_glow_size[1] - 1)
     cone_width = round(
@@ -384,7 +386,7 @@ battlestation_glow_top_width = math.ceil(64 + 2*Box.PADDING)
 battlestation_glow_bottom_width = 2
 battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT/1.5))
 battlestation_glow = pygame.Surface(battlestation_glow_size)
-battlestation_glow_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
+battlestation_glow_color = Color.HOLOGRAM_GLOW
 for y in range(battlestation_glow_size[1]):
     y_ratio = y / (battlestation_glow_size[1] - 1)
     cone_width = round(

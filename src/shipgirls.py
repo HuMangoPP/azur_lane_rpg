@@ -41,7 +41,7 @@ class Smoke:
 
 class DummyTarget:
     def __init__(self, menu_manager):
-        self.rect = menu_manager.fleet_selection_menu.fleet_slots[1]
+        self.rect = menu_manager.encounter_menu.fleet_slots[1]
 
 class ShipgirlBattleComponent:
     SHELL_SPEED = 1000
@@ -416,7 +416,7 @@ class ShipgirlBattleComponent:
             battlestation_surf = pygame.Surface((64 + 2*Box.PADDING, 16 + 2*Box.PADDING))
             battlestation_rect = battlestation_surf.get_rect()
         battlestation_rect.midbottom = battlestation_glow_rect.midtop
-        battlestation_surf.fill([c//3 for c in Color.BLUEPRINT_SLOT_BORDER_GLOW])
+        battlestation_surf.fill([c//3 for c in Color.HOLOGRAM_GLOW])
         surface.blit(battlestation_surf, battlestation_rect, special_flags=pygame.BLEND_RGB_ADD)
 
         hp_pct = self.hp / self.stat("max_hp")

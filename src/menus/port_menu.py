@@ -688,6 +688,9 @@ class PortMenu:
         return None
 
     def update_no_overlay(self, events):
+        for quest in self.menu_manager.quest_manager.started_quests.values():
+            quest.completed = quest.completed or quest.completion_criteria(self.menu_manager)
+
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1 and self.can_start_no_overlay_camera_drag(event.pos):

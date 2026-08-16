@@ -628,9 +628,6 @@ class SortieSelectionMenu:
         if self.selected_sortie_node is not None:
             self.selected_sortie_node.draw_selection_effect(surface)
 
-        for fog in self.fogs:
-            fog.draw(surface)
-
         for chapter_name_ribbon in self.chapter_name_ribbons:
             chapter_name_ribbon.draw(surface, font_registry)
         
@@ -651,6 +648,9 @@ class SortieSelectionMenu:
             arrow_rect = arrow.get_rect()
             arrow_rect.midbottom = current_sortie_node.get_bounding_rect().midtop
             surface.blit(arrow, arrow_rect)
+
+        for fog in self.fogs:
+            fog.draw(surface)
         
         if self.selected_sortie_node is not None:
             pygame.draw.rect(surface, Color.BLACK, self.selected_sortie_info_panel)

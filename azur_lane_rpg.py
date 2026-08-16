@@ -66,9 +66,6 @@ while running:
 
     menu_manager.current_menu.update(dt, events)
 
-    for quest in menu_manager.quest_manager.started_quests.values():
-        quest.completed = quest.completed or quest.completion_criteria(menu_manager)
-
     # TODO clean up magic numbers
     display.fill((50,20,20))
     menu_manager.current_menu.draw(display, font_registry)
