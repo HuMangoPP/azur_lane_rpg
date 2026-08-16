@@ -345,17 +345,13 @@ class FleetSelectionMenu:
                         self.backup_fleet_slots,
                         event
                     )
-                    self.selected_shipgirl = None
-                if self.selected_shipgirl is not None:
-                    for _, slot in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
-                        if not slot.collidepoint(event.pos):
-                            continue
+                    if self.tray_overlay.collidepoint(event.pos):
                         if self.selected_shipgirl_index_from_fleet is not None:
                             self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = None
                         if self.selected_shipgirl_index_from_backup is not None:
                             self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = None
-                        self.selected_shipgirl = None
                         click = True
+                    self.selected_shipgirl = None
 
                 self.mouse_start_drag = None
                 click = (

@@ -347,13 +347,13 @@ class Background:
                 for draw_index, shipgirl in shipgirl_draw_indices:
                     if i == draw_index:
                         shipgirl.draw(surface, font_registry)
-                        shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
+                        # shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
 
             if siren_draw_indices is not None:
                 for draw_index, siren in siren_draw_indices:
                     if i == draw_index:
                         siren.draw(surface, font_registry)
-                        siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
+                        # siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
 
             move_amt = i / num_waves
             wave = self.wave_sprites[i]
@@ -861,6 +861,14 @@ class EncounterMenu:
         self.menu_manager.player_fleet.draw_battle_effects(surface, self.vfx_manager)
         self.menu_manager.siren_fleet.draw_battle_effects(surface, self.vfx_manager)
         self.vfx_manager.draw(surface, font_registry)
+
+        for shipgirl in self.menu_manager.player_fleet.fleet:
+            if shipgirl is None:
+                continue
+            shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
+        for siren in self.menu_manager.siren_fleet.fleet:
+            siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
+
 
         self.next_encounter_button.draw(surface, font_registry)
         self.open_reward_cache_button.draw(surface, font_registry)
