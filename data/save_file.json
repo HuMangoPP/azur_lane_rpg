@@ -23,7 +23,7 @@
 		"wisdom_cube": 0,
 		"full_burst_javelin": 0,
 		"lions_aegis": 0,
-		"decoration_coin": 8,
+		"decoration_coin": 10,
 		"privateers_heroism": 0,
 		"CA_blueprint": 0,
 		"metals": 0,
@@ -33,9 +33,9 @@
 	},
 	"specialized_wisdom_cubes": {},
 	"decoration_depot": {
-		"bed": 1
+		"bed": 0
 	},
-	"decorations": [],
+	"decorations": [["bed", [2, 8], true]],
 	"research_target": null,
 	"sortie_progress": 4,
 	"chapter_progress": 1,
@@ -50,6 +50,6 @@
 		"craft_weapon": "completed",
 		"equip_weapon": "completed",
 		"buy_decoration": "completed",
-		"decorate_port": "in_progress"
+		"decorate_port": "completed"
 	}
 }

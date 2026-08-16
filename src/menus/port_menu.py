@@ -432,8 +432,9 @@ class PortMenu:
         self.dragged_shipgirl = None
         self.moved_decoration_depot_overlay = False
         self.flipped_decoration = False
-        self.placed_decoration = False
-        self.removed_decoration = False
+        self.placed_bed_decoration = False
+        self.removed_bed_decoration = False
+        self.shipgirl_interacted_with_bed = False
 
         Decorations.floor_rect.center = (screen_x(0.5), screen_y(0.5))
         self.camera_dragging = False
@@ -1454,6 +1455,8 @@ class PortMenu:
             shipgirl.interacting_decoration = tuple(tilepos_anchor)
             shipgirl.sprite.set_animation(decoration_store_info.get("shipgirl_animation", Live2D.IDLE_ANIMATION))
             shipgirl.facing_left = flipped
+            if decoration == "bed":
+                self.shipgirl_interacted_with_bed = True
             return True
 
         shipgirl.interacting_decoration = None
@@ -1603,7 +1606,8 @@ class PortMenu:
                             DataFiles.save_file["decoration_depot"][decoration] = (
                                 DataFiles.save_file["decoration_depot"].get(decoration, 0) + 1
                             )
-                            self.removed_decoration = True
+                            if decoration == "bed":
+                                self.removed_bed_decoration = True
                             break
                 elif self.selected_decoration_in_depot is not None:
                     occupied_tiles = set() # TODO code optimization
@@ -1621,7 +1625,8 @@ class PortMenu:
                     DataFiles.sfx["click"].play()
                     DataFiles.save_file["decorations"].append((decoration, clicked_tilepos, self.decoration_flipped))
                     DataFiles.save_file["decoration_depot"][decoration] -= 1
-                    self.placed_decoration = True
+                    if decoration == "bed":
+                        self.placed_bed_decoration = True
                     if DataFiles.save_file["decoration_depot"][decoration] <= 0:
                         self.selected_decoration_in_depot = None
 

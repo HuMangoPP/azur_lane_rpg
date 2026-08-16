@@ -659,10 +659,7 @@ buy_decoration_post_quest_dialogue = [
 ]
 
 def buy_decoration_completion_criteria(menu_manager):
-    return any(
-        decoration_count > 0
-        for decoration_count in DataFiles.save_file["decoration_depot"].values()
-    )
+    return DataFiles.save_file["decoration_depot"].get("bed", 0) > 0
 
 def buy_decoration_tutorial_draw(menu_manager, surface, font_registry):
     if menu_manager.current_menu != menu_manager.port_menu:
@@ -674,16 +671,13 @@ def buy_decoration_tutorial_draw(menu_manager, surface, font_registry):
 
         draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DECORATION_STORE:
-        if menu_manager.port_menu.overlay_selected_entity is None:
-            rect = menu_manager.port_menu.warehouse_overlay
-            draw_tb(
-                surface, font_registry,
-                "Pick any decoration to buy.",
-                rect.center,
-                False, False
-            )
+        if menu_manager.port_menu.overlay_selected_entity != "bed":
+            rect = menu_manager.port_menu.warehouse_icons[0]
+            pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+
+            draw_tb(surface, font_registry, "Buy a bed.", rect.bottomright, False, False)
         elif menu_manager.port_menu.decoration_signature_button.active:
-            if not DataFiles.save_file["decoration_depot"]:
+            if DataFiles.save_file["decoration_depot"].get("bed", 0) == 0:
                 rect = menu_manager.port_menu.decoration_signature_button.rect.inflate(2*Box.PADDING, 2*Box.PADDING)
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
@@ -714,9 +708,10 @@ decorate_port_pre_quest_dialogue = [
     "Your new decoration is ready to be placed, Commander.",
     "You can customize the port by placing decorations wherever you like.",
     "If you don't like how something looks, you can remove the decoration or flip it horizontally.",
-    "Try arranging the new decoration until it looks good to you."
+    "Some decorations can also be used by your shipgirls.",
+    "Try arranging the new bed, then let one of your shipgirls rest on it."
 ]
-decorate_port_quest_line = "Place a decoration in the port."
+decorate_port_quest_line = "Place a bed in the port and have a shipgirl sleep on it."
 decorate_port_post_quest_dialogue = [
     "Decoration setup complete.",
     "The port is starting to feel more lively, Commander.",
@@ -729,14 +724,15 @@ def decorate_port_completion_criteria(menu_manager):
     return (
         port_menu.moved_decoration_depot_overlay
         and port_menu.flipped_decoration
-        and port_menu.placed_decoration
-        and port_menu.removed_decoration
-        and len(DataFiles.save_file["decorations"]) > 0
+        and port_menu.placed_bed_decoration
+        and port_menu.removed_bed_decoration
+        and port_menu.shipgirl_interacted_with_bed
+        and _decorate_port_get_placed_bed_data() is not None
+        and _decorate_port_get_interacting_shipgirl_on_bed(menu_manager) is not None
         and not port_menu.is_decorating
     )
 
-def _decorate_port_get_depot_decoration_rects(port_menu):
-    rects = []
+def _decorate_port_get_depot_decoration_rect(port_menu, target_decoration):
     decoration_index = 0
     for decoration, amt in DataFiles.save_file["decoration_depot"].items():
         if amt <= 0:
@@ -746,9 +742,10 @@ def _decorate_port_get_depot_decoration_rects(port_menu):
             left=port_menu.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
             top=port_menu.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
         )
-        rects.append(rect)
+        if decoration == target_decoration:
+            return rect
         decoration_index += 1
-    return rects
+    return None
 
 def _decorate_port_get_delete_rect(port_menu):
     decoration_index = sum(
@@ -761,18 +758,43 @@ def _decorate_port_get_delete_rect(port_menu):
         top=port_menu.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
     )
 
-def _decorate_port_get_placed_decoration_rect():
-    if len(DataFiles.save_file["decorations"]) <= 0:
+def _decorate_port_get_placed_bed_data():
+    for decoration_data in DataFiles.save_file["decorations"]:
+        decoration, _, _ = Decorations.unpack_decoration_data(decoration_data)
+        if decoration == "bed":
+            return decoration_data
+    return None
+
+def _decorate_port_get_placed_bed_rect():
+    decoration_data = _decorate_port_get_placed_bed_data()
+    if decoration_data is None:
         return None
 
-    decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(
-        DataFiles.save_file["decorations"][0]
-    )
+    decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
     return Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
 
-def _decorate_port_draw_depot_items(menu_manager, surface, font_registry, text):
-    for rect in _decorate_port_get_depot_decoration_rects(menu_manager.port_menu):
-        pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
+def _decorate_port_get_interacting_shipgirl_on_bed(menu_manager):
+    decoration_data = _decorate_port_get_placed_bed_data()
+    if decoration_data is None:
+        return None
+
+    _, tilepos_anchor, _ = Decorations.unpack_decoration_data(decoration_data)
+    bed_anchor = tuple(tilepos_anchor)
+    return next(
+        (
+            shipgirl for shipgirl in menu_manager.available_shipgirls
+            if shipgirl.interacting_decoration == bed_anchor
+        ),
+        None
+    )
+
+def _decorate_port_draw_bed_depot_item(menu_manager, surface, font_registry, text):
+    rect = _decorate_port_get_depot_decoration_rect(menu_manager.port_menu, "bed")
+    if rect is None:
+        draw_tb(surface, font_registry, text, pygame.mouse.get_pos(), False, False)
+        return
+
+    pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
     draw_tb(
         surface, font_registry,
@@ -806,57 +828,106 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
         )
         return
 
-    if not port_menu.placed_decoration:
-        if port_menu.selected_decoration_in_depot is None:
-            _decorate_port_draw_depot_items(
+    if not port_menu.placed_bed_decoration:
+        if port_menu.selected_decoration_in_depot != "bed":
+            _decorate_port_draw_bed_depot_item(
                 menu_manager, surface, font_registry,
-                "Pick one decoration from your depot."
+                "Pick the bed from your depot."
             )
         elif not port_menu.flipped_decoration:
             draw_tb(
                 surface, font_registry,
-                "Right click to flip the decoration.",
+                "Right click to flip the bed.",
                 pygame.mouse.get_pos(),
                 False, False
             )
         else:
             draw_tb(
                 surface, font_registry,
-                "Left click an open tile to place it.",
+                "Left click an open tile to place the bed.",
                 pygame.mouse.get_pos(),
                 False, False
             )
         return
 
-    if not port_menu.removed_decoration:
+    if not port_menu.removed_bed_decoration:
         if not port_menu.deleting_decoration:
             rect = _decorate_port_get_delete_rect(port_menu)
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
             draw_tb(
                 surface, font_registry,
-                "Use this to remove a placed decoration.",
+                "Use this to remove the placed bed.",
                 rect.bottomright,
                 False, False
             )
         else:
-            rect = _decorate_port_get_placed_decoration_rect()
+            rect = _decorate_port_get_placed_bed_rect()
             if rect is not None:
                 pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
                 draw_tb(
                     surface, font_registry,
-                    "Click the placed decoration to return it to the depot.",
+                    "Click the bed to return it to the depot.",
                     rect.bottomright,
                     False, False
                 )
         return
 
-    if len(DataFiles.save_file["decorations"]) <= 0:
-        draw_tb(
-            surface, font_registry,
-            "Place the decoration again.",
-            pygame.mouse.get_pos(),
-            False, False
+    if _decorate_port_get_placed_bed_data() is None:
+        if port_menu.selected_decoration_in_depot != "bed":
+            _decorate_port_draw_bed_depot_item(
+                menu_manager, surface, font_registry,
+                "Pick the bed again."
+            )
+        else:
+            draw_tb(
+                surface, font_registry,
+                "Place the bed again.",
+                pygame.mouse.get_pos(),
+                False, False
+            )
+        return
+
+    if port_menu.selected_decoration_in_depot is not None:
+        selected_decoration_rect = _decorate_port_get_depot_decoration_rect(
+            port_menu,
+            port_menu.selected_decoration_in_depot
         )
+        if selected_decoration_rect is not None:
+            pygame.draw.rect(surface, Color.RED, selected_decoration_rect, width=Box.OUTLINE_WIDTH)
+            draw_tb(
+                surface, font_registry,
+                "Deselect the decoration.",
+                selected_decoration_rect.bottomright,
+                False, False
+            )
+        else:
+            draw_tb(
+                surface, font_registry,
+                "Deselect the decoration.",
+                pygame.mouse.get_pos(),
+                False, False
+            )
+        return
+
+    if _decorate_port_get_interacting_shipgirl_on_bed(menu_manager) is None:
+        bed_rect = _decorate_port_get_placed_bed_rect()
+        shipgirl = menu_manager.available_shipgirls[0]
+        pygame.draw.rect(surface, Color.RED, bed_rect, width=Box.OUTLINE_WIDTH)
+        if port_menu.dragged_shipgirl is None:
+            pygame.draw.rect(surface, Color.RED, shipgirl.rect, width=Box.OUTLINE_WIDTH)
+            draw_tb(
+                surface, font_registry,
+                "Drag a shipgirl onto the bed.",
+                shipgirl.rect.topright,
+                True, False
+            )
+        else:
+            draw_tb(
+                surface, font_registry,
+                "Drop her onto the bed.",
+                pygame.mouse.get_pos(),
+                False, False
+            )
         return
 
     rect = port_menu.toggle_decoration_mode_button.rect.inflate(2*Box.PADDING, 2*Box.PADDING)
@@ -869,8 +940,9 @@ def decorate_port_on_start(menu_manager):
     port_menu.toggle_decoration_mode_button.active = True
     port_menu.moved_decoration_depot_overlay = False
     port_menu.flipped_decoration = False
-    port_menu.placed_decoration = False
-    port_menu.removed_decoration = False
+    port_menu.placed_bed_decoration = False
+    port_menu.removed_bed_decoration = False
+    port_menu.shipgirl_interacted_with_bed = False
 
 def decorate_port_on_complete(menu_manager, save_file_load=False):
     pass
