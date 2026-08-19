@@ -122,24 +122,31 @@ class PortMenu:
                     choose_faction_button.active = False
             return choose_faction
         
-        self.choose_faction_buttons = [
-            Button(
-                get_rect(
-                    width=Box.WIDTH, height=Box.HEIGHT,
-                    centerx=screen_x(0.5) + (i-2)*Box.WIDTH+(i-1.5)*Box.PADDING,
-                    centery=screen_y(0.5)
-                ),
-                choose_faction_factory(faction),
+        self.choose_faction_buttons = []
+        choose_faction_center = pygame.Vector2(screen_x(0.5), screen_y(0.5))
+        choose_faction_angles = [
+            math.radians(-135),
+            math.radians(-45),
+            math.radians(45),
+            math.radians(135),
+        ]
+        for faction, angle in zip(factions, choose_faction_angles):
+            choose_faction_button = AnnularSectorButton(
+                callback=choose_faction_factory(faction),
                 active=False,
                 background_styling={
                     "background_color": Color.BLACK,
                     "background_img": DataFiles.sprites["user_interface"][f"{faction}_big"],
                     "opacity": 160
                 },
-                hover_styling={"opacity": 200}
+                hover_styling={"opacity": 200},
+                inner_radius=Box.WIDTH,
+                outer_radius=Box.WIDTH * 2.5,
+                angle_width=math.radians(90),
             )
-            for i, faction in enumerate(factions)
-        ]
+            choose_faction_button.center = choose_faction_center
+            choose_faction_button.angle = angle
+            self.choose_faction_buttons.append(choose_faction_button)
 
         # Sortie button
         def open_select_sortie_menu():
@@ -526,12 +533,12 @@ class PortMenu:
             self.open_intel_center_overlay_button,
             self.open_decoration_store_overlay_button,
             self.toggle_decoration_mode_button,
-            *self.choose_faction_buttons,
         ]
         if any(button.active and button.rect.collidepoint(pos) for button in rectangular_buttons):
             return False
 
         annular_buttons = [
+            *self.choose_faction_buttons,
             *self.shipgirl_dialogue_options
         ]
         if any(button.active and button.contains_point(pos) for button in annular_buttons):
