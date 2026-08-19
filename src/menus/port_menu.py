@@ -168,6 +168,7 @@ class PortMenu:
 
         # Overlay state
         self.current_overlay = self.NO_OVERLAY
+        self.overlay_pages = {}
         self.visited_depot = False
         self.visited_intel_center = False
         self.depot_notification = True
@@ -182,6 +183,7 @@ class PortMenu:
         def open_overlay_button_factory(index, overlay_enum, has_notification=True):
             def open_overlay():
                 self.current_overlay = overlay_enum
+                self.overlay_pages.setdefault(overlay_enum, 0)
                 if has_notification:
                     setattr(self, f"{overlay_enum}_notification", False)
 
@@ -230,7 +232,7 @@ class PortMenu:
             width=num_items_in_row*(Box.WIDTH + Box.PADDING) + 4*Box.PADDING,
             height=num_items_in_col*(Box.HEIGHT + Box.PADDING) + 3*Box.PADDING + Box.HEIGHT,
             right=screen_x(0.5) + Box.WIDTH,
-            centery=screen_y(0.5)
+            centery=screen_y(0.5) - Box.HEIGHT
         )
         # Manila folder background
         self.dossier_bg = get_rect(
@@ -299,6 +301,30 @@ class PortMenu:
         self.forklift_x = 0
         self.forklift_dx = 1
         self.forklift_pause = 0
+
+        # Overlay paging buttons
+        self.overlay_page_prev_button = Button(
+            get_rect(width=48, height=48, left=0, top=0),
+            lambda: self.change_overlay_page(-1),
+            active=False,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["prev"],
+                "opacity": 160,
+            },
+            hover_styling={"opacity": 200}
+        )
+        self.overlay_page_next_button = Button(
+            get_rect(width=48, height=48, left=0, top=0),
+            lambda: self.change_overlay_page(1),
+            active=False,
+            background_styling={
+                "background_color": Color.BLACK,
+                "background_img": DataFiles.sprites["user_interface"]["next"],
+                "opacity": 160,
+            },
+            hover_styling={"opacity": 200}
+        )
 
         # Clipboard-themed right panel
         self.clipboard_bg = get_rect(
@@ -695,6 +721,110 @@ class PortMenu:
             return self.decoration_signature_button
         return None
 
+    def get_overlay_entities(self):
+        if self.current_overlay == self.DEPOT:
+            return [item for item, count in DataFiles.save_file["inventory"].items() if count > 0]
+        if self.current_overlay == self.INTEL_CENTER:
+            return [
+                siren for siren in self.encountered_sirens
+                if DataFiles.siren_data[siren]["hull_type"] == self.intel_center_filters[self.overlay_selected_filter]
+            ]
+        if self.current_overlay == self.SHIPYARD:
+            return [
+                shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+                if shipgirl not in DataFiles.save_file["shipgirls"]
+                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
+                and shipgirl_info["faction"] == self.shipyard_filters[self.overlay_selected_filter]
+            ]
+        if self.current_overlay == self.GEAR_LAB:
+            if self.gear_lab_filters[self.overlay_selected_filter] == "AUX":
+                return [
+                    equip for equip, equip_data in DataFiles.equipment_data.items()
+                    if equip_data["type"] == "aux"
+                ]
+            return [
+                equip for equip, equip_data in DataFiles.equipment_data.items()
+                if equip_data["type"] == "weapon"
+                and equip_data["equippable_by"] == self.gear_lab_filters[self.overlay_selected_filter]
+            ]
+        if self.current_overlay == self.DECORATION_STORE:
+            return [decoration for decoration in DataFiles.decoration_store]
+        return []
+
+    def get_overlay_icon_rects(self):
+        if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
+            return self.warehouse_icons
+        if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
+            return self.dossier_icons
+        return []
+
+    def get_overlay_page_count(self, entities=None):
+        if entities is None:
+            entities = self.get_overlay_entities()
+
+        page_size = len(self.get_overlay_icon_rects())
+        if page_size == 0:
+            return 1
+        return max(1, math.ceil(len(entities) / page_size))
+
+    def get_overlay_page(self, entities=None):
+        page_count = self.get_overlay_page_count(entities)
+        page = min(self.overlay_pages.get(self.current_overlay, 0), page_count - 1)
+        page = max(0, page)
+        self.overlay_pages[self.current_overlay] = page
+        return page
+
+    def get_visible_overlay_entities(self, entities=None):
+        if entities is None:
+            entities = self.get_overlay_entities()
+
+        page_size = len(self.get_overlay_icon_rects())
+        if page_size == 0:
+            return []
+
+        page = self.get_overlay_page(entities)
+        start = page * page_size
+        return entities[start:start + page_size]
+
+    def position_overlay_page_buttons(self):
+        if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
+            overlay = self.warehouse_overlay
+        elif self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
+            overlay = self.dossier_overlay
+        else:
+            return
+
+        button_gap = Box.PADDING
+        indicator_width = Box.WIDTH
+        total_width = (
+            self.overlay_page_prev_button.rect.width
+            + indicator_width
+            + self.overlay_page_next_button.rect.width
+            + 2 * button_gap
+        )
+        left = overlay.centerx - total_width / 2
+        top = overlay.bottom + Box.PADDING
+        self.overlay_page_prev_button.rect.topleft = (left, top)
+        self.overlay_page_next_button.rect.topleft = (
+            left + self.overlay_page_prev_button.rect.width + indicator_width + 2 * button_gap,
+            top
+        )
+
+    def refresh_overlay_page_buttons(self):
+        entities = self.get_overlay_entities()
+        page_count = self.get_overlay_page_count(entities)
+        page = self.get_overlay_page(entities)
+        self.position_overlay_page_buttons()
+        self.overlay_page_prev_button.active = page_count > 1 and page > 0
+        self.overlay_page_next_button.active = page_count > 1 and page < page_count - 1
+
+    def change_overlay_page(self, delta):
+        entities = self.get_overlay_entities()
+        page_count = self.get_overlay_page_count(entities)
+        page = self.get_overlay_page(entities)
+        self.overlay_pages[self.current_overlay] = min(page_count - 1, max(0, page + delta))
+        self.refresh_overlay_page_buttons()
+
     def update_no_overlay(self, events):
         for quest in self.menu_manager.quest_manager.started_quests.values():
             quest.completed = quest.completed or quest.completion_criteria(self.menu_manager)
@@ -784,6 +914,13 @@ class PortMenu:
                             option.active = True
 
     def exit_overlay(self, mouseup_event):
+        clicked_page_button = (
+            self.overlay_page_prev_button.active
+            and self.overlay_page_prev_button.rect.collidepoint(mouseup_event.pos)
+        ) or (
+            self.overlay_page_next_button.active
+            and self.overlay_page_next_button.rect.collidepoint(mouseup_event.pos)
+        )
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             left_overlay = self.warehouse_overlay
             right_overlay = self.clipboard_bg
@@ -803,6 +940,7 @@ class PortMenu:
 
         if (
             not left_overlay.collidepoint(mouseup_event.pos)
+            and not clicked_page_button
             and (
                 self.overlay_selected_entity is None
                 or not clicked_right_overlay
@@ -811,6 +949,8 @@ class PortMenu:
             self.current_overlay = self.NO_OVERLAY
             self.overlay_selected_entity = None
             self.refresh_overlay_action_buttons()
+            self.overlay_page_prev_button.active = False
+            self.overlay_page_next_button.active = False
             self.overlay_selected_filter = 0
             return True
         return False
@@ -824,41 +964,12 @@ class PortMenu:
             if rect.collidepoint(mouseup_event.pos):
                 DataFiles.sfx["click"].play()
                 self.overlay_selected_filter = i
+                self.overlay_pages[self.current_overlay] = 0
+                self.refresh_overlay_page_buttons()
 
     def select_entity(self, mouseup_event):
-        if self.current_overlay == self.DEPOT:
-            entities = [item for item, count in DataFiles.save_file["inventory"].items() if count > 0]
-            rects = self.warehouse_icons
-        if self.current_overlay == self.INTEL_CENTER:
-            entities = [
-                siren for siren in self.encountered_sirens
-                if DataFiles.siren_data[siren]["hull_type"] == self.intel_center_filters[self.overlay_selected_filter]
-            ]
-            rects = self.dossier_icons
-        if self.current_overlay == self.SHIPYARD:
-            entities = [
-                shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                if shipgirl not in DataFiles.save_file["shipgirls"]
-                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                and shipgirl_info["faction"] == self.shipyard_filters[self.overlay_selected_filter]
-            ]
-            rects = self.dossier_icons
-        if self.current_overlay == self.GEAR_LAB:
-            if self.gear_lab_filters[self.overlay_selected_filter] == "AUX":
-                entities = [
-                    equip for equip, equip_data in DataFiles.equipment_data.items()
-                    if equip_data["type"] == "aux"
-                ]
-            else:
-                entities = [
-                    equip for equip, equip_data in DataFiles.equipment_data.items()
-                    if equip_data["type"] == "weapon"
-                    and equip_data["equippable_by"] == self.gear_lab_filters[self.overlay_selected_filter]
-                ]
-            rects = self.dossier_icons
-        if self.current_overlay == self.DECORATION_STORE:
-            entities = [decoration for decoration in DataFiles.decoration_store]
-            rects = self.warehouse_icons
+        entities = self.get_visible_overlay_entities()
+        rects = self.get_overlay_icon_rects()
 
         for entity, rect in zip(entities, rects):
             if rect.collidepoint(mouseup_event.pos):
@@ -869,6 +980,35 @@ class PortMenu:
                     setattr(self, f"visited_{self.current_overlay}", True)
 
                 self.refresh_overlay_action_buttons()
+
+    def draw_overlay_page_buttons(self, surface, font_registry):
+        self.refresh_overlay_page_buttons()
+        if self.get_overlay_page_count() <= 1:
+            return
+
+        page = self.get_overlay_page()
+        page_count = self.get_overlay_page_count()
+        page_text_pos = (
+            (self.overlay_page_prev_button.rect.centerx + self.overlay_page_next_button.rect.centerx) / 2,
+            self.overlay_page_prev_button.rect.centery
+        )
+        page_text_width = (
+            self.overlay_page_next_button.rect.left
+            - self.overlay_page_prev_button.rect.right
+            - Box.PADDING
+        )
+        self.overlay_page_prev_button.draw(surface, font_registry)
+        self.overlay_page_next_button.draw(surface, font_registry)
+        font_registry["big_pixel"].render(
+            surface,
+            f"{page + 1}/{page_count}",
+            page_text_pos,
+            Color.WHITE,
+            1,
+            style="center",
+            box_width=page_text_width,
+            outline_color=Color.BLACK,
+        )
 
     def draw_dossier_overlay(self, surface, font_registry):
         entity_filters = getattr(self, f"{self.current_overlay}_filters")
@@ -892,30 +1032,7 @@ class PortMenu:
             icon_rect.centery = rect.top + rect.height/2
             surface.blit(icon, icon_rect)
 
-        if self.current_overlay == self.INTEL_CENTER:
-            entities = [
-                siren for siren in self.encountered_sirens
-                if DataFiles.siren_data[siren]["hull_type"] == self.intel_center_filters[self.overlay_selected_filter]
-            ]
-        if self.current_overlay == self.SHIPYARD:
-            entities = [
-                shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                if shipgirl not in DataFiles.save_file["shipgirls"]
-                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                and shipgirl_info["faction"] == self.shipyard_filters[self.overlay_selected_filter]
-            ]
-        if self.current_overlay == self.GEAR_LAB:
-            if self.gear_lab_filters[self.overlay_selected_filter] == "AUX":
-                entities = [
-                    equip for equip, equip_data in DataFiles.equipment_data.items()
-                    if equip_data["type"] == "aux"
-                ]
-            else:
-                entities = [
-                    equip for equip, equip_data in DataFiles.equipment_data.items()
-                    if equip_data["type"] == "weapon"
-                    and equip_data["equippable_by"] == self.gear_lab_filters[self.overlay_selected_filter]
-                ]
+        entities = self.get_visible_overlay_entities()
         misaligned_pages = [
             (-5, pygame.Vector2(-8, 6), (224, 218, 201)),
             (4, pygame.Vector2(6, -4), (235, 229, 212)),
@@ -969,6 +1086,7 @@ class PortMenu:
         coffee_ring_rect = coffee_ring_sprite.get_rect()
         coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
         surface.blit(coffee_ring_sprite, coffee_ring_rect)
+        self.draw_overlay_page_buttons(surface, font_registry)
 
     def draw_sticky_note_overlay(self, surface, font_registry):
         action_button = self.get_current_overlay_action_button()
@@ -1156,10 +1274,7 @@ class PortMenu:
     def draw_warehouse_overlay(self, surface, font_registry):
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.warehouse_overlay)
 
-        if self.current_overlay == self.DEPOT:
-            entities = [item for item, count in DataFiles.save_file["inventory"].items() if count > 0]
-        if self.current_overlay == self.DECORATION_STORE:
-            entities = [decoration for decoration in DataFiles.decoration_store]
+        entities = self.get_visible_overlay_entities()
         for entity, rect in zip(entities, self.warehouse_icons):
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
             image = DataFiles.get_entity_sprite(entity)
@@ -1252,6 +1367,7 @@ class PortMenu:
         lightbulb_light_rect.centerx = lightbulb_rect.centerx
         lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
+        self.draw_overlay_page_buttons(surface, font_registry)
 
     def draw_clipboard_overlay(self, surface, font_registry):
         if self.overlay_selected_entity is None:
@@ -1650,7 +1766,21 @@ class PortMenu:
             self.update_no_overlay(events)
         else:
             for event in events:
+                if event.type == pygame.MOUSEMOTION:
+                    self.refresh_overlay_page_buttons()
+                    self.overlay_page_prev_button.hover(event.pos)
+                    self.overlay_page_next_button.hover(event.pos)
+                    action_button = self.get_current_overlay_action_button()
+                    if action_button is not None:
+                        action_button.hover(event.pos)
                 if event.type == pygame.MOUSEBUTTONUP:
+                    self.refresh_overlay_page_buttons()
+                    if (
+                        self.overlay_page_prev_button.click(event.pos)
+                        or self.overlay_page_next_button.click(event.pos)
+                    ):
+                        DataFiles.sfx["click"].play()
+                        continue
                     if self.exit_overlay(event):
                         continue
                     self.select_filter(event)

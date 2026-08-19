@@ -1,15 +1,55 @@
 {
-	"unlocked_factions": [],
-	"shipgirls": {},
-	"equipment": {},
-	"inventory": {},
+	"unlocked_factions": ["HMS"],
+	"shipgirls": {
+		"javelin": {
+			"equipment": ["twin_120", null, null],
+			"exp": 254
+		},
+		"lion": {
+			"equipment": [null, null, null],
+			"exp": 254
+		},
+		"drake": {
+			"equipment": [null, null, null],
+			"exp": 242
+		}
+	},
+	"equipment": {
+		"twin_120": 0
+	},
+	"inventory": {
+		"DD_blueprint": 0,
+		"BB_blueprint": 1,
+		"wisdom_cube": 0,
+		"full_burst_javelin": 0,
+		"lions_aegis": 0,
+		"decoration_coin": 10,
+		"privateers_heroism": 0,
+		"CA_blueprint": 0,
+		"metals": 0,
+		"gunpowder": 0,
+		"plastics": 1,
+		"electronics": 1
+	},
 	"specialized_wisdom_cubes": {},
-	"decoration_depot": {},
-	"decorations": [],
+	"decoration_depot": {
+		"bed": 0
+	},
+	"decorations": [["bed", [2, 8], true]],
 	"research_target": null,
-	"sortie_progress": 0,
-	"chapter_progress": 0,
+	"sortie_progress": 4,
+	"chapter_progress": 1,
 	"quests": {
-		"choose_faction": "new"
+		"choose_faction": "completed",
+		"construct_shipgirls": "completed",
+		"first_sortie": "completed",
+		"inventory": "completed",
+		"intel_center": "completed",
+		"research_shipgirl": "completed",
+		"construct_shipgirl": "completed",
+		"craft_weapon": "completed",
+		"equip_weapon": "completed",
+		"buy_decoration": "completed",
+		"decorate_port": "completed"
 	}
 }
