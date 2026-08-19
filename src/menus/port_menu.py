@@ -104,6 +104,9 @@ class PortMenu:
     GEAR_LAB = "gear_lab"
     DECORATION_STORE = "decoration_store"
 
+    DECORATION_DEPOT = "decoration_depot"
+    DELETE_DECORATION = "__delete_decoration__"
+
     DECORATION_STAMP_ANIMATION_DURATION = 1
     DECORATION_STAMP_DOWN_TIME = 0.15
     DECORATION_STAMP_LIFT_TIME = 0.30
@@ -436,6 +439,12 @@ class PortMenu:
 
         def toggle_decoration_mode():
             self.is_decorating = not self.is_decorating
+            if self.is_decorating:
+                self.overlay_pages.setdefault(self.DECORATION_DEPOT, 0)
+                self.refresh_overlay_page_buttons()
+            else:
+                self.overlay_page_prev_button.active = False
+                self.overlay_page_next_button.active = False
 
             close_shipgirl_dialogue_options()
 
@@ -586,6 +595,14 @@ class PortMenu:
         if self.decoration_depot_overlay.collidepoint(pos):
             return False
         if (
+            self.overlay_page_prev_button.active
+            and self.overlay_page_prev_button.rect.collidepoint(pos)
+        ) or (
+            self.overlay_page_next_button.active
+            and self.overlay_page_next_button.rect.collidepoint(pos)
+        ):
+            return False
+        if (
             self.toggle_decoration_mode_button.active
             and self.toggle_decoration_mode_button.rect.collidepoint(pos)
         ):
@@ -601,6 +618,34 @@ class PortMenu:
                     return False
 
         return not any(shipgirl.rect.collidepoint(pos) for shipgirl in self.menu_manager.available_shipgirls)
+
+    def get_decoration_depot_entity_at_pos(self, pos):
+        entities = self.get_visible_overlay_entities()
+        rects = self.get_overlay_icon_rects()
+        for entity, rect in zip(entities, rects):
+            if rect.collidepoint(pos):
+                return entity
+        return None
+
+    def select_decoration_depot_entity(self, pos, allow_delete_toggle):
+        entity = self.get_decoration_depot_entity_at_pos(pos)
+        if entity is None:
+            return False
+
+        if entity == self.DELETE_DECORATION:
+            if allow_delete_toggle:
+                DataFiles.sfx["click"].play()
+                self.deleting_decoration = not self.deleting_decoration
+                self.selected_decoration_in_depot = None
+            return True
+
+        DataFiles.sfx["click"].play()
+        if self.selected_decoration_in_depot == entity:
+            self.selected_decoration_in_depot = None
+        else:
+            self.selected_decoration_in_depot = entity
+            self.deleting_decoration = False
+        return True
 
     def update_encountered_sirens(self):
         self.encountered_sirens = set()
@@ -721,7 +766,19 @@ class PortMenu:
             return self.decoration_signature_button
         return None
 
+    def get_overlay_page_key(self):
+        if self.is_decorating:
+            return self.DECORATION_DEPOT
+        return self.current_overlay
+
     def get_overlay_entities(self):
+        if self.is_decorating:
+            decorations = [
+                decoration
+                for decoration, amt in DataFiles.save_file["decoration_depot"].items()
+                if amt > 0
+            ]
+            return decorations + [self.DELETE_DECORATION]
         if self.current_overlay == self.DEPOT:
             return [item for item, count in DataFiles.save_file["inventory"].items() if count > 0]
         if self.current_overlay == self.INTEL_CENTER:
@@ -752,6 +809,15 @@ class PortMenu:
         return []
 
     def get_overlay_icon_rects(self):
+        if self.is_decorating:
+            return [
+                get_rect(
+                    width=Box.WIDTH, height=Box.HEIGHT,
+                    left=self.decoration_depot_overlay.left + (i%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+                    top=self.decoration_depot_overlay.top + (i//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+                )
+                for i in range(9)
+            ]
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             return self.warehouse_icons
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
@@ -769,9 +835,10 @@ class PortMenu:
 
     def get_overlay_page(self, entities=None):
         page_count = self.get_overlay_page_count(entities)
-        page = min(self.overlay_pages.get(self.current_overlay, 0), page_count - 1)
+        page_key = self.get_overlay_page_key()
+        page = min(self.overlay_pages.get(page_key, 0), page_count - 1)
         page = max(0, page)
-        self.overlay_pages[self.current_overlay] = page
+        self.overlay_pages[page_key] = page
         return page
 
     def get_visible_overlay_entities(self, entities=None):
@@ -787,7 +854,9 @@ class PortMenu:
         return entities[start:start + page_size]
 
     def position_overlay_page_buttons(self):
-        if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
+        if self.is_decorating:
+            overlay = self.decoration_depot_overlay
+        elif self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             overlay = self.warehouse_overlay
         elif self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             overlay = self.dossier_overlay
@@ -822,7 +891,7 @@ class PortMenu:
         entities = self.get_overlay_entities()
         page_count = self.get_overlay_page_count(entities)
         page = self.get_overlay_page(entities)
-        self.overlay_pages[self.current_overlay] = min(page_count - 1, max(0, page + delta))
+        self.overlay_pages[self.get_overlay_page_key()] = min(page_count - 1, max(0, page + delta))
         self.refresh_overlay_page_buttons()
 
     def update_no_overlay(self, events):
@@ -1598,32 +1667,21 @@ class PortMenu:
                 if event.button != 1:
                     continue
 
+                self.refresh_overlay_page_buttons()
+                if (
+                    self.overlay_page_prev_button.active
+                    and self.overlay_page_prev_button.rect.collidepoint(event.pos)
+                ) or (
+                    self.overlay_page_next_button.active
+                    and self.overlay_page_next_button.rect.collidepoint(event.pos)
+                ):
+                    continue
+
                 if self.decoration_depot_overlay.collidepoint(event.pos):
-                    decoration_index = 0
-                    for decoration, amt in DataFiles.save_file["decoration_depot"].items():
-                        if amt <= 0:
-                            continue
-                        rect = get_rect(
-                            width=Box.WIDTH, height=Box.HEIGHT,
-                            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-                            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-                        )
-                        if rect.collidepoint(event.pos):
-                            DataFiles.sfx["click"].play()
-                            if self.selected_decoration_in_depot == decoration:
-                                self.selected_decoration_in_depot = None
-                            else:
-                                self.selected_decoration_in_depot = decoration
-                                self.deleting_decoration = False
-                            break
-                        decoration_index += 1
-                    else:
-                        delete_rect = get_rect(
-                            width=Box.WIDTH, height=Box.HEIGHT,
-                            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-                            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-                        )
-                        if delete_rect.collidepoint(event.pos):
+                    entity = self.get_decoration_depot_entity_at_pos(event.pos)
+                    if entity is not None:
+                        self.select_decoration_depot_entity(event.pos, allow_delete_toggle=False)
+                        if entity == self.DELETE_DECORATION:
                             continue
                     self.decoration_depot_drag_offset = pygame.Vector2(self.decoration_depot_overlay.topleft) - pygame.Vector2(event.pos)
                     continue
@@ -1648,6 +1706,9 @@ class PortMenu:
                     continue
 
                 self.toggle_decoration_mode_button.hover(event.pos)
+                self.refresh_overlay_page_buttons()
+                self.overlay_page_prev_button.hover(event.pos)
+                self.overlay_page_next_button.hover(event.pos)
 
                 if self.dragged_shipgirl is not None:
                     self.dragged_shipgirl.pos = pygame.Vector2(event.pos)
@@ -1664,6 +1725,14 @@ class PortMenu:
                     continue
 
                 if event.button != 1:
+                    continue
+
+                self.refresh_overlay_page_buttons()
+                if (
+                    self.overlay_page_prev_button.click(event.pos)
+                    or self.overlay_page_next_button.click(event.pos)
+                ):
+                    DataFiles.sfx["click"].play()
                     continue
 
                 if self.camera_dragging:
@@ -1690,34 +1759,7 @@ class PortMenu:
                     continue
             
                 if self.decoration_depot_overlay.collidepoint(event.pos):
-                    decoration_index = 0
-                    for decoration, amt in DataFiles.save_file["decoration_depot"].items():
-                        if amt <= 0:
-                            continue
-                        rect = get_rect(
-                            width=Box.WIDTH, height=Box.HEIGHT,
-                            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-                            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-                        )
-                        if rect.collidepoint(event.pos):
-                            DataFiles.sfx["click"].play()
-                            if self.selected_decoration_in_depot == decoration:
-                                self.selected_decoration_in_depot = None
-                            else:
-                                self.selected_decoration_in_depot = decoration
-                                self.deleting_decoration = False
-                            break
-                        decoration_index += 1
-                    else:
-                        delete_rect = get_rect(
-                            width=Box.WIDTH, height=Box.HEIGHT,
-                            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-                            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-                        )
-                        if delete_rect.collidepoint(event.pos):
-                            DataFiles.sfx["click"].play()
-                            self.deleting_decoration = not self.deleting_decoration
-                            self.selected_decoration_in_depot = None
+                    self.select_decoration_depot_entity(event.pos, allow_delete_toggle=True)
                 elif self.deleting_decoration:
                     clicked_tilepos = Decorations.get_isometric_tilepos(event.pos)
                     for decoration_index, decoration_data in enumerate(DataFiles.save_file["decorations"]):
@@ -1855,31 +1897,21 @@ class PortMenu:
 
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.decoration_depot_overlay)
 
-        decoration_index = 0
-        for decoration, amt in DataFiles.save_file["decoration_depot"].items():
-            if amt <= 0:
-                continue
-            rect = get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-                top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-            )
-            sprite = DataFiles.get_entity_sprite(decoration)
+        for entity, rect in zip(self.get_visible_overlay_entities(), self.get_overlay_icon_rects()):
+            if entity == self.DELETE_DECORATION:
+                sprite = DataFiles.sprites["user_interface"]["remove_decoration"]
+            else:
+                sprite = DataFiles.get_entity_sprite(entity)
+
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
             surface.blit(sprite, rect)
-            font_registry["big_pixel"].render(surface,str(amt),rect.center,Color.WHITE,1,style="center",outline_color=Color.BLACK)
-            if self.selected_decoration_in_depot == decoration:
+            if entity != self.DELETE_DECORATION:
+                amt = DataFiles.save_file["decoration_depot"][entity]
+                font_registry["big_pixel"].render(surface,str(amt),rect.center,Color.WHITE,1,style="center",outline_color=Color.BLACK)
+            if self.selected_decoration_in_depot == entity:
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            decoration_index += 1
-        delete_rect = get_rect(
-            width=Box.WIDTH, height=Box.HEIGHT,
-            left=self.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-            top=self.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
-        )
-        pygame.draw.rect(surface, Color.CARGO_BOX, delete_rect)
-        surface.blit(DataFiles.sprites["user_interface"]["remove_decoration"], delete_rect)
-        if self.deleting_decoration:
-            pygame.draw.rect(surface, Color.WHITE, delete_rect, width=Box.OUTLINE_WIDTH)
+            if entity == self.DELETE_DECORATION and self.deleting_decoration:
+                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
 
         depot_decoration_top = self.decoration_depot_overlay.top - Box.WIDTH/8
         top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
@@ -1941,6 +1973,7 @@ class PortMenu:
         ]:
             cargo_box_rect.center = cargo_box_pos
             surface.blit(cargo_box_sprite, cargo_box_rect)
+        self.draw_overlay_page_buttons(surface, font_registry)
 
     def draw(self, surface, font_registry):
         surface.blit(Decorations.wallpaper_surf, Decorations.get_wallpaper_rect())
