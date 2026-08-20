@@ -222,20 +222,6 @@ class EquipmentMenu:
         self.equipment_pages[self.selected_slot] = min(page_count - 1, max(0, page + delta))
         self.refresh_equipment_page_buttons()
 
-    def draw_equipment_page_counter(self, surface, font_registry):
-        if self.get_equipment_page_count() <= 1:
-            return
-
-        font_registry["big_pixel"].render(
-            surface,
-            f"{self.get_equipment_page() + 1}/{self.get_equipment_page_count()}",
-            (self.equipment_depot.centerx, self.equipment_depot.bottom - 1.5*Box.PADDING),
-            Color.WHITE,
-            1,
-            style="center",
-            outline_color=Color.CARGO_BOX_BACK,
-        )
-
     def draw_equipment_page_buttons(self, surface, font_registry):
         self.refresh_equipment_page_buttons()
         if self.get_equipment_page_count() <= 1:
@@ -404,7 +390,6 @@ class EquipmentMenu:
                 surface.blit(DataFiles.sprites["user_interface"]["unequip_item"], rect)
             else:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
-        # self.draw_equipment_page_counter(surface, font_registry)
 
         self.selected_shipgirl.draw(surface, font_registry)
 

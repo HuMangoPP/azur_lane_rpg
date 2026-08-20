@@ -1064,20 +1064,6 @@ class PortMenu:
         self.overlay_page_prev_button.draw(surface, font_registry)
         self.overlay_page_next_button.draw(surface, font_registry)
 
-    def draw_cargo_overlay_page_counter(self, surface, font_registry, overlay):
-        if self.get_overlay_page_count() <= 1:
-            return
-
-        font_registry["big_pixel"].render(
-            surface,
-            f"{self.get_overlay_page() + 1}/{self.get_overlay_page_count()}",
-            (overlay.centerx, overlay.bottom - 1.5*Box.PADDING),
-            Color.WHITE,
-            1,
-            style="center",
-            outline_color=Color.CARGO_BOX_BACK,
-        )
-
     def draw_dossier_overlay(self, surface, font_registry):
         entity_filters = getattr(self, f"{self.current_overlay}_filters")
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
@@ -1168,15 +1154,6 @@ class PortMenu:
             else:
                 prev_corner_color = (224, 224, 216)
             pygame.draw.polygon(surface, prev_corner_color, prev_corner)
-        font_registry["big_pixel"].render(
-            surface,
-            f"{self.get_overlay_page() + 1}/{self.get_overlay_page_count()}",
-            (self.dossier_page.centerx, self.dossier_page.bottom - 2*Box.PADDING),
-            Color.BLACK,
-            1,
-            style="center",
-            outline_color=Color.DOSSIER_PAGE,
-        )
         red_circle_sprite = DataFiles.sprites["props"]["red_circle"]
         red_circle_rect = red_circle_sprite.get_rect()
         red_circle_rect.topleft = (-2*Box.WIDTH, -2*Box.HEIGHT)
@@ -1406,8 +1383,6 @@ class PortMenu:
                 count = DataFiles.save_file["inventory"][entity]
                 count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
                 font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-
-        # self.draw_cargo_overlay_page_counter(surface, font_registry, self.warehouse_overlay)
 
         cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
@@ -1964,8 +1939,6 @@ class PortMenu:
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             if entity == self.DELETE_DECORATION and self.deleting_decoration:
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-
-        # self.draw_cargo_overlay_page_counter(surface, font_registry, self.decoration_depot_overlay)
 
         depot_decoration_top = self.decoration_depot_overlay.top - Box.WIDTH/8
         top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
