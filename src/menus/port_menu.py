@@ -292,11 +292,12 @@ class PortMenu:
         # Warehouse-themed left panel
         num_items_in_row = 5
         num_items_in_col = 4
+        warehouse_overlay_content_height = num_items_in_col*(Box.HEIGHT+Box.PADDING) + Box.PADDING
         self.warehouse_overlay = get_rect(
             width=num_items_in_row*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-            height=num_items_in_col*(Box.HEIGHT+Box.PADDING) + Box.PADDING,
+            height=warehouse_overlay_content_height + 2*Box.PADDING,
             right=screen_x(0.5) + Box.WIDTH/2,
-            centery=screen_y(0.4)
+            top=screen_y(0.4) - warehouse_overlay_content_height/2
         )
         self.warehouse_icons = [
             get_rect(
@@ -316,22 +317,22 @@ class PortMenu:
             lambda: self.change_overlay_page(-1),
             active=False,
             background_styling={
-                "background_color": Color.BLACK,
+                "background_color": Color.WHITE,
                 "background_img": DataFiles.sprites["user_interface"]["prev"],
-                "opacity": 160,
+                "opacity": 0,
             },
-            hover_styling={"opacity": 200}
+            hover_styling={"opacity": 32}
         )
         self.overlay_page_next_button = Button(
             get_rect(width=48, height=48, left=0, top=0),
             lambda: self.change_overlay_page(1),
             active=False,
             background_styling={
-                "background_color": Color.BLACK,
+                "background_color": Color.WHITE,
                 "background_img": DataFiles.sprites["user_interface"]["next"],
-                "opacity": 160,
+                "opacity": 0,
             },
-            hover_styling={"opacity": 200}
+            hover_styling={"opacity": 32}
         )
 
         # Clipboard-themed right panel
@@ -466,11 +467,12 @@ class PortMenu:
         )
         self.is_decorating = False
 
+        decoration_depot_content_height = 3*(Box.HEIGHT+Box.PADDING) + Box.PADDING
         self.decoration_depot_overlay = get_rect(
             width=3*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-            height=3*(Box.HEIGHT+Box.PADDING) + Box.PADDING,
+            height=decoration_depot_content_height + 2*Box.PADDING,
             left=Box.WIDTH,
-            bottom=screen_y(1) - Box.HEIGHT
+            top=screen_y(1) - Box.HEIGHT - decoration_depot_content_height
         )
         self.selected_decoration_in_depot = None
         self.decoration_flipped = False
@@ -860,9 +862,13 @@ class PortMenu:
 
     def position_overlay_page_buttons(self):
         if self.is_decorating:
-            overlay = self.decoration_depot_overlay
+            self.overlay_page_prev_button.rect.center = self.decoration_depot_overlay.bottomleft
+            self.overlay_page_next_button.rect.center = self.decoration_depot_overlay.bottomright
+            return
         elif self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
-            overlay = self.warehouse_overlay
+            self.overlay_page_prev_button.rect.topleft = self.warehouse_overlay.bottomleft
+            self.overlay_page_next_button.rect.topright = self.warehouse_overlay.bottomright
+            return
         elif self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             self.overlay_page_prev_button.rect.topleft = (
                 self.dossier_page.left,
@@ -875,22 +881,6 @@ class PortMenu:
             return
         else:
             return
-
-        button_gap = Box.PADDING
-        indicator_width = Box.WIDTH
-        total_width = (
-            self.overlay_page_prev_button.rect.width
-            + indicator_width
-            + self.overlay_page_next_button.rect.width
-            + 2 * button_gap
-        )
-        left = overlay.centerx - total_width / 2
-        top = overlay.bottom + Box.PADDING
-        self.overlay_page_prev_button.rect.topleft = (left, top)
-        self.overlay_page_next_button.rect.topleft = (
-            left + self.overlay_page_prev_button.rect.width + indicator_width + 2 * button_gap,
-            top
-        )
 
     def refresh_overlay_page_buttons(self):
         entities = self.get_overlay_entities()
@@ -1071,28 +1061,21 @@ class PortMenu:
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             return
 
-        page = self.get_overlay_page()
-        page_count = self.get_overlay_page_count()
-        page_text_pos = (
-            (self.overlay_page_prev_button.rect.centerx + self.overlay_page_next_button.rect.centerx) / 2,
-            self.overlay_page_prev_button.rect.centery
-        )
-        page_text_width = (
-            self.overlay_page_next_button.rect.left
-            - self.overlay_page_prev_button.rect.right
-            - Box.PADDING
-        )
         self.overlay_page_prev_button.draw(surface, font_registry)
         self.overlay_page_next_button.draw(surface, font_registry)
+
+    def draw_cargo_overlay_page_counter(self, surface, font_registry, overlay):
+        if self.get_overlay_page_count() <= 1:
+            return
+
         font_registry["big_pixel"].render(
             surface,
-            f"{page + 1}/{page_count}",
-            page_text_pos,
+            f"{self.get_overlay_page() + 1}/{self.get_overlay_page_count()}",
+            (overlay.centerx, overlay.bottom - 1.5*Box.PADDING),
             Color.WHITE,
             1,
             style="center",
-            box_width=page_text_width,
-            outline_color=Color.BLACK,
+            outline_color=Color.CARGO_BOX_BACK,
         )
 
     def draw_dossier_overlay(self, surface, font_registry):
@@ -1189,7 +1172,7 @@ class PortMenu:
             surface,
             f"{self.get_overlay_page() + 1}/{self.get_overlay_page_count()}",
             (self.dossier_page.centerx, self.dossier_page.bottom - 2*Box.PADDING),
-            (128, 128, 120),
+            Color.BLACK,
             1,
             style="center",
             outline_color=Color.DOSSIER_PAGE,
@@ -1423,6 +1406,8 @@ class PortMenu:
                 count = DataFiles.save_file["inventory"][entity]
                 count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
                 font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+
+        self.draw_cargo_overlay_page_counter(surface, font_registry, self.warehouse_overlay)
 
         cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
@@ -1980,6 +1965,8 @@ class PortMenu:
             if entity == self.DELETE_DECORATION and self.deleting_decoration:
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
 
+        self.draw_cargo_overlay_page_counter(surface, font_registry, self.decoration_depot_overlay)
+
         depot_decoration_top = self.decoration_depot_overlay.top - Box.WIDTH/8
         top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
         top_rope_rect = top_rope_sprite.get_rect()
@@ -2031,9 +2018,7 @@ class PortMenu:
         for cargo_box_pos in [
             pygame.Vector2(self.decoration_depot_overlay.bottomleft),
             pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(cargo_box_rect.width, 0),
-            pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(cargo_box_rect.width/2, cargo_box_rect.height/2),
-            pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width/2, cargo_box_rect.height/2),
-
+            
             pygame.Vector2(self.decoration_depot_overlay.bottomright),
             pygame.Vector2(self.decoration_depot_overlay.bottomright) + pygame.Vector2(cargo_box_rect.width/2, -cargo_box_rect.height),
             pygame.Vector2(self.decoration_depot_overlay.bottomright) + pygame.Vector2(cargo_box_rect.width, 0),
