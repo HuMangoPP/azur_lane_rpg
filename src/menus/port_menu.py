@@ -295,7 +295,7 @@ class PortMenu:
         warehouse_overlay_content_height = num_items_in_col*(Box.HEIGHT+Box.PADDING) + Box.PADDING
         self.warehouse_overlay = get_rect(
             width=num_items_in_row*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-            height=warehouse_overlay_content_height + 2*Box.PADDING,
+            height=warehouse_overlay_content_height,
             right=screen_x(0.5) + Box.WIDTH/2,
             top=screen_y(0.4) - warehouse_overlay_content_height/2
         )
@@ -470,7 +470,7 @@ class PortMenu:
         decoration_depot_content_height = 3*(Box.HEIGHT+Box.PADDING) + Box.PADDING
         self.decoration_depot_overlay = get_rect(
             width=3*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-            height=decoration_depot_content_height + 2*Box.PADDING,
+            height=decoration_depot_content_height,
             left=Box.WIDTH,
             top=screen_y(1) - Box.HEIGHT - decoration_depot_content_height
         )
@@ -1407,7 +1407,7 @@ class PortMenu:
                 count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
                 font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
 
-        self.draw_cargo_overlay_page_counter(surface, font_registry, self.warehouse_overlay)
+        # self.draw_cargo_overlay_page_counter(surface, font_registry, self.warehouse_overlay)
 
         cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
@@ -1965,7 +1965,7 @@ class PortMenu:
             if entity == self.DELETE_DECORATION and self.deleting_decoration:
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
 
-        self.draw_cargo_overlay_page_counter(surface, font_registry, self.decoration_depot_overlay)
+        # self.draw_cargo_overlay_page_counter(surface, font_registry, self.decoration_depot_overlay)
 
         depot_decoration_top = self.decoration_depot_overlay.top - Box.WIDTH/8
         top_rope_sprite = DataFiles.sprites["props"]["top_rope"]

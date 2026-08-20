@@ -44,11 +44,12 @@ class EquipmentMenu:
 
         num_equipment_per_row = 7
         num_equipment_rows = 2
+        equipment_depot_content_height = num_equipment_rows*(Box.HEIGHT+Box.PADDING)+Box.PADDING
         self.equipment_depot = get_rect(
             width=num_equipment_per_row*(Box.WIDTH+Box.PADDING)+Box.PADDING,
-            height=num_equipment_rows*(Box.HEIGHT+Box.PADDING)+Box.PADDING,
+            height=equipment_depot_content_height,
             right=self.blueprint_page.right,
-            bottom=Box.BOTTOM_OF_SCREEN
+            top=Box.BOTTOM_OF_SCREEN-equipment_depot_content_height
         )
         self.equippable_rects = [
             get_rect(
@@ -59,6 +60,30 @@ class EquipmentMenu:
             for i in range(num_equipment_per_row * num_equipment_rows)
         ]
         self.hovered_equipment = None
+        self.equipment_pages = {}
+
+        self.equipment_page_prev_button = Button(
+            get_rect(width=48, height=48, left=0, top=0),
+            lambda: self.change_equipment_page(-1),
+            active=False,
+            background_styling={
+                "background_color": Color.WHITE,
+                "background_img": DataFiles.sprites["user_interface"]["prev"],
+                "opacity": 0,
+            },
+            hover_styling={"opacity": 32}
+        )
+        self.equipment_page_next_button = Button(
+            get_rect(width=48, height=48, left=0, top=0),
+            lambda: self.change_equipment_page(1),
+            active=False,
+            background_styling={
+                "background_color": Color.WHITE,
+                "background_img": DataFiles.sprites["user_interface"]["next"],
+                "opacity": 0,
+            },
+            hover_styling={"opacity": 32}
+        )
 
         font_height = 12
         self.dossier_page = get_rect(
@@ -153,8 +178,71 @@ class EquipmentMenu:
         options = self.get_equippable_inventory()
         current_equipment = self.selected_shipgirl.battle_component.equipment[self.selected_slot]
         if current_equipment is not None:
-            options = [self.UNEQUIP_ITEM] + options
+            options = options + [self.UNEQUIP_ITEM]
         return options
+
+    def get_equipment_page_count(self, equippable=None):
+        if equippable is None:
+            equippable = self.get_equippable_options()
+
+        return max(1, math.ceil(len(equippable) / len(self.equippable_rects)))
+
+    def get_equipment_page(self, equippable=None):
+        page_count = self.get_equipment_page_count(equippable)
+        page = min(self.equipment_pages.get(self.selected_slot, 0), page_count - 1)
+        page = max(0, page)
+        self.equipment_pages[self.selected_slot] = page
+        return page
+
+    def get_visible_equippable_options(self, equippable=None):
+        if equippable is None:
+            equippable = self.get_equippable_options()
+
+        page = self.get_equipment_page(equippable)
+        page_size = len(self.equippable_rects)
+        start = page * page_size
+        return equippable[start:start + page_size]
+
+    def position_equipment_page_buttons(self):
+        self.equipment_page_prev_button.rect.center = self.equipment_depot.bottomleft
+        self.equipment_page_next_button.rect.center = self.equipment_depot.bottomright
+
+    def refresh_equipment_page_buttons(self):
+        equippable = self.get_equippable_options()
+        page_count = self.get_equipment_page_count(equippable)
+        page = self.get_equipment_page(equippable)
+        self.position_equipment_page_buttons()
+        self.equipment_page_prev_button.active = page_count > 1 and page > 0
+        self.equipment_page_next_button.active = page_count > 1 and page < page_count - 1
+
+    def change_equipment_page(self, delta):
+        equippable = self.get_equippable_options()
+        page_count = self.get_equipment_page_count(equippable)
+        page = self.get_equipment_page(equippable)
+        self.equipment_pages[self.selected_slot] = min(page_count - 1, max(0, page + delta))
+        self.refresh_equipment_page_buttons()
+
+    def draw_equipment_page_counter(self, surface, font_registry):
+        if self.get_equipment_page_count() <= 1:
+            return
+
+        font_registry["big_pixel"].render(
+            surface,
+            f"{self.get_equipment_page() + 1}/{self.get_equipment_page_count()}",
+            (self.equipment_depot.centerx, self.equipment_depot.bottom - 1.5*Box.PADDING),
+            Color.WHITE,
+            1,
+            style="center",
+            outline_color=Color.CARGO_BOX_BACK,
+        )
+
+    def draw_equipment_page_buttons(self, surface, font_registry):
+        self.refresh_equipment_page_buttons()
+        if self.get_equipment_page_count() <= 1:
+            return
+
+        self.equipment_page_prev_button.draw(surface, font_registry)
+        self.equipment_page_next_button.draw(surface, font_registry)
 
     def draw_tabletop(self, surface, tabletop_rect):
         grain_rng = random.Random(self.TABLETOP_GRAIN_SEED)
@@ -181,7 +269,7 @@ class EquipmentMenu:
         if self.shipgirl_x is None:
             self.shipgirl_x = screen_x(0.5)
             self.target_shipgirl_x = self.shipgirl_x
-            self.selected_shipgirl.rect.bottom = self.equipment_depot.bottom + Box.HEIGHT/4
+            self.selected_shipgirl.rect.bottom = self.equipment_depot.bottom + Box.HEIGHT/2.5
         if self.shipgirl_pause_time > 0:
             self.shipgirl_pause_time -= dt
             self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
@@ -198,15 +286,23 @@ class EquipmentMenu:
         self.selected_shipgirl.animate(dt)
         
         equip_slots = [Equipment.WEAPON, Equipment.AUX1, Equipment.AUX2]
-        equippable = self.get_equippable_options()
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
+                self.refresh_equipment_page_buttons()
+                if (
+                    self.equipment_page_prev_button.click(event.pos)
+                    or self.equipment_page_next_button.click(event.pos)
+                ):
+                    DataFiles.sfx["click"].play()
+                    continue
+
                 for equip_slot, rect in zip(equip_slots, self.equipped_rects):
                     if rect.collidepoint(event.pos):
                         self.selected_slot = equip_slot
+                        self.refresh_equipment_page_buttons()
                         DataFiles.sfx["click"].play()
 
-                for new_equipment, rect in zip(equippable, self.equippable_rects):
+                for new_equipment, rect in zip(self.get_visible_equippable_options(), self.equippable_rects):
                     if rect.collidepoint(event.pos):
                         current_equipment = self.selected_shipgirl.battle_component.equipment[self.selected_slot]
                         if current_equipment is not None:
@@ -222,8 +318,11 @@ class EquipmentMenu:
                     DataFiles.sfx["click"].play()
             if event.type == pygame.MOUSEMOTION:
                 self.exit_equipment_menu_button.hover(event.pos)
+                self.refresh_equipment_page_buttons()
+                self.equipment_page_prev_button.hover(event.pos)
+                self.equipment_page_next_button.hover(event.pos)
                 
-                for equipment, rect in zip(equippable, self.equippable_rects):
+                for equipment, rect in zip(self.get_visible_equippable_options(), self.equippable_rects):
                     if rect.collidepoint(event.pos):
                         self.hovered_equipment = equipment
                         break
@@ -296,7 +395,8 @@ class EquipmentMenu:
         lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
 
-        equippable = self.get_equippable_options()
+        equippable = self.get_visible_equippable_options()
+        self.refresh_equipment_page_buttons()
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.equipment_depot)
         for equipment, rect in zip(equippable, self.equippable_rects):
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
@@ -304,6 +404,7 @@ class EquipmentMenu:
                 surface.blit(DataFiles.sprites["user_interface"]["unequip_item"], rect)
             else:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+        # self.draw_equipment_page_counter(surface, font_registry)
 
         self.selected_shipgirl.draw(surface, font_registry)
 
@@ -375,6 +476,7 @@ class EquipmentMenu:
         ]:
             cargo_box_rect.center = cargo_box_pos
             surface.blit(cargo_box_sprite, cargo_box_rect)
+        self.draw_equipment_page_buttons(surface, font_registry)
 
         tabletop_rect = get_rect(
             width=screen_x(1) - 2*Box.WIDTH,
