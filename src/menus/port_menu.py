@@ -231,11 +231,14 @@ class PortMenu:
         # Full overlay left panel area
         num_items_in_row = 6
         num_items_in_col = 4
+        dossier_page_margin = 48
+        dossier_icon_grid_width = num_items_in_row*Box.WIDTH + (num_items_in_row - 1)*Box.PADDING
+        dossier_icon_grid_height = num_items_in_col*Box.HEIGHT + (num_items_in_col - 1)*Box.PADDING
         self.dossier_overlay = get_rect(
-            width=num_items_in_row*(Box.WIDTH + Box.PADDING) + 4*Box.PADDING,
-            height=num_items_in_col*(Box.HEIGHT + Box.PADDING) + 3*Box.PADDING + Box.HEIGHT,
+            width=dossier_icon_grid_width + 2*dossier_page_margin + 2*Box.PADDING,
+            height=dossier_icon_grid_height + 2*dossier_page_margin + Box.HEIGHT + 2*Box.PADDING,
             right=screen_x(0.5) + Box.WIDTH,
-            centery=screen_y(0.5) - Box.HEIGHT
+            centery=screen_y(0.5) - Box.HEIGHT/2
         )
         # Manila folder background
         self.dossier_bg = get_rect(
@@ -261,11 +264,13 @@ class PortMenu:
             center=self.dossier_bg.center
         )
         # Icons on page
+        dossier_icon_grid_left = self.dossier_page.centerx - dossier_icon_grid_width / 2
+        dossier_icon_grid_top = self.dossier_page.centery - dossier_icon_grid_height / 2
         self.dossier_icons = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.dossier_page.left+Box.PADDING+(i%num_items_in_row)*(Box.WIDTH+Box.PADDING),
-                top=self.dossier_page.top+Box.PADDING+(i//num_items_in_row)*(Box.HEIGHT+Box.PADDING)
+                left=dossier_icon_grid_left+(i%num_items_in_row)*(Box.WIDTH+Box.PADDING),
+                top=dossier_icon_grid_top+(i//num_items_in_row)*(Box.HEIGHT+Box.PADDING)
             ) for i in range(num_items_in_row * num_items_in_col)
         ]
 
@@ -859,7 +864,15 @@ class PortMenu:
         elif self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             overlay = self.warehouse_overlay
         elif self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
-            overlay = self.dossier_overlay
+            self.overlay_page_prev_button.rect.topleft = (
+                self.dossier_page.left,
+                self.dossier_page.top
+            )
+            self.overlay_page_next_button.rect.bottomright = (
+                self.dossier_page.right,
+                self.dossier_page.bottom
+            )
+            return
         else:
             return
 
@@ -1055,6 +1068,9 @@ class PortMenu:
         if self.get_overlay_page_count() <= 1:
             return
 
+        if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
+            return
+
         page = self.get_overlay_page()
         page_count = self.get_overlay_page_count()
         page_text_pos = (
@@ -1102,6 +1118,7 @@ class PortMenu:
             surface.blit(icon, icon_rect)
 
         entities = self.get_visible_overlay_entities()
+        self.refresh_overlay_page_buttons()
         misaligned_pages = [
             (-5, pygame.Vector2(-8, 6), (224, 218, 201)),
             (4, pygame.Vector2(6, -4), (235, 229, 212)),
@@ -1126,7 +1143,57 @@ class PortMenu:
             sticky_tab_rect.centery = self.dossier_page.top + sticky_tab_offsety
             surface.blit(sticky_tab_sprite, sticky_tab_rect)
 
-        pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
+        page_turn_size = self.overlay_page_next_button.rect.width
+        if self.overlay_page_next_button.active:
+            fold_top = (self.dossier_page.right, self.dossier_page.bottom - page_turn_size)
+            fold_left = (self.dossier_page.right - page_turn_size, self.dossier_page.bottom)
+            fold_tip = (
+                self.dossier_page.right - page_turn_size,
+                self.dossier_page.bottom - page_turn_size
+            )
+            page_polygon = [
+                self.dossier_page.topleft,
+                self.dossier_page.topright,
+                fold_top,
+                fold_left,
+                self.dossier_page.bottomleft,
+            ]
+            folded_corner = [
+                fold_top,
+                fold_left,
+                fold_tip,
+            ]
+            pygame.draw.polygon(surface, Color.DOSSIER_PAGE, page_polygon)
+            if self.overlay_page_next_button.hovered:
+                folded_corner_color = (196, 196, 188)
+            else:
+                folded_corner_color = (224, 224, 216)
+            pygame.draw.polygon(surface, folded_corner_color, folded_corner)
+            pygame.draw.line(surface, (196, 196, 188), fold_top, fold_left, width=Box.OUTLINE_WIDTH)
+            pygame.draw.line(surface, (238, 238, 232), fold_left, fold_tip, width=Box.OUTLINE_WIDTH)
+        else:
+            pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
+
+        if self.overlay_page_prev_button.active:
+            prev_corner = [
+                self.dossier_page.topleft,
+                (self.dossier_page.left + page_turn_size, self.dossier_page.top),
+                (self.dossier_page.left, self.dossier_page.top + page_turn_size),
+            ]
+            if self.overlay_page_prev_button.hovered:
+                prev_corner_color = (196, 196, 188)
+            else:
+                prev_corner_color = (224, 224, 216)
+            pygame.draw.polygon(surface, prev_corner_color, prev_corner)
+        font_registry["big_pixel"].render(
+            surface,
+            f"{self.get_overlay_page() + 1}/{self.get_overlay_page_count()}",
+            (self.dossier_page.centerx, self.dossier_page.bottom - 2*Box.PADDING),
+            (128, 128, 120),
+            1,
+            style="center",
+            outline_color=Color.DOSSIER_PAGE,
+        )
         red_circle_sprite = DataFiles.sprites["props"]["red_circle"]
         red_circle_rect = red_circle_sprite.get_rect()
         red_circle_rect.topleft = (-2*Box.WIDTH, -2*Box.HEIGHT)
@@ -1140,10 +1207,10 @@ class PortMenu:
             pygame.draw.rect(surface, Color.BLACK, rect, width=Box.OUTLINE_WIDTH)
         surface.blit(red_circle_sprite, red_circle_rect)
 
-        paperclip_sprite = DataFiles.sprites["props"]["paperclip"]
+        paperclip_sprite = DataFiles.sprites["props"]["diagonal_paperclip"]
         paperclip_rect = paperclip_sprite.get_rect()
-        paperclip_rect.left = self.dossier_bg.left - 4 # TODO paper clip offset magic number
-        paperclip_rect.top = self.dossier_bg.top
+        paperclip_rect.left = self.dossier_bg.left - 16 # TODO paper clip offset magic number
+        paperclip_rect.top = self.dossier_bg.top - 8
         surface.blit(paperclip_sprite, paperclip_rect)
 
         classified_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["classified"], 1.5)
