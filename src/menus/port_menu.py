@@ -111,6 +111,7 @@ class PortMenu:
     DECORATION_STAMP_DOWN_TIME = 0.15
     DECORATION_STAMP_LIFT_TIME = 0.30
     DECORATION_STAMP_DISAPPEAR_TIME = 0.5
+    DECORATION_PRICE = 1
 
     def __init__(self, menu_manager):
         # MenuManager object
@@ -337,8 +338,8 @@ class PortMenu:
 
         # Clipboard-themed right panel
         self.clipboard_bg = get_rect(
-            width=4*Box.WIDTH + 2*Box.PADDING,
-            height=5*Box.HEIGHT + 2*Box.PADDING,
+            width=4*Box.WIDTH + 4*Box.PADDING,
+            height=5*Box.HEIGHT + 4*Box.PADDING,
             left=self.warehouse_overlay.right + Box.WIDTH/2,
             centery=screen_y(0.5) - Box.HEIGHT/2
         )
@@ -423,7 +424,7 @@ class PortMenu:
                 DataFiles.save_file["decoration_depot"].get(self.overlay_selected_entity, 0) + 1
             )
             DataFiles.save_file["inventory"]["decoration_coin"] = (
-                DataFiles.save_file["inventory"].get("decoration_coin", 0) - 1
+                DataFiles.save_file["inventory"].get("decoration_coin", 0) - self.DECORATION_PRICE
             )
             self.decoration_stamp_animation_timer = self.DECORATION_STAMP_ANIMATION_DURATION
             self.decoration_stamp_animation_pos = pygame.Vector2(pygame.mouse.get_pos())
@@ -433,10 +434,10 @@ class PortMenu:
         self.decoration_stamp_animation_pos = pygame.Vector2((0, 0))
         self.decoration_signature_button = Button(
             get_rect(
-                width=self.clipboard_page.width - 2*Box.WIDTH,
+                width=2*Box.WIDTH,
                 height=Box.HEIGHT,
-                centerx=self.clipboard_page.centerx,
-                bottom=self.clipboard_page.bottom - Box.HEIGHT/2 - Box.PADDING
+                right=self.clipboard_page.right - Box.PADDING,
+                bottom=self.clipboard_page.bottom - Box.PADDING
             ),
             confirm_decoration_signature,
             active=False,
@@ -730,9 +731,17 @@ class PortMenu:
     def can_purchase_selected_decoration(self):
         return (
             self.overlay_selected_entity is not None
-            and DataFiles.save_file["inventory"].get("decoration_coin", 0) > 0
+            and DataFiles.save_file["inventory"].get("decoration_coin", 0) >= self.DECORATION_PRICE
             and self.decoration_stamp_animation_timer <= 0
         )
+
+    def get_owned_decoration_count(self, decoration):
+        owned_count = DataFiles.save_file["decoration_depot"].get(decoration, 0)
+        for decoration_data in DataFiles.save_file["decorations"]:
+            placed_decoration, _, _ = Decorations.unpack_decoration_data(decoration_data)
+            if placed_decoration == decoration:
+                owned_count += 1
+        return owned_count
 
     def refresh_overlay_action_buttons(self):
         self.shipyard_sticky_note_button.active = False
@@ -1460,6 +1469,22 @@ class PortMenu:
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
         self.draw_overlay_page_buttons(surface, font_registry)
 
+    @staticmethod
+    def draw_dashed_rect(surface, color, rect, dash_length=8, gap_length=4, width=2):
+        right = rect.right - 1
+        bottom = rect.bottom - 1
+        dash_step = dash_length + gap_length
+
+        for x in range(rect.left, right + 1, dash_step):
+            dash_right = min(x + dash_length, right)
+            pygame.draw.line(surface, color, (x, rect.top), (dash_right, rect.top), width)
+            pygame.draw.line(surface, color, (x, bottom), (dash_right, bottom), width)
+
+        for y in range(rect.top, bottom + 1, dash_step):
+            dash_bottom = min(y + dash_length, bottom)
+            pygame.draw.line(surface, color, (rect.left, y), (rect.left, dash_bottom), width)
+            pygame.draw.line(surface, color, (right, y), (right, dash_bottom), width)
+
     def draw_depot_stock_record(self, surface, font_registry):
         font = font_registry["big_pixel"]
         content_left = self.clipboard_page.left + Box.PADDING
@@ -1598,6 +1623,237 @@ class PortMenu:
             box_width=content_width
         )
 
+    def draw_decoration_purchase_form(self, surface, font_registry):
+        font = font_registry["big_pixel"]
+        content_left = self.clipboard_page.left + Box.PADDING
+        content_width = self.clipboard_page.width - 2*Box.PADDING
+        content_top = self.clipboard_page.top + Box.HEIGHT/4 + Box.PADDING
+
+        font.render(
+            surface,
+            "decoration purchase form",
+            (content_left, content_top),
+            Color.BLACK,
+            1,
+            style="topleft"
+        )
+        header_rule_y = content_top + font.font_height + Box.PADDING
+        pygame.draw.line(
+            surface,
+            Color.BLACK,
+            (content_left, header_rule_y),
+            (content_left + content_width, header_rule_y),
+            width=Box.OUTLINE_WIDTH
+        )
+
+        display_name = self.overlay_selected_entity.replace("_", " ")
+        name_top = header_rule_y + Box.PADDING
+        name_height = font.get_height(display_name, 2, content_width)
+        font.render(
+            surface,
+            display_name,
+            (content_left, name_top),
+            Color.BLACK,
+            2,
+            style="topleft",
+            box_width=content_width
+        )
+
+        product_rect = get_rect(
+            width=content_width,
+            height=Box.HEIGHT,
+            left=content_left,
+            top=name_top + name_height + Box.PADDING
+        )
+        icon_rect = get_rect(
+            width=Box.WIDTH,
+            height=Box.HEIGHT,
+            left=product_rect.left,
+            top=product_rect.top
+        )
+        field_width = (product_rect.width - icon_rect.width) / 2
+        quantity_rect = get_rect(
+            width=field_width,
+            height=product_rect.height,
+            left=icon_rect.right,
+            top=product_rect.top
+        )
+        price_rect = get_rect(
+            width=field_width,
+            height=product_rect.height,
+            left=quantity_rect.right,
+            top=product_rect.top
+        )
+
+        surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), icon_rect)
+        pygame.draw.rect(surface, Color.BLACK, product_rect, width=Box.OUTLINE_WIDTH)
+        for divider_x in [icon_rect.right, quantity_rect.right]:
+            pygame.draw.line(
+                surface,
+                Color.BLACK,
+                (divider_x, product_rect.top),
+                (divider_x, product_rect.bottom),
+                width=Box.OUTLINE_WIDTH
+            )
+
+        owned_count = self.get_owned_decoration_count(self.overlay_selected_entity)
+        for field_rect, label, value, footer in [
+            (quantity_rect, "qty", owned_count, "owned"),
+            (price_rect, "price", self.DECORATION_PRICE, "coin"),
+        ]:
+            field_header_rule_y = field_rect.top + font.font_height + Box.PADDING
+            font.render(
+                surface,
+                label,
+                (field_rect.centerx, (field_rect.top + field_header_rule_y) / 2),
+                Color.BLACK,
+                1,
+                style="center"
+            )
+            pygame.draw.line(
+                surface,
+                Color.BLACK,
+                (field_rect.left, field_header_rule_y),
+                (field_rect.right, field_header_rule_y),
+                width=Box.OUTLINE_WIDTH
+            )
+            font.render(
+                surface,
+                str(value),
+                (field_rect.centerx, field_header_rule_y + Box.PADDING + font.font_height),
+                Color.BLACK,
+                2,
+                style="center"
+            )
+            font.render(
+                surface,
+                footer,
+                (field_rect.centerx, field_rect.bottom - Box.PADDING - font.font_height/2),
+                Color.BLACK,
+                1,
+                style="center"
+            )
+
+        description_label_top = product_rect.bottom + Box.PADDING
+        font.render(
+            surface,
+            "description",
+            (content_left, description_label_top),
+            Color.BLACK,
+            1,
+            style="topleft"
+        )
+        description_rule_y = description_label_top + font.font_height + Box.PADDING
+        pygame.draw.line(
+            surface,
+            Color.BLACK,
+            (content_left, description_rule_y),
+            (content_left + content_width, description_rule_y),
+            width=Box.OUTLINE_WIDTH
+        )
+        description_top = description_rule_y + Box.PADDING
+        description = DataFiles.decoration_store[self.overlay_selected_entity]["description"]
+        font.render(
+            surface,
+            description,
+            (content_left, description_top),
+            Color.BLACK,
+            1,
+            style="topleft",
+            box_width=content_width
+        )
+
+        signature_rect = self.decoration_signature_button.rect
+        approval_label_pos = (
+            signature_rect.left,
+            signature_rect.top - Box.PADDING - font.font_height
+        )
+        font.render(
+            surface,
+            "purchase approval",
+            approval_label_pos,
+            Color.BLACK,
+            1,
+            style="topleft"
+        )
+
+        has_funds = (
+            DataFiles.save_file["inventory"].get("decoration_coin", 0)
+            >= self.DECORATION_PRICE
+        )
+        stamp_box_color = Color.BLACK if has_funds else Color.CLIPBOARD_CLIP
+        self.draw_dashed_rect(
+            surface,
+            stamp_box_color,
+            signature_rect,
+            width=Box.OUTLINE_WIDTH
+        )
+        font.render(
+            surface,
+            "stamp here",
+            signature_rect.center,
+            stamp_box_color,
+            1,
+            style="center"
+        )
+
+        coin_count = DataFiles.save_file["inventory"].get("decoration_coin", 0)
+
+        coin_sprite = DataFiles.sprites["props"]["decoration_coin"]
+        coin_rect = coin_sprite.get_rect()
+        coin_rect.centerx = self.clipboard_page.right
+        coin_rect.top = self.clipboard_page.top
+
+        for _ in range(coin_count):
+            coin_rect.y -= 6 # TODO decoration coin height magic number
+            surface.blit(coin_sprite, coin_rect)
+
+        smiley_sprite = DataFiles.sprites["props"]["smiley"]
+        smiley_rect = smiley_sprite.get_rect()
+        smiley_rect.center = self.decoration_stamp_animation_pos
+        if self.decoration_stamp_animation_timer > 0:
+            elapsed = self.DECORATION_STAMP_ANIMATION_DURATION - self.decoration_stamp_animation_timer
+            if elapsed >= self.DECORATION_STAMP_DISAPPEAR_TIME:
+                progress = (
+                    self.decoration_stamp_animation_timer
+                    / (self.DECORATION_STAMP_ANIMATION_DURATION - self.DECORATION_STAMP_DISAPPEAR_TIME)
+                )
+                smiley_sprite.set_alpha(int(255 * progress))
+                surface.blit(smiley_sprite, smiley_rect)
+            elif elapsed >= self.DECORATION_STAMP_DOWN_TIME:
+                smiley_sprite.set_alpha(255)
+                surface.blit(smiley_sprite, smiley_rect)
+
+        stamp_sprite = DataFiles.sprites["props"]["stamp"]
+        stamp_rect = stamp_sprite.get_rect()
+        if self.decoration_stamp_animation_timer <= 0:
+            stamp_rect.center = self.clipboard_page.bottomleft
+            surface.blit(stamp_sprite, stamp_rect)
+        else:
+            elapsed = self.DECORATION_STAMP_ANIMATION_DURATION - self.decoration_stamp_animation_timer
+            target_pos = pygame.Vector2(self.decoration_stamp_animation_pos)
+            above_pos = target_pos - pygame.Vector2(0, Box.HEIGHT)
+            if elapsed >= self.DECORATION_STAMP_LIFT_TIME:
+                stamp_rect.centerx = above_pos.x
+                stamp_rect.bottom = above_pos.y + Box.HEIGHT/2
+                surface.blit(stamp_sprite, stamp_rect)
+            elif elapsed >= self.DECORATION_STAMP_DOWN_TIME:
+                progress = min(
+                    1,
+                    (elapsed - self.DECORATION_STAMP_DOWN_TIME)
+                    / (self.DECORATION_STAMP_LIFT_TIME - self.DECORATION_STAMP_DOWN_TIME)
+                )
+                stamp_pos = target_pos.lerp(above_pos, progress)
+                stamp_rect.centerx = stamp_pos.x
+                stamp_rect.bottom = stamp_pos.y + Box.HEIGHT/2
+                surface.blit(stamp_sprite, stamp_rect)
+            else:
+                progress = min(1, elapsed / self.DECORATION_STAMP_DOWN_TIME)
+                stamp_pos = above_pos.lerp(target_pos, progress)
+                stamp_rect.centerx = stamp_pos.x
+                stamp_rect.bottom = stamp_pos.y + Box.HEIGHT/2
+                surface.blit(stamp_sprite, stamp_rect)
+
     def draw_clipboard_overlay(self, surface, font_registry):
         if self.overlay_selected_entity is None:
             return
@@ -1622,17 +1878,6 @@ class PortMenu:
                 Box.get_rotated_rect_polygon(self.clipboard_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.WHITE, self.clipboard_page)
-        if self.current_overlay == self.DECORATION_STORE:
-            coin_count = DataFiles.save_file["inventory"].get("decoration_coin", 0)
-
-            coin_sprite = DataFiles.sprites["props"]["decoration_coin"]
-            coin_rect = coin_sprite.get_rect()
-            coin_rect.centerx = self.clipboard_page.right
-            coin_rect.top = self.clipboard_page.top
-
-            for _ in range(coin_count):
-                coin_rect.y -= 6 # TODO decoration coin height magic number
-                surface.blit(coin_sprite, coin_rect)
         pygame.draw.lines(
             surface,
             Color.CLIPBOARD_CLIP_FRONT,
@@ -1648,120 +1893,7 @@ class PortMenu:
         if self.current_overlay == self.DEPOT:
             self.draw_depot_stock_record(surface, font_registry)
         elif self.current_overlay == self.DECORATION_STORE:
-            font_height = 10
-            clipboard_name_pos = pygame.Vector2(
-                self.clipboard_page.centerx,
-                self.clipboard_page.top + font_height/2 + Box.PADDING + Box.HEIGHT/4
-            )
-            clipboard_highlight_icon = get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=self.clipboard_page.centerx,
-                top=clipboard_name_pos.y + font_height/2 + Box.PADDING
-            )
-            font_registry["big_pixel"].render(
-                surface,
-                self.overlay_selected_entity,
-                clipboard_name_pos,
-                Color.BLACK,
-                1,
-                style="center"
-            )
-            surface.blit(
-                DataFiles.get_entity_sprite(self.overlay_selected_entity),
-                clipboard_highlight_icon
-            )
-            pygame.draw.rect(
-                surface,
-                Color.BLACK,
-                clipboard_highlight_icon,
-                width=Box.OUTLINE_WIDTH
-            )
-
-            desc = DataFiles.decoration_store[self.overlay_selected_entity]["description"]
-            desc_topleft = pygame.Vector2(
-                self.clipboard_page.left + Box.PADDING + Box.WIDTH/4,
-                clipboard_highlight_icon.bottom + Box.PADDING + Box.HEIGHT/4
-            )
-            desc_text_boxwidth = self.clipboard_page.width - 2*Box.PADDING - Box.WIDTH/2
-            font_registry["big_pixel"].render(
-                surface,
-                desc,
-                desc_topleft,
-                Color.BLACK,
-                1,
-                style="topleft",
-                box_width=desc_text_boxwidth
-            )
-
-            signature_rect = self.decoration_signature_button.rect
-            pygame.draw.rect(surface, (220, 220, 220), signature_rect)
-            pygame.draw.line(
-                surface,
-                Color.BLACK,
-                signature_rect.bottomleft,
-                signature_rect.bottomright,
-                width=Box.OUTLINE_WIDTH
-            )
-            font_registry["big_pixel"].render(
-                surface,
-                "stamp here",
-                (signature_rect.left, signature_rect.bottom + Box.PADDING),
-                Color.BLACK,
-                1,
-                style="topleft"
-            )
-
-            smiley_sprite = DataFiles.sprites["props"]["smiley"]
-            smiley_rect = smiley_sprite.get_rect()
-            smiley_rect.center = self.decoration_stamp_animation_pos
-            if self.decoration_stamp_animation_timer > 0:
-                elapsed = self.DECORATION_STAMP_ANIMATION_DURATION - self.decoration_stamp_animation_timer
-                if elapsed >= self.DECORATION_STAMP_DISAPPEAR_TIME:
-                    progress = (
-                        self.decoration_stamp_animation_timer
-                        / (self.DECORATION_STAMP_ANIMATION_DURATION - self.DECORATION_STAMP_DISAPPEAR_TIME)
-                    )
-                    smiley_sprite.set_alpha(int(255 * progress))
-                    surface.blit(smiley_sprite, smiley_rect)
-                elif elapsed >= self.DECORATION_STAMP_DOWN_TIME:
-                    smiley_sprite.set_alpha(255)
-                    surface.blit(smiley_sprite, smiley_rect)
-
-            stamp_sprite = DataFiles.sprites["props"]["stamp"]
-            stamp_rect = stamp_sprite.get_rect()
-            if self.decoration_stamp_animation_timer <= 0:
-                stamp_rect.center = self.clipboard_page.bottomleft
-                surface.blit(stamp_sprite, stamp_rect)
-            else:
-                elapsed = self.DECORATION_STAMP_ANIMATION_DURATION - self.decoration_stamp_animation_timer
-                target_pos = pygame.Vector2(self.decoration_stamp_animation_pos)
-                above_pos = target_pos - pygame.Vector2(0, Box.HEIGHT)
-                if elapsed >= self.DECORATION_STAMP_LIFT_TIME:
-                    # stamp is at the above_pos
-                    stamp_rect.centerx = above_pos.x
-                    stamp_rect.bottom = above_pos.y + Box.HEIGHT/2
-                    surface.blit(stamp_sprite, stamp_rect)
-                elif elapsed >= self.DECORATION_STAMP_DOWN_TIME:
-                    # stamp is moving up
-                    progress = min(
-                        1,
-                        (elapsed - self.DECORATION_STAMP_DOWN_TIME)
-                        / (self.DECORATION_STAMP_LIFT_TIME - self.DECORATION_STAMP_DOWN_TIME)
-                    )
-                    stamp_pos = target_pos.lerp(above_pos, progress)
-                    stamp_rect.centerx = stamp_pos.x
-                    stamp_rect.bottom = stamp_pos.y + Box.HEIGHT/2
-                    surface.blit(stamp_sprite, stamp_rect)
-                else:
-                    # stamp is moving down
-                    progress = min(
-                        1,
-                        elapsed / self.DECORATION_STAMP_DOWN_TIME
-                    )
-                    stamp_pos = above_pos.lerp(target_pos, progress)
-                    stamp_rect.centerx = stamp_pos.x
-                    stamp_rect.bottom = stamp_pos.y + Box.HEIGHT/2
-                    surface.blit(stamp_sprite, stamp_rect)
+            self.draw_decoration_purchase_form(surface, font_registry)
 
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
