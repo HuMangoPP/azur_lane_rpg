@@ -229,7 +229,7 @@ class PortMenu:
 
         # Dossier-themed left panel
         # Full overlay left panel area
-        num_items_in_row = 6
+        num_items_in_row = 5
         num_items_in_col = 4
         dossier_page_margin = 48
         dossier_icon_grid_width = num_items_in_row*Box.WIDTH + (num_items_in_row - 1)*Box.PADDING
@@ -337,10 +337,10 @@ class PortMenu:
 
         # Clipboard-themed right panel
         self.clipboard_bg = get_rect(
-            width=3*(Box.WIDTH+Box.PADDING) + 3*Box.PADDING,
-            height=4*(Box.HEIGHT+Box.PADDING) + 3*Box.PADDING + Box.HEIGHT/2,
+            width=4*Box.WIDTH + 2*Box.PADDING,
+            height=5*Box.HEIGHT + 2*Box.PADDING,
             left=self.warehouse_overlay.right + Box.WIDTH/2,
-            centery=screen_y(0.5)
+            centery=screen_y(0.5) - Box.HEIGHT/2
         )
         self.clipboard_page = get_rect(
             width=self.clipboard_bg.width - 2*Box.PADDING,
@@ -1379,11 +1379,6 @@ class PortMenu:
             surface.blit(image, image_rect)
             pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, image_rect, width=2*Box.OUTLINE_WIDTH)
 
-            if self.current_overlay == self.DEPOT:
-                count = DataFiles.save_file["inventory"][entity]
-                count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
-                font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
-
         cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
         for cargo_box_pos in [
@@ -1465,6 +1460,144 @@ class PortMenu:
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
         self.draw_overlay_page_buttons(surface, font_registry)
 
+    def draw_depot_stock_record(self, surface, font_registry):
+        font = font_registry["big_pixel"]
+        content_left = self.clipboard_page.left + Box.PADDING
+        content_width = self.clipboard_page.width - 2*Box.PADDING
+        content_top = self.clipboard_page.top + Box.HEIGHT/4 + Box.PADDING
+
+        font.render(
+            surface,
+            "warehouse stock record",
+            (content_left, content_top),
+            Color.BLACK,
+            1,
+            style="topleft"
+        )
+        header_rule_y = content_top + font.font_height + Box.PADDING
+        pygame.draw.line(
+            surface,
+            Color.BLACK,
+            (content_left, header_rule_y),
+            (content_left + content_width, header_rule_y),
+            width=Box.OUTLINE_WIDTH
+        )
+
+        display_name = self.overlay_selected_entity.replace("_", " ")
+        name_top = header_rule_y + Box.PADDING
+        name_height = font.get_height(display_name, 2, content_width)
+        font.render(
+            surface,
+            display_name,
+            (content_left, name_top),
+            Color.BLACK,
+            2,
+            style="topleft",
+            box_width=content_width
+        )
+
+        identity_rect = get_rect(
+            width=content_width,
+            height=Box.HEIGHT,
+            left=content_left,
+            top=name_top + name_height + Box.PADDING
+        )
+        icon_rect = get_rect(
+            width=Box.WIDTH,
+            height=Box.HEIGHT,
+            left=identity_rect.left,
+            top=identity_rect.top
+        )
+        quantity_rect = get_rect(
+            width=identity_rect.width - icon_rect.width,
+            height=identity_rect.height,
+            left=icon_rect.right,
+            top=identity_rect.top
+        )
+
+        surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), icon_rect)
+        pygame.draw.rect(surface, Color.BLACK, identity_rect, width=Box.OUTLINE_WIDTH)
+        pygame.draw.line(
+            surface,
+            Color.BLACK,
+            icon_rect.topright,
+            icon_rect.bottomright,
+            width=Box.OUTLINE_WIDTH
+        )
+
+        quantity_header_rule_y = quantity_rect.top + font.font_height + Box.PADDING
+        font.render(
+            surface,
+            "qty",
+            (quantity_rect.centerx, (quantity_rect.top + quantity_header_rule_y) / 2),
+            Color.BLACK,
+            1,
+            style="center"
+        )
+        pygame.draw.line(
+            surface,
+            Color.BLACK,
+            (quantity_rect.left, quantity_header_rule_y),
+            (quantity_rect.right, quantity_header_rule_y),
+            width=Box.OUTLINE_WIDTH
+        )
+        quantity = DataFiles.save_file["inventory"].get(self.overlay_selected_entity, 0)
+        font.render(
+            surface,
+            str(quantity),
+            (quantity_rect.centerx, quantity_header_rule_y + Box.PADDING + font.font_height),
+            Color.BLACK,
+            2,
+            style="center"
+        )
+        font.render(
+            surface,
+            "in stock",
+            (quantity_rect.centerx, quantity_rect.bottom - Box.PADDING - font.font_height/2),
+            Color.BLACK,
+            1,
+            style="center"
+        )
+
+        description_label_top = identity_rect.bottom + Box.PADDING
+        font.render(
+            surface,
+            "description",
+            (content_left, description_label_top),
+            Color.BLACK,
+            1,
+            style="topleft"
+        )
+        description_top = description_label_top + font.font_height + Box.PADDING
+        description_bottom = self.clipboard_page.bottom - Box.PADDING
+        line_spacing = font.font_height + font.padding
+        ruled_line_color = (210, 210, 200)
+        for line_y in range(
+            round(description_top + font.font_height + 2),
+            round(description_bottom),
+            line_spacing
+        ):
+            pygame.draw.line(
+                surface,
+                ruled_line_color,
+                (content_left, line_y),
+                (content_left + content_width, line_y)
+            )
+
+        description = DataFiles.item_descriptions.get(
+            self.overlay_selected_entity,
+            "no description"
+        )
+        font.render(
+            surface,
+            description,
+            (content_left, description_top),
+            Color.BLACK,
+            1,
+            style="topleft",
+            box_width=content_width
+        )
+
     def draw_clipboard_overlay(self, surface, font_registry):
         if self.overlay_selected_entity is None:
             return
@@ -1473,17 +1606,6 @@ class PortMenu:
             width=Box.WIDTH, height=Box.HEIGHT/2,
             centerx=self.clipboard_bg.centerx,
             top=self.clipboard_bg.top + Box.PADDING
-        )
-
-        font_height = 10
-        clipboard_name_pos = pygame.Vector2(
-            self.clipboard_page.centerx,
-            self.clipboard_page.top + font_height/2 + Box.PADDING + Box.HEIGHT/4
-        )
-        clipboard_highlight_icon = get_rect(
-            width=Box.WIDTH, height=Box.HEIGHT,
-            centerx=self.clipboard_page.centerx,
-            top=clipboard_name_pos.y + font_height/2 + Box.PADDING
         )
 
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.clipboard_bg)
@@ -1505,8 +1627,8 @@ class PortMenu:
 
             coin_sprite = DataFiles.sprites["props"]["decoration_coin"]
             coin_rect = coin_sprite.get_rect()
-            coin_rect.right = self.clipboard_page.right - Box.PADDING
-            coin_rect.top = self.clipboard_page.top + Box.PADDING
+            coin_rect.centerx = self.clipboard_page.right
+            coin_rect.top = self.clipboard_page.top
 
             for _ in range(coin_count):
                 coin_rect.y -= 6 # TODO decoration coin height magic number
@@ -1523,45 +1645,56 @@ class PortMenu:
             ],
             width=4 # TODO magic number
         )
-        font_registry["big_pixel"].render(surface, self.overlay_selected_entity, clipboard_name_pos, Color.BLACK, 1, style="center")
-        surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), clipboard_highlight_icon)
-        pygame.draw.rect(surface, Color.BLACK, clipboard_highlight_icon, width=Box.OUTLINE_WIDTH)
-
         if self.current_overlay == self.DEPOT:
-            desc = DataFiles.item_descriptions.get(self.overlay_selected_entity, "no description")
-        if self.current_overlay == self.DECORATION_STORE:
-            desc = DataFiles.decoration_store[self.overlay_selected_entity]["description"]
-        
-        desc_topleft = pygame.Vector2(
-            self.clipboard_page.left + Box.PADDING + Box.WIDTH/4, # TODO fix alignment magic number
-            clipboard_highlight_icon.bottom + Box.PADDING + Box.HEIGHT/4
-        )
-        desc_text_boxwidth = self.clipboard_page.width - 2*Box.PADDING - Box.WIDTH/2
-        font_registry["big_pixel"].render(surface, desc, desc_topleft, Color.BLACK, 1, style="topleft", box_width=desc_text_boxwidth)
+            self.draw_depot_stock_record(surface, font_registry)
+        elif self.current_overlay == self.DECORATION_STORE:
+            font_height = 10
+            clipboard_name_pos = pygame.Vector2(
+                self.clipboard_page.centerx,
+                self.clipboard_page.top + font_height/2 + Box.PADDING + Box.HEIGHT/4
+            )
+            clipboard_highlight_icon = get_rect(
+                width=Box.WIDTH, height=Box.HEIGHT,
+                centerx=self.clipboard_page.centerx,
+                top=clipboard_name_pos.y + font_height/2 + Box.PADDING
+            )
+            font_registry["big_pixel"].render(
+                surface,
+                self.overlay_selected_entity,
+                clipboard_name_pos,
+                Color.BLACK,
+                1,
+                style="center"
+            )
+            surface.blit(
+                DataFiles.get_entity_sprite(self.overlay_selected_entity),
+                clipboard_highlight_icon
+            )
+            pygame.draw.rect(
+                surface,
+                Color.BLACK,
+                clipboard_highlight_icon,
+                width=Box.OUTLINE_WIDTH
+            )
 
-        if self.current_overlay == self.DECORATION_STORE:
+            desc = DataFiles.decoration_store[self.overlay_selected_entity]["description"]
+            desc_topleft = pygame.Vector2(
+                self.clipboard_page.left + Box.PADDING + Box.WIDTH/4,
+                clipboard_highlight_icon.bottom + Box.PADDING + Box.HEIGHT/4
+            )
+            desc_text_boxwidth = self.clipboard_page.width - 2*Box.PADDING - Box.WIDTH/2
+            font_registry["big_pixel"].render(
+                surface,
+                desc,
+                desc_topleft,
+                Color.BLACK,
+                1,
+                style="topleft",
+                box_width=desc_text_boxwidth
+            )
+
             signature_rect = self.decoration_signature_button.rect
-            x_rect = get_rect(
-                width=Box.WIDTH/6,
-                height=Box.WIDTH/6,
-                right=signature_rect.left - Box.PADDING,
-                bottom=signature_rect.bottom - Box.PADDING
-            )
             pygame.draw.rect(surface, (220, 220, 220), signature_rect)
-            pygame.draw.line(
-                surface,
-                Color.BLACK,
-                x_rect.topleft,
-                x_rect.bottomright,
-                width=Box.OUTLINE_WIDTH
-            )
-            pygame.draw.line(
-                surface,
-                Color.BLACK,
-                x_rect.bottomleft,
-                x_rect.topright,
-                width=Box.OUTLINE_WIDTH
-            )
             pygame.draw.line(
                 surface,
                 Color.BLACK,
