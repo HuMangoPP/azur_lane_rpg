@@ -201,10 +201,10 @@
 			"height": 128
 		},
 		"rope_hook": {
-			"left": 128,
-			"top": 128,
-			"width": 128,
-			"height": 32,
+			"left": 64,
+			"top": 320,
+			"width": 192,
+			"height": 64,
 			"rotation": 90
 		},
 		"lightbulb": {

@@ -1452,9 +1452,39 @@ class PortMenu:
 
         rope_hook_sprite = DataFiles.sprites["props"]["rope_hook"]
         rope_hook_rect = rope_hook_sprite.get_rect()
-        rope_hook_rect.left = self.warehouse_overlay.left
+        rope_hook_rect.centerx = self.warehouse_overlay.left + Box.PADDING
         rope_hook_rect.top = warehouse_decoration_top
         surface.blit(rope_hook_sprite, rope_hook_rect)
+
+        aisle_sign_rect = get_rect(
+            width=Box.WIDTH,
+            height=Box.HEIGHT,
+            centerx=rope_hook_rect.centerx,
+            bottom=rope_hook_rect.bottom
+        )
+        font = font_registry["big_pixel"]
+        font.render(
+            surface,
+            "aisle",
+            (
+                aisle_sign_rect.centerx,
+                aisle_sign_rect.centery - 1.25*font.font_height
+            ),
+            Color.BLACK,
+            1,
+            style="center"
+        )
+        font.render(
+            surface,
+            str(self.get_overlay_page() + 1),
+            (
+                aisle_sign_rect.centerx,
+                aisle_sign_rect.centery + font.font_height/2
+            ),
+            Color.BLACK,
+            2,
+            style="center"
+        )
 
         lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
         lightbulb_rect = lightbulb_sprite.get_rect()
