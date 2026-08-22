@@ -836,8 +836,8 @@ class EncounterMenu:
                 self.end_encounter_banner.text = "victory"
                 for siren in self.menu_manager.siren_fleet.fleet:
                     siren_reward_exp = Stats.stat(
-                        siren.battle_component.exp,
-                        *DataFiles.siren_data[siren.name]["reward_exp"]
+                        *DataFiles.siren_data[siren.name]["reward_exp"],
+                        exp=siren.battle_component.exp,
                     )
                     for shipgirl in self.menu_manager.player_fleet.fleet:
                         if shipgirl is not None:

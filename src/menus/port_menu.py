@@ -110,6 +110,16 @@ class PortMenu:
         GEAR_LAB: "armaments index",
     }
 
+    HULL_TYPE_MAPPING = {
+        "DD": "destroyer",
+        "CL": "light cruiser",
+        "CA": "heavy cruiser",
+        "BB": "battleship",
+        "SS": "submarine",
+        "CV": "aircraft carrier",
+        "AUX": "universal",
+    }
+
     DECORATION_DEPOT = "decoration_depot"
     DELETE_DECORATION = "__delete_decoration__"
 
@@ -680,15 +690,13 @@ class PortMenu:
         return True
 
     def update_encountered_sirens(self):
-        self.encountered_sirens = set()
+        encountered_sirens = set()
         for i in range(DataFiles.save_file["sortie_progress"]):
             encounters = DataFiles.sortie_data[i]["encounters"]
             for encounter in encounters:
-                self.encountered_sirens = self.encountered_sirens.union(
-                    [siren_name.split(":")[0] for siren_name in encounter["front"]]
-                    + [siren_name.split(":")[0] for siren_name in encounter["back"]]
-                )
-        self.encountered_sirens = list(self.encountered_sirens)
+                for encoded_siren in encounter["front"] + encounter["back"]:
+                    encountered_sirens.add(encoded_siren)
+        self.encountered_sirens = sorted(list(encountered_sirens))
 
     def draw_button_notification(self, surface, button, notification):
         if not button.active or not notification:
@@ -823,8 +831,11 @@ class PortMenu:
             return [item for item, count in DataFiles.save_file["inventory"].items() if count > 0]
         if self.current_overlay == self.INTEL_CENTER:
             return [
-                siren for siren in self.encountered_sirens
-                if DataFiles.siren_data[siren]["hull_type"] == self.intel_center_filters[self.overlay_selected_filter]
+                encoded_siren for encoded_siren in self.encountered_sirens
+                if (
+                    DataFiles.siren_data[encoded_siren.split(":")[0]]["hull_type"]
+                    == self.intel_center_filters[self.overlay_selected_filter]
+                )
             ]
         if self.current_overlay == self.SHIPYARD:
             return [
@@ -1309,7 +1320,7 @@ class PortMenu:
             card_shadow_rect = rect.move(2, 2)
             pygame.draw.rect(surface, Color.DOSSIER_CARD_SHADOW, card_shadow_rect)
             pygame.draw.rect(surface, Color.DOSSIER_CARD, rect)
-            image = DataFiles.get_entity_sprite(entity)
+            image = DataFiles.get_entity_sprite(entity.split(":")[0])
             image_rect = image.get_rect()
             image_rect.center = rect.center
             surface.blit(image, image_rect)
@@ -1359,23 +1370,24 @@ class PortMenu:
         display_name = self.overlay_selected_entity.replace("_", " ")
 
         if self.current_overlay == self.INTEL_CENTER:
-            selected_siren = DataFiles.siren_data[self.overlay_selected_entity]
+            siren_name, siren_level = self.overlay_selected_entity.split(":")
+            selected_siren = DataFiles.siren_data[siren_name]
             hull_type = selected_siren["hull_type"]
+            siren_level = int(siren_level)
             return {
-                "name": display_name,
-                "subtitle": f"hostile contact - {hull_type} classification",
+                "name": display_name.split(":")[0],
+                "subtitle": f"hostile contact - threat level: {siren_level}",
                 "specifications_header": "observed capabilities",
                 "materials_header": "recovered materials",
-                "materials_legend": "recovery rate",
                 "empty_materials": "no recoverable materials logged",
-                "specifications": [ # TODO scale stats by siren level
+                "specifications": [
                     ("hull_type", "hull class", hull_type),
-                    ("max_hp", "structural integrity", selected_siren["max_hp"][0]),
-                    ("evasion", "maneuverability", selected_siren["evasion"][0]),
-                    ("firepower", "firepower", selected_siren["firepower"][0]),
-                    ("reload", "reload cycle", selected_siren["reload"][0]),
+                    ("max_hp", "structural integrity", Stats.stat(*selected_siren["max_hp"], level=siren_level)),
+                    ("evasion", "maneuverability", Stats.stat(*selected_siren["evasion"], level=siren_level)),
+                    ("firepower", "firepower", Stats.stat(*selected_siren["firepower"], level=siren_level)),
+                    ("reload", "reload cycle", Stats.stat(*selected_siren["reload"], level=siren_level)),
                     ("target_pref", "targeting doctrine", selected_siren["target_pref"]),
-                    ("medal", "combat data yield", selected_siren["reward_exp"][0])
+                    ("medal", "combat data yield", Stats.stat(*selected_siren["reward_exp"], level=siren_level))
                 ],
                 "materials": [
                     (drop, f"{drop_rate}%", None)
@@ -1408,33 +1420,32 @@ class PortMenu:
                 "name": display_name,
                 "subtitle": (
                     f"{selected_shipgirl['faction']} - "
-                    f"{selected_shipgirl['class']}-class {hull_type}"
+                    f"{selected_shipgirl['class']}-class {self.HULL_TYPE_MAPPING[hull_type]}"
                 ),
                 "specifications_header": "projected specifications",
                 "materials_header": "construction requisition",
-                "materials_legend": "stock/req",
                 "empty_materials": "no components requisitioned",
                 "specifications": [
                     ("hull_type", "hull class", hull_type),
                     (
                         "max_hp",
                         "structural integrity",
-                        Stats.stat(research_exp, *selected_entity_stats["max_hp"]),
+                        Stats.stat(*selected_entity_stats["max_hp"], exp=research_exp),
                     ),
                     (
                         "evasion",
                         "maneuverability",
-                        Stats.stat(research_exp, *selected_entity_stats["evasion"]),
+                        Stats.stat(*selected_entity_stats["evasion"], exp=research_exp),
                     ),
                     (
                         "firepower",
                         "firepower",
-                        Stats.stat(research_exp, *selected_entity_stats["firepower"]),
+                        Stats.stat(*selected_entity_stats["firepower"], exp=research_exp),
                     ),
                     (
                         "reload",
                         "reload cycle",
-                        Stats.stat(research_exp, *selected_entity_stats["reload"]),
+                        Stats.stat(*selected_entity_stats["reload"], exp=research_exp),
                     ),
                     ("medal", "research data", research_exp),
                 ],
@@ -1448,13 +1459,12 @@ class PortMenu:
         inventory = DataFiles.save_file["inventory"]
         equipment_type = selected_equipment["type"]
         display_type = "auxiliary" if equipment_type == "aux" else equipment_type
-        approved_hulls = selected_equipment.get("equippable_by") or "universal"
+        approved_hulls = selected_equipment.get("equippable_by", "AUX")
         return {
             "name": display_name,
-            "subtitle": f"{display_type} - {approved_hulls} fitment",
+            "subtitle": f"{display_type} - {self.HULL_TYPE_MAPPING[approved_hulls]} fitment",
             "specifications_header": "technical specifications",
             "materials_header": "bill of materials",
-            "materials_legend": "stock/req",
             "empty_materials": "no components specified",
             "specifications": [
                 ("hull_type", "approved hulls", approved_hulls),
@@ -1523,15 +1533,9 @@ class PortMenu:
         title_width = title_safe_right - title_left
         title_font = font_registry["big_pixel"]
         title_scale = 2 if title_font.get_width(document["name"], 2, 0) <= title_width else 1
+        title_font.render(surface, document["name"], (title_left, title_top), Color.WHITE, title_scale)
+        subtitle_top = title_top + title_scale * title_font.font_height + Box.PADDING/2
         title_font.render(
-            surface,
-            document["name"],
-            (title_left, title_top),
-            Color.WHITE,
-            title_scale,
-        )
-        subtitle_top = self.blueprint_page.top + 37
-        font_registry["pixel"].render(
             surface,
             document["subtitle"],
             (title_left, subtitle_top),
@@ -1562,14 +1566,15 @@ class PortMenu:
             Color.BLUEPRINT_SLOT_BORDER_GLOW,
             length=Box.PADDING,
         )
-        profile_sprite = DataFiles.get_entity_sprite(self.overlay_selected_entity)
+        profile_sprite = DataFiles.get_entity_sprite(self.overlay_selected_entity.split(":")[0])
         profile_sprite_rect = profile_sprite.get_rect(center=profile_rect.center)
         surface.blit(profile_sprite, profile_sprite_rect)
 
-    def draw_blueprint_section_header(self, surface, font_registry, number, label, legend, top):
+    def draw_blueprint_section_header(self, surface, font_registry, number, label, top):
+        header_font = font_registry["big_pixel"]
         section_rect = get_rect(
             width=self.blueprint_page.width - 4*Box.PADDING,
-            height=18,
+            height=header_font.font_height + Box.PADDING,
             left=self.blueprint_page.left + 2*Box.PADDING,
             top=top,
         )
@@ -1577,7 +1582,7 @@ class PortMenu:
         pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_GLOW, section_rect, width=Box.OUTLINE_WIDTH)
         number_rect = get_rect(width=24, height=section_rect.height, left=section_rect.left, top=section_rect.top)
         pygame.draw.line(surface, Color.BLUEPRINT_PAGE_GLOW, number_rect.topright, number_rect.bottomright)
-        font_registry["big_pixel"].render(
+        header_font.render(
             surface,
             number,
             number_rect.center,
@@ -1585,7 +1590,7 @@ class PortMenu:
             1,
             style="center",
         )
-        font_registry["big_pixel"].render(
+        header_font.render(
             surface,
             label,
             (number_rect.right + Box.PADDING, section_rect.centery),
@@ -1593,17 +1598,7 @@ class PortMenu:
             1,
             style="centerleft",
         )
-        if legend:
-            legend_font = font_registry["pixel"]
-            legend_width = legend_font.get_width(legend, 1, 0)
-            legend_font.render(
-                surface,
-                legend,
-                (section_rect.right - Box.PADDING - legend_width, section_rect.centery),
-                Color.BLUEPRINT_INK_MUTED,
-                1,
-                style="centerleft",
-            )
+        return section_rect
 
     def draw_blueprint_specifications(self, surface, font_registry, specifications, top):
         specifications = [specification for specification in specifications if specification[2] is not None]
@@ -1642,9 +1637,10 @@ class PortMenu:
             )
 
     def draw_blueprint_materials(self, surface, font_registry, materials, empty_text, top):
+        font = font_registry["big_pixel"]
         materials = materials[:6]
         if not materials:
-            font_registry["big_pixel"].render(
+            font.render(
                 surface,
                 empty_text,
                 (self.blueprint_page.centerx, top + 30),
@@ -1693,13 +1689,13 @@ class PortMenu:
                     text_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
                 quantity_plate = get_rect(
                     width=64,
-                    height=16,
+                    height=font.font_height + Box.PADDING,
                     centerx=slot_rect.centerx,
                     bottom=slot_rect.bottom,
                 )
                 pygame.draw.rect(surface, Color.BLUEPRINT_TITLE_BLOCK, quantity_plate)
                 pygame.draw.rect(surface, plate_color, quantity_plate, width=Box.OUTLINE_WIDTH)
-                font_registry["big_pixel"].render(
+                font.render(
                     surface,
                     quantity,
                     quantity_plate.center,
@@ -1738,29 +1734,25 @@ class PortMenu:
         self.draw_blueprint_title_and_profile(surface, font_registry, document)
 
         specifications_header_top = self.blueprint_page.top + 2*Box.HEIGHT + Box.PADDING
-        specifications_top = specifications_header_top + 3*Box.PADDING
-        self.draw_blueprint_section_header(
+        specifications_header_rect = self.draw_blueprint_section_header(
             surface,
             font_registry,
             "01",
             document["specifications_header"],
-            None,
             specifications_header_top,
         )
         self.draw_blueprint_specifications(
             surface,
             font_registry,
             document["specifications"],
-            specifications_top,
+            specifications_header_rect.bottom + Box.PADDING/2,
         )
         materials_header_top = self.blueprint_page.top + 4.5*Box.HEIGHT + Box.PADDING
-        materials_top = materials_header_top + 3*Box.PADDING
-        self.draw_blueprint_section_header(
+        materials_header_rect = self.draw_blueprint_section_header(
             surface,
             font_registry,
             "02",
             document["materials_header"],
-            document["materials_legend"],
             materials_header_top,
         )
         self.draw_blueprint_materials(
@@ -1768,7 +1760,7 @@ class PortMenu:
             font_registry,
             document["materials"],
             document["empty_materials"],
-            materials_top,
+            materials_header_rect.bottom + Box.PADDING,
         )
         self.draw_blueprint_tools(surface)
         self.draw_sticky_note_overlay(surface, font_registry)

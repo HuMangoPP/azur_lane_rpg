@@ -142,8 +142,12 @@ class Stats:
         return exp / cls.exp_amount_at_level(level)
 
     @classmethod
-    def stat(cls, exp, base_stat, stat_per_level):
-        return base_stat + stat_per_level * cls.level(exp)
+    def stat(cls, base_stat, stat_per_level, exp=None, level=None):
+        if exp is not None:
+            return base_stat + stat_per_level * cls.level(exp)
+        if level is not None:
+            return base_stat + stat_per_level * level
+        return None
 
 from engine.load_assets import load_sprites, load_sound
 

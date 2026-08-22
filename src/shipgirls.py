@@ -103,7 +103,7 @@ class ShipgirlBattleComponent:
 
     def stat(self, stat):
         return (
-            Stats.stat(self.exp, *self.base_stats[stat])
+            Stats.stat(*self.base_stats[stat], exp=self.exp)
             + sum(
                 DataFiles.equipment_data.get(equipment, {}).get(stat, 0)
                 for equipment in self.equipment
