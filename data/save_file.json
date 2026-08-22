@@ -23,7 +23,7 @@
 		"wisdom_cube": 0,
 		"full_burst_javelin": 0,
 		"lions_aegis": 0,
-		"decoration_coin": 10,
+		"decoration_coin": 1,
 		"privateers_heroism": 0,
 		"CA_blueprint": 0,
 		"metals": 0,
@@ -33,7 +33,15 @@
 	},
 	"specialized_wisdom_cubes": {},
 	"decoration_depot": {
-		"bed": 0
+		"bed": 1,
+		"chair": 1,
+		"couch_double": 1,
+		"couch_single": 1,
+		"table": 1,
+		"nightstand": 1,
+		"shelf": 1,
+		"tv": 1,
+		"desk": 1
 	},
 	"decorations": [["bed", [2, 8], true]],
 	"research_target": null,

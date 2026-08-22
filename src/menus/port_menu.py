@@ -2175,6 +2175,34 @@ class PortMenu:
                 shipgirl.update(dt)
             shipgirl.animate(dt)
 
+    def draw_decoration_stock_sticker(self, surface, font_registry, icon_rect, amount):
+        font = font_registry["big_pixel"]
+        label_text = f"x{amount}"
+        label_rect = get_rect(
+            width=font.get_width(label_text, 1, 0) + Box.PADDING,
+            height=font.font_height + Box.PADDING,
+            left=icon_rect.left + Box.OUTLINE_WIDTH,
+            top=icon_rect.top + Box.OUTLINE_WIDTH
+        )
+        label_shadow_rect = label_rect.move(Box.OUTLINE_WIDTH, Box.OUTLINE_WIDTH)
+
+        pygame.draw.rect(surface, Color.GREY, label_shadow_rect)
+        pygame.draw.rect(surface, Color.WHITE, label_rect)
+        pygame.draw.rect(
+            surface,
+            Color.GREY,
+            label_rect,
+            width=Box.OUTLINE_WIDTH
+        )
+        font.render(
+            surface,
+            label_text,
+            label_rect.center,
+            Color.BLACK,
+            1,
+            style="center"
+        )
+
     def draw_decoration_mode_overlay(self, surface, font_registry):
         if self.deleting_decoration:
             mpos = pygame.mouse.get_pos()
@@ -2229,7 +2257,12 @@ class PortMenu:
             surface.blit(sprite, rect)
             if entity != self.DELETE_DECORATION:
                 amt = DataFiles.save_file["decoration_depot"][entity]
-                font_registry["big_pixel"].render(surface,str(amt),rect.center,Color.WHITE,1,style="center",outline_color=Color.BLACK)
+                self.draw_decoration_stock_sticker(
+                    surface,
+                    font_registry,
+                    rect,
+                    amt
+                )
             if self.selected_decoration_in_depot == entity:
                 pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
             if entity == self.DELETE_DECORATION and self.deleting_decoration:
@@ -2247,9 +2280,39 @@ class PortMenu:
             True, False
         )
         rope_hook_rect = rope_hook_sprite.get_rect()
-        rope_hook_rect.right = self.decoration_depot_overlay.right - Box.PADDING
+        rope_hook_rect.centerx = self.decoration_depot_overlay.right - Box.PADDING
         rope_hook_rect.top = depot_decoration_top
         surface.blit(rope_hook_sprite, rope_hook_rect)
+
+        aisle_sign_rect = get_rect(
+            width=Box.WIDTH,
+            height=Box.HEIGHT,
+            centerx=rope_hook_rect.centerx,
+            bottom=rope_hook_rect.bottom
+        )
+        font = font_registry["big_pixel"]
+        font.render(
+            surface,
+            "aisle",
+            (
+                aisle_sign_rect.centerx,
+                aisle_sign_rect.centery - 1.25*font.font_height
+            ),
+            Color.BLACK,
+            1,
+            style="center"
+        )
+        font.render(
+            surface,
+            str(self.get_overlay_page() + 1),
+            (
+                aisle_sign_rect.centerx,
+                aisle_sign_rect.centery + font.font_height/2
+            ),
+            Color.BLACK,
+            2,
+            style="center"
+        )
 
         corner_rope_sprite = pygame.transform.flip(
             DataFiles.sprites["props"]["corner_rope"],
@@ -2285,10 +2348,10 @@ class PortMenu:
         cargo_box_rect = cargo_box_sprite.get_rect()
         for cargo_box_pos in [
             pygame.Vector2(self.decoration_depot_overlay.bottomleft),
-            pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(cargo_box_rect.width, 0),
+            pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width, 0),
+            pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width/2, -cargo_box_rect.height),
             
             pygame.Vector2(self.decoration_depot_overlay.bottomright),
-            pygame.Vector2(self.decoration_depot_overlay.bottomright) + pygame.Vector2(cargo_box_rect.width/2, -cargo_box_rect.height),
             pygame.Vector2(self.decoration_depot_overlay.bottomright) + pygame.Vector2(cargo_box_rect.width, 0),
         ]:
             cargo_box_rect.center = cargo_box_pos
