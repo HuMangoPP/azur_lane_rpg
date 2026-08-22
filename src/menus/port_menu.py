@@ -2039,6 +2039,13 @@ class PortMenu:
 
                 if self.decoration_depot_drag_offset is not None:
                     self.decoration_depot_overlay.topleft = pygame.Vector2(event.pos) + self.decoration_depot_drag_offset
+                    screen_rect = get_rect(
+                        width=screen_x(1),
+                        height=screen_y(1),
+                        left=screen_x(0),
+                        top=screen_y(0)
+                    )
+                    self.decoration_depot_overlay.clamp_ip(screen_rect)
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 3 and self.selected_decoration_in_depot is not None:
                     DataFiles.sfx["click"].play()
