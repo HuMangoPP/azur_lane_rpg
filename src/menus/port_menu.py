@@ -995,46 +995,47 @@ class PortMenu:
                             option.active = True
 
     def exit_overlay(self, mouseup_event):
-        clicked_page_button = (
+        if (
             self.overlay_page_prev_button.active
             and self.overlay_page_prev_button.rect.collidepoint(mouseup_event.pos)
-        ) or (
+        ):
+            return False
+        if (
             self.overlay_page_next_button.active
             and self.overlay_page_next_button.rect.collidepoint(mouseup_event.pos)
-        )
+        ):
+            return False
+    
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             left_overlay = self.warehouse_overlay
             right_overlay = self.clipboard_bg
-            clicked_right_overlay = right_overlay.collidepoint(mouseup_event.pos)
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
-            left_overlay = self.dossier_overlay
+            left_overlay = self.dossier_bg
+            entity_filters = getattr(self, f"{self.current_overlay}_filters")
+            for _, filter_rect in zip(entity_filters, self.dossier_tabs):
+                if filter_rect.collidepoint(mouseup_event.pos):
+                    return False
             right_overlay = self.blueprint_page
-            action_button = self.get_current_overlay_action_button()
-            clicked_right_overlay = (
-                right_overlay.collidepoint(mouseup_event.pos)
-                or (
-                    action_button is not None
-                    and action_button.active
-                    and self.sticky_note_page.collidepoint(mouseup_event.pos)
-                )
-            )
+            if self.overlay_selected_entity is not None:
+                action_button = self.get_current_overlay_action_button()
+                if action_button.collidepoint(mouseup_event.pos):
+                    return False
 
+        if left_overlay.collidepoint(mouseup_event.pos):
+            return False
         if (
-            not left_overlay.collidepoint(mouseup_event.pos)
-            and not clicked_page_button
-            and (
-                self.overlay_selected_entity is None
-                or not clicked_right_overlay
-            )
+            self.overlay_selected_entity is not None
+            and right_overlay.collidepoint(mouseup_event.pos)
         ):
-            self.current_overlay = self.NO_OVERLAY
-            self.overlay_selected_entity = None
-            self.refresh_overlay_action_buttons()
-            self.overlay_page_prev_button.active = False
-            self.overlay_page_next_button.active = False
-            self.overlay_selected_filter = 0
-            return True
-        return False
+            return False
+
+        self.current_overlay = self.NO_OVERLAY
+        self.overlay_selected_entity = None
+        self.refresh_overlay_action_buttons()
+        self.overlay_page_prev_button.active = False
+        self.overlay_page_next_button.active = False
+        self.overlay_selected_filter = 0
+        return True
 
     def select_filter(self, mouseup_event):
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
