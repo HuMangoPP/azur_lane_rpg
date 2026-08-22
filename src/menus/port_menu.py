@@ -2210,6 +2210,32 @@ class PortMenu:
             style="center"
         )
 
+    def draw_decoration_depot_selection_marker(self, surface, icon_rect, color):
+        marker_rect = icon_rect.inflate(
+            2*Box.OUTLINE_WIDTH,
+            2*Box.OUTLINE_WIDTH
+        )
+        left = marker_rect.left
+        top = marker_rect.top
+        right = marker_rect.right - 1
+        bottom = marker_rect.bottom - 1
+        corner_length = Box.PADDING + 2*Box.OUTLINE_WIDTH
+        corners = [
+            [(left, top + corner_length), (left, top), (left + corner_length, top)],
+            [(right - corner_length, top), (right, top), (right, top + corner_length)],
+            [(right, bottom - corner_length), (right, bottom), (right - corner_length, bottom)],
+            [(left + corner_length, bottom), (left, bottom), (left, bottom - corner_length)],
+        ]
+
+        for corner in corners:
+            pygame.draw.lines(
+                surface,
+                color,
+                False,
+                corner,
+                width=2*Box.OUTLINE_WIDTH
+            )
+
     def draw_decoration_mode_overlay(self, surface, font_registry):
         if self.deleting_decoration:
             mpos = pygame.mouse.get_pos()
@@ -2270,10 +2296,15 @@ class PortMenu:
                     rect,
                     amt
                 )
-            if self.selected_decoration_in_depot == entity:
-                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            if entity == self.DELETE_DECORATION and self.deleting_decoration:
-                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
+            selected = self.selected_decoration_in_depot == entity
+            delete_tool_active = entity == self.DELETE_DECORATION and self.deleting_decoration
+            if selected or delete_tool_active:
+                marker_color = Color.RED if delete_tool_active else (240, 190, 60)
+                self.draw_decoration_depot_selection_marker(
+                    surface,
+                    rect,
+                    marker_color
+                )
 
         depot_decoration_top = self.decoration_depot_overlay.top - Box.WIDTH/8
         top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
