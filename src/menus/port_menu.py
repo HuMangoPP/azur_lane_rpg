@@ -244,7 +244,7 @@ class PortMenu:
         self.dossier_overlay = get_rect(
             width=dossier_icon_grid_width + 2*dossier_page_margin + 2*Box.PADDING,
             height=dossier_icon_grid_height + 2*dossier_page_margin + Box.HEIGHT + 2*Box.PADDING,
-            right=screen_x(0.5) + Box.WIDTH,
+            right=screen_x(0.5) + Box.WIDTH/2,
             centery=screen_y(0.5) - Box.HEIGHT/2
         )
         # Manila folder background
@@ -301,8 +301,8 @@ class PortMenu:
 
         # Blueprint-themed right panel
         self.blueprint_page = get_rect(
-            width=4*(Box.WIDTH + Box.PADDING) + Box.PADDING,
-            height=5*(Box.HEIGHT + Box.PADDING) + Box.PADDING + Box.HEIGHT,
+            width=5*Box.WIDTH + 2*Box.PADDING,
+            height=7.5*Box.HEIGHT + 2*Box.PADDING,
             left=self.dossier_overlay.right+Box.PADDING,
             centery=screen_y(0.5),
         )
@@ -311,7 +311,7 @@ class PortMenu:
             width=2*Box.WIDTH + 2*Box.PADDING,
             height=2*Box.HEIGHT + 2*Box.PADDING,
             right=self.blueprint_page.right + Box.WIDTH + Box.PADDING,
-            top=self.blueprint_page.top - Box.HEIGHT/2 - Box.PADDING,
+            top=max(Box.PADDING, self.blueprint_page.top - Box.HEIGHT/2 - Box.PADDING),
         )
 
         # Warehouse-themed left panel
@@ -1043,7 +1043,8 @@ class PortMenu:
             if self.overlay_selected_entity is not None:
                 action_button = self.get_current_overlay_action_button()
                 if (
-                    action_button.active
+                    action_button is not None
+                    and action_button.active
                     and action_button.rect.collidepoint(mouseup_event.pos)
                 ):
                     return False
@@ -1354,29 +1355,135 @@ class PortMenu:
         pygame.draw.rect(surface, Color.STICKY_NOTE, self.sticky_note_page)
         action_button.draw(surface, font_registry)
 
-    def draw_blueprint_overlay(self, surface, font_registry):
-        if self.overlay_selected_entity is None:
-            return
+    def get_blueprint_document_data(self):
+        display_name = self.overlay_selected_entity.replace("_", " ")
 
-        font_height = 10
-        blueprint_name_pos = pygame.Vector2(
-            self.blueprint_page.centerx,
-            self.blueprint_page.top + font_height/2 + Box.PADDING
-        )
-        blueprint_highlight_icon = get_rect(
-            width=Box.WIDTH, height=Box.HEIGHT,
-            centerx=self.blueprint_page.centerx,
-            top=blueprint_name_pos.y + font_height/2 + Box.PADDING
-        )
-        num_icons_per_row = 3
-        blueprint_icons = [
-            get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                centerx=self.blueprint_page.centerx+(i%num_icons_per_row-1)*(Box.WIDTH+Box.PADDING),
-                bottom=self.blueprint_page.bottom-2*Box.PADDING-Box.HEIGHT+(i//num_icons_per_row)*(Box.HEIGHT+Box.PADDING)
-            ) for i in range(2*num_icons_per_row)
+        if self.current_overlay == self.INTEL_CENTER:
+            selected_siren = DataFiles.siren_data[self.overlay_selected_entity]
+            hull_type = selected_siren["hull_type"]
+            return {
+                "name": display_name,
+                "subtitle": f"hostile contact - {hull_type} classification",
+                "specifications_header": "observed capabilities",
+                "materials_header": "recovered materials",
+                "materials_legend": "recovery rate",
+                "empty_materials": "no recoverable materials logged",
+                "specifications": [ # TODO scale stats by siren level
+                    ("hull_type", "hull class", hull_type),
+                    ("max_hp", "structural integrity", selected_siren["max_hp"][0]),
+                    ("evasion", "maneuverability", selected_siren["evasion"][0]),
+                    ("firepower", "firepower", selected_siren["firepower"][0]),
+                    ("reload", "reload cycle", selected_siren["reload"][0]),
+                    ("target_pref", "targeting doctrine", selected_siren["target_pref"]),
+                    ("medal", "combat data yield", selected_siren["reward_exp"][0])
+                ],
+                "materials": [
+                    (drop, f"{drop_rate}%", None)
+                    for drop, drop_rate in selected_siren["drops"].items()
+                ],
+            }
+
+        if self.current_overlay == self.SHIPYARD:
+            selected_shipgirl = DataFiles.shipgirl_data[self.overlay_selected_entity]
+            hull_type = selected_shipgirl["hull_type"]
+            inventory = DataFiles.save_file["inventory"]
+            specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
+            research_exp = specialized_wisdom_cubes.get(self.overlay_selected_entity, 0)
+            wisdom_cube_count = (
+                1
+                if self.overlay_selected_entity in specialized_wisdom_cubes
+                else inventory.get("wisdom_cube", 0)
+            )
+            requirements = [
+                (f"{hull_type}_blueprint", inventory.get(f"{hull_type}_blueprint", 0), 1),
+                ("wisdom_cube", wisdom_cube_count, 1),
+                (
+                    selected_shipgirl["unique_item"],
+                    inventory.get(selected_shipgirl["unique_item"], 0),
+                    1,
+                ),
+            ]
+            selected_entity_stats = DataFiles.stats_data[hull_type]
+            return {
+                "name": display_name,
+                "subtitle": (
+                    f"{selected_shipgirl['faction']} - "
+                    f"{selected_shipgirl['class']}-class {hull_type}"
+                ),
+                "specifications_header": "projected specifications",
+                "materials_header": "construction requisition",
+                "materials_legend": "stock/req",
+                "empty_materials": "no components requisitioned",
+                "specifications": [
+                    ("hull_type", "hull class", hull_type),
+                    (
+                        "max_hp",
+                        "structural integrity",
+                        Stats.stat(research_exp, *selected_entity_stats["max_hp"]),
+                    ),
+                    (
+                        "evasion",
+                        "maneuverability",
+                        Stats.stat(research_exp, *selected_entity_stats["evasion"]),
+                    ),
+                    (
+                        "firepower",
+                        "firepower",
+                        Stats.stat(research_exp, *selected_entity_stats["firepower"]),
+                    ),
+                    (
+                        "reload",
+                        "reload cycle",
+                        Stats.stat(research_exp, *selected_entity_stats["reload"]),
+                    ),
+                    ("medal", "research data", research_exp),
+                ],
+                "materials": [
+                    (material, f"{stock}/{required}", stock >= required)
+                    for material, stock, required in requirements
+                ],
+            }
+
+        selected_equipment = DataFiles.equipment_data[self.overlay_selected_entity]
+        inventory = DataFiles.save_file["inventory"]
+        equipment_type = selected_equipment["type"]
+        display_type = "auxiliary" if equipment_type == "aux" else equipment_type
+        approved_hulls = selected_equipment.get("equippable_by") or "universal"
+        return {
+            "name": display_name,
+            "subtitle": f"{display_type} - {approved_hulls} fitment",
+            "specifications_header": "technical specifications",
+            "materials_header": "bill of materials",
+            "materials_legend": "stock/req",
+            "empty_materials": "no components specified",
+            "specifications": [
+                ("hull_type", "approved hulls", approved_hulls),
+                ("max_hp", "structural integrity", selected_equipment.get("max_hp")),
+                ("evasion", "maneuverability", selected_equipment.get("evasion")),
+                ("firepower", "firepower", selected_equipment.get("firepower")),
+                ("reload", "reload cycle", selected_equipment.get("reload")),
+                ("shell_type", "ammunition", selected_equipment.get("shell_type")),
+            ],
+            "materials": [
+                (material, f"{inventory.get(material, 0)}/{required}", inventory.get(material, 0) >= required)
+                for material, required in selected_equipment["craft_reqs"].items()
+            ],
+        }
+
+    def draw_blueprint_corner_brackets(self, surface, rect, color, length=8):
+        corners = [
+            (rect.topleft, (1, 1)),
+            (rect.topright, (-1, 1)),
+            (rect.bottomleft, (1, -1)),
+            (rect.bottomright, (-1, -1)),
         ]
+        for corner, direction in corners:
+            corner = pygame.Vector2(corner)
+            dx, dy = direction
+            pygame.draw.line(surface, color, corner, corner + pygame.Vector2(dx*length, 0))
+            pygame.draw.line(surface, color, corner, corner + pygame.Vector2(0, dy*length))
 
+    def draw_blueprint_page(self, surface):
         misaligned_pages = [
             (-5, pygame.Vector2(-7, 6), Color.BLUEPRINT_PAGE_BACK),
             (4, pygame.Vector2(7, -4), (34, 62, 125)),
@@ -1386,120 +1493,225 @@ class PortMenu:
             pygame.draw.polygon(
                 surface,
                 color,
-                Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset)
+                Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset),
             )
         pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
-        font_registry["big_pixel"].render(surface, self.overlay_selected_entity, blueprint_name_pos, Color.WHITE, 1, style="center")
-        surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), blueprint_highlight_icon)
-        pygame.draw.rect(surface, Color.WHITE, blueprint_highlight_icon, width=Box.OUTLINE_WIDTH)
 
-        def draw_blueprint_divider(label, y):
-            divider_margin = 2*Box.PADDING
-            label_left = self.blueprint_page.left + divider_margin
-            line_left = label_left + font_registry["big_pixel"].get_width(label, 1, 0) + Box.PADDING
-            line_right = self.blueprint_page.right - divider_margin
-            font_registry["big_pixel"].render(surface, label, (label_left, y), Color.WHITE, 1, style="centerleft")
-            pygame.draw.line(
+        grid_step = 2*Box.PADDING
+        for index, x in enumerate(range(
+            self.blueprint_page.left + grid_step + Box.PADDING,
+            self.blueprint_page.right - Box.PADDING,
+            grid_step
+        ), 1):
+            color = Color.BLUEPRINT_GRID_MAJOR if index % 4 == 0 else Color.BLUEPRINT_GRID_MINOR
+            pygame.draw.line(surface, color, (x, self.blueprint_page.top), (x, self.blueprint_page.bottom))
+        for index, y in enumerate(range(
+            self.blueprint_page.top + grid_step + Box.PADDING,
+            self.blueprint_page.bottom - Box.PADDING,
+            grid_step), 1
+        ):
+            color = Color.BLUEPRINT_GRID_MAJOR if index % 4 == 0 else Color.BLUEPRINT_GRID_MINOR
+            pygame.draw.line(surface, color, (self.blueprint_page.left, y), (self.blueprint_page.right, y))
+
+        inset_rect = self.blueprint_page.inflate(-2*Box.PADDING, -2*Box.PADDING)
+        pygame.draw.rect(surface, Color.BLUEPRINT_GRID_MAJOR, inset_rect, width=Box.OUTLINE_WIDTH)
+
+    def draw_blueprint_title_and_profile(self, surface, font_registry, document):
+        title_left = self.blueprint_page.left + 2*Box.PADDING
+        title_top = self.blueprint_page.top + 12
+        title_safe_right = self.blueprint_page.right - Box.WIDTH - Box.PADDING
+        title_width = title_safe_right - title_left
+        title_font = font_registry["big_pixel"]
+        title_scale = 2 if title_font.get_width(document["name"], 2, 0) <= title_width else 1
+        title_font.render(
+            surface,
+            document["name"],
+            (title_left, title_top),
+            Color.WHITE,
+            title_scale,
+        )
+        subtitle_top = self.blueprint_page.top + 37
+        font_registry["pixel"].render(
+            surface,
+            document["subtitle"],
+            (title_left, subtitle_top),
+            Color.BLUEPRINT_INK_MUTED,
+            1,
+        )
+        profile_rect = get_rect(
+            width=Box.WIDTH + Box.PADDING,
+            height=Box.HEIGHT + Box.PADDING,
+            centerx=self.blueprint_page.centerx,
+            centery=self.blueprint_page.top + Box.HEIGHT + 3*Box.PADDING,
+        )
+        pygame.draw.line(
+            surface,
+            Color.BLUEPRINT_GRID_MAJOR,
+            (profile_rect.left - Box.PADDING, profile_rect.centery),
+            (profile_rect.right + Box.PADDING, profile_rect.centery),
+        )
+        pygame.draw.line(
+            surface,
+            Color.BLUEPRINT_GRID_MAJOR,
+            (profile_rect.centerx, profile_rect.top - Box.PADDING),
+            (profile_rect.centerx, profile_rect.bottom + Box.PADDING),
+        )
+        self.draw_blueprint_corner_brackets(
+            surface,
+            profile_rect,
+            Color.BLUEPRINT_SLOT_BORDER_GLOW,
+            length=Box.PADDING,
+        )
+        profile_sprite = DataFiles.get_entity_sprite(self.overlay_selected_entity)
+        profile_sprite_rect = profile_sprite.get_rect(center=profile_rect.center)
+        surface.blit(profile_sprite, profile_sprite_rect)
+
+    def draw_blueprint_section_header(self, surface, font_registry, number, label, legend, top):
+        section_rect = get_rect(
+            width=self.blueprint_page.width - 4*Box.PADDING,
+            height=18,
+            left=self.blueprint_page.left + 2*Box.PADDING,
+            top=top,
+        )
+        pygame.draw.rect(surface, Color.BLUEPRINT_TITLE_BLOCK, section_rect)
+        pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_GLOW, section_rect, width=Box.OUTLINE_WIDTH)
+        number_rect = get_rect(width=24, height=section_rect.height, left=section_rect.left, top=section_rect.top)
+        pygame.draw.line(surface, Color.BLUEPRINT_PAGE_GLOW, number_rect.topright, number_rect.bottomright)
+        font_registry["big_pixel"].render(
+            surface,
+            number,
+            number_rect.center,
+            Color.BLUEPRINT_SLOT_BORDER_GLOW,
+            1,
+            style="center",
+        )
+        font_registry["big_pixel"].render(
+            surface,
+            label,
+            (number_rect.right + Box.PADDING, section_rect.centery),
+            Color.WHITE,
+            1,
+            style="centerleft",
+        )
+        if legend:
+            legend_font = font_registry["pixel"]
+            legend_width = legend_font.get_width(legend, 1, 0)
+            legend_font.render(
                 surface,
-                Color.WHITE,
-                (line_left, y),
-                (line_right, y),
-                width=Box.OUTLINE_WIDTH
+                legend,
+                (section_rect.right - Box.PADDING - legend_width, section_rect.centery),
+                Color.BLUEPRINT_INK_MUTED,
+                1,
+                style="centerleft",
             )
 
-        if self.current_overlay == self.INTEL_CENTER:
-            selected_siren = DataFiles.siren_data[self.overlay_selected_entity]
-            drop_rates = selected_siren["drops"]
-            icons = [(drop, str(drop_rate)) for drop, drop_rate in drop_rates.items()]
-            rewards_header = "drops"
-            info = { # TODO scale stats by siren level
-                "hull_type": selected_siren.get("hull_type"),
-                "max_hp": selected_siren["max_hp"][0],
-                "evasion": selected_siren["evasion"][0],
-                "firepower": selected_siren["firepower"][0],
-                "reload": selected_siren["reload"][0],
-                "target_pref": selected_siren["target_pref"],
-                "EXP": selected_siren["reward_exp"][0],
-            }
-        if self.current_overlay == self.SHIPYARD:
-            selected_shipgirl = DataFiles.shipgirl_data[self.overlay_selected_entity]
-            hull_type = selected_shipgirl["hull_type"]
-            unique_item = selected_shipgirl["unique_item"]
-            inventory = DataFiles.save_file["inventory"]
-            specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
-            wisdom_cube_count = 1 if self.overlay_selected_entity in specialized_wisdom_cubes else inventory.get("wisdom_cube", 0)
-            research_reqs = [
-                (f"{hull_type}_blueprint", inventory.get(f"{hull_type}_blueprint", 0)),
-                ("wisdom_cube", wisdom_cube_count),
-                (unique_item, inventory.get(unique_item, 0))
-            ]
-            icons = [
-                (research_req, f"{count}/1")
-                for research_req, count in research_reqs
-            ]
-            rewards_header = "materials"
-            hull_type = selected_shipgirl.get("hull_type")
-            selected_entity_stats = DataFiles.stats_data[hull_type]
-            research_shipgirl_exp = specialized_wisdom_cubes.get(self.overlay_selected_entity, 0)
-            info = {
-                "hull_type": hull_type,
-                "max_hp": Stats.stat(research_shipgirl_exp, *selected_entity_stats["max_hp"]),
-                "evasion": Stats.stat(research_shipgirl_exp, *selected_entity_stats["evasion"]),
-                "firepower": Stats.stat(research_shipgirl_exp, *selected_entity_stats["firepower"]),
-                "reload": Stats.stat(research_shipgirl_exp, *selected_entity_stats["reload"]),
-                "EXP": research_shipgirl_exp
-            }
-        if self.current_overlay == self.GEAR_LAB:
-            selected_equipment = DataFiles.equipment_data[self.overlay_selected_entity]
-            crafting_reqs = selected_equipment["craft_reqs"]
-            inventory = DataFiles.save_file["inventory"]
-            icons = [
-                (material, f"{inventory.get(material,0)}/{req}")
-                for material, req in crafting_reqs.items()
-            ]
-            rewards_header = "materials"
-            info = {
-                "hull_type": selected_equipment.get("equippable_by"),
-                "max_hp": selected_equipment.get("max_hp"),
-                "evasion": selected_equipment.get("evasion"),
-                "firepower": selected_equipment.get("firepower"),
-                "reload": selected_equipment.get("reload"),
-                "shell_type": selected_equipment.get("shell_type"),
-            }
+    def draw_blueprint_specifications(self, surface, font_registry, specifications, top):
+        specifications = [specification for specification in specifications if specification[2] is not None]
+        content_left = self.blueprint_page.left + 2*Box.PADDING
+        column_gap = Box.PADDING
+        cell_width = (self.blueprint_page.width - 4*Box.PADDING - column_gap) / 2
+        cell_height = 32
 
-        icon_size = Box.WIDTH / 2
-        stats_divider_y = blueprint_highlight_icon.bottom + Box.PADDING + font_height/2
-        rewards_divider_y = blueprint_icons[0].top - Box.PADDING - font_height/2
-        draw_blueprint_divider("stats", stats_divider_y)
-        draw_blueprint_divider(rewards_header, rewards_divider_y)
+        for index, (icon_name, label, value) in enumerate(specifications):
+            column = index % 2
+            row = index // 2
+            cell_rect = get_rect(
+                width=cell_width,
+                height=cell_height,
+                left=content_left + column*(cell_width + column_gap),
+                top=top + row*cell_height,
+            )
+            icon = DataFiles.sprites["user_interface"][icon_name]
+            surface.blit(icon, icon.get_rect(midleft=cell_rect.midleft))
 
-        left_align = [blueprint_icons[0].left + Box.PADDING,self.blueprint_page.centerx + Box.PADDING]
-        y = stats_divider_y + font_height/2 + Box.PADDING
-        info_index = 0
-        for info_key, info_value in info.items():
-            if info_value is None:
+            text_left = cell_rect.left + 36
+            font_registry["pixel"].render(
+                surface,
+                label,
+                (text_left, cell_rect.top + 5),
+                Color.BLUEPRINT_INK_MUTED,
+                1,
+            )
+            display_value = str(value).replace("_", " ")
+            font_registry["big_pixel"].render(
+                surface,
+                display_value,
+                (text_left, cell_rect.top + 17),
+                Color.WHITE,
+                1,
+            )
+
+    def draw_blueprint_materials(self, surface, font_registry, materials, empty_text, top):
+        materials = materials[:6]
+        if not materials:
+            font_registry["big_pixel"].render(
+                surface,
+                empty_text,
+                (self.blueprint_page.centerx, top + 30),
+                Color.BLUEPRINT_INK_MUTED,
+                1,
+                style="center",
+            )
+            return
+
+        slot_width = Box.WIDTH + Box.PADDING
+        slot_height = Box.HEIGHT + Box.PADDING
+        slot_gap = 2*Box.PADDING
+        row_gap = 1.5*Box.PADDING
+        for row in range(2):
+            row_materials = materials[row*3:(row+1)*3]
+            if not row_materials:
                 continue
+            row_width = len(row_materials)*slot_width + (len(row_materials)-1)*slot_gap
+            row_left = self.blueprint_page.centerx - row_width/2
+            for column, (material, quantity, sufficient) in enumerate(row_materials):
+                slot_rect = get_rect(
+                    width=slot_width,
+                    height=slot_height,
+                    left=row_left + column*(slot_width + slot_gap),
+                    top=top + row*(slot_height + row_gap),
+                )
+                icon_frame = get_rect(
+                    width=Box.WIDTH + Box.PADDING,
+                    height=Box.HEIGHT,
+                    centerx=slot_rect.centerx,
+                    top=slot_rect.top,
+                )
+                self.draw_blueprint_corner_brackets(
+                    surface,
+                    icon_frame,
+                    Color.BLUEPRINT_INK_MUTED,
+                    length=6,
+                )
+                icon = DataFiles.get_entity_sprite(material)
+                surface.blit(icon, icon.get_rect(center=icon_frame.center))
 
-            x = left_align[info_index%2]
-            if info_key in DataFiles.sprites["user_interface"]:
-                info_icon = DataFiles.sprites["user_interface"][info_key]
-                info_rect = info_icon.get_rect()
-                info_rect.topleft = (x, y)
-                surface.blit(info_icon, info_rect)
-            else:
-                info_rect = get_rect(width=icon_size, height=icon_size, left=x, top=y)
-                font_registry["big_pixel"].render(surface,str(info_key),info_rect.center,Color.WHITE,1,style="center")
-            font_registry["big_pixel"].render(surface,str(info_value),(info_rect.right + Box.PADDING, info_rect.centery),Color.WHITE,1,style="centerleft",)
-            info_index += 1
-            if info_index % 2 == 0:
-                y += icon_size
-            
-        for (icon_name, icon_text), rect in zip(icons, blueprint_icons):
-            surface.blit(DataFiles.get_entity_sprite(icon_name), rect)
-            pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-            xy = (rect.centerx, rect.top+0.67*rect.height)
-            font_registry["big_pixel"].render(surface, icon_text, xy, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+                plate_color = Color.BLUEPRINT_INK_MUTED
+                text_color = Color.BLUEPRINT_INK_MUTED
+                if sufficient:
+                    plate_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
+                    text_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
+                quantity_plate = get_rect(
+                    width=64,
+                    height=16,
+                    centerx=slot_rect.centerx,
+                    bottom=slot_rect.bottom,
+                )
+                pygame.draw.rect(surface, Color.BLUEPRINT_TITLE_BLOCK, quantity_plate)
+                pygame.draw.rect(surface, plate_color, quantity_plate, width=Box.OUTLINE_WIDTH)
+                font_registry["big_pixel"].render(
+                    surface,
+                    quantity,
+                    quantity_plate.center,
+                    text_color,
+                    1,
+                    style="center",
+                )
 
+    def draw_blueprint_tools(self, surface):
+        if self.current_overlay == self.INTEL_CENTER:
+            return
+        
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
         pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment magic number
@@ -1516,6 +1728,49 @@ class PortMenu:
         compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment magic number
         compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
         surface.blit(compass_sprite, compass_rect)
+
+    def draw_blueprint_overlay(self, surface, font_registry):
+        if self.overlay_selected_entity is None:
+            return
+
+        document = self.get_blueprint_document_data()
+        self.draw_blueprint_page(surface)
+        self.draw_blueprint_title_and_profile(surface, font_registry, document)
+
+        specifications_header_top = self.blueprint_page.top + 2*Box.HEIGHT + Box.PADDING
+        specifications_top = specifications_header_top + 3*Box.PADDING
+        self.draw_blueprint_section_header(
+            surface,
+            font_registry,
+            "01",
+            document["specifications_header"],
+            None,
+            specifications_header_top,
+        )
+        self.draw_blueprint_specifications(
+            surface,
+            font_registry,
+            document["specifications"],
+            specifications_top,
+        )
+        materials_header_top = self.blueprint_page.top + 4.5*Box.HEIGHT + Box.PADDING
+        materials_top = materials_header_top + 3*Box.PADDING
+        self.draw_blueprint_section_header(
+            surface,
+            font_registry,
+            "02",
+            document["materials_header"],
+            document["materials_legend"],
+            materials_header_top,
+        )
+        self.draw_blueprint_materials(
+            surface,
+            font_registry,
+            document["materials"],
+            document["empty_materials"],
+            materials_top,
+        )
+        self.draw_blueprint_tools(surface)
         self.draw_sticky_note_overlay(surface, font_registry)
 
     def draw_warehouse_overlay(self, surface, font_registry):
