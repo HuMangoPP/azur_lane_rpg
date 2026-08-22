@@ -48,7 +48,7 @@ class EquipmentMenu:
         self.equipment_depot = get_rect(
             width=num_equipment_per_row*(Box.WIDTH+Box.PADDING)+Box.PADDING,
             height=equipment_depot_content_height,
-            right=self.blueprint_page.right,
+            right=self.blueprint_page.right + Box.WIDTH/2,
             top=Box.BOTTOM_OF_SCREEN-equipment_depot_content_height
         )
         self.equippable_rects = [
@@ -318,7 +318,7 @@ class EquipmentMenu:
     def draw(self, surface, font_registry):
         # TODO clean up magic numbers
         floor_color = (71, 71, 71)
-        wall_color = 105, 105, 105
+        wall_color = (105, 105, 105)
         surface.fill(wall_color)
 
         workshop_floor = get_rect(
@@ -406,11 +406,35 @@ class EquipmentMenu:
         big_top_rope_rect.top = depot_decoration_top
         surface.blit(big_top_rope_sprite, big_top_rope_rect)
 
-        rope_hook_sprite = DataFiles.sprites["props"]["rope_hook"]
+        rope_hook_sprite = DataFiles.sprites["props"]["short_rope_hook"]
         rope_hook_rect = rope_hook_sprite.get_rect()
         rope_hook_rect.left = self.equipment_depot.left + Box.WIDTH/2
         rope_hook_rect.top = depot_decoration_top
         surface.blit(rope_hook_sprite, rope_hook_rect)
+
+        sign_rect = get_rect(
+            width=Box.WIDTH,
+            height=Box.HEIGHT,
+            centerx=rope_hook_rect.centerx,
+            bottom=rope_hook_rect.bottom
+        )
+        font = font_registry["big_pixel"]
+        font.render(
+            surface,
+            "depot",
+            (sign_rect.centerx, sign_rect.centery - 1.25*font.font_height),
+            Color.BLACK,
+            1,
+            style="center"
+        )
+        font.render(
+            surface,
+            str(self.get_equipment_page() + 1),
+            (sign_rect.centerx, sign_rect.centery + font.font_height/2),
+            Color.BLACK,
+            2,
+            style="center"
+        )
 
         corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
         corner_rope_rect = corner_rope_sprite.get_rect()

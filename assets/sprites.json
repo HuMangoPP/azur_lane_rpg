@@ -200,13 +200,6 @@
 			"width": 96,
 			"height": 128
 		},
-		"rope_hook": {
-			"left": 64,
-			"top": 320,
-			"width": 192,
-			"height": 64,
-			"rotation": 90
-		},
 		"lightbulb": {
 			"left": 64,
 			"top": 160,
@@ -274,6 +267,20 @@
 			"top": 320,
 			"width": 64,
 			"height": 64
+		},
+		"rope_hook": {
+			"left": 64,
+			"top": 320,
+			"width": 192,
+			"height": 64,
+			"rotation": 90
+		},
+		"short_rope_hook": {
+			"left": 256,
+			"top": 320,
+			"width": 112,
+			"height": 64,
+			"rotation": 90
 		}
 	},
 	"encounter": {
