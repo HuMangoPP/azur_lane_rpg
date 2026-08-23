@@ -2327,6 +2327,43 @@ class PortMenu:
             None
         )
 
+    def position_shipgirl_at_decoration(self, shipgirl, decoration_data):
+        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+        decoration_store_info = DataFiles.decoration_store[decoration]
+        sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
+        snap_x, snap_y = decoration_store_info.get("snap", (0.5, 1))
+        shipgirl.pos = pygame.Vector2(
+            sprite_rect.left + sprite_rect.width * snap_x,
+            sprite_rect.top + sprite_rect.height * snap_y
+        )
+        shipgirl.rect.center = shipgirl.pos
+        shipgirl.interacting_decoration = tuple(tilepos_anchor)
+        shipgirl.sprite.set_animation(decoration_store_info.get("shipgirl_animation", Live2D.IDLE_ANIMATION))
+        shipgirl.facing_left = flipped
+
+    def restore_shipgirl_decoration_interactions(self):
+        decorations_by_anchor = {
+            tuple(Decorations.unpack_decoration_data(decoration_data)[1]): decoration_data
+            for decoration_data in DataFiles.save_file["decorations"]
+        }
+        for shipgirl in self.menu_manager.available_shipgirls:
+            if shipgirl.interacting_decoration is None:
+                continue
+
+            decoration_data = decorations_by_anchor.get(tuple(shipgirl.interacting_decoration))
+            if decoration_data is None:
+                shipgirl.interacting_decoration = None
+                shipgirl.pick_new_wander_target()
+                continue
+
+            decoration = Decorations.unpack_decoration_data(decoration_data)[0]
+            if not DataFiles.decoration_store[decoration]["interactable"]:
+                shipgirl.interacting_decoration = None
+                shipgirl.pick_new_wander_target()
+                continue
+
+            self.position_shipgirl_at_decoration(shipgirl, decoration_data)
+
     def snap_shipgirl_to_interactable_decoration(self, shipgirl):
         for decoration_data in DataFiles.save_file["decorations"]:
             decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
@@ -2342,16 +2379,7 @@ class PortMenu:
             if self.interacting_shipgirl_of_decoration(tilepos_anchor) is not None:
                 continue
 
-            sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
-            snap_x, snap_y = decoration_store_info.get("snap", (0.5, 1))
-            shipgirl.pos = pygame.Vector2(
-                sprite_rect.left + sprite_rect.width * snap_x,
-                sprite_rect.top + sprite_rect.height * snap_y
-            )
-            shipgirl.rect.center = shipgirl.pos
-            shipgirl.interacting_decoration = tuple(tilepos_anchor)
-            shipgirl.sprite.set_animation(decoration_store_info.get("shipgirl_animation", Live2D.IDLE_ANIMATION))
-            shipgirl.facing_left = flipped
+            self.position_shipgirl_at_decoration(shipgirl, decoration_data)
             if decoration == "bed":
                 self.shipgirl_interacted_with_bed = True
             return True

@@ -70,3 +70,13 @@ class MenuManager:
     @property
     def encounter_menu(self):
         return self.menu_register[self.ENCOUNTER]
+
+    @property
+    def current_menu(self):
+        return self._current_menu
+
+    @current_menu.setter
+    def current_menu(self, menu):
+        self._current_menu = menu
+        if menu is self.port_menu:
+            self.port_menu.restore_shipgirl_decoration_interactions()
