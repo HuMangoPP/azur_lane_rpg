@@ -13,6 +13,19 @@ class EquipmentMenu:
     UNEQUIP_ITEM = "__unequip_item__"
     TABLETOP_COLOR = (171, 85, 33)
     TABLETOP_GRAIN_SEED = 0
+    HULL_TYPE_MAPPING = {
+        "DD": "destroyer",
+        "CL": "light cruiser",
+        "CA": "heavy cruiser",
+        "BB": "battleship",
+        "SS": "submarine",
+        "CV": "aircraft carrier",
+    }
+    SLOT_LABELS = {
+        Equipment.WEAPON: "main",
+        Equipment.AUX1: "aux 1",
+        Equipment.AUX2: "aux 2",
+    }
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -21,26 +34,26 @@ class EquipmentMenu:
 
 
         self.blueprint_page = get_rect(
-            width=448,
-            height=288,
+            width=7*Box.WIDTH + 2*Box.PADDING,
+            height=4.5*Box.WIDTH + 2*Box.PADDING,
             left=screen_x(0.5) - Box.WIDTH * 3/2,
-            top=Box.TOP_OF_SCREEN - Box.PADDING,
+            top=2*Box.PADDING,
         )
         self.equipped_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx,
-                centery=self.blueprint_page.bottom - 3*Box.HEIGHT
+                centery=self.blueprint_page.bottom - 3*Box.HEIGHT - Box.PADDING
             ),
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx - Box.WIDTH,
-                centery=self.blueprint_page.bottom - Box.HEIGHT
+                centery=self.blueprint_page.bottom - Box.HEIGHT - Box.PADDING
             ),
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx + Box.WIDTH,
-                centery=self.blueprint_page.bottom - Box.HEIGHT
+                centery=self.blueprint_page.bottom - Box.HEIGHT - Box.PADDING
             ),
         ]
         self.selected_slot = Equipment.WEAPON
@@ -134,7 +147,7 @@ class EquipmentMenu:
         def exit_equipment_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
             self.selected_shipgirl = None
-            self.shipgirl_x = 0
+            self.shipgirl_x = None
 
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
@@ -152,6 +165,7 @@ class EquipmentMenu:
         self.shipgirl_x = None
         self.target_shipgirl_x = 0
         self.shipgirl_pause_time = 0
+        self.blueprint_effect_time = 0
 
     def get_stat_delta(self, shipgirl, stat):
         if self.hovered_equipment is None:
@@ -255,6 +269,7 @@ class EquipmentMenu:
             y += band_height
 
     def update(self, dt, events):
+        self.blueprint_effect_time = (self.blueprint_effect_time + dt) % 12
         if self.shipgirl_x is None:
             self.shipgirl_x = screen_x(0.5)
             self.target_shipgirl_x = self.shipgirl_x
@@ -318,6 +333,251 @@ class EquipmentMenu:
                 else:
                     self.hovered_equipment = None
 
+    @staticmethod
+    def draw_blueprint_corner_brackets(surface, rect, color, length=8):
+        corners = [
+            (rect.topleft, (1, 1)),
+            (rect.topright, (-1, 1)),
+            (rect.bottomleft, (1, -1)),
+            (rect.bottomright, (-1, -1)),
+        ]
+        for corner, direction in corners:
+            corner = pygame.Vector2(corner)
+            dx, dy = direction
+            pygame.draw.line(surface, color, corner, corner + pygame.Vector2(dx*length, 0))
+            pygame.draw.line(surface, color, corner, corner + pygame.Vector2(0, dy*length))
+
+    @staticmethod
+    def draw_dashed_rect(surface, color, rect, dash_length=8, gap_length=4, width=2):
+        dash_step = dash_length + gap_length
+        right = rect.right - 1
+        bottom = rect.bottom - 1
+        for x in range(rect.left, rect.right, dash_step):
+            dash_right = min(x + dash_length, right)
+            pygame.draw.line(surface, color, (x, rect.top), (dash_right, rect.top), width)
+            pygame.draw.line(surface, color, (x, bottom), (dash_right, bottom), width)
+        for y in range(rect.top, rect.bottom, dash_step):
+            dash_bottom = min(y + dash_length, bottom)
+            pygame.draw.line(surface, color, (rect.left, y), (rect.left, dash_bottom), width)
+            pygame.draw.line(surface, color, (right, y), (right, dash_bottom), width)
+
+    def draw_blueprint_page(self, surface):
+        misaligned_pages = [
+            (-6, pygame.Vector2(-5, 7), Color.BLUEPRINT_PAGE_BACK),
+            (3, pygame.Vector2(8, -5), (34, 62, 125)),
+            (-1, pygame.Vector2(4, 6), (45, 76, 145)),
+        ]
+        for rotated_angle, offset, color in misaligned_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset),
+            )
+        pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
+
+        grid_step = 2*Box.PADDING
+        for index, x in enumerate(range(
+            self.blueprint_page.left + grid_step + Box.PADDING,
+            self.blueprint_page.right - Box.PADDING,
+            grid_step,
+        ), 1):
+            color = Color.BLUEPRINT_GRID_MAJOR if index % 4 == 0 else Color.BLUEPRINT_GRID_MINOR
+            pygame.draw.line(
+                surface,
+                color,
+                (x, self.blueprint_page.top),
+                (x, self.blueprint_page.bottom),
+            )
+        for index, y in enumerate(range(
+            self.blueprint_page.top + grid_step + Box.PADDING,
+            self.blueprint_page.bottom - Box.PADDING,
+            grid_step,
+        ), 1):
+            color = Color.BLUEPRINT_GRID_MAJOR if index % 4 == 0 else Color.BLUEPRINT_GRID_MINOR
+            pygame.draw.line(
+                surface,
+                color,
+                (self.blueprint_page.left, y),
+                (self.blueprint_page.right, y),
+            )
+
+        inset_rect = self.blueprint_page.inflate(-2*Box.PADDING, -2*Box.PADDING)
+        pygame.draw.rect(
+            surface,
+            Color.BLUEPRINT_GRID_MAJOR,
+            inset_rect,
+            width=Box.OUTLINE_WIDTH,
+        )
+
+    def draw_blueprint_schematics(self, surface):
+        side_schematic = DataFiles.sprites["equipment_menu"]["side_schematic"]
+        side_schematic_rect = side_schematic.get_rect()
+        side_schematic_rect.left = self.blueprint_page.left
+        side_schematic_rect.centery = self.equipped_rects[0].centery
+        surface.blit(side_schematic, side_schematic_rect)
+
+        top_schematic = DataFiles.sprites["equipment_menu"]["top_schematic"]
+        top_schematic_rect = top_schematic.get_rect()
+        top_schematic_rect.left = self.blueprint_page.left
+        top_schematic_rect.centery = self.equipped_rects[-1].centery
+        surface.blit(top_schematic, top_schematic_rect)
+
+    def draw_blueprint_identity(self, surface, font_registry):
+        shipgirl_data = DataFiles.shipgirl_data[self.selected_shipgirl.name]
+        faction = shipgirl_data["faction"]
+        ship_class = shipgirl_data["class"].replace("_", " ")
+        hull_type = shipgirl_data["hull_type"]
+        hull_name = self.HULL_TYPE_MAPPING.get(hull_type, hull_type)
+
+        faction_icon = DataFiles.sprites["user_interface"][f"{faction}_big"]
+        faction_icon_rect = faction_icon.get_rect(
+            left=self.blueprint_page.left + Box.PADDING,
+            top=self.blueprint_page.top + Box.PADDING,
+        )
+        font = font_registry["big_pixel"]
+        text_left = faction_icon_rect.right + Box.PADDING
+        text_right = self.blueprint_page.right - 2*Box.PADDING
+        text_width = text_right - text_left
+        heading_top = self.blueprint_page.top + 2*Box.PADDING
+        display_name = self.selected_shipgirl.name.replace("_", " ")
+        name_scale = 2 if font.get_width(display_name, 2, 0) <= text_width else 1
+        name_top = heading_top + font.font_height + 2
+        classification_top = name_top + name_scale*font.font_height + 2
+
+        surface.blit(faction_icon, faction_icon_rect)
+        self.draw_blueprint_corner_brackets(
+            surface,
+            faction_icon_rect,
+            Color.BLUEPRINT_GRID_MAJOR,
+            length=Box.PADDING,
+        )
+        font.render(
+            surface,
+            f"refit schematic // {faction}",
+            (text_left, heading_top),
+            Color.BLUEPRINT_INK_MUTED,
+            1,
+        )
+        font.render(
+            surface,
+            display_name,
+            (text_left, name_top),
+            Color.BLUEPRINT_SLOT_BORDER_GLOW,
+            name_scale,
+        )
+        font.render(
+            surface,
+            f"{ship_class}-class // {hull_name} [{hull_type}]",
+            (text_left, classification_top),
+            Color.BLUEPRINT_INK_MUTED,
+            1,
+        )
+
+    def draw_blueprint_slot_selection(self, surface, rect):
+        pulse = (math.sin(self.blueprint_effect_time * math.tau / 2.4) + 1) / 2
+        halo_rect = rect.inflate(2*Box.PADDING, 2*Box.PADDING)
+        halo_surface = pygame.Surface(halo_rect.size, pygame.SRCALPHA)
+        for inset, alpha in ((0, 18), (3, 28), (6, 38)):
+            layer_rect = halo_surface.get_rect().inflate(-2*inset, -2*inset)
+            layer_alpha = round(alpha + pulse*alpha)
+            pygame.draw.rect(
+                halo_surface,
+                (*Color.BLUEPRINT_PAGE_GLOW, layer_alpha),
+                layer_rect,
+                width=Box.OUTLINE_WIDTH,
+            )
+        surface.blit(halo_surface, halo_rect)
+        pygame.draw.rect(
+            surface,
+            Color.BLUEPRINT_SLOT_BORDER_GLOW,
+            rect,
+            width=Box.OUTLINE_WIDTH,
+        )
+
+        glint_cycle = 3.2
+        glint_progress = (self.blueprint_effect_time % glint_cycle) / glint_cycle
+        if glint_progress < 0.12:
+            corners = [rect.topleft, rect.topright, rect.bottomright, rect.bottomleft]
+            corner_index = int(self.blueprint_effect_time / glint_cycle) % len(corners)
+            center = pygame.Vector2(corners[corner_index])
+            glint_alpha = math.sin(glint_progress / 0.12 * math.pi)
+            glint_length = 2 + round(3*glint_alpha)
+            pygame.draw.line(
+                surface,
+                Color.BLUEPRINT_SLOT_BORDER_GLOW,
+                center - pygame.Vector2(glint_length, 0),
+                center + pygame.Vector2(glint_length, 0),
+            )
+            pygame.draw.line(
+                surface,
+                Color.BLUEPRINT_SLOT_BORDER_GLOW,
+                center - pygame.Vector2(0, glint_length),
+                center + pygame.Vector2(0, glint_length),
+            )
+
+    def draw_blueprint_slots(self, surface, font_registry):
+        equipment_slots = self.selected_shipgirl.battle_component.equipment
+        for slot, (equipment, rect) in enumerate(zip(equipment_slots, self.equipped_rects)):
+            pygame.draw.rect(surface, Color.BLUEPRINT_TITLE_BLOCK, rect)
+            if equipment is None:
+                label_y = rect.centery - font_registry["big_pixel"].font_height/2 - 2
+                font_registry["big_pixel"].render(
+                    surface,
+                    self.SLOT_LABELS[slot],
+                    (rect.centerx, label_y),
+                    Color.BLUEPRINT_SLOT_BORDER_GLOW,
+                    1,
+                    style="center",
+                )
+                font_registry["pixel"].render(
+                    surface,
+                    "vacant",
+                    (rect.centerx, rect.centery + font_registry["pixel"].font_height),
+                    Color.BLUEPRINT_INK_MUTED,
+                    1,
+                    style="center",
+                )
+            else:
+                equipment_sprite = DataFiles.get_entity_sprite(equipment)
+                surface.blit(equipment_sprite, equipment_sprite.get_rect(center=rect.center))
+
+            if self.selected_slot == slot:
+                self.draw_blueprint_slot_selection(surface, rect)
+            else:
+                self.draw_dashed_rect(
+                    surface,
+                    Color.BLUEPRINT_INK_MUTED,
+                    rect,
+                    width=Box.OUTLINE_WIDTH,
+                )
+
+    def draw_blueprint_tools(self, surface):
+        page_bottom = self.blueprint_page.bottom + Box.HEIGHT/2
+
+        pencil_sprite = DataFiles.sprites["props"]["pencil"]
+        pencil_rect = pencil_sprite.get_rect()
+        pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4
+        pencil_rect.bottom = page_bottom
+
+        ruler_sprite = DataFiles.sprites["props"]["ruler"]
+        ruler_rect = ruler_sprite.get_rect()
+        ruler_rect.midbottom = pencil_rect.bottomleft
+        surface.blit(ruler_sprite, ruler_rect)
+        surface.blit(pencil_sprite, pencil_rect)
+
+        compass_sprite = DataFiles.sprites["props"]["compass"]
+        compass_rect = compass_sprite.get_rect()
+        compass_rect.left = self.blueprint_page.left - Box.WIDTH/4
+        compass_rect.bottom = page_bottom
+        surface.blit(compass_sprite, compass_rect)
+
+    def draw_blueprint(self, surface, font_registry):
+        self.draw_blueprint_page(surface)
+        self.draw_blueprint_schematics(surface)
+        self.draw_blueprint_identity(surface, font_registry)
+        self.draw_blueprint_slots(surface, font_registry)
+        self.draw_blueprint_tools(surface)
+
     def draw(self, surface, font_registry):
         # TODO clean up magic numbers
         floor_color = (71, 71, 71)
@@ -328,18 +588,131 @@ class EquipmentMenu:
             width=screen_x(1), height=Box.HEIGHT,
             left=0, top=self.equipment_depot.bottom
         )
-        pygame.draw.rect(surface, floor_color, workshop_floor)
-
         workshop_wall = get_rect(
             width=screen_x(1), height=2*Box.HEIGHT,
             left=0, bottom=workshop_floor.top
         )
-        pygame.draw.rect(surface, wall_color, workshop_wall)
-
         workshop_ceiling = get_rect(
             width=screen_x(1), height=Box.HEIGHT/2,
             left=0, bottom=workshop_wall.top
         )
+
+        tabletop_rect = get_rect(
+            width=screen_x(1) - 2*Box.WIDTH,
+            height=workshop_ceiling.top,
+            left=Box.WIDTH, top=0
+        )
+        self.draw_tabletop(surface, tabletop_rect)
+
+        pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
+        pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
+        misaligned_dossier_pages = [
+            (-4, pygame.Vector2(-6, 7), (224, 218, 201)),
+            (5, pygame.Vector2(8, -5), (235, 229, 212)),
+            (-3, pygame.Vector2(2, 6), (244, 239, 224)),
+        ]
+        for rotated_angle, offset, color in misaligned_dossier_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
+            )
+        pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
+
+        faction = DataFiles.shipgirl_data[self.selected_shipgirl.name]["faction"]
+        font_registry["big_pixel"].render(surface,f"{faction} {self.selected_shipgirl.name}",(self.dossier_page.left+Box.PADDING, self.dossier_page.top+Box.PADDING),Color.BLACK,1)
+        level = Stats.level(self.selected_shipgirl.battle_component.exp) + 1
+        medal_icon = DataFiles.sprites["user_interface"]["medal"]
+        medal_rect = medal_icon.get_rect()
+        medal_rect.left = self.dossier_page.left + Box.PADDING
+        medal_rect.centery = self.exp_bar_bg.centery
+        surface.blit(medal_icon, medal_rect)
+        font_registry["big_pixel"].render(
+            surface,
+            str(level),
+            medal_rect.center,
+            Color.WHITE,
+            1,
+            style="center",
+            outline_color=Color.BLACK
+        )
+        level_progress = Stats.level_progress(self.selected_shipgirl.battle_component.exp)
+        exp_bar = get_rect(
+            width=level_progress*self.exp_bar_bg.width,
+            height=self.exp_bar_bg.height,
+            left=self.exp_bar_bg.left,
+            top=self.exp_bar_bg.top
+        )
+        pygame.draw.rect(surface, Color.EXP_BAR_BG, self.exp_bar_bg)
+        pygame.draw.rect(surface, Color.EXP_BAR_FILL, exp_bar)
+
+        for stat, rect in self.stat_rects.items():
+            stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.BLACK)
+            surface.blit(stat_icon, rect)
+            stat_text = str(self.selected_shipgirl.battle_component.stat(stat))
+            font_registry["big_pixel"].render(
+                surface,
+                stat_text,
+                (rect.right + Box.PADDING, rect.centery),
+                Color.BLACK,
+                1,
+                style="centerleft"
+            )
+            stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
+            if stat_delta > 0:
+                center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
+                pygame.draw.polygon(surface, (34, 178, 34), [
+                    center+get_vec(length=Box.PADDING, angle=math.radians(30)),
+                    center+get_vec(length=Box.PADDING, angle=math.radians(150)),
+                    center+get_vec(length=Box.PADDING, angle=math.radians(270))
+                ])
+                font_registry["big_pixel"].render(
+                    surface,
+                    f"+{stat_delta}",
+                    (rect.right + Box.PADDING + font_registry["big_pixel"].font_width*len(stat_text), rect.centery),
+                    (34, 178, 34),
+                    1,
+                    style="centerleft"
+                )
+            elif stat_delta < 0:
+                center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
+                pygame.draw.polygon(surface, (178, 34, 34),[
+                    center+get_vec(length=Box.PADDING, angle=math.radians(90)),
+                    center+get_vec(length=Box.PADDING, angle=math.radians(210)),
+                    center+get_vec(length=Box.PADDING, angle=math.radians(330))
+                ])
+                font_registry["big_pixel"].render(
+                    surface,
+                    str(stat_delta),
+                    (rect.right + Box.PADDING + font_registry["big_pixel"].font_width*len(stat_text), rect.centery),
+                    (178, 34, 34),
+                    1,
+                    style="centerleft"
+                )
+
+        classified_sprite = DataFiles.sprites["props"]["classified"]
+        classified_rect = classified_sprite.get_rect()
+        classified_rect.topright = self.dossier_bg.topright
+        surface.blit(classified_sprite, classified_rect)
+
+        coffee_ring_sprite = DataFiles.sprites["props"]["coffee_ring"]
+        coffee_ring_rect = coffee_ring_sprite.get_rect()
+        coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
+        surface.blit(coffee_ring_sprite, coffee_ring_rect)
+
+        paperclip_sprite = pygame.transform.rotate(
+            DataFiles.sprites["props"]["paperclip"],
+            -90
+        )
+        paperclip_rect = paperclip_sprite.get_rect()
+        paperclip_rect.right = self.dossier_page.right
+        paperclip_rect.top = self.dossier_bg.top - 4 # TODO paper clip offset magic number
+        surface.blit(paperclip_sprite, paperclip_rect)
+
+        self.draw_blueprint(surface, font_registry)
+
+        pygame.draw.rect(surface, floor_color, workshop_floor)
+        pygame.draw.rect(surface, wall_color, workshop_wall)
         pygame.draw.rect(surface, floor_color, workshop_ceiling)
 
         table_sprite = DataFiles.sprites["equipment_menu"]["table"]
@@ -489,186 +862,6 @@ class EquipmentMenu:
             cargo_box_rect.center = cargo_box_pos
             surface.blit(cargo_box_sprite, cargo_box_rect)
         self.draw_equipment_page_buttons(surface, font_registry)
-
-        tabletop_rect = get_rect(
-            width=screen_x(1) - 2*Box.WIDTH,
-            height=workshop_ceiling.top,
-            left=Box.WIDTH, top=0
-        )
-        self.draw_tabletop(surface, tabletop_rect)
-
-        pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
-        pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
-        misaligned_dossier_pages = [
-            (-4, pygame.Vector2(-6, 7), (224, 218, 201)),
-            (5, pygame.Vector2(8, -5), (235, 229, 212)),
-            (-3, pygame.Vector2(2, 6), (244, 239, 224)),
-        ]
-        for rotated_angle, offset, color in misaligned_dossier_pages:
-            pygame.draw.polygon(
-                surface,
-                color,
-                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
-            )
-        pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
-
-        faction = DataFiles.shipgirl_data[self.selected_shipgirl.name]["faction"]
-        font_registry["big_pixel"].render(surface,f"{faction} {self.selected_shipgirl.name}",(self.dossier_page.left+Box.PADDING, self.dossier_page.top+Box.PADDING),Color.BLACK,1)
-        level = Stats.level(self.selected_shipgirl.battle_component.exp) + 1
-        medal_icon = DataFiles.sprites["user_interface"]["medal"]
-        medal_rect = medal_icon.get_rect()
-        medal_rect.left = self.dossier_page.left + Box.PADDING
-        medal_rect.centery = self.exp_bar_bg.centery
-        surface.blit(medal_icon, medal_rect)
-        font_registry["big_pixel"].render(
-            surface,
-            str(level),
-            medal_rect.center,
-            Color.WHITE,
-            1,
-            style="center",
-            outline_color=Color.BLACK
-        )
-        level_progress = Stats.level_progress(self.selected_shipgirl.battle_component.exp)
-        exp_bar = get_rect(
-            width=level_progress*self.exp_bar_bg.width,
-            height=self.exp_bar_bg.height,
-            left=self.exp_bar_bg.left,
-            top=self.exp_bar_bg.top
-        )
-        pygame.draw.rect(surface, Color.EXP_BAR_BG, self.exp_bar_bg)
-        pygame.draw.rect(surface, Color.EXP_BAR_FILL, exp_bar)
-
-        for stat, rect in self.stat_rects.items():
-            stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.BLACK)
-            surface.blit(stat_icon, rect)
-            stat_text = str(self.selected_shipgirl.battle_component.stat(stat))
-            font_registry["big_pixel"].render(
-                surface,
-                stat_text,
-                (rect.right + Box.PADDING, rect.centery),
-                Color.BLACK,
-                1,
-                style="centerleft"
-            )
-            stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
-            if stat_delta > 0:
-                center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
-                pygame.draw.polygon(surface, (34, 178, 34), [
-                    center+get_vec(length=Box.PADDING, angle=math.radians(30)),
-                    center+get_vec(length=Box.PADDING, angle=math.radians(150)),
-                    center+get_vec(length=Box.PADDING, angle=math.radians(270))
-                ])
-                font_registry["big_pixel"].render(
-                    surface,
-                    f"+{stat_delta}",
-                    (rect.right + Box.PADDING + font_registry["big_pixel"].font_width*len(stat_text), rect.centery),
-                    (34, 178, 34),
-                    1,
-                    style="centerleft"
-                )
-            elif stat_delta < 0:
-                center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
-                pygame.draw.polygon(surface, (178, 34, 34),[
-                    center+get_vec(length=Box.PADDING, angle=math.radians(90)),
-                    center+get_vec(length=Box.PADDING, angle=math.radians(210)),
-                    center+get_vec(length=Box.PADDING, angle=math.radians(330))
-                ])
-                font_registry["big_pixel"].render(
-                    surface,
-                    str(stat_delta),
-                    (rect.right + Box.PADDING + font_registry["big_pixel"].font_width*len(stat_text), rect.centery),
-                    (178, 34, 34),
-                    1,
-                    style="centerleft"
-                )
-
-        classified_sprite = DataFiles.sprites["props"]["classified"]
-        classified_rect = classified_sprite.get_rect()
-        classified_rect.topright = self.dossier_bg.topright
-        surface.blit(classified_sprite, classified_rect)
-
-        coffee_ring_sprite = DataFiles.sprites["props"]["coffee_ring"]
-        coffee_ring_rect = coffee_ring_sprite.get_rect()
-        coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
-        surface.blit(coffee_ring_sprite, coffee_ring_rect)
-
-        paperclip_sprite = pygame.transform.rotate(
-            DataFiles.sprites["props"]["paperclip"],
-            -90
-        )
-        paperclip_rect = paperclip_sprite.get_rect()
-        paperclip_rect.right = self.dossier_page.right
-        paperclip_rect.top = self.dossier_bg.top - 4 # TODO paper clip offset magic number
-        surface.blit(paperclip_sprite, paperclip_rect)
-        
-        misaligned_blueprint_pages = [
-            (-6, pygame.Vector2(-5, 7), Color.BLUEPRINT_PAGE_BACK),
-            (3, pygame.Vector2(8, -5), (34, 62, 125)),
-            (-1, pygame.Vector2(4, 6), (45, 76, 145)),
-        ]
-        for rotated_angle, offset, color in misaligned_blueprint_pages:
-            pygame.draw.polygon(
-                surface,
-                color,
-                Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset)
-            )
-        pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
-
-        side_schematic = DataFiles.sprites["equipment_menu"]["side_schematic"]
-        side_schematic_rect = side_schematic.get_rect()
-        side_schematic_rect.left = self.blueprint_page.left
-        side_schematic_rect.top = self.blueprint_page.top + Box.HEIGHT/2
-        surface.blit(side_schematic, side_schematic_rect)
-
-        top_schematic = DataFiles.sprites["equipment_menu"]["top_schematic"]
-        top_schematic_rect = top_schematic.get_rect()
-        top_schematic_rect.left = self.blueprint_page.left
-        top_schematic_rect.bottom = self.blueprint_page.bottom
-        surface.blit(top_schematic, top_schematic_rect)
-
-        faction_icon = DataFiles.sprites["user_interface"][f"{faction}_big"]
-        faction_icon_rect = faction_icon.get_rect()
-        faction_icon_rect.left = self.blueprint_page.left + Box.PADDING
-        faction_icon_rect.top = self.blueprint_page.top + Box.PADDING
-        surface.blit(faction_icon, faction_icon_rect)
-        font_registry["big_pixel"].render(surface,f"{faction} {self.selected_shipgirl.name}",(faction_icon_rect.right, faction_icon_rect.centery-font_registry["big_pixel"].font_height-2),Color.WHITE,1)
-        ship_class = DataFiles.shipgirl_data[self.selected_shipgirl.name]["class"]
-        hull_type = DataFiles.shipgirl_data[self.selected_shipgirl.name]["hull_type"]
-        font_registry["big_pixel"].render(surface,f"{ship_class}-class {hull_type}",(faction_icon_rect.right, faction_icon_rect.centery+2),Color.WHITE,1)
-        for i, (equipment, rect) in enumerate(zip(self.selected_shipgirl.battle_component.equipment, self.equipped_rects)):
-            pygame.draw.rect(
-                surface,
-                Color.BLUEPRINT_PAGE_GLOW if self.selected_slot == i else Color.BLUEPRINT_PAGE_BACK,
-                rect
-            )
-            if equipment is not None:
-                surface.blit(DataFiles.get_entity_sprite(equipment), rect)
-            if self.selected_slot == i:
-                pygame.draw.rect(surface, Color.BLUEPRINT_SLOT_BORDER_GLOW, rect, width=Box.OUTLINE_WIDTH)
-                slot_glow = DataFiles.sprites["user_interface"]["blueprint_slot_glow"]
-                slot_glow_rect = slot_glow.get_rect()
-                slot_glow_rect.bottomleft = rect.topleft
-                surface.blit(slot_glow, slot_glow_rect, special_flags=pygame.BLEND_RGB_ADD)
-
-        page_bottom = self.blueprint_page.bottom + Box.HEIGHT/2
-
-        pencil_sprite = DataFiles.sprites["props"]["pencil"]
-        pencil_rect = pencil_sprite.get_rect()
-        pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment magic number
-        pencil_rect.bottom = page_bottom
-
-        ruler_sprite = DataFiles.sprites["props"]["ruler"]
-        ruler_rect = ruler_sprite.get_rect()
-        ruler_rect.midbottom = pencil_rect.bottomleft
-        surface.blit(ruler_sprite, ruler_rect)
-        surface.blit(pencil_sprite, pencil_rect)
-
-        compass_sprite = DataFiles.sprites["props"]["compass"]
-        compass_rect = compass_sprite.get_rect()
-        compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment magic number
-        compass_rect.bottom = page_bottom
-        surface.blit(compass_sprite, compass_rect)
         
         # section divider
         pygame.draw.line(surface, Color.BLACK, workshop_ceiling.topleft, workshop_ceiling.topright, width=4)
