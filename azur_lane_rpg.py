@@ -13,7 +13,7 @@ from engine.font import Font
 from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles, Color
 from src.menus.menu_manager import MenuManager
 
-display = screen
+display = pygame.Surface(TEMP_SCREEN_SIZE)
 clock = pygame.Clock()
 with open("engine/fonts.json") as f:
     fonts = json.load(f)
@@ -81,7 +81,7 @@ while running:
         style="center",
         outline_color=Color.BLACK
     )
-    # screen.blit(pygame.transform.scale(display, screen.get_size()), (0,0))
+    screen.blit(pygame.transform.scale(display, screen.get_size()))
     pygame.display.flip()
 
 DataFiles.bgm["lofi_loop"].stop()

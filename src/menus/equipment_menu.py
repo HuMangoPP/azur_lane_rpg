@@ -27,6 +27,12 @@ class EquipmentMenu:
         Equipment.AUX1: "aux 1",
         Equipment.AUX2: "aux 2",
     }
+    DOSSIER_STAT_LABELS = {
+        "max_hp": "structural integrity",
+        "evasion": "maneuverability",
+        "firepower": "firepower",
+        "reload": "reload cycle",
+    }
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -102,18 +108,11 @@ class EquipmentMenu:
             hover_styling={"opacity": 32}
         )
 
-        font_height = 12
         self.dossier_page = get_rect(
             width=3*Box.WIDTH + 2*Box.PADDING,
-            height=(
-                2*Box.PADDING # padding
-                + font_height+Box.PADDING # name
-                + Box.HEIGHT/2 # exp
-                + 2*Box.HEIGHT # stats
-                + Box.HEIGHT
-            ),
+            height=288,
             centerx=screen_x(0.25),
-            bottom=self.blueprint_page.bottom
+            bottom=self.blueprint_page.bottom + Box.PADDING
         )
         self.dossier_bg = get_rect(
             width=self.dossier_page.width + 2*Box.PADDING,
@@ -128,21 +127,52 @@ class EquipmentMenu:
             dossier_bg_topleft + pygame.Vector2(0, -Box.HEIGHT/3)
         ]
 
+        dossier_content_left = self.dossier_page.left + Box.PADDING
+        dossier_content_width = self.dossier_page.width - 2*Box.PADDING
+        self.dossier_header = get_rect(
+            width=dossier_content_width,
+            height=62,
+            left=dossier_content_left,
+            top=self.dossier_page.top + Box.PADDING,
+        )
+        self.dossier_progress = get_rect(
+            width=dossier_content_width,
+            height=50,
+            left=dossier_content_left,
+            top=self.dossier_header.bottom + 4,
+        )
+        self.dossier_capabilities = get_rect(
+            width=dossier_content_width,
+            height=150,
+            left=dossier_content_left,
+            top=self.dossier_progress.bottom + 6,
+        )
         self.exp_bar_bg = get_rect(
-            width=2*Box.WIDTH, height=Box.HEIGHT/4,
-            left=self.dossier_page.left+Box.PADDING+Box.WIDTH/2,
-            centery=self.dossier_page.top+2*Box.PADDING+font_height+Box.HEIGHT/4
+            width=116,
+            height=10,
+            right=self.dossier_progress.right,
+            top=self.dossier_progress.top + 32,
         )
 
-        stats = ["max_hp", "evasion", "firepower", "reload"]
-        stat_rect_size = 32
+        stat_row_height = 34
+        stat_rows_top = self.dossier_capabilities.top + 14
+        self.stat_row_rects = {
+            stat: get_rect(
+                width=dossier_content_width,
+                height=stat_row_height,
+                left=dossier_content_left,
+                top=stat_rows_top + i*stat_row_height,
+            )
+            for i, stat in enumerate(self.DOSSIER_STAT_LABELS)
+        }
         self.stat_rects = {
             stat: get_rect(
-                width=stat_rect_size, height=stat_rect_size,
+                width=32,
+                height=32,
                 left=self.dossier_page.left+3*Box.PADDING,
-                top=self.exp_bar_bg.centery + Box.HEIGHT/4 + i*stat_rect_size
+                centery=self.stat_row_rects[stat].centery,
             )
-            for i, stat in enumerate(stats)
+            for stat in self.DOSSIER_STAT_LABELS
         }
 
         def exit_equipment_menu():
@@ -656,6 +686,263 @@ class EquipmentMenu:
         self.draw_blueprint_slots(surface, font_registry)
         self.draw_blueprint_tools(surface)
 
+    def draw_dossier_paper(self, surface, font_registry):
+        pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
+        pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
+
+        misaligned_pages = [
+            (-4, pygame.Vector2(-6, 7), (224, 218, 201)),
+            (5, pygame.Vector2(8, -5), (235, 229, 212)),
+            (-3, pygame.Vector2(2, 6), (244, 239, 224)),
+        ]
+        for rotated_angle, offset, color in misaligned_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset),
+            )
+        pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
+
+    def draw_dossier_watermark(self, surface):
+        classified_sprite = DataFiles.sprites["props"]["classified"].copy()
+        classified_sprite.set_alpha(80)
+        classified_rect = classified_sprite.get_rect(topright=self.dossier_bg.topright)
+        surface.blit(classified_sprite, classified_rect)
+
+        coffee_ring_sprite = DataFiles.sprites["props"]["coffee_ring"].copy()
+        coffee_ring_sprite.set_alpha(144)
+        coffee_ring_rect = coffee_ring_sprite.get_rect(bottomleft=self.dossier_bg.bottomleft)
+        surface.blit(coffee_ring_sprite, coffee_ring_rect)
+
+    def draw_dossier_header(self, surface, font_registry):
+        pixel_font = font_registry["pixel"]
+        title_font = font_registry["big_pixel"]
+        shipgirl_data = DataFiles.shipgirl_data[self.selected_shipgirl.name]
+        faction = shipgirl_data["faction"]
+        hull_type = shipgirl_data["hull_type"]
+        display_name = self.selected_shipgirl.name.replace("_", " ")
+        file_name = self.selected_shipgirl.name.replace("_", "-")
+
+        pixel_font.render(
+            surface,
+            "azur lane naval command",
+            self.dossier_header.topleft,
+            Color.DOSSIER_RULE,
+            1,
+        )
+        form_text = "form er-01"
+        form_left = self.dossier_header.right - pixel_font.get_width(form_text, 1, 0)
+        pixel_font.render(
+            surface,
+            form_text,
+            (form_left, self.dossier_header.top),
+            Color.DOSSIER_INK,
+            1,
+        )
+
+        name_scale = 2 if title_font.get_width(display_name, 2, 0) <= self.dossier_header.width else 1
+        title_font.render(
+            surface,
+            display_name,
+            (self.dossier_header.left, self.dossier_header.top + 11),
+            Color.DOSSIER_INK,
+            name_scale,
+        )
+        pixel_font.render(
+            surface,
+            f"file: {faction}-{file_name}",
+            (self.dossier_header.left, self.dossier_header.top + 34),
+            Color.DOSSIER_RULE,
+            1,
+        )
+        pixel_font.render(
+            surface,
+            f"class: {shipgirl_data['class'].replace('_', ' ')}",
+            (self.dossier_header.left, self.dossier_header.top + 43),
+            Color.DOSSIER_RULE,
+            1,
+        )
+        pixel_font.render(
+            surface,
+            f"hull: {self.HULL_TYPE_MAPPING[hull_type]} [{hull_type}]",
+            (self.dossier_header.left, self.dossier_header.top + 52),
+            Color.DOSSIER_RULE,
+            1,
+        )
+
+    @staticmethod
+    def draw_dossier_section_header(surface, font_registry, text, rect):
+        pygame.draw.line(
+            surface,
+            Color.DOSSIER_RULE,
+            (rect.left, rect.top - 4),
+            (rect.right, rect.top - 4),
+        )
+        font_registry["pixel"].render(
+            surface,
+            text,
+            rect.topleft,
+            Color.DOSSIER_RULE,
+            1,
+        )
+        pygame.draw.line(
+            surface,
+            Color.DOSSIER_RULE,
+            (rect.left, rect.top + 10),
+            (rect.right, rect.top + 10),
+        )
+
+    def draw_dossier_progress(self, surface, font_registry):
+        self.draw_dossier_section_header(
+            surface,
+            font_registry,
+            "01 service progression",
+            self.dossier_progress,
+        )
+
+        exp = self.selected_shipgirl.battle_component.exp
+        level_index = Stats.level(exp)
+        level = level_index + 1
+        level_exp = exp - Stats.exp_to_level(level_index)
+        required_exp = Stats.exp_amount_at_level(level_index)
+        level_progress = level_exp / required_exp
+
+        medal_icon = DataFiles.sprites["user_interface"]["medal"]
+        medal_rect = medal_icon.get_rect(
+            left=self.dossier_progress.left,
+            top=self.dossier_progress.top + 14,
+        )
+        surface.blit(medal_icon, medal_rect)
+
+        font_registry["pixel"].render(
+            surface,
+            "service level",
+            (medal_rect.right + Box.PADDING, self.dossier_progress.top + 14),
+            Color.DOSSIER_RULE,
+            1,
+        )
+        font_registry["big_pixel"].render(
+            surface,
+            f"{level:02d}",
+            (medal_rect.right + Box.PADDING, self.dossier_progress.top + 23),
+            Color.DOSSIER_INK,
+            2,
+        )
+        font_registry["pixel"].render(
+            surface,
+            f"{level_exp}/{required_exp}",
+            (self.exp_bar_bg.centerx, self.exp_bar_bg.top - Box.PADDING),
+            Color.DOSSIER_RULE,
+            1,
+            style="center"
+        )
+
+        pygame.draw.rect(surface, Color.DOSSIER_RULE, self.exp_bar_bg)
+        exp_bar = get_rect(
+            width=round(level_progress*self.exp_bar_bg.width),
+            height=self.exp_bar_bg.height,
+            left=self.exp_bar_bg.left,
+            top=self.exp_bar_bg.top,
+        )
+        pygame.draw.rect(surface, Color.DOSSIER_INK, exp_bar)
+        for tick in (0.25, 0.5, 0.75):
+            tick_x = self.exp_bar_bg.left + round(self.exp_bar_bg.width*tick)
+            pygame.draw.line(
+                surface,
+                Color.DOSSIER_PAGE,
+                (tick_x, self.exp_bar_bg.top + 1),
+                (tick_x, self.exp_bar_bg.bottom - 2),
+            )
+        pygame.draw.rect(surface, Color.DOSSIER_INK, self.exp_bar_bg, width=1)
+
+    def draw_dossier_stat_delta(self, surface, font_registry, stat, icon_rect, value, value_left):
+        stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
+        if stat_delta == 0:
+            return
+
+        color = (34, 178, 34) if stat_delta > 0 else (178, 34, 34)
+        center = pygame.Vector2(icon_rect.left - Box.PADDING, icon_rect.centery)
+        angles = (30, 150, 270) if stat_delta > 0 else (90, 210, 330)
+        pygame.draw.polygon(
+            surface,
+            color,
+            [center + get_vec(length=Box.PADDING, angle=math.radians(angle)) for angle in angles],
+        )
+
+        value_width = font_registry["big_pixel"].get_width(value, 2, 0)
+        delta_text = f"+{stat_delta}" if stat_delta > 0 else str(stat_delta)
+        font_registry["big_pixel"].render(
+            surface,
+            delta_text,
+            (value_left + value_width + Box.PADDING/2, icon_rect.centery + 5),
+            color,
+            1,
+            style="centerleft",
+        )
+
+    def draw_dossier_capabilities(self, surface, font_registry):
+        self.draw_dossier_section_header(
+            surface,
+            font_registry,
+            "02 combat capability",
+            self.dossier_capabilities,
+        )
+
+        for stat, row_rect in self.stat_row_rects.items():
+            icon_rect = self.stat_rects[stat]
+            stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.DOSSIER_INK)
+            surface.blit(stat_icon, icon_rect)
+
+            value = str(self.selected_shipgirl.battle_component.stat(stat))
+            value_left = icon_rect.right + Box.PADDING
+            font_registry["pixel"].render(
+                surface,
+                self.DOSSIER_STAT_LABELS[stat],
+                (value_left, row_rect.top + 2),
+                Color.DOSSIER_RULE,
+                1,
+            )
+            font_registry["big_pixel"].render(
+                surface,
+                value,
+                (value_left, row_rect.top + 12),
+                Color.DOSSIER_INK,
+                2,
+            )
+            self.draw_dossier_stat_delta(
+                surface,
+                font_registry,
+                stat,
+                icon_rect,
+                value,
+                value_left,
+            )
+        pygame.draw.line(
+            surface,
+            Color.DOSSIER_RULE,
+            (row_rect.left, row_rect.bottom - 1),
+            (row_rect.right, row_rect.bottom - 1),
+        )
+
+    def draw_dossier_props(self, surface):
+        paperclip_sprite = pygame.transform.rotate(
+            DataFiles.sprites["props"]["paperclip"],
+            -90,
+        )
+        paperclip_rect = paperclip_sprite.get_rect(
+            right=self.dossier_bg.right + Box.PADDING,
+            top=self.dossier_bg.top - 4,
+        )
+        surface.blit(paperclip_sprite, paperclip_rect)
+
+    def draw_dossier(self, surface, font_registry):
+        self.draw_dossier_paper(surface, font_registry)
+        self.draw_dossier_watermark(surface)
+        self.draw_dossier_header(surface, font_registry)
+        self.draw_dossier_progress(surface, font_registry)
+        self.draw_dossier_capabilities(surface, font_registry)
+        self.draw_dossier_props(surface)
+
     def draw(self, surface, font_registry):
         # TODO clean up magic numbers
         floor_color = (71, 71, 71)
@@ -682,110 +969,7 @@ class EquipmentMenu:
         )
         self.draw_tabletop(surface, tabletop_rect)
 
-        pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
-        pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
-        misaligned_dossier_pages = [
-            (-4, pygame.Vector2(-6, 7), (224, 218, 201)),
-            (5, pygame.Vector2(8, -5), (235, 229, 212)),
-            (-3, pygame.Vector2(2, 6), (244, 239, 224)),
-        ]
-        for rotated_angle, offset, color in misaligned_dossier_pages:
-            pygame.draw.polygon(
-                surface,
-                color,
-                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
-            )
-        pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
-
-        faction = DataFiles.shipgirl_data[self.selected_shipgirl.name]["faction"]
-        font_registry["big_pixel"].render(surface,f"{faction} {self.selected_shipgirl.name}",(self.dossier_page.left+Box.PADDING, self.dossier_page.top+Box.PADDING),Color.BLACK,1)
-        level = Stats.level(self.selected_shipgirl.battle_component.exp) + 1
-        medal_icon = DataFiles.sprites["user_interface"]["medal"]
-        medal_rect = medal_icon.get_rect()
-        medal_rect.left = self.dossier_page.left + Box.PADDING
-        medal_rect.centery = self.exp_bar_bg.centery
-        surface.blit(medal_icon, medal_rect)
-        font_registry["big_pixel"].render(
-            surface,
-            str(level),
-            medal_rect.center,
-            Color.WHITE,
-            1,
-            style="center",
-            outline_color=Color.BLACK
-        )
-        level_progress = Stats.level_progress(self.selected_shipgirl.battle_component.exp)
-        exp_bar = get_rect(
-            width=level_progress*self.exp_bar_bg.width,
-            height=self.exp_bar_bg.height,
-            left=self.exp_bar_bg.left,
-            top=self.exp_bar_bg.top
-        )
-        pygame.draw.rect(surface, Color.EXP_BAR_BG, self.exp_bar_bg)
-        pygame.draw.rect(surface, Color.EXP_BAR_FILL, exp_bar)
-
-        for stat, rect in self.stat_rects.items():
-            stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.BLACK)
-            surface.blit(stat_icon, rect)
-            stat_text = str(self.selected_shipgirl.battle_component.stat(stat))
-            font_registry["big_pixel"].render(
-                surface,
-                stat_text,
-                (rect.right + Box.PADDING, rect.centery),
-                Color.BLACK,
-                1,
-                style="centerleft"
-            )
-            stat_delta = self.get_stat_delta(self.selected_shipgirl, stat)
-            if stat_delta > 0:
-                center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
-                pygame.draw.polygon(surface, (34, 178, 34), [
-                    center+get_vec(length=Box.PADDING, angle=math.radians(30)),
-                    center+get_vec(length=Box.PADDING, angle=math.radians(150)),
-                    center+get_vec(length=Box.PADDING, angle=math.radians(270))
-                ])
-                font_registry["big_pixel"].render(
-                    surface,
-                    f"+{stat_delta}",
-                    (rect.right + Box.PADDING + font_registry["big_pixel"].font_width*len(stat_text), rect.centery),
-                    (34, 178, 34),
-                    1,
-                    style="centerleft"
-                )
-            elif stat_delta < 0:
-                center = pygame.Vector2(rect.left-Box.PADDING,rect.centery)
-                pygame.draw.polygon(surface, (178, 34, 34),[
-                    center+get_vec(length=Box.PADDING, angle=math.radians(90)),
-                    center+get_vec(length=Box.PADDING, angle=math.radians(210)),
-                    center+get_vec(length=Box.PADDING, angle=math.radians(330))
-                ])
-                font_registry["big_pixel"].render(
-                    surface,
-                    str(stat_delta),
-                    (rect.right + Box.PADDING + font_registry["big_pixel"].font_width*len(stat_text), rect.centery),
-                    (178, 34, 34),
-                    1,
-                    style="centerleft"
-                )
-
-        classified_sprite = DataFiles.sprites["props"]["classified"]
-        classified_rect = classified_sprite.get_rect()
-        classified_rect.topright = self.dossier_bg.topright
-        surface.blit(classified_sprite, classified_rect)
-
-        coffee_ring_sprite = DataFiles.sprites["props"]["coffee_ring"]
-        coffee_ring_rect = coffee_ring_sprite.get_rect()
-        coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
-        surface.blit(coffee_ring_sprite, coffee_ring_rect)
-
-        paperclip_sprite = pygame.transform.rotate(
-            DataFiles.sprites["props"]["paperclip"],
-            -90
-        )
-        paperclip_rect = paperclip_sprite.get_rect()
-        paperclip_rect.right = self.dossier_page.right
-        paperclip_rect.top = self.dossier_bg.top - 4 # TODO paper clip offset magic number
-        surface.blit(paperclip_sprite, paperclip_rect)
+        self.draw_dossier(surface, font_registry)
 
         self.draw_blueprint(surface, font_registry)
 
