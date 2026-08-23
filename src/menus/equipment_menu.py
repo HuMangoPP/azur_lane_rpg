@@ -13,6 +13,7 @@ class EquipmentMenu:
     UNEQUIP_ITEM = "__unequip_item__"
     TABLETOP_COLOR = (171, 85, 33)
     TABLETOP_GRAIN_SEED = 0
+    _SELECTION_ACTIVATION_DURATION = 0.22
     HULL_TYPE_MAPPING = {
         "DD": "destroyer",
         "CL": "light cruiser",
@@ -148,6 +149,7 @@ class EquipmentMenu:
             self.menu_manager.current_menu = self.menu_manager.port_menu
             self.selected_shipgirl = None
             self.shipgirl_x = None
+            self._selection_activation_time = 0
 
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
@@ -166,6 +168,7 @@ class EquipmentMenu:
         self.target_shipgirl_x = 0
         self.shipgirl_pause_time = 0
         self.blueprint_effect_time = 0
+        self._selection_activation_time = 0
 
     def get_stat_delta(self, shipgirl, stat):
         if self.hovered_equipment is None:
@@ -269,7 +272,11 @@ class EquipmentMenu:
             y += band_height
 
     def update(self, dt, events):
-        self.blueprint_effect_time = (self.blueprint_effect_time + dt) % 12
+        self.blueprint_effect_time += dt
+        self._selection_activation_time = min(
+            self._SELECTION_ACTIVATION_DURATION,
+            self._selection_activation_time + dt,
+        )
         if self.shipgirl_x is None:
             self.shipgirl_x = screen_x(0.5)
             self.target_shipgirl_x = self.shipgirl_x
@@ -302,6 +309,8 @@ class EquipmentMenu:
 
                 for equip_slot, rect in zip(equip_slots, self.equipped_rects):
                     if rect.collidepoint(event.pos):
+                        if equip_slot != self.selected_slot:
+                            self._selection_activation_time = 0
                         self.selected_slot = equip_slot
                         self.refresh_equipment_page_buttons()
                         DataFiles.sfx["click"].play()
@@ -475,18 +484,60 @@ class EquipmentMenu:
 
     def draw_blueprint_slot_selection(self, surface, rect):
         pulse = (math.sin(self.blueprint_effect_time * math.tau / 2.4) + 1) / 2
+        activation_progress = min(
+            1,
+            self._selection_activation_time / self._SELECTION_ACTIVATION_DURATION,
+        )
+        activation_ease = 1 - (1 - activation_progress)**3
+
         beacon_base = DataFiles.sprites["user_interface"]["blueprint_slot_glow"].copy()
         beacon_base.set_alpha(int(128 + 127*pulse))
         beacon = pygame.Surface(beacon_base.get_size())
         beacon.blit(beacon_base)
         beacon_rect = beacon.get_rect()
         beacon_rect.bottomleft = rect.topleft
-        surface.blit(beacon, beacon_rect, special_flags=pygame.BLEND_RGB_ADD)
 
+        visible_beacon_height = max(1, math.ceil(beacon_rect.height*activation_ease))
+        beacon_source_rect = pygame.Rect(
+            0,
+            beacon_rect.height - visible_beacon_height,
+            beacon_rect.width,
+            visible_beacon_height,
+        )
+        visible_beacon_rect = beacon_source_rect.copy()
+        visible_beacon_rect.bottomleft = rect.topleft
+        surface.blit(
+            beacon,
+            visible_beacon_rect,
+            beacon_source_rect,
+            special_flags=pygame.BLEND_RGB_ADD,
+        )
+
+        activation_flash = (1 - activation_progress)**2
+        border_color = tuple(
+            round(channel + (white - channel)*0.65*activation_flash)
+            for channel, white in zip(Color.BLUEPRINT_SLOT_BORDER_GLOW, Color.WHITE)
+        )
         pygame.draw.rect(
             surface,
-            Color.BLUEPRINT_SLOT_BORDER_GLOW,
+            border_color,
             rect,
+            width=Box.OUTLINE_WIDTH,
+        )
+
+        seam_strength = min(1, 0.25 + 0.25*pulse + 0.65*activation_flash)
+        seam_color = tuple(
+            round(glow + (bright - glow)*seam_strength)
+            for glow, bright in zip(
+                Color.BLUEPRINT_PAGE_GLOW,
+                Color.BLUEPRINT_SLOT_BORDER_GLOW,
+            )
+        )
+        pygame.draw.line(
+            surface,
+            seam_color,
+            (rect.left + 4, rect.top),
+            (rect.right - 5, rect.top),
             width=Box.OUTLINE_WIDTH,
         )
 
@@ -508,9 +559,11 @@ class EquipmentMenu:
                 beacon_rect.top + beacon_rect.height/2 + 4 + (cycle_index*19 + glint_index*31) % (1.5*beacon_rect.height - 8),
             )
             center = spawn_center - pygame.Vector2(0, glint_drift*glint_progress)
+            if center.y < visible_beacon_rect.top:
+                continue
             glint_length = 1 + round((glint_max_length - 1)*glint_strength)
             glint_color = tuple(
-                round(channel*glint_strength)
+                round(channel*glint_strength*activation_ease)
                 for channel in Color.BLUEPRINT_SLOT_BORDER_GLOW
             )
             glint_surface = pygame.Surface(
