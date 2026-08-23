@@ -3,7 +3,7 @@ import pygame
 import json
 
 pygame.init()
-SCREEN_SIZE = pygame.Vector2(960, 540)
+SCREEN_SIZE = pygame.Vector2(1920, 1080)
 screen = pygame.display.set_mode(SCREEN_SIZE)
 
 pygame.mixer.init()
@@ -14,6 +14,22 @@ from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles, Color
 from src.menus.menu_manager import MenuManager
 
 display = pygame.Surface(TEMP_SCREEN_SIZE)
+mouse_scale = (
+    TEMP_SCREEN_SIZE.x / SCREEN_SIZE.x,
+    TEMP_SCREEN_SIZE.y / SCREEN_SIZE.y,
+)
+
+get_physical_mouse_pos = pygame.mouse.get_pos
+
+def get_scaled_mouse_pos():
+    mouse_pos = get_physical_mouse_pos()
+    return (
+        mouse_pos[0] * mouse_scale[0],
+        mouse_pos[1] * mouse_scale[1],
+    )
+
+pygame.mouse.get_pos = get_scaled_mouse_pos
+
 clock = pygame.Clock()
 with open("engine/fonts.json") as f:
     fonts = json.load(f)
@@ -57,12 +73,25 @@ while running:
     dt = clock.get_time() / 1000
     fps = int(clock.get_fps())
 
-    events = pygame.event.get()
-    for event in events:
+    events = []
+    for event in pygame.event.get():
+        if hasattr(event, "pos"):
+            event.pos = (
+                event.pos[0] * mouse_scale[0],
+                event.pos[1] * mouse_scale[1],
+            )
+        if hasattr(event, "rel"):
+            event.rel = (
+                event.rel[0] * mouse_scale[0],
+                event.rel[1] * mouse_scale[1],
+            )
+
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
+
+        events.append(event)
 
     menu_manager.current_menu.update(dt, events)
 
