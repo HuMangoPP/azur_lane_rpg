@@ -475,18 +475,14 @@ class EquipmentMenu:
 
     def draw_blueprint_slot_selection(self, surface, rect):
         pulse = (math.sin(self.blueprint_effect_time * math.tau / 2.4) + 1) / 2
-        halo_rect = rect.inflate(2*Box.PADDING, 2*Box.PADDING)
-        halo_surface = pygame.Surface(halo_rect.size, pygame.SRCALPHA)
-        for inset, alpha in ((0, 18), (3, 28), (6, 38)):
-            layer_rect = halo_surface.get_rect().inflate(-2*inset, -2*inset)
-            layer_alpha = round(alpha + pulse*alpha)
-            pygame.draw.rect(
-                halo_surface,
-                (*Color.BLUEPRINT_PAGE_GLOW, layer_alpha),
-                layer_rect,
-                width=Box.OUTLINE_WIDTH,
-            )
-        surface.blit(halo_surface, halo_rect)
+        beacon_base = DataFiles.sprites["user_interface"]["blueprint_slot_glow"].copy()
+        beacon_base.set_alpha(int(128 + 127*pulse))
+        beacon = pygame.Surface(beacon_base.get_size())
+        beacon.blit(beacon_base)
+        beacon_rect = beacon.get_rect()
+        beacon_rect.bottomleft = rect.topleft
+        surface.blit(beacon, beacon_rect, special_flags=pygame.BLEND_RGB_ADD)
+
         pygame.draw.rect(
             surface,
             Color.BLUEPRINT_SLOT_BORDER_GLOW,
@@ -494,31 +490,60 @@ class EquipmentMenu:
             width=Box.OUTLINE_WIDTH,
         )
 
-        glint_cycle = 3.2
-        glint_progress = (self.blueprint_effect_time % glint_cycle) / glint_cycle
-        if glint_progress < 0.12:
-            corners = [rect.topleft, rect.topright, rect.bottomright, rect.bottomleft]
-            corner_index = int(self.blueprint_effect_time / glint_cycle) % len(corners)
-            center = pygame.Vector2(corners[corner_index])
-            glint_alpha = math.sin(glint_progress / 0.12 * math.pi)
-            glint_length = 2 + round(3*glint_alpha)
+        glint_cycle = 0.9
+        glint_lifetime = 0.7
+        glint_max_length = 5
+        glint_drift = 12
+        for glint_index in range(4):
+            glint_time = self.blueprint_effect_time + glint_index*glint_cycle/4
+            glint_age = glint_time % glint_cycle
+            if glint_age >= glint_lifetime:
+                continue
+
+            cycle_index = math.floor(glint_time / glint_cycle)
+            glint_progress = glint_age / glint_lifetime
+            glint_strength = (1 - glint_progress)**1.5
+            spawn_center = pygame.Vector2(
+                beacon_rect.left + 6 + (cycle_index*29 + glint_index*17) % (beacon_rect.width - 12),
+                beacon_rect.top + beacon_rect.height/2 + 4 + (cycle_index*19 + glint_index*31) % (1.5*beacon_rect.height - 8),
+            )
+            center = spawn_center - pygame.Vector2(0, glint_drift*glint_progress)
+            glint_length = 1 + round((glint_max_length - 1)*glint_strength)
+            glint_color = tuple(
+                round(channel*glint_strength)
+                for channel in Color.BLUEPRINT_SLOT_BORDER_GLOW
+            )
+            glint_surface = pygame.Surface(
+                (2*glint_max_length + 1, 2*glint_max_length + 1)
+            )
+            glint_surface_center = pygame.Vector2(glint_max_length, glint_max_length)
             pygame.draw.line(
-                surface,
-                Color.BLUEPRINT_SLOT_BORDER_GLOW,
-                center - pygame.Vector2(glint_length, 0),
-                center + pygame.Vector2(glint_length, 0),
+                glint_surface,
+                glint_color,
+                glint_surface_center - pygame.Vector2(glint_length, 0),
+                glint_surface_center + pygame.Vector2(glint_length, 0),
             )
             pygame.draw.line(
-                surface,
-                Color.BLUEPRINT_SLOT_BORDER_GLOW,
-                center - pygame.Vector2(0, glint_length),
-                center + pygame.Vector2(0, glint_length),
+                glint_surface,
+                glint_color,
+                glint_surface_center - pygame.Vector2(0, glint_length),
+                glint_surface_center + pygame.Vector2(0, glint_length),
+            )
+            surface.blit(
+                glint_surface,
+                glint_surface.get_rect(center=center),
+                special_flags=pygame.BLEND_RGB_ADD,
             )
 
     def draw_blueprint_slots(self, surface, font_registry):
         equipment_slots = self.selected_shipgirl.battle_component.equipment
         for slot, (equipment, rect) in enumerate(zip(equipment_slots, self.equipped_rects)):
-            pygame.draw.rect(surface, Color.BLUEPRINT_TITLE_BLOCK, rect)
+            slot_color = (
+                Color.BLUEPRINT_PAGE_GLOW
+                if self.selected_slot == slot
+                else Color.BLUEPRINT_TITLE_BLOCK
+            )
+            pygame.draw.rect(surface, slot_color, rect)
             if equipment is None:
                 label_y = rect.centery - font_registry["big_pixel"].font_height/2 - 2
                 font_registry["big_pixel"].render(
