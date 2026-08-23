@@ -19,10 +19,13 @@ class EquipmentMenu:
 
         self.selected_shipgirl = None
 
-        blueprint_surf = DataFiles.sprites["equipment_menu"]["blueprint"]
-        self.blueprint_page = blueprint_surf.get_rect()
-        self.blueprint_page.left = screen_x(0.5) - Box.WIDTH * 3/2
-        self.blueprint_page.top = Box.TOP_OF_SCREEN - Box.PADDING
+
+        self.blueprint_page = get_rect(
+            width=448,
+            height=288,
+            left=screen_x(0.5) - Box.WIDTH * 3/2,
+            top=Box.TOP_OF_SCREEN - Box.PADDING,
+        )
         self.equipped_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
@@ -610,7 +613,20 @@ class EquipmentMenu:
                 color,
                 Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset)
             )
-        surface.blit(DataFiles.sprites["equipment_menu"]["blueprint"], self.blueprint_page)
+        pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
+
+        side_schematic = DataFiles.sprites["equipment_menu"]["side_schematic"]
+        side_schematic_rect = side_schematic.get_rect()
+        side_schematic_rect.left = self.blueprint_page.left
+        side_schematic_rect.top = self.blueprint_page.top + Box.HEIGHT/2
+        surface.blit(side_schematic, side_schematic_rect)
+
+        top_schematic = DataFiles.sprites["equipment_menu"]["top_schematic"]
+        top_schematic_rect = top_schematic.get_rect()
+        top_schematic_rect.left = self.blueprint_page.left
+        top_schematic_rect.bottom = self.blueprint_page.bottom
+        surface.blit(top_schematic, top_schematic_rect)
+
         faction_icon = DataFiles.sprites["user_interface"][f"{faction}_big"]
         faction_icon_rect = faction_icon.get_rect()
         faction_icon_rect.left = self.blueprint_page.left + Box.PADDING
@@ -635,10 +651,12 @@ class EquipmentMenu:
                 slot_glow_rect.bottomleft = rect.topleft
                 surface.blit(slot_glow, slot_glow_rect, special_flags=pygame.BLEND_RGB_ADD)
 
+        page_bottom = self.blueprint_page.bottom + Box.HEIGHT/2
+
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
         pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment magic number
-        pencil_rect.bottom = self.blueprint_page.bottom
+        pencil_rect.bottom = page_bottom
 
         ruler_sprite = DataFiles.sprites["props"]["ruler"]
         ruler_rect = ruler_sprite.get_rect()
@@ -649,7 +667,7 @@ class EquipmentMenu:
         compass_sprite = DataFiles.sprites["props"]["compass"]
         compass_rect = compass_sprite.get_rect()
         compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment magic number
-        compass_rect.bottom = self.blueprint_page.bottom
+        compass_rect.bottom = page_bottom
         surface.blit(compass_sprite, compass_rect)
         
         # section divider
