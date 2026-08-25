@@ -27,13 +27,16 @@ class FleetSelectionMenu:
     Y_ALIGN = screen_y(0.3)
     PATH_DASH_LENGTH = 16
     PATH_DASH_WIDTH = 4
-    PATH_HEX_PULSE_DURATION = 2.4
-    PATH_HEX_GLINT_CYCLE = 0.9
-    PATH_HEX_GLINT_LIFETIME = 0.7
+    SELECTION_PULSE_DURATION = 2.4
+    SELECTION_GLINT_CYCLE = 0.9
+    SELECTION_GLINT_LIFETIME = 0.7
+    SELECTION_GLINT_MAX_LENGTH = 5
+    SELECTION_GLINT_DRIFT = 12
     PATH_HEX_GLINTS_PER_HEX = 4
-    PATH_HEX_GLINT_MAX_LENGTH = 5
     PATH_HEX_GLINT_MARGIN = 6
-    PATH_HEX_GLINT_DRIFT = 12
+    MARKER_GLINT_COUNT = 4
+    MARKER_GLINT_MARGIN = 6
+    MARKER_PROJECTION_ALPHA = 192
     TRAY_WOOD_COLOR = (116, 79, 52)
     TRAY_BEZEL_COLOR = (153, 108, 74)
     TRAY_WOOD_GRAIN_SEED = 1
@@ -138,9 +141,11 @@ class FleetSelectionMenu:
 
         self.path = []
         self.path_hexes = []
-        self.path_hex_effect_time = 0
+        self.selection_effect_time = 0
 
         self.background = Background()
+        self.marker_glow_layer = None
+        self.marker_projection_layer = None
 
     def _draw_dashed_rect(self, surface, rect, color = Color.WHITE, dash_length = PATH_DASH_LENGTH, dash_width = PATH_DASH_WIDTH):
         for start, end in [
@@ -257,22 +262,58 @@ class FleetSelectionMenu:
         if len(self.path_hexes) < num_encounters:
             self.path_hexes.append(pos)
 
-    def draw_path_hexes(self, surface):
-        hex_size = Box.WIDTH/2
+    def get_pulsing_selection_glow(self, glow_sprite):
         pulse = (
             math.sin(
-                self.path_hex_effect_time
+                self.selection_effect_time
                 * math.tau
-                / self.PATH_HEX_PULSE_DURATION
+                / self.SELECTION_PULSE_DURATION
             )
             + 1
         ) / 2
-        glow_base = DataFiles.sprites[
-            "sortie_selection"
-        ]["locked_node_selection_glow"].copy()
+        glow_base = glow_sprite.copy()
         glow_base.set_alpha(int(128 + 127*pulse))
         glow = pygame.Surface(glow_base.get_size())
         glow.blit(glow_base)
+        return glow
+
+    def draw_selection_glint(self, surface, center, color, strength):
+        glint_length = 1 + round(
+            (self.SELECTION_GLINT_MAX_LENGTH - 1)*strength
+        )
+        glint_color = tuple(round(channel*strength) for channel in color)
+        glint_surface = pygame.Surface(
+            (
+                2*self.SELECTION_GLINT_MAX_LENGTH + 1,
+                2*self.SELECTION_GLINT_MAX_LENGTH + 1,
+            )
+        )
+        glint_surface_center = pygame.Vector2(
+            self.SELECTION_GLINT_MAX_LENGTH,
+            self.SELECTION_GLINT_MAX_LENGTH,
+        )
+        pygame.draw.line(
+            glint_surface,
+            glint_color,
+            glint_surface_center - pygame.Vector2(glint_length, 0),
+            glint_surface_center + pygame.Vector2(glint_length, 0),
+        )
+        pygame.draw.line(
+            glint_surface,
+            glint_color,
+            glint_surface_center - pygame.Vector2(0, glint_length),
+            glint_surface_center + pygame.Vector2(0, glint_length),
+        )
+        surface.blit(
+            glint_surface,
+            glint_surface.get_rect(center=center),
+            special_flags=pygame.BLEND_RGB_ADD,
+        )
+
+    def draw_path_hexes(self, surface):
+        hex_size = Box.WIDTH/2
+        glow_sprite = DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
+        glow = self.get_pulsing_selection_glow(glow_sprite)
 
         icon = DataFiles.sprites["user_interface"]["uncleared"]
         path_hex_centers = []
@@ -318,15 +359,15 @@ class FleetSelectionMenu:
             for glint_index in range(self.PATH_HEX_GLINTS_PER_HEX):
                 particle_index = glint_index*len(path_hex_centers) + hex_index
                 glint_time = (
-                    self.path_hex_effect_time
-                    + particle_index*self.PATH_HEX_GLINT_CYCLE/glint_count
+                    self.selection_effect_time
+                    + particle_index*self.SELECTION_GLINT_CYCLE/glint_count
                 )
-                glint_age = glint_time % self.PATH_HEX_GLINT_CYCLE
-                if glint_age >= self.PATH_HEX_GLINT_LIFETIME:
+                glint_age = glint_time % self.SELECTION_GLINT_CYCLE
+                if glint_age >= self.SELECTION_GLINT_LIFETIME:
                     continue
 
-                cycle_index = math.floor(glint_time / self.PATH_HEX_GLINT_CYCLE)
-                glint_progress = glint_age / self.PATH_HEX_GLINT_LIFETIME
+                cycle_index = math.floor(glint_time / self.SELECTION_GLINT_CYCLE)
+                glint_progress = glint_age / self.SELECTION_GLINT_LIFETIME
                 glint_strength = (1 - glint_progress)**1.5
                 half_spawn_width = (
                     math.sqrt(3)/2*hex_size - self.PATH_HEX_GLINT_MARGIN
@@ -347,42 +388,124 @@ class FleetSelectionMenu:
                 spawn_center = hex_center + pygame.Vector2(spawn_x, spawn_y)
                 center = spawn_center - pygame.Vector2(
                     0,
-                    self.PATH_HEX_GLINT_DRIFT*glint_progress,
+                    self.SELECTION_GLINT_DRIFT*glint_progress,
                 )
-                glint_length = 1 + round(
-                    (self.PATH_HEX_GLINT_MAX_LENGTH - 1)*glint_strength
+                self.draw_selection_glint(
+                    surface,
+                    center,
+                    Color.LOCKED_ZONE_OUTLINE,
+                    glint_strength,
                 )
-                glint_color = tuple(
-                    round(channel*glint_strength)
-                    for channel in Color.LOCKED_ZONE_OUTLINE
-                )
-                glint_surface = pygame.Surface(
-                    (
-                        2*self.PATH_HEX_GLINT_MAX_LENGTH + 1,
-                        2*self.PATH_HEX_GLINT_MAX_LENGTH + 1,
-                    )
-                )
-                glint_surface_center = pygame.Vector2(
-                    self.PATH_HEX_GLINT_MAX_LENGTH,
-                    self.PATH_HEX_GLINT_MAX_LENGTH,
-                )
-                pygame.draw.line(
-                    glint_surface,
-                    glint_color,
-                    glint_surface_center - pygame.Vector2(glint_length, 0),
-                    glint_surface_center + pygame.Vector2(glint_length, 0),
-                )
-                pygame.draw.line(
-                    glint_surface,
-                    glint_color,
-                    glint_surface_center - pygame.Vector2(0, glint_length),
-                    glint_surface_center + pygame.Vector2(0, glint_length),
-                )
-                surface.blit(
-                    glint_surface,
-                    glint_surface.get_rect(center=center),
-                    special_flags=pygame.BLEND_RGB_ADD,
-                )
+
+    def draw_marker_selection_effect(self, surface, marker_rect):
+        glow_sprite = DataFiles.sprites["fleet_selection"]["marker_selection_glow"]
+        glow = self.get_pulsing_selection_glow(glow_sprite)
+        glow_rect = glow.get_rect(midbottom=marker_rect.center)
+        surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
+
+        vertical_spawn_range = glow_rect.height - 2*self.MARKER_GLINT_MARGIN
+        bottom_width = math.ceil(0.75*Box.WIDTH)
+        for glint_index in range(self.MARKER_GLINT_COUNT):
+            glint_time = (
+                self.selection_effect_time
+                + glint_index*self.SELECTION_GLINT_CYCLE/self.MARKER_GLINT_COUNT
+            )
+            glint_age = glint_time % self.SELECTION_GLINT_CYCLE
+            if glint_age >= self.SELECTION_GLINT_LIFETIME:
+                continue
+
+            cycle_index = math.floor(glint_time / self.SELECTION_GLINT_CYCLE)
+            glint_progress = glint_age / self.SELECTION_GLINT_LIFETIME
+            glint_strength = (1 - glint_progress)**1.5
+            spawn_y = (
+                self.MARKER_GLINT_MARGIN
+                + (cycle_index*19 + glint_index*31) % vertical_spawn_range
+            )
+            y_ratio = spawn_y / (glow_rect.height - 1)
+            cone_width = round(
+                glow_rect.width - (glow_rect.width - bottom_width)*y_ratio
+            )
+            half_spawn_width = cone_width/2 - self.MARKER_GLINT_MARGIN
+            spawn_x = (
+                (cycle_index*29 + glint_index*17) % (2*half_spawn_width)
+                - half_spawn_width
+            )
+            spawn_center = pygame.Vector2(
+                glow_rect.centerx + spawn_x,
+                glow_rect.top + spawn_y,
+            )
+            center = spawn_center - pygame.Vector2(
+                0,
+                self.SELECTION_GLINT_DRIFT*glint_progress,
+            )
+            if center.y < glow_rect.top:
+                continue
+            self.draw_selection_glint(
+                surface,
+                center,
+                Color.HOLOGRAM_GLOW,
+                glint_strength,
+            )
+
+    def get_marker_projection_layers(self, surface):
+        surface_size = surface.get_size()
+        if (
+            self.marker_glow_layer is None
+            or self.marker_glow_layer.get_size() != surface_size
+        ):
+            self.marker_glow_layer = pygame.Surface(surface_size)
+            self.marker_projection_layer = pygame.Surface(
+                surface_size,
+                flags=pygame.SRCALPHA,
+            )
+
+        self.marker_glow_layer.fill((0, 0, 0))
+        self.marker_projection_layer.fill((0, 0, 0, 0))
+
+        return self.marker_glow_layer, self.marker_projection_layer
+
+    def draw_marker_hologram(
+        self,
+        surface,
+        marker,
+        marker_rect,
+        shipgirl,
+        font_registry,
+    ):
+        glow_layer, projection_layer = self.get_marker_projection_layers(surface)
+        self.draw_marker_selection_effect(glow_layer, marker_rect)
+
+        # The opaque marker occludes the glow, keeping both halves the same color.
+        surface.blit(glow_layer, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
+        surface.blit(marker, marker_rect)
+
+        shipgirl.draw(
+            projection_layer,
+            font_registry,
+            alpha=self.MARKER_PROJECTION_ALPHA,
+        )
+        surface.blit(projection_layer, (0, 0))
+
+        # Reapply the cone through the projection silhouette so the translucent
+        # shipgirl receives the light without brightening exposed marker pixels.
+        projection_mask = pygame.mask.from_surface(projection_layer, threshold=1)
+        mask_strength = self.MARKER_PROJECTION_ALPHA
+        mask_surface = projection_mask.to_surface(
+            setcolor=(255, 255, 255),
+            unsetcolor=(0, 0, 0),
+        )
+        mask_surface.set_colorkey(None)
+        projection_glow = glow_layer.copy()
+        projection_glow.blit(
+            mask_surface,
+            (0, 0),
+            special_flags=pygame.BLEND_RGB_MULT,
+        )
+        surface.blit(
+            projection_glow,
+            (0, 0),
+            special_flags=pygame.BLEND_RGB_ADD,
+        )
 
     def draw_tray_overlay(self, surface, font_registry):
         self.draw_tray_wood_grain(surface, self.tray_overlay)
@@ -444,7 +567,7 @@ class FleetSelectionMenu:
         return False
 
     def update(self, dt, events):
-        self.path_hex_effect_time += dt
+        self.selection_effect_time += dt
         for event in events:
             if event.type == pygame.MOUSEMOTION:
                 self.exit_fleet_selection_menu_button.hover(event.pos)
@@ -552,19 +675,16 @@ class FleetSelectionMenu:
                     marker = pygame.transform.flip(marker, flip_x=True, flip_y=False)
                 marker_rect = marker.get_rect()
                 marker_rect.center = slot.center
-                surface.blit(marker, marker_rect)
-                if marker_key == "blank":
-                    shipgirl.draw(surface, font_registry, alpha=160)
-                # TODO ad hoc solution right now with the sprite, need to figure out if
-                # there is a programmatic way to fix this issue
-                # the issue right now is that if the blank marker has the same color for
-                # the face, then the glow add blending will cause the upper half of the
-                # marker to be brighter than the lower half
                 if marker_hovered:
-                    glow = DataFiles.sprites["fleet_selection"]["marker_selection_glow"]
-                    glow_rect = glow.get_rect()
-                    glow_rect.midbottom = marker_rect.center
-                    surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
+                    self.draw_marker_hologram(
+                        surface,
+                        marker,
+                        marker_rect,
+                        shipgirl,
+                        font_registry,
+                    )
+                else:
+                    surface.blit(marker, marker_rect)
             elif self.selected_shipgirl is not None:
                 anchor_sprite = DataFiles.sprites["user_interface"]["start_sortie"]
                 anchor_rect = anchor_sprite.get_rect()
