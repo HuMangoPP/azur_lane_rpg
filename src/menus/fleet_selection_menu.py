@@ -27,6 +27,11 @@ class FleetSelectionMenu:
     Y_ALIGN = screen_y(0.45)
     PATH_DASH_LENGTH = 16
     PATH_DASH_WIDTH = 4
+    LAUNCH_MARKER_RADIUS = 32
+    LAUNCH_MARKER_HIT_SIZE = 80
+    LAUNCH_MARKER_HOVER_LIFT = 2
+    LAUNCH_MARKER_SHADOW_OFFSET = pygame.Vector2(2, 4)
+    LAUNCH_MARKER_MUTED_INK = (146, 165, 196)
     SELECTION_PULSE_DURATION = 2.4
     SELECTION_GLINT_CYCLE = 0.9
     SELECTION_GLINT_LIFETIME = 0.7
@@ -86,20 +91,19 @@ class FleetSelectionMenu:
             self.menu_manager.encounter_menu.begin_sortie()
 
         self.start_sortie_button = Button(
-            get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, bottom=self.tray_overlay.top - Box.PADDING),
+            get_rect(
+                width=self.LAUNCH_MARKER_HIT_SIZE,
+                height=self.LAUNCH_MARKER_HIT_SIZE,
+                center=(screen_x(0.5), self.Y_ALIGN),
+            ),
             start_sortie,
             active=False,
-            background_styling={
-                "background_color": Color.START_SORTIE_BUTTON,
-                "background_img": DataFiles.sprites["user_interface"]["start_sortie"],
-                "background_img_align": (1/4, 1/2)
-            },
-            text_styling={
-                "text": "start",
-                "text_align": (2/3, 1/2),
-                "text_color": Color.WHITE
-            },
-            hover_styling={"background_color": Color.HOVER_START_SORTIE_BUTTON}
+        )
+        self.start_sortie_anchor = DataFiles.sprites["user_interface"]["start_sortie"]
+        self.muted_start_sortie_anchor = DataFiles.recolor_sprite(
+            "user_interface",
+            "start_sortie",
+            self.LAUNCH_MARKER_MUTED_INK,
         )
 
         def exit_fleet_selection_menu():
@@ -405,6 +409,121 @@ class FleetSelectionMenu:
         if len(self.path_hexes) < num_encounters:
             self.path_hexes.append(pos)
 
+        self.start_sortie_button.rect.center = self.path[0][0]
+
+    def _get_launch_marker_polygon(self, center):
+        return [
+            pygame.Vector2(center) + get_vec(
+                self.LAUNCH_MARKER_RADIUS,
+                math.radians(30 + corner_index*60),
+            )
+            for corner_index in range(6)
+        ]
+
+    def draw_launch_marker(self, surface):
+        center = pygame.Vector2(self.start_sortie_button.rect.center)
+        hovered = (
+            self.start_sortie_button.active
+            and self.start_sortie_button.hovered
+            and self.mouse_start_drag is None
+        )
+        token_center = center - pygame.Vector2(
+            0,
+            self.LAUNCH_MARKER_HOVER_LIFT if hovered else 0,
+        )
+
+        shadow_polygon = self._get_launch_marker_polygon(
+            center + self.LAUNCH_MARKER_SHADOW_OFFSET
+        )
+        pygame.draw.polygon(surface, self.TRAY_CAST_SHADOW, shadow_polygon)
+
+        if self.start_sortie_button.active:
+            glow_sprite = DataFiles.sprites["sortie_selection"][
+                "uncleared_node_selection_glow"
+            ]
+            glow = self.get_pulsing_selection_glow(glow_sprite)
+            marker_polygon = self._get_launch_marker_polygon(token_center)
+            glow_left = int(min(corner.x for corner in marker_polygon))
+            glow_right = int(max(corner.x for corner in marker_polygon))
+            glow_rect = pygame.Rect(
+                glow_left,
+                0,
+                glow_right - glow_left + 1,
+                glow.get_height(),
+            )
+            glow_rect.bottom = token_center.y
+            marker_glow = pygame.transform.smoothscale(glow, glow_rect.size)
+            surface.blit(
+                marker_glow,
+                glow_rect,
+                special_flags=pygame.BLEND_RGB_ADD,
+            )
+
+        outline_color = Color.UNCLEARED_ZONE_OUTLINE
+        if self.start_sortie_button.active:
+            fill_color = Color.UNCLEARED_ZONE_OUTLINE
+            anchor = self.start_sortie_anchor
+        else:
+            fill_color = Color.UNCLEARED_ZONE_FILL
+            anchor = self.muted_start_sortie_anchor
+
+        marker_polygon = self._get_launch_marker_polygon(token_center)
+        pygame.draw.polygon(surface, fill_color, marker_polygon)
+        pygame.draw.polygon(
+            surface,
+            outline_color,
+            marker_polygon,
+            width=Box.OUTLINE_WIDTH,
+        )
+
+        anchor_rect = anchor.get_rect(center=token_center)
+        surface.blit(anchor, anchor_rect)
+
+        if self.start_sortie_button.active:
+            glint_count = self.PATH_HEX_GLINTS_PER_HEX
+            for glint_index in range(glint_count):
+                glint_time = (
+                    self.selection_effect_time
+                    + glint_index*self.SELECTION_GLINT_CYCLE/glint_count
+                )
+                glint_age = glint_time % self.SELECTION_GLINT_CYCLE
+                if glint_age >= self.SELECTION_GLINT_LIFETIME:
+                    continue
+
+                cycle_index = math.floor(glint_time / self.SELECTION_GLINT_CYCLE)
+                glint_progress = glint_age / self.SELECTION_GLINT_LIFETIME
+                glint_strength = (1 - glint_progress)**1.5
+                half_spawn_width = (
+                    math.sqrt(3)/2*self.LAUNCH_MARKER_RADIUS
+                    - self.PATH_HEX_GLINT_MARGIN
+                )
+                spawn_x = (
+                    (cycle_index*29 + glint_index*17)
+                    % (2*half_spawn_width)
+                    - half_spawn_width
+                )
+                half_spawn_height = (
+                    self.LAUNCH_MARKER_RADIUS
+                    - abs(spawn_x)/math.sqrt(3)
+                    - self.PATH_HEX_GLINT_MARGIN
+                )
+                spawn_y = (
+                    (cycle_index*19 + glint_index*31)
+                    % (2*half_spawn_height)
+                    - half_spawn_height
+                )
+                spawn_center = token_center + pygame.Vector2(spawn_x, spawn_y)
+                glint_center = spawn_center - pygame.Vector2(
+                    0,
+                    self.SELECTION_GLINT_DRIFT*glint_progress,
+                )
+                self.draw_selection_glint(
+                    surface,
+                    glint_center,
+                    Color.UNCLEARED_ZONE_OUTLINE,
+                    glint_strength,
+                )
+
     def get_pulsing_selection_glow(self, glow_sprite):
         pulse = (
             math.sin(
@@ -495,13 +614,7 @@ class FleetSelectionMenu:
                 special_flags=pygame.BLEND_RGB_ADD,
             )
 
-            pygame.draw.polygon(surface, Color.LOCKED_ZONE_FILL_HOVER, polygon)
-            pygame.draw.polygon(
-                surface,
-                Color.LOCKED_ZONE_OUTLINE,
-                polygon,
-                width=Box.OUTLINE_WIDTH,
-            )
+            pygame.draw.polygon(surface, Color.LOCKED_ZONE_OUTLINE, polygon)
             surface.blit(icon, icon_rect)
             path_hex_centers.append(hex_center)
 
@@ -841,7 +954,10 @@ class FleetSelectionMenu:
         for event in events:
             if event.type == pygame.MOUSEMOTION:
                 self.exit_fleet_selection_menu_button.hover(event.pos)
-                self.start_sortie_button.hover(event.pos)
+                if self.mouse_start_drag is None:
+                    self.start_sortie_button.hover(event.pos)
+                else:
+                    self.start_sortie_button.hovered = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.selected_shipgirl = None
                 self.mouse_start_drag = None
@@ -863,6 +979,7 @@ class FleetSelectionMenu:
                         self.selected_shipgirl_index_from_backup = i
             if event.type == pygame.MOUSEBUTTONUP:
                 click = False
+                was_dragging_shipgirl = self.selected_shipgirl is not None
                 if self.selected_shipgirl is not None:
                     click = self._drop_shipgirl(
                         self.menu_manager.player_fleet.shipgirls,
@@ -883,11 +1000,9 @@ class FleetSelectionMenu:
                     self.selected_shipgirl = None
 
                 self.mouse_start_drag = None
-                click = (
-                    click
-                    or self.start_sortie_button.click(event.pos)
-                    or self.exit_fleet_selection_menu_button.click(event.pos)
-                )
+                if not was_dragging_shipgirl:
+                    click = click or self.start_sortie_button.click(event.pos)
+                click = click or self.exit_fleet_selection_menu_button.click(event.pos)
 
                 if click:
                     DataFiles.sfx["click"].play()
@@ -912,7 +1027,10 @@ class FleetSelectionMenu:
 
         for point, angle in self.path:
             dash_offset = get_vec(self.PATH_DASH_LENGTH / 2, angle)
-            dash_width_offset = get_vec(self.PATH_DASH_WIDTH / 2, angle + math.radians(90))
+            dash_width_offset = get_vec(
+                self.PATH_DASH_WIDTH / 2,
+                angle + math.radians(90),
+            )
             dash_polygon = [
                 point + dash_offset + dash_width_offset,
                 point - dash_offset + dash_width_offset,
@@ -922,10 +1040,11 @@ class FleetSelectionMenu:
             pygame.draw.polygon(
                 surface,
                 Color.WHITE,
-                dash_polygon
+                dash_polygon,
             )
 
         self.draw_path_hexes(surface)
+        self.draw_launch_marker(surface)
 
         # self.background.draw_markings(surface, font_registry)
         
@@ -976,6 +1095,5 @@ class FleetSelectionMenu:
         self.draw_tray_overlay(surface, font_registry)
         self.header_ribbon.draw(surface, font_registry)
 
-        self.start_sortie_button.draw(surface, font_registry)
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
         self._draw_dragged_marker(surface, mpos)
