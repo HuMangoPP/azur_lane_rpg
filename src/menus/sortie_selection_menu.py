@@ -330,22 +330,40 @@ class NameRibbon:
         self.position = pygame.Vector2(position)
     
     def get_width(self, font_registry):
-        left = DataFiles.sprites["sortie_selection"]["name_left"]
-        right = DataFiles.sprites["sortie_selection"]["name_right"]
-        middle = DataFiles.sprites["sortie_selection"]["name_middle"]
+        left = pygame.transform.scale_by(
+            DataFiles.sprites["sortie_selection"]["name_left"],
+            self.FONT_SCALE
+        )
+        right = pygame.transform.scale_by(
+            DataFiles.sprites["sortie_selection"]["name_right"],
+            self.FONT_SCALE
+        )
+        middle = pygame.transform.scale_by(
+            DataFiles.sprites["sortie_selection"]["name_middle"],
+            self.FONT_SCALE
+        )
         text_width = font_registry["handwritten"].get_width(self.text, self.FONT_SCALE, 0) - Box.WIDTH
         middle_width = max(middle.get_width(), text_width + 2 * self.PADDING_X)
         return left.get_width() + middle_width + right.get_width()
 
     def get_rect(self, font_registry):
         width = self.get_width(font_registry)
-        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
+        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height() * self.FONT_SCALE
         return get_rect(width=width, height=height, center=self.position + anchor())
 
     def draw(self, surface, font_registry):
-        left = DataFiles.sprites["sortie_selection"]["name_left"]
-        middle = DataFiles.sprites["sortie_selection"]["name_middle"]
-        right = DataFiles.sprites["sortie_selection"]["name_right"]
+        left = pygame.transform.scale_by(
+            DataFiles.sprites["sortie_selection"]["name_left"],
+            self.FONT_SCALE
+        )
+        right = pygame.transform.scale_by(
+            DataFiles.sprites["sortie_selection"]["name_right"],
+            self.FONT_SCALE
+        )
+        middle = pygame.transform.scale_by(
+            DataFiles.sprites["sortie_selection"]["name_middle"],
+            self.FONT_SCALE
+        )
         rect = self.get_rect(font_registry)
 
         left_rect = left.get_rect(topleft=rect.topleft)
@@ -364,8 +382,7 @@ class NameRibbon:
         right_rect = right.get_rect(topright=rect.topright)
         surface.blit(right, right_rect)
 
-        text_pos = pygame.Vector2(rect.centerx, rect.centery)
-        font_registry["handwritten"].render(surface, self.text, text_pos, Color.BLACK, self.FONT_SCALE, style="center")
+        font_registry["handwritten"].render(surface, self.text, rect.center, Color.BLACK, self.FONT_SCALE, style="center")
 
 class ChapterNameRibbon:
     CHAPTER_NAMES = [
@@ -467,9 +484,9 @@ class Background:
 
 class SortieOrderCard:
     WIDTH = 3*(Box.WIDTH + Box.PADDING) + Box.PADDING + 2*Box.PADDING
-    HEIGHT = 4.5*Box.HEIGHT + 4*Box.PADDING
-    HEADER_BOTTOM = 64
-    REWARD_TOP = 84
+    HEIGHT = 5*Box.HEIGHT + 4*Box.PADDING
+    HEADER_BOTTOM = 96
+    REWARD_TOP = 116
     AUTHORIZATION_HEIGHT = 72
     AUTHORIZATION_DURATION = 1
     AUTHORIZATION_IMPACT_TIME = 0.15
@@ -596,8 +613,8 @@ class SortieOrderCard:
 
     def get_status(self):
         if self.node.cleared:
-            return "cleared", Color.CLEARED_ZONE_FILL
-        return "available", Color.UNCLEARED_ZONE_FILL
+            return "charted territory", Color.CLEARED_ZONE_FILL
+        return "uncharted waters", Color.UNCLEARED_ZONE_FILL
 
     def draw_paper(self, surface):
         dossier_rect = self.rect.inflate(0, -Box.HEIGHT/2)
@@ -642,8 +659,8 @@ class SortieOrderCard:
         status_rect = get_rect(
             width=status_width,
             height=24,
-            right=right,
-            bottom=self.page_rect.top + self.HEADER_BOTTOM - Box.PADDING,
+            left=left,
+            top=top + 52,
         )
         pygame.draw.rect(surface, status_color, status_rect, width=Box.OUTLINE_WIDTH)
         pygame.draw.rect(surface, status_color, status_rect.inflate(-4, -4), width=1)
@@ -660,7 +677,7 @@ class SortieOrderCard:
         font = font_registry["big_pixel"]
         left = self.page_rect.left + Box.PADDING
         heading = "allotment issued" if self.node.cleared else "first-clear allotment"
-        font.render(surface, heading, (left, self.page_rect.top + 70), Color.DOSSIER_RULE, 1)
+        font.render(surface, heading, (left, self.page_rect.top + 102), Color.DOSSIER_RULE, 1)
 
         rewards = DataFiles.sortie_data[self.node.index]["rewards"]
         if not rewards:
@@ -839,6 +856,9 @@ class SortieSelectionMenu:
         def start_sortie():
             self.menu_manager.current_menu = self.menu_manager.fleet_selection_menu
             self.menu_manager.fleet_selection_menu.generate_path(self.selected_sortie_node.index)
+            self.menu_manager.fleet_selection_menu.header_ribbon.text = (
+                f"sector {self.selected_sortie_node.index + 1:02d}"
+            )
             self.menu_manager.encounter_menu.current_sortie = self.selected_sortie_node.index
             self.menu_manager.encounter_menu.current_encounter = 0
             self.menu_manager.player_fleet.clear_fleet()

@@ -13,18 +13,18 @@ from live2d.live2d import Live2D
 
 
 class FleetNameRibbon(NameRibbon):
-    def __init__(self, position, text):
-        self.text = text
-        self.position = pygame.Vector2(position)
-
     def get_rect(self, font_registry):
         width = self.get_width(font_registry)
-        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
+        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height() * self.FONT_SCALE
         return get_rect(width=width, height=height, center=self.position)
 
 
+class HeaderNameRibbon(FleetNameRibbon):
+    FONT_SCALE = 1.5
+
+
 class FleetSelectionMenu:
-    Y_ALIGN = screen_y(0.3)
+    Y_ALIGN = screen_y(0.45)
     PATH_DASH_LENGTH = 16
     PATH_DASH_WIDTH = 4
     SELECTION_PULSE_DURATION = 2.4
@@ -45,7 +45,7 @@ class FleetSelectionMenu:
         self.menu_manager = menu_manager
 
         # TODO update tray styling
-        num_rows = 2
+        num_rows = 1
         num_rects_in_row = 6
         self.tray_overlay = get_rect(
             width=num_rects_in_row*(Box.WIDTH + Box.PADDING) + 4*Box.PADDING,
@@ -139,6 +139,8 @@ class FleetSelectionMenu:
             "backup",
         )
 
+        self.header_ribbon = HeaderNameRibbon((screen_x(0.5), Box.TOP_OF_SCREEN), "")
+
         self.path = []
         self.path_hexes = []
         self.selection_effect_time = 0
@@ -194,7 +196,7 @@ class FleetSelectionMenu:
         encounter_counter = num_encounters
         radius = 48
         sign = random.choice([1, -1])
-        straight_distance = random.uniform(10, 30)
+        straight_distance = random.uniform(5, 10)
         launch_angle = sign * math.radians(90)
         land_pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
         checkpoints = [land_pos]
@@ -208,9 +210,9 @@ class FleetSelectionMenu:
             encounter_counter -= 1
 
             if encounter_counter > 1:
-                straight_distance = random.uniform(80, 150)
+                straight_distance = random.uniform(80, 120)
             else:
-                straight_distance = random.uniform(20, 40)
+                straight_distance = random.uniform(10, 20)
         circle_center = land_pos + get_vec(radius, launch_angle)
         end_pos = circle_center + get_vec(radius, -sign * math.radians(90))
         checkpoints.append(end_pos)
@@ -657,6 +659,13 @@ class FleetSelectionMenu:
 
         self.draw_path_hexes(surface)
 
+        # self.background.draw_markings(surface, font_registry)
+        
+        self._draw_dashed_rect(surface, self.backup_fleet_box)
+        self._draw_dashed_rect(surface, self.primary_fleet_box)
+        self.backup_fleet_ribbon.draw(surface, font_registry)
+        self.primary_fleet_ribbon.draw(surface, font_registry)
+
         for slot, shipgirl in zip(
             self.fleet_slots + self.backup_fleet_slots,
             self.menu_manager.player_fleet.shipgirls + self.menu_manager.player_fleet.backups
@@ -690,18 +699,12 @@ class FleetSelectionMenu:
                 anchor_rect = anchor_sprite.get_rect()
                 anchor_rect.center = slot.center
                 surface.blit(anchor_sprite, anchor_rect)
-        
-        self._draw_dashed_rect(surface, self.backup_fleet_box)
-        self._draw_dashed_rect(surface, self.primary_fleet_box)
-        self.backup_fleet_ribbon.draw(surface, font_registry)
-        self.primary_fleet_ribbon.draw(surface, font_registry)
 
         self.draw_tray_overlay(surface, font_registry)
+        self.header_ribbon.draw(surface, font_registry)
 
         self.start_sortie_button.draw(surface, font_registry)
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
-        
-        self.background.draw_markings(surface, font_registry)
 
         if self.mouse_start_drag is not None:
             pygame.draw.line(surface, Color.WHITE, self.mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)
