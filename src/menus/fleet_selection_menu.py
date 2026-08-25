@@ -37,9 +37,18 @@ class FleetSelectionMenu:
     MARKER_GLINT_COUNT = 4
     MARKER_GLINT_MARGIN = 6
     MARKER_PROJECTION_ALPHA = 192
-    TRAY_WOOD_COLOR = (116, 79, 52)
-    TRAY_BEZEL_COLOR = (153, 108, 74)
-    TRAY_WOOD_GRAIN_SEED = 1
+    TRAY_FRAME_COLOR = (38, 52, 72)
+    TRAY_FRAME_HIGHLIGHT = (76, 96, 119)
+    TRAY_FRAME_SHADOW = (19, 28, 42)
+    TRAY_RECESS_RIM = (15, 24, 36)
+    TRAY_BAY_COLOR = (45, 62, 76)
+    TRAY_BAY_HIGHLIGHT = (72, 91, 108)
+    TRAY_SCREW_COLOR = (58, 75, 91)
+    TRAY_CAST_SHADOW = (7, 14, 28)
+    TRAY_CORNER_CUT = 4
+    TRAY_MARKER_SHADOW_OFFSET = (2, 2)
+    TRAY_MARKER_HOVER_LIFT = 4
+    TRAY_DRAG_SHADOW_OFFSET = (4, 6)
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -48,16 +57,16 @@ class FleetSelectionMenu:
         num_rows = 1
         num_rects_in_row = 6
         self.tray_overlay = get_rect(
-            width=num_rects_in_row*(Box.WIDTH + Box.PADDING) + 4*Box.PADDING,
-            height=num_rows*(Box.HEIGHT + Box.PADDING) + 3*Box.PADDING,
+            width=num_rects_in_row*(Box.WIDTH + Box.PADDING) + 5*Box.PADDING,
+            height=num_rows*(Box.HEIGHT + Box.PADDING) + 5*Box.PADDING,
             right=Box.RIGHT_OF_SCREEN,
             bottom=Box.BOTTOM_OF_SCREEN
         )
         self.available_shipgirl_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.tray_overlay.left+2*Box.PADDING+(i%num_rects_in_row)*(Box.WIDTH+Box.PADDING),
-                top=self.tray_overlay.top+2*Box.PADDING+(i//num_rects_in_row)*(Box.HEIGHT+Box.PADDING)
+                left=self.tray_overlay.left+3*Box.PADDING+(i%num_rects_in_row)*(Box.WIDTH+Box.PADDING),
+                top=self.tray_overlay.top+3*Box.PADDING+(i//num_rects_in_row)*(Box.HEIGHT+Box.PADDING)
             ) for i in range(num_rows * num_rects_in_row)
         ]
 
@@ -149,6 +158,10 @@ class FleetSelectionMenu:
         self.background = Background()
         self.marker_glow_layer = None
         self.marker_projection_layer = None
+        self._tray_surface_cache = None
+        self._tray_shadow_cache = None
+        self._tray_cache_size = None
+        self._tray_marker_shadow_cache = {}
 
     def _draw_dashed_rect(self, surface, rect, color = Color.WHITE, dash_length = PATH_DASH_LENGTH, dash_width = PATH_DASH_WIDTH):
         for start, end in [
@@ -171,26 +184,153 @@ class FleetSelectionMenu:
                 pygame.draw.line(surface, color, dash_start, dash_end, width=dash_width)
                 distance += 2 * dash_length
 
-    def draw_tray_wood_grain(self, surface, tray_rect):
-        grain_rng = random.Random(self.TRAY_WOOD_GRAIN_SEED)
-        y = tray_rect.top
+    @classmethod
+    def _get_tray_polygon(cls, size, offset=(0, 0)):
+        width, height = size
+        offset_x, offset_y = offset
+        corner_cut = cls.TRAY_CORNER_CUT
+        return [
+            (offset_x + corner_cut, offset_y),
+            (offset_x + width - corner_cut - 1, offset_y),
+            (offset_x + width - 1, offset_y + corner_cut),
+            (offset_x + width - 1, offset_y + height - corner_cut - 1),
+            (offset_x + width - corner_cut - 1, offset_y + height - 1),
+            (offset_x + corner_cut, offset_y + height - 1),
+            (offset_x, offset_y + height - corner_cut - 1),
+            (offset_x, offset_y + corner_cut),
+        ]
 
-        while y < tray_rect.bottom:
-            band_height = min(grain_rng.randint(4, 24), tray_rect.bottom - y)
-            color_offset = grain_rng.randint(-14, 14)
-            color = (
-                max(0, min(255, self.TRAY_WOOD_COLOR[0] + color_offset)),
-                max(0, min(255, self.TRAY_WOOD_COLOR[1] + color_offset // 2)),
-                max(0, min(255, self.TRAY_WOOD_COLOR[2] + color_offset // 3)),
+    def _get_local_tray_bays(self):
+        return [
+            rect.move(-self.tray_overlay.left, -self.tray_overlay.top)
+            for rect in self.available_shipgirl_rects
+        ]
+
+    def _draw_tray_screw(self, surface, center):
+        center_x, center_y = center
+        pygame.draw.circle(
+            surface,
+            self.TRAY_FRAME_SHADOW,
+            center,
+            radius=Box.PADDING,
+        )
+        pygame.draw.circle(
+            surface,
+            self.TRAY_SCREW_COLOR,
+            center,
+            radius=Box.PADDING-2,
+        )
+        pygame.draw.line(
+            surface,
+            self.TRAY_FRAME_SHADOW,
+            (center_x - (Box.PADDING-2), center_y),
+            (center_x + (Box.PADDING-2), center_y),
+            width=3,
+        )
+
+    def _build_tray_surface(self):
+        tray_size = self.tray_overlay.size
+        tray_surface = pygame.Surface(tray_size, flags=pygame.SRCALPHA)
+        tray_polygon = self._get_tray_polygon(tray_size)
+        pygame.draw.polygon(tray_surface, self.TRAY_FRAME_COLOR, tray_polygon)
+
+        local_bays = self._get_local_tray_bays()
+        for bay_rect in local_bays:
+            recess_rect = bay_rect.inflate(4, 4)
+            pygame.draw.rect(tray_surface, self.TRAY_RECESS_RIM, recess_rect)
+            pygame.draw.rect(tray_surface, self.TRAY_BAY_COLOR, bay_rect)
+
+            # Crisp directional shading makes each bay read as stamped metal.
+            pygame.draw.line(
+                tray_surface,
+                self.TRAY_RECESS_RIM,
+                bay_rect.topleft,
+                bay_rect.topright,
+                width=2,
             )
-            band_rect = get_rect(
-                width=tray_rect.width,
-                height=band_height,
-                left=tray_rect.left,
-                top=y
+            pygame.draw.line(
+                tray_surface,
+                self.TRAY_RECESS_RIM,
+                bay_rect.topleft,
+                bay_rect.bottomleft,
+                width=2,
             )
-            pygame.draw.rect(surface, color, band_rect)
-            y += band_height
+            pygame.draw.line(
+                tray_surface,
+                self.TRAY_BAY_HIGHLIGHT,
+                bay_rect.bottomleft + pygame.Vector2(2, -2),
+                bay_rect.bottomright + pygame.Vector2(-2, -2),
+            )
+            pygame.draw.line(
+                tray_surface,
+                self.TRAY_BAY_HIGHLIGHT,
+                bay_rect.topright + pygame.Vector2(-2, 2),
+                bay_rect.bottomright + pygame.Vector2(-2, -2),
+            )
+
+        width, height = tray_size
+        corner_cut = self.TRAY_CORNER_CUT
+        pygame.draw.lines(
+            tray_surface,
+            self.TRAY_FRAME_HIGHLIGHT,
+            False,
+            [
+                (0, height - corner_cut - 1),
+                (0, corner_cut),
+                (corner_cut, 0),
+                (width - corner_cut - 1, 0),
+            ],
+            width=2,
+        )
+        pygame.draw.lines(
+            tray_surface,
+            self.TRAY_FRAME_SHADOW,
+            False,
+            [
+                (width - corner_cut - 1, 1),
+                (width - 1, corner_cut),
+                (width - 1, height - corner_cut - 1),
+                (width - corner_cut - 1, height - 1),
+                (corner_cut, height - 1),
+            ],
+            width=4,
+        )
+
+        screw_margin = 1.75*Box.PADDING
+        for screw_center in [
+            (screw_margin, screw_margin),
+            (width - screw_margin, screw_margin),
+            (screw_margin, height - screw_margin),
+            (width - screw_margin, height - screw_margin),
+        ]:
+            self._draw_tray_screw(tray_surface, screw_center)
+
+        return tray_surface
+
+    def _build_tray_shadow(self):
+        width, height = self.tray_overlay.size
+        shadow_surface = pygame.Surface(
+            (width + 10, height + 12),
+            flags=pygame.SRCALPHA,
+        )
+        pygame.draw.polygon(
+            shadow_surface,
+            (*self.TRAY_CAST_SHADOW, 56),
+            self._get_tray_polygon((width, height), offset=(6, 8)),
+        )
+        pygame.draw.polygon(
+            shadow_surface,
+            (*self.TRAY_CAST_SHADOW, 112),
+            self._get_tray_polygon((width, height), offset=(3, 4)),
+        )
+        return shadow_surface
+
+    def _get_tray_surfaces(self):
+        if self._tray_cache_size != self.tray_overlay.size:
+            self._tray_cache_size = self.tray_overlay.size
+            self._tray_surface_cache = self._build_tray_surface()
+            self._tray_shadow_cache = self._build_tray_shadow()
+        return self._tray_surface_cache, self._tray_shadow_cache
 
     def generate_path(self):
         num_encounters = len(DataFiles.sortie_data[self.sortie_index]["encounters"])
@@ -518,17 +658,136 @@ class FleetSelectionMenu:
             special_flags=pygame.BLEND_RGB_ADD,
         )
 
-    def draw_tray_overlay(self, surface, font_registry):
-        self.draw_tray_wood_grain(surface, self.tray_overlay)
-        pygame.draw.rect(surface, self.TRAY_BEZEL_COLOR, self.tray_overlay, width=6*Box.OUTLINE_WIDTH)
+    def _draw_tray_bay_highlight(self, surface, rect):
+        highlight = pygame.Surface(rect.size, flags=pygame.SRCALPHA)
+        highlight.fill((*self.TRAY_BAY_HIGHLIGHT, 72))
+        surface.blit(highlight, rect)
 
-        for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
-            pygame.draw.rect(surface, Color.CARGO_BOX, rect)
-            portrait = DataFiles.sprites["fleet_selection"][shipgirl.name]
-            portrait_rect = portrait.get_rect()
-            portrait_rect.center = rect.center
-            surface.blit(portrait, portrait_rect)
-            pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, rect, width=2*Box.OUTLINE_WIDTH)
+    def _get_tray_marker_shadow(self, marker_key, marker):
+        cached_shadow = self._tray_marker_shadow_cache.get(marker_key)
+        if cached_shadow is not None and cached_shadow.get_size() == marker.get_size():
+            return cached_shadow
+
+        marker_shadow = pygame.Surface(marker.get_size(), flags=pygame.SRCALPHA)
+        marker_mask = pygame.mask.from_surface(marker)
+        marker_mask.to_surface(
+            marker_shadow,
+            setcolor=(*self.TRAY_CAST_SHADOW, 144),
+            unsetcolor=(0, 0, 0, 0),
+        )
+        self._tray_marker_shadow_cache[marker_key] = marker_shadow
+        return marker_shadow
+
+    def _draw_tray_marker(self, surface, shipgirl, rect, lifted=False):
+        marker_key = shipgirl.name
+        marker = DataFiles.sprites["fleet_selection"][marker_key]
+        resting_rect = marker.get_rect(center=rect.center)
+        marker_rect = resting_rect.move(
+            0,
+            -self.TRAY_MARKER_HOVER_LIFT if lifted else 0,
+        )
+        marker_shadow = self._get_tray_marker_shadow(marker_key, marker)
+        shadow_rect = resting_rect.move(self.TRAY_MARKER_SHADOW_OFFSET)
+        surface.blit(marker_shadow, shadow_rect)
+        surface.blit(marker, marker_rect)
+
+    def _draw_dragged_marker(self, surface, mouse_pos):
+        if self.mouse_start_drag is None or self.selected_shipgirl is None:
+            return
+
+        marker_key = self.selected_shipgirl.name
+        marker = DataFiles.sprites["fleet_selection"][marker_key]
+        marker_is_deployed = (
+            self.selected_shipgirl_index_from_fleet is not None
+            or self.selected_shipgirl_index_from_backup is not None
+        )
+        shadow_key = marker_key
+        if marker_is_deployed:
+            marker = pygame.transform.flip(marker, flip_x=True, flip_y=False)
+            shadow_key = f"{marker_key}:flipped"
+
+        marker_rect = marker.get_rect(center=mouse_pos)
+        marker_shadow = self._get_tray_marker_shadow(shadow_key, marker)
+        surface.blit(marker_shadow, marker_rect.move(self.TRAY_DRAG_SHADOW_OFFSET))
+        surface.blit(marker, marker_rect)
+
+    def _draw_tray_bay_rims(self, surface):
+        for rect in self.available_shipgirl_rects:
+            pygame.draw.rect(surface, self.TRAY_RECESS_RIM, rect, width=2)
+            pygame.draw.line(
+                surface,
+                self.TRAY_FRAME_HIGHLIGHT,
+                rect.bottomleft + pygame.Vector2(1, -1),
+                rect.bottomright + pygame.Vector2(-1, -1),
+            )
+            pygame.draw.line(
+                surface,
+                self.TRAY_FRAME_HIGHLIGHT,
+                rect.topright + pygame.Vector2(-1, 1),
+                rect.bottomright + pygame.Vector2(-1, -1),
+            )
+
+    def _draw_tray_drop_target(self, surface, mouse_pos):
+        dragging_deployed_marker = (
+            self.mouse_start_drag is not None
+            and (
+                self.selected_shipgirl_index_from_fleet is not None
+                or self.selected_shipgirl_index_from_backup is not None
+            )
+        )
+        if not dragging_deployed_marker or not self.tray_overlay.collidepoint(mouse_pos):
+            return
+
+        highlight_inset = 4
+        highlight_size = (
+            self.tray_overlay.width - 2 * highlight_inset,
+            self.tray_overlay.height - 2 * highlight_inset,
+        )
+        tray_polygon = [
+            pygame.Vector2(point)
+            + self.tray_overlay.topleft
+            + (highlight_inset, highlight_inset)
+            for point in self._get_tray_polygon(highlight_size)
+        ]
+        pygame.draw.polygon(
+            surface,
+            Color.BLUEPRINT_PAGE_GLOW,
+            tray_polygon,
+            width=Box.OUTLINE_WIDTH,
+        )
+
+    def draw_tray_overlay(self, surface, font_registry):
+        tray_surface, tray_shadow = self._get_tray_surfaces()
+        surface.blit(tray_shadow, self.tray_overlay.topleft)
+        surface.blit(tray_surface, self.tray_overlay)
+
+        # Drawing the rims last seats the markers beneath the case lip.
+        mouse_pos = pygame.mouse.get_pos()
+        self._draw_tray_bay_rims(surface)
+        self._draw_tray_drop_target(surface, mouse_pos)
+        for shipgirl, rect in zip(
+            self.menu_manager.available_shipgirls,
+            self.available_shipgirl_rects,
+        ):
+            marker_available = shipgirl not in self.menu_manager.player_fleet.fleet
+            marker_hovered = (
+                marker_available
+                and self.mouse_start_drag is None
+                and rect.collidepoint(mouse_pos)
+            )
+            marker_dragged = (
+                self.mouse_start_drag is not None
+                and shipgirl is self.selected_shipgirl
+            )
+            if marker_hovered:
+                self._draw_tray_bay_highlight(surface, rect)
+            if marker_available and not marker_dragged:
+                self._draw_tray_marker(
+                    surface,
+                    shipgirl,
+                    rect,
+                    lifted=marker_hovered,
+                )
 
     def _position_shipgirls_for_battle(self):
         for shipgirl, slot in zip(
@@ -686,6 +945,11 @@ class FleetSelectionMenu:
                 self._draw_dashed_rect(surface, slot, dash_length=6, dash_width=2)
 
             if shipgirl is not None:
+                if (
+                    self.mouse_start_drag is not None
+                    and shipgirl is self.selected_shipgirl
+                ):
+                    continue
                 marker_hovered = slot.collidepoint(mpos)
                 marker_key = "blank" if marker_hovered else shipgirl.name
                 marker = DataFiles.sprites["fleet_selection"][marker_key]
@@ -714,6 +978,4 @@ class FleetSelectionMenu:
 
         self.start_sortie_button.draw(surface, font_registry)
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
-
-        if self.mouse_start_drag is not None:
-            pygame.draw.line(surface, Color.WHITE, self.mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)
+        self._draw_dragged_marker(surface, mpos)
