@@ -77,6 +77,13 @@ class MenuManager:
 
     @current_menu.setter
     def current_menu(self, menu):
-        self._current_menu = menu
         if menu is self.port_menu:
             self.port_menu.restore_shipgirl_decoration_interactions()
+        if menu is self.fleet_selection_menu:
+            if self.fleet_selection_menu.sortie_index < 0:
+                return
+            self.fleet_selection_menu.generate_path()
+            self.fleet_selection_menu.header_ribbon.text = (
+                f"sector {self.fleet_selection_menu.sortie_index + 1:02d}"
+            )
+        self._current_menu = menu

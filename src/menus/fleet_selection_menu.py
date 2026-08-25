@@ -139,6 +139,7 @@ class FleetSelectionMenu:
             "backup",
         )
 
+        self.sortie_index = -1
         self.header_ribbon = HeaderNameRibbon((screen_x(0.5), Box.TOP_OF_SCREEN), "")
 
         self.path = []
@@ -191,8 +192,8 @@ class FleetSelectionMenu:
             pygame.draw.rect(surface, color, band_rect)
             y += band_height
 
-    def generate_path(self, sortie_index):
-        num_encounters = len(DataFiles.sortie_data[sortie_index]["encounters"])
+    def generate_path(self):
+        num_encounters = len(DataFiles.sortie_data[self.sortie_index]["encounters"])
         encounter_counter = num_encounters
         radius = 48
         sign = random.choice([1, -1])
@@ -317,9 +318,17 @@ class FleetSelectionMenu:
         glow_sprite = DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
         glow = self.get_pulsing_selection_glow(glow_sprite)
 
-        icon = DataFiles.sprites["user_interface"]["uncleared"]
+        encounters = DataFiles.sortie_data[self.sortie_index]["encounters"]
         path_hex_centers = []
-        for point in self.path_hexes:
+        for point, encounter in zip(self.path_hexes, encounters):
+            has_tester = any(
+                siren_encoding.split(":")[0] == "tester"
+                for siren_encoding in encounter["front"] + encounter["back"]
+            )
+            if has_tester:
+                icon = DataFiles.sprites["user_interface"]["boss"]
+            else:
+                icon = DataFiles.sprites["user_interface"]["uncleared"]
             icon_rect = icon.get_rect(center=point)
             hex_center = pygame.Vector2(icon_rect.center)
             polygon = [
