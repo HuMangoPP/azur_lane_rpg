@@ -421,7 +421,14 @@
 		"arrow": { "left": 320, "top": 128, "width": 64, "height": 64 },
 
 		"compass_rose": { "left": 0, "top": 0, "width": 128, "height": 128 },
-		"map_scale": { "left": 128, "top": 0, "width": 128, "height": 8 }
+		"map_scale": { "left": 128, "top": 0, "width": 128, "height": 8 },
+
+		"obtained_stamp": {
+			"left": 320,
+			"top": 192,
+			"width": 192,
+			"height": 96
+		}
 	},
 	"fleet_selection": {
 		"blank": { "left": 384, "top": 0, "width": 64, "height": 64 },
@@ -456,11 +463,11 @@
 	"equipment_menu": {
 		"side_schematic": { "left": 0, "top": 0, "width": 448, "height": 128 },
 		"top_schematic": { "left": 0, "top": 128, "width": 448, "height": 128 },
-		"table": { "left": 0, "top": 256 , "width": 128, "height": 64 },
-		"pegboard": { "left": 128, "top": 256 , "width": 128, "height": 64 },
-		"paints": { "left": 256, "top": 256 , "width": 64, "height": 32 },
-		"oil_drum": { "left": 320, "top": 256 , "width": 64, "height": 64 },
-		"cabinet": { "left": 384, "top": 256 , "width": 64, "height": 64 },
+		"table": { "left": 0, "top": 256, "width": 128, "height": 64 },
+		"pegboard": { "left": 128, "top": 256, "width": 128, "height": 64 },
+		"paints": { "left": 256, "top": 256, "width": 64, "height": 32 },
+		"oil_drum": { "left": 320, "top": 256, "width": 64, "height": 64 },
+		"cabinet": { "left": 384, "top": 256, "width": 64, "height": 64 },
 		"lightbulb": {
 			"left": 256,
 			"top": 288,

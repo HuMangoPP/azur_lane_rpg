@@ -254,7 +254,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
         draw_tb(surface, font_registry, None, rect.topleft, True, True)
     elif menu_manager.current_menu == menu_manager.sortie_selection_menu:
         if menu_manager.sortie_selection_menu.selected_sortie_node is not None:
-            rect = menu_manager.sortie_selection_menu.start_sortie_button.rect.inflate(2*Box.PADDING, 2*Box.PADDING)
+            rect = menu_manager.sortie_selection_menu.sortie_order_card.button.rect.inflate(2*Box.PADDING, 2*Box.PADDING)
             pygame.draw.rect(surface, Color.RED, rect, width=Box.OUTLINE_WIDTH)
 
             draw_tb(surface, font_registry, None, rect.bottomleft, False, True)

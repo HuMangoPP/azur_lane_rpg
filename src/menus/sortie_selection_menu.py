@@ -346,9 +346,209 @@ class Background:
         )
 
 
+class SortieOrderCard:
+    WIDTH = 3*(Box.WIDTH + Box.PADDING) + Box.PADDING + 2*Box.PADDING
+    HEIGHT = 4.5*Box.HEIGHT + 4*Box.PADDING
+    HEADER_BOTTOM = 64
+    REWARD_TOP = 84
+    BUTTON_HEIGHT = Box.HEIGHT
+    CHART_GAP = 2 * Box.PADDING
+
+    def __init__(self, authorize_sortie):
+        self.rect = get_rect(width=self.WIDTH, height=self.HEIGHT, left=0, top=0)
+        self.page_rect = self.rect.inflate(-2*Box.PADDING, -2*Box.PADDING - Box.HEIGHT/2)
+        self.side = "right"
+        self.node = None
+
+        self.button = Button(
+            get_rect(width=self.WIDTH - 4*Box.PADDING, height=self.BUTTON_HEIGHT, left=0, top=0),
+            authorize_sortie,
+            active=False,
+            background_styling={
+                "background_color": Color.START_SORTIE_BUTTON,
+                "background_img": DataFiles.sprites["user_interface"]["start_sortie"],
+                "background_img_align": (1/5, 1/2),
+            },
+            text_styling={
+                "text": "authorize sortie",
+                "text_align": (3/5, 1/2),
+                "text_color": Color.WHITE,
+            },
+            hover_styling={
+                "background_color": Color.HOVER_START_SORTIE_BUTTON,
+            },
+        )
+
+    @staticmethod
+    def get_safe_rect():
+        exit_button_clearance = 48 + Box.PADDING
+        return pygame.Rect(
+            Box.LEFT_OF_SCREEN,
+            Box.TOP_OF_SCREEN,
+            Box.RIGHT_OF_SCREEN - exit_button_clearance - Box.LEFT_OF_SCREEN,
+            Box.BOTTOM_OF_SCREEN - Box.TOP_OF_SCREEN,
+        )
+
+    def get_unclamped_rect(self, node_rect, side=None):
+        side = side or self.side
+        rect = self.rect.copy()
+        rect.centery = node_rect.centery
+        if side == "right":
+            rect.left = node_rect.right + self.CHART_GAP
+        else:
+            rect.right = node_rect.left - self.CHART_GAP
+        return rect
+
+    def layout(self):
+        if self.node is None:
+            return
+
+        node_rect = self.node.get_bounding_rect()
+        rect = self.get_unclamped_rect(node_rect)
+        safe_rect = self.get_safe_rect()
+        rect.clamp_ip(safe_rect)
+        self.rect.topleft = rect.topleft
+        self.page_rect.centerx = self.rect.centerx
+        self.page_rect.bottom = self.rect.bottom - Box.PADDING
+
+        self.button.rect.centerx = self.rect.centerx
+        self.button.rect.bottom = self.rect.bottom - 2*Box.PADDING
+
+    def select(self, node, side, authorize_immediately):
+        self.node = node
+        self.side = side
+        self.layout()
+        self.button.active = authorize_immediately
+
+    def clear(self):
+        self.node = None
+        self.button.active = False
+        self.button.hovered = False
+
+    def get_status(self):
+        if self.node.cleared:
+            return "cleared", Color.CLEARED_ZONE_FILL
+        return "available", Color.UNCLEARED_ZONE_FILL
+
+    def draw_paper(self, surface):
+        dossier_rect = self.rect.inflate(0, -Box.HEIGHT/2)
+        dossier_rect.bottomleft = self.rect.bottomleft
+        pygame.draw.rect(surface, Color.DOSSIER, dossier_rect)
+        dossier_tab = [
+            pygame.Vector2(self.rect.topleft),
+            pygame.Vector2(self.rect.topleft) + pygame.Vector2(Box.WIDTH - Box.PADDING, 0),
+            pygame.Vector2(self.rect.topleft) + pygame.Vector2(Box.WIDTH + Box.PADDING, Box.HEIGHT/2),
+            pygame.Vector2(self.rect.topleft) + pygame.Vector2(0, Box.HEIGHT/2),
+        ]
+        pygame.draw.polygon(surface, Color.DOSSIER, dossier_tab)
+
+        undersheets = [
+            (-2, pygame.Vector2(-2, 3), Color.DOSSIER_PAPER_UNDERSIDE),
+            (2, pygame.Vector2(3, 1), Color.DOSSIER_CARD),
+        ]
+        for angle, offset, color in undersheets:
+            pygame.draw.polygon(
+                surface,
+                color,
+                Box.get_rotated_rect_polygon(self.page_rect, angle, offset),
+            )
+        pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.page_rect)
+
+    def draw_header(self, surface, font_registry):
+        font = font_registry["big_pixel"]
+        small_font = font_registry["pixel"]
+        left = self.page_rect.left + Box.PADDING
+        right = self.page_rect.right - Box.PADDING
+        top = self.page_rect.top + Box.PADDING
+        status, status_color = self.get_status()
+
+        small_font.render(surface, "azur lane naval command", (left, top), Color.DOSSIER_RULE, 1)
+        form_text = f"form so-{self.node.index + 1:03d}"
+        form_left = right - small_font.get_width(form_text, 1, 0)
+        small_font.render(surface, form_text, (form_left, top), Color.DOSSIER_RULE, 1)
+        small_font.render(surface, "operation order", (left, top + 12), Color.DOSSIER_INK, 1)
+        font.render(surface, f"sector {self.node.index + 1:02d}", (left, top + 27), Color.DOSSIER_INK, 2)
+
+        status_width = font.get_width(status, 1, 0) + 2*Box.PADDING
+        status_rect = get_rect(
+            width=status_width,
+            height=24,
+            right=right,
+            bottom=self.page_rect.top + self.HEADER_BOTTOM - Box.PADDING,
+        )
+        pygame.draw.rect(surface, status_color, status_rect, width=Box.OUTLINE_WIDTH)
+        pygame.draw.rect(surface, status_color, status_rect.inflate(-4, -4), width=1)
+        font.render(surface, status, status_rect.center, status_color, 1, style="center")
+
+        pygame.draw.line(
+            surface,
+            Color.DOSSIER_RULE,
+            (left, self.page_rect.top + self.HEADER_BOTTOM),
+            (right, self.page_rect.top + self.HEADER_BOTTOM),
+        )
+
+    def draw_rewards(self, surface, font_registry):
+        font = font_registry["big_pixel"]
+        left = self.page_rect.left + Box.PADDING
+        heading = "allotment issued" if self.node.cleared else "first-clear allotment"
+        font.render(surface, heading, (left, self.page_rect.top + 70), Color.DOSSIER_RULE, 1)
+
+        rewards = DataFiles.sortie_data[self.node.index]["rewards"]
+        if not rewards:
+            reward_area = pygame.Rect(left, self.page_rect.top + self.REWARD_TOP, self.page_rect.width - 2*Box.PADDING, Box.HEIGHT)
+            font.render(surface, "no allotment on file", reward_area.center, Color.DOSSIER_RULE, 1, style="center")
+            return
+
+        for i, (reward, count) in enumerate(rewards.items()):
+            rect = get_rect(
+                width=Box.WIDTH,
+                height=Box.HEIGHT,
+                left=left + i*(Box.WIDTH + Box.PADDING),
+                top=self.page_rect.top + self.REWARD_TOP,
+            )
+            pygame.draw.rect(surface, Color.DOSSIER_CARD_SHADOW, rect.move(2, 2))
+            pygame.draw.rect(surface, Color.DOSSIER_CARD, rect)
+            surface.blit(DataFiles.get_entity_sprite(reward), rect)
+
+            quantity_rect = pygame.Rect(rect.left, rect.bottom - 14, rect.width, 14)
+            pygame.draw.rect(surface, Color.DOSSIER_CARD, quantity_rect)
+            pygame.draw.line(surface, Color.DOSSIER_RULE, quantity_rect.topleft, quantity_rect.topright)
+            font.render(surface, f"qty {count:02d}", quantity_rect.center, Color.DOSSIER_INK, 1, style="center")
+            pygame.draw.rect(surface, Color.DOSSIER_INK, rect, width=1)
+
+        if self.node.cleared:
+            obtained_stamp = DataFiles.sprites["sortie_selection"]["obtained_stamp"].copy()
+            obtained_stamp.set_alpha(128)
+            obtained_stamp_rect = obtained_stamp.get_rect()
+            obtained_stamp_rect.centerx = self.page_rect.centerx
+            obtained_stamp_rect.top = self.page_rect.top + self.REWARD_TOP
+            surface.blit(obtained_stamp, obtained_stamp_rect)
+
+    def draw_props(self, surface):
+        paperclip = DataFiles.sprites["props"]["diagonal_paperclip"]
+        paperclip_rect = paperclip.get_rect()
+        paperclip_rect.left = self.rect.left - 16
+        paperclip_rect.top = self.rect.top - 8 + Box.HEIGHT/2
+        surface.blit(paperclip, paperclip_rect)
+
+    def draw(self, surface, font_registry):
+        if self.node is None:
+            return
+
+        self.layout()
+        self.draw_paper(surface)
+        self.draw_header(surface, font_registry)
+        self.draw_rewards(surface, font_registry)
+        self.button.draw(surface, font_registry)
+        self.draw_props(surface)
+
+
 class SortieSelectionMenu:
     PATH_DASH_LENGTH = 8
     PATH_DASH_WIDTH = 3
+    CAMERA_PAN_DURATION = 0.25
+    CAMERA_MIN = pygame.Vector2(screen_x(0.5), -305)
+    CAMERA_MAX = pygame.Vector2(1822, screen_y(0.5))
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -361,18 +561,6 @@ class SortieSelectionMenu:
             for sortie_index, sortie_info in enumerate(DataFiles.sortie_data)
         ]
 
-        num_rect_rows = 1
-        num_rects_in_row = 3
-        panel_width = Box.PADDING + num_rects_in_row*(Box.WIDTH+Box.PADDING)
-        font_height = 9
-        panel_height = (
-            2*Box.PADDING + 2*font_height
-            + 2*Box.PADDING + font_height
-            + num_rect_rows*(Box.HEIGHT+Box.PADDING)
-            + Box.HEIGHT+Box.PADDING
-        )
-        self.selected_sortie_info_panel = get_rect(width=panel_width, height=panel_height, left=0, top=0)
-
         def start_sortie():
             self.menu_manager.current_menu = self.menu_manager.fleet_selection_menu
             self.menu_manager.fleet_selection_menu.generate_path(self.selected_sortie_node.index)
@@ -383,23 +571,13 @@ class SortieSelectionMenu:
 
             self.selected_sortie_node.hovered = False
             self.selected_sortie_node = None
-            self.start_sortie_button.active = False
+            self.sortie_order_card.clear()
         
-        self.start_sortie_button = Button(
-            get_rect(width=2*Box.WIDTH, height=Box.HEIGHT, top=0, left=0),
-            start_sortie,
-            active=False,
-            background_styling={
-                "background_color": Color.BLACK,
-                "background_img": DataFiles.sprites["user_interface"]["start_sortie"],
-                "background_img_align": (1/4, 1/2)
-            },
-            text_styling={
-                "text": "sortie",
-                "text_align": (2/3, 1/2),
-                "text_color": Color.WHITE
-            }
-        )
+        self.sortie_order_card = SortieOrderCard(start_sortie)
+        self.selected_sortie_info_panel = self.sortie_order_card.rect
+        self.camera_pan_start = SortieNode.center.copy()
+        self.camera_pan_target = SortieNode.center.copy()
+        self.camera_pan_timer = 0
 
         def exit_sortie_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
@@ -503,12 +681,100 @@ class SortieSelectionMenu:
             ribbons.append(ChapterNameRibbon(chapter, chapter_nodes))
         return ribbons
 
+    @classmethod
+    def clamp_camera_center(cls, center):
+        return pygame.Vector2(
+            min(max(cls.CAMERA_MIN.x, center.x), cls.CAMERA_MAX.x),
+            min(max(cls.CAMERA_MIN.y, center.y), cls.CAMERA_MAX.y),
+        )
+
+    @staticmethod
+    def get_viewport_shift(rect, safe_rect):
+        shift = pygame.Vector2()
+        if rect.left < safe_rect.left:
+            shift.x = safe_rect.left - rect.left
+        elif rect.right > safe_rect.right:
+            shift.x = safe_rect.right - rect.right
+        if rect.top < safe_rect.top:
+            shift.y = safe_rect.top - rect.top
+        elif rect.bottom > safe_rect.bottom:
+            shift.y = safe_rect.bottom - rect.bottom
+        return shift
+
+    @staticmethod
+    def get_viewport_overflow(rect, safe_rect):
+        return (
+            max(0, safe_rect.left - rect.left)
+            + max(0, rect.right - safe_rect.right)
+            + max(0, safe_rect.top - rect.top)
+            + max(0, rect.bottom - safe_rect.bottom)
+        )
+
+    def get_camera_target_for_card_side(self, node, side):
+        node_rect = node.get_bounding_rect()
+        card_rect = self.sortie_order_card.get_unclamped_rect(node_rect, side)
+        combined_rect = node_rect.union(card_rect)
+        safe_rect = self.sortie_order_card.get_safe_rect()
+        requested_shift = self.get_viewport_shift(combined_rect, safe_rect)
+
+        target = self.clamp_camera_center(SortieNode.center - requested_shift)
+        actual_shift = SortieNode.center - target
+        shifted_combined_rect = combined_rect.move(round(actual_shift.x), round(actual_shift.y))
+        overflow = self.get_viewport_overflow(shifted_combined_rect, safe_rect)
+        return target, overflow
+
+    def select_sortie_node(self, node):
+        right_target, right_overflow = self.get_camera_target_for_card_side(node, "right")
+        if right_overflow == 0:
+            side = "right"
+            target = right_target
+        else:
+            left_target, left_overflow = self.get_camera_target_for_card_side(node, "left")
+            if left_overflow < right_overflow:
+                side = "left"
+                target = left_target
+            else:
+                side = "right"
+                target = right_target
+
+        self.selected_sortie_node = node
+        self.selected_sortie_node.hovered = False
+        self.camera_pan_start = SortieNode.center.copy()
+        self.camera_pan_target = target
+        camera_will_move = not self.camera_pan_start.distance_squared_to(target) < 0.01
+        self.camera_pan_timer = self.CAMERA_PAN_DURATION if camera_will_move else 0
+        self.sortie_order_card.select(node, side, authorize_immediately=not camera_will_move)
+
+    def clear_selected_sortie(self):
+        if self.selected_sortie_node is not None:
+            self.selected_sortie_node.hovered = False
+        self.selected_sortie_node = None
+        self.sortie_order_card.clear()
+        self.camera_pan_timer = 0
+        self.camera_pan_start = SortieNode.center.copy()
+        self.camera_pan_target = SortieNode.center.copy()
+
+    def update_camera_pan(self, dt):
+        if self.camera_pan_timer <= 0:
+            return
+
+        self.camera_pan_timer = max(0, self.camera_pan_timer - dt)
+        progress = 1 - self.camera_pan_timer / self.CAMERA_PAN_DURATION
+        eased_progress = 1 - (1 - progress) ** 3
+        SortieNode.center = self.camera_pan_start.lerp(self.camera_pan_target, eased_progress)
+        self.sortie_order_card.layout()
+
+        if self.camera_pan_timer == 0:
+            SortieNode.center = self.camera_pan_target.copy()
+            self.sortie_order_card.layout()
+            self.sortie_order_card.button.active = self.selected_sortie_node is not None
+
     def update(self, dt, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.exit_sortie_selection_menu_button.rect.collidepoint(event.pos):
                     continue
-                if self.start_sortie_button.rect.collidepoint(event.pos):
+                if self.sortie_order_card.button.rect.collidepoint(event.pos):
                     continue
                 if self.selected_sortie_node is not None:
                     continue
@@ -518,74 +784,43 @@ class SortieSelectionMenu:
                 else:
                     self.mousedown = True
             if event.type == pygame.MOUSEMOTION:
-                self.start_sortie_button.hover(event.pos)
+                self.sortie_order_card.button.hover(event.pos)
 
                 if self.selected_sortie_node is None:
                     self.exit_sortie_selection_menu_button.hover(event.pos)
                     if self.mousedown:
                         movement = pygame.Vector2(event.rel)
                         SortieNode.center -= movement
-                        SortieNode.center = pygame.Vector2( # TODO create better bounds / magic number
-                            min(max(screen_x(0.5), SortieNode.center.x), 1822),
-                            max(min(screen_y(0.5), SortieNode.center.y), -305)
-                        )
+                        SortieNode.center = self.clamp_camera_center(SortieNode.center)
             if event.type == pygame.MOUSEBUTTONUP:
                 if self.mousedown:
                     self.mousedown = False
                     continue
 
-                click = (
-                    self.exit_sortie_selection_menu_button.click(event.pos)
-                    or self.start_sortie_button.click(event.pos)
-                )
+                if self.exit_sortie_selection_menu_button.click(event.pos):
+                    DataFiles.sfx["click"].play()
+                    continue
+                if self.sortie_order_card.button.click(event.pos):
+                    DataFiles.sfx["click"].play()
+                    continue
 
                 if self.selected_sortie_node is None:
                     for sortie_node in self.sortie_nodes:
                         if not sortie_node.select(event.pos):
                             continue
-                        click = True
-                        self.selected_sortie_node = sortie_node
-                        self.selected_sortie_node.hovered = False
-
-                        rx = -100 # get x value of rightmost hex
-                        cy = 0 # get average y value of all hexes
-                        n_hexes = len(sortie_node.hexes)
-                        for q, r in sortie_node.hexes:
-                            x, y = hex_to_pixel(q, r, SortieNode.SIZE)
-                            if x > rx:
-                                rx = x
-                            cy += y / n_hexes
-                            
-                        self.selected_sortie_info_panel.left = rx + anchor().x + SortieNode.SIZE + Box.PADDING
-                        self.selected_sortie_info_panel.centery = cy + anchor().y
-
-                        self.start_sortie_button.active = True
-                        self.start_sortie_button.rect.centerx = self.selected_sortie_info_panel.centerx
-                        self.start_sortie_button.rect.bottom = self.selected_sortie_info_panel.bottom - Box.PADDING
-
-                        if sortie_node.cleared:
-                            self.start_sortie_button.background_color = Color.CLEARED_ZONE_FILL
-                            self.start_sortie_button.hover_background_color = Color.CLEARED_ZONE_OUTLINE
-                        elif sortie_node.unlocked:
-                            self.start_sortie_button.background_color = Color.UNCLEARED_ZONE_FILL
-                            self.start_sortie_button.hover_background_color = Color.UNCLEARED_ZONE_OUTLINE
-                        else:
-                            self.start_sortie_button.background_color = Color.LOCKED_ZONE_FILL
-                            self.start_sortie_button.hover_background_color = Color.LOCKED_ZONE_OUTLINE
+                        self.select_sortie_node(sortie_node)
+                        DataFiles.sfx["click"].play()
+                        break
                 else:
                     if not self.selected_sortie_info_panel.collidepoint(event.pos):
-                        self.selected_sortie_node.hovered = False
-                        self.selected_sortie_node = None
-                        self.start_sortie_button.active = False
-
-                if click:
-                    DataFiles.sfx["click"].play()
+                        self.clear_selected_sortie()
 
             if event.type == pygame.MOUSEMOTION:
                 if self.selected_sortie_node is None:
                     for sortie_node in self.sortie_nodes:
                         sortie_node.hover(event.pos)
 
+        self.update_camera_pan(dt)
         self.background.update(dt)
         for fog in self.fogs:
             fog.update(dt)
@@ -653,49 +888,6 @@ class SortieSelectionMenu:
             fog.draw(surface)
         
         if self.selected_sortie_node is not None:
-            pygame.draw.rect(surface, Color.BLACK, self.selected_sortie_info_panel)
-            title_card_rect = get_rect(
-                width=self.selected_sortie_info_panel.width,
-                height=2*font_registry["big_pixel"].font_height + 2*Box.PADDING,
-                left=self.selected_sortie_info_panel.left,
-                top=self.selected_sortie_info_panel.top
-            )
-            if self.selected_sortie_node.cleared:
-                title_card_color = Color.CLEARED_ZONE_FILL
-            elif self.selected_sortie_node.unlocked:
-                title_card_color = Color.UNCLEARED_ZONE_FILL
-            else:
-                title_card_color = Color.LOCKED_ZONE_FILL
-            pygame.draw.rect(surface, title_card_color, title_card_rect)
-            self.start_sortie_button.draw(surface, font_registry)
-            font_registry["big_pixel"].render(
-                surface,
-                f"zone {self.selected_sortie_node.index + 1}",
-                title_card_rect.center,
-                Color.WHITE,
-                2,
-                style="center",
-            )
-
-            font_registry["big_pixel"].render(
-                surface,
-                "first clear rewards",
-                (self.selected_sortie_info_panel.left + Box.PADDING, title_card_rect.bottom + Box.PADDING),
-                Color.WHITE,
-                1,
-                style="topleft",
-            )
-
-            rewards = DataFiles.sortie_data[self.selected_sortie_node.index]["rewards"]
-            for i, (reward, count) in enumerate(rewards.items()):
-                rect = get_rect(
-                    width=Box.WIDTH, height=Box.HEIGHT,
-                    left=self.selected_sortie_info_panel.left + Box.PADDING + (i%3)*(Box.WIDTH+Box.PADDING),
-                    top=title_card_rect.bottom + 2*Box.PADDING + font_registry["big_pixel"].font_height + (i//3)*(Box.HEIGHT+Box.PADDING)
-                )
-                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                surface.blit(DataFiles.get_entity_sprite(reward), rect)
-                count_pos = pygame.Vector2(rect.bottomright) - pygame.Vector2(2*Box.PADDING, 2*Box.PADDING)
-                font_registry["big_pixel"].render(surface, str(count), count_pos, Color.WHITE, 1, style="center", outline_color=Color.BLACK)
+            self.sortie_order_card.draw(surface, font_registry)
 
         self.exit_sortie_selection_menu_button.draw(surface, font_registry)
