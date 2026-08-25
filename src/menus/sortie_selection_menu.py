@@ -351,7 +351,11 @@ class SortieOrderCard:
     HEIGHT = 4.5*Box.HEIGHT + 4*Box.PADDING
     HEADER_BOTTOM = 64
     REWARD_TOP = 84
-    BUTTON_HEIGHT = Box.HEIGHT
+    AUTHORIZATION_HEIGHT = 72
+    AUTHORIZATION_DURATION = 1
+    AUTHORIZATION_IMPACT_TIME = 0.15
+    AUTHORIZATION_LIFT_TIME = 0.30
+    AUTHORIZATION_DISAPPEAR_TIME = 0.5
     CHART_GAP = 2 * Box.PADDING
 
     def __init__(self, authorize_sortie):
@@ -359,24 +363,27 @@ class SortieOrderCard:
         self.page_rect = self.rect.inflate(-2*Box.PADDING, -2*Box.PADDING - Box.HEIGHT/2)
         self.side = "right"
         self.node = None
+        self.authorize_sortie = authorize_sortie
+        self.authorizing = False
+        self.authorization_timer = 0
+        self.authorization_impact_played = False
+        self.authorization_pos = pygame.Vector2()
+
+        self.authorization_anchors = {
+            "muted": DataFiles.recolor_sprite("user_interface", "start_sortie", Color.DOSSIER_RULE),
+            "red":DataFiles.recolor_sprite("user_interface", "start_sortie", Color.START_SORTIE_BUTTON),
+        }
+        self.authorization_stamp = DataFiles.sprites["props"]["stamp"]
 
         self.button = Button(
-            get_rect(width=self.WIDTH - 4*Box.PADDING, height=self.BUTTON_HEIGHT, left=0, top=0),
-            authorize_sortie,
+            get_rect(
+                width=self.WIDTH - 4*Box.PADDING,
+                height=self.AUTHORIZATION_HEIGHT,
+                left=0,
+                top=0,
+            ),
+            self.begin_authorization,
             active=False,
-            background_styling={
-                "background_color": Color.START_SORTIE_BUTTON,
-                "background_img": DataFiles.sprites["user_interface"]["start_sortie"],
-                "background_img_align": (1/5, 1/2),
-            },
-            text_styling={
-                "text": "authorize sortie",
-                "text_align": (3/5, 1/2),
-                "text_color": Color.WHITE,
-            },
-            hover_styling={
-                "background_color": Color.HOVER_START_SORTIE_BUTTON,
-            },
         )
 
     @staticmethod
@@ -412,11 +419,17 @@ class SortieOrderCard:
         self.page_rect.bottom = self.rect.bottom - Box.PADDING
 
         self.button.rect.centerx = self.rect.centerx
-        self.button.rect.bottom = self.rect.bottom - 2*Box.PADDING
+        self.button.rect.bottom = self.page_rect.bottom - Box.PADDING
+        if not self.authorizing:
+            self.authorization_pos = pygame.Vector2(self.button.rect.center)
 
     def select(self, node, side, authorize_immediately):
         self.node = node
         self.side = side
+        self.authorizing = False
+        self.authorization_timer = 0
+        self.authorization_impact_played = False
+        self.authorization_pos = pygame.Vector2(self.button.rect.center)
         self.layout()
         self.button.active = authorize_immediately
 
@@ -424,6 +437,43 @@ class SortieOrderCard:
         self.node = None
         self.button.active = False
         self.button.hovered = False
+        self.authorizing = False
+        self.authorization_timer = 0
+        self.authorization_impact_played = False
+        self.authorization_pos = pygame.Vector2()
+
+    def begin_authorization(self, click_pos=None):
+        if self.node is None or self.authorizing or not self.button.active:
+            return
+
+        if click_pos is None:
+            click_pos = pygame.mouse.get_pos()
+        self.authorization_pos = pygame.Vector2(click_pos)
+        self.authorizing = True
+        self.authorization_timer = 0
+        self.authorization_impact_played = False
+        self.button.active = False
+        self.button.hovered = False
+
+    def update(self, dt):
+        if not self.authorizing:
+            return
+
+        previous_timer = self.authorization_timer
+        self.authorization_timer = min(
+            self.AUTHORIZATION_DURATION,
+            self.authorization_timer + dt,
+        )
+        if (
+            not self.authorization_impact_played
+            and previous_timer < self.AUTHORIZATION_IMPACT_TIME <= self.authorization_timer
+        ):
+            self.authorization_impact_played = True
+            DataFiles.sfx["click"].play()
+
+        if self.authorization_timer >= self.AUTHORIZATION_DURATION:
+            self.authorizing = False
+            self.authorize_sortie()
 
     def get_status(self):
         if self.node.cleared:
@@ -521,8 +571,111 @@ class SortieOrderCard:
             obtained_stamp.set_alpha(128)
             obtained_stamp_rect = obtained_stamp.get_rect()
             obtained_stamp_rect.centerx = self.page_rect.centerx
-            obtained_stamp_rect.top = self.page_rect.top + self.REWARD_TOP
+            obtained_stamp_rect.top = self.page_rect.top + self.REWARD_TOP - Box.HEIGHT/4
             surface.blit(obtained_stamp, obtained_stamp_rect)
+
+    @staticmethod
+    def draw_dashed_rect(surface, color, rect, dash_length=8, gap_length=4, width=2):
+        right = rect.right - 1
+        bottom = rect.bottom - 1
+        dash_step = dash_length + gap_length
+        for x in range(rect.left, right + 1, dash_step):
+            dash_right = min(x + dash_length, right)
+            pygame.draw.line(surface, color, (x, rect.top), (dash_right, rect.top), width)
+            pygame.draw.line(surface, color, (x, bottom), (dash_right, bottom), width)
+        for y in range(rect.top, bottom + 1, dash_step):
+            dash_bottom = min(y + dash_length, bottom)
+            pygame.draw.line(surface, color, (rect.left, y), (rect.left, dash_bottom), width)
+            pygame.draw.line(surface, color, (right, y), (right, dash_bottom), width)
+
+    def draw_authorization(self, surface, font_registry):
+        field_rect = self.button.rect
+        label_y = field_rect.top - 16
+        rule_y = field_rect.top - 24
+        content_left = self.page_rect.left + Box.PADDING
+        content_right = self.page_rect.right - Box.PADDING
+        pygame.draw.line(
+            surface,
+            Color.DOSSIER_RULE,
+            (content_left, rule_y),
+            (content_right, rule_y),
+        )
+        font_registry["big_pixel"].render(
+            surface,
+            "command authorization",
+            (content_left, label_y),
+            Color.DOSSIER_RULE,
+            1,
+        )
+
+        hovered = self.button.active and self.button.hovered
+        imprint_visible = (
+            self.authorizing
+            and self.authorization_timer >= self.AUTHORIZATION_IMPACT_TIME
+        )
+        action_highlighted = hovered or self.authorizing
+        ink_color = Color.START_SORTIE_BUTTON if action_highlighted else Color.DOSSIER_RULE
+
+        if hovered:
+            pygame.draw.rect(surface, Color.DOSSIER_CARD, field_rect)
+        self.draw_dashed_rect(surface, ink_color, field_rect, width=Box.OUTLINE_WIDTH)
+
+        font_registry["big_pixel"].render(
+            surface,
+            "stamp here",
+            (field_rect.centerx, field_rect.centery - 5),
+            ink_color,
+            2,
+            style="center",
+        )
+        font_registry["big_pixel"].render(
+            surface,
+            "authorize sortie",
+            (field_rect.centerx, field_rect.centery + 15),
+            ink_color,
+            1,
+            style="center",
+        )
+
+        if imprint_visible:
+            stamp_pattern_sprite = DataFiles.sprites["props"]["stamp_pattern"].copy()
+            if self.authorization_timer >= self.AUTHORIZATION_DISAPPEAR_TIME:
+                fade_duration = (
+                    self.AUTHORIZATION_DURATION
+                    - self.AUTHORIZATION_DISAPPEAR_TIME
+                )
+                fade_progress = (
+                    (self.AUTHORIZATION_DURATION - self.authorization_timer)
+                    / fade_duration
+                )
+                stamp_pattern_sprite.set_alpha(int(255 * fade_progress))
+            else:
+                stamp_pattern_sprite.set_alpha(255)
+            stamp_pattern_rect = stamp_pattern_sprite.get_rect()
+            stamp_pattern_rect.center = self.authorization_pos
+            surface.blit(stamp_pattern_sprite, stamp_pattern_rect)
+
+    def draw_authorization_stamp(self, surface):
+        if not self.authorizing or self.authorization_timer > self.AUTHORIZATION_LIFT_TIME:
+            return
+
+        target_pos = self.authorization_pos
+        raised_pos = target_pos - pygame.Vector2(0, Box.HEIGHT)
+        if self.authorization_timer <= self.AUTHORIZATION_IMPACT_TIME:
+            progress = self.authorization_timer / self.AUTHORIZATION_IMPACT_TIME
+            stamp_pos = raised_pos.lerp(target_pos, progress)
+        else:
+            lift_duration = self.AUTHORIZATION_LIFT_TIME - self.AUTHORIZATION_IMPACT_TIME
+            progress = (
+                (self.authorization_timer - self.AUTHORIZATION_IMPACT_TIME)
+                / lift_duration
+            )
+            stamp_pos = target_pos.lerp(raised_pos, progress)
+
+        stamp_rect = self.authorization_stamp.get_rect()
+        stamp_rect.centerx = round(stamp_pos.x)
+        stamp_rect.bottom = round(stamp_pos.y + Box.HEIGHT/2)
+        surface.blit(self.authorization_stamp, stamp_rect)
 
     def draw_props(self, surface):
         paperclip = DataFiles.sprites["props"]["diagonal_paperclip"]
@@ -539,8 +692,10 @@ class SortieOrderCard:
         self.draw_paper(surface)
         self.draw_header(surface, font_registry)
         self.draw_rewards(surface, font_registry)
+        self.draw_authorization(surface, font_registry)
         self.button.draw(surface, font_registry)
         self.draw_props(surface)
+        self.draw_authorization_stamp(surface)
 
 
 class SortieSelectionMenu:
@@ -771,6 +926,8 @@ class SortieSelectionMenu:
 
     def update(self, dt, events):
         for event in events:
+            if self.sortie_order_card.authorizing:
+                continue
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.exit_sortie_selection_menu_button.rect.collidepoint(event.pos):
                     continue
@@ -800,8 +957,11 @@ class SortieSelectionMenu:
                 if self.exit_sortie_selection_menu_button.click(event.pos):
                     DataFiles.sfx["click"].play()
                     continue
-                if self.sortie_order_card.button.click(event.pos):
-                    DataFiles.sfx["click"].play()
+                if (
+                    self.sortie_order_card.button.active
+                    and self.sortie_order_card.button.rect.collidepoint(event.pos)
+                ):
+                    self.sortie_order_card.begin_authorization(event.pos)
                     continue
 
                 if self.selected_sortie_node is None:
@@ -821,6 +981,7 @@ class SortieSelectionMenu:
                         sortie_node.hover(event.pos)
 
         self.update_camera_pan(dt)
+        self.sortie_order_card.update(dt)
         self.background.update(dt)
         for fog in self.fogs:
             fog.update(dt)

@@ -231,7 +231,7 @@
 		"cargo_box": { "left": 0, "top": 0, "width": 48, "height": 48 },
 		"forklift": { "left": 64, "top": 0, "width": 160, "height": 64 },
 		"decoration_coin": { "left": 224, "top": 0, "width": 64, "height": 64 },
-		"smiley": { "left": 288, "top": 0, "width": 64, "height": 64 },
+		"stamp_pattern": { "left": 288, "top": 0, "width": 64, "height": 64 },
 		"stamp": { "left": 352, "top": 0, "width": 64, "height": 96 },
 
 		"big_top_rope": { "left": 0, "top": 64, "width": 128, "height": 96 },

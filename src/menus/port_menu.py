@@ -2221,9 +2221,9 @@ class PortMenu:
             coin_rect.y -= 6 # TODO decoration coin height magic number
             surface.blit(coin_sprite, coin_rect)
 
-        smiley_sprite = DataFiles.sprites["props"]["smiley"]
-        smiley_rect = smiley_sprite.get_rect()
-        smiley_rect.center = self.decoration_stamp_animation_pos
+        stamp_pattern_sprite = DataFiles.sprites["props"]["stamp_pattern"]
+        stamp_pattern_rect = stamp_pattern_sprite.get_rect()
+        stamp_pattern_rect.center = self.decoration_stamp_animation_pos
         if self.decoration_stamp_animation_timer > 0:
             elapsed = self.DECORATION_STAMP_ANIMATION_DURATION - self.decoration_stamp_animation_timer
             if elapsed >= self.DECORATION_STAMP_DISAPPEAR_TIME:
@@ -2231,11 +2231,11 @@ class PortMenu:
                     self.decoration_stamp_animation_timer
                     / (self.DECORATION_STAMP_ANIMATION_DURATION - self.DECORATION_STAMP_DISAPPEAR_TIME)
                 )
-                smiley_sprite.set_alpha(int(255 * progress))
-                surface.blit(smiley_sprite, smiley_rect)
+                stamp_pattern_sprite.set_alpha(int(255 * progress))
+                surface.blit(stamp_pattern_sprite, stamp_pattern_rect)
             elif elapsed >= self.DECORATION_STAMP_DOWN_TIME:
-                smiley_sprite.set_alpha(255)
-                surface.blit(smiley_sprite, smiley_rect)
+                stamp_pattern_sprite.set_alpha(255)
+                surface.blit(stamp_pattern_sprite, stamp_pattern_rect)
 
         stamp_sprite = DataFiles.sprites["props"]["stamp"]
         stamp_rect = stamp_sprite.get_rect()
