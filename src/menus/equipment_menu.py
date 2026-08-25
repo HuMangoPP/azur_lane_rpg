@@ -937,10 +937,10 @@ class EquipmentMenu:
 
     def draw_dossier(self, surface, font_registry):
         self.draw_dossier_paper(surface, font_registry)
-        self.draw_dossier_watermark(surface)
         self.draw_dossier_header(surface, font_registry)
         self.draw_dossier_progress(surface, font_registry)
         self.draw_dossier_capabilities(surface, font_registry)
+        self.draw_dossier_watermark(surface)
         self.draw_dossier_props(surface)
 
     def draw(self, surface, font_registry):
