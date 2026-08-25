@@ -27,6 +27,13 @@ class FleetSelectionMenu:
     Y_ALIGN = screen_y(0.3)
     PATH_DASH_LENGTH = 16
     PATH_DASH_WIDTH = 4
+    PATH_HEX_PULSE_DURATION = 2.4
+    PATH_HEX_GLINT_CYCLE = 0.9
+    PATH_HEX_GLINT_LIFETIME = 0.7
+    PATH_HEX_GLINTS_PER_HEX = 4
+    PATH_HEX_GLINT_MAX_LENGTH = 5
+    PATH_HEX_GLINT_MARGIN = 6
+    PATH_HEX_GLINT_DRIFT = 12
     TRAY_WOOD_COLOR = (116, 79, 52)
     TRAY_BEZEL_COLOR = (153, 108, 74)
     TRAY_WOOD_GRAIN_SEED = 1
@@ -131,6 +138,7 @@ class FleetSelectionMenu:
 
         self.path = []
         self.path_hexes = []
+        self.path_hex_effect_time = 0
 
         self.background = Background()
 
@@ -249,6 +257,133 @@ class FleetSelectionMenu:
         if len(self.path_hexes) < num_encounters:
             self.path_hexes.append(pos)
 
+    def draw_path_hexes(self, surface):
+        hex_size = Box.WIDTH/2
+        pulse = (
+            math.sin(
+                self.path_hex_effect_time
+                * math.tau
+                / self.PATH_HEX_PULSE_DURATION
+            )
+            + 1
+        ) / 2
+        glow_base = DataFiles.sprites[
+            "sortie_selection"
+        ]["locked_node_selection_glow"].copy()
+        glow_base.set_alpha(int(128 + 127*pulse))
+        glow = pygame.Surface(glow_base.get_size())
+        glow.blit(glow_base)
+
+        icon = DataFiles.sprites["user_interface"]["uncleared"]
+        path_hex_centers = []
+        for point in self.path_hexes:
+            icon_rect = icon.get_rect(center=point)
+            hex_center = pygame.Vector2(icon_rect.center)
+            polygon = [
+                hex_center + get_vec(
+                    hex_size,
+                    math.radians(30 + corner_index*60),
+                )
+                for corner_index in range(6)
+            ]
+
+            glow_left = int(min(corner.x for corner in polygon))
+            glow_right = int(max(corner.x for corner in polygon))
+            glow_rect = pygame.Rect(
+                glow_left,
+                0,
+                glow_right - glow_left + 1,
+                glow.get_height(),
+            )
+            glow_rect.bottom = hex_center.y
+            hex_glow = pygame.transform.smoothscale(glow, glow_rect.size)
+            surface.blit(
+                hex_glow,
+                glow_rect,
+                special_flags=pygame.BLEND_RGB_ADD,
+            )
+
+            pygame.draw.polygon(surface, Color.LOCKED_ZONE_FILL_HOVER, polygon)
+            pygame.draw.polygon(
+                surface,
+                Color.LOCKED_ZONE_OUTLINE,
+                polygon,
+                width=Box.OUTLINE_WIDTH,
+            )
+            surface.blit(icon, icon_rect)
+            path_hex_centers.append(hex_center)
+
+        glint_count = len(path_hex_centers) * self.PATH_HEX_GLINTS_PER_HEX
+        for hex_index, hex_center in enumerate(path_hex_centers):
+            for glint_index in range(self.PATH_HEX_GLINTS_PER_HEX):
+                particle_index = glint_index*len(path_hex_centers) + hex_index
+                glint_time = (
+                    self.path_hex_effect_time
+                    + particle_index*self.PATH_HEX_GLINT_CYCLE/glint_count
+                )
+                glint_age = glint_time % self.PATH_HEX_GLINT_CYCLE
+                if glint_age >= self.PATH_HEX_GLINT_LIFETIME:
+                    continue
+
+                cycle_index = math.floor(glint_time / self.PATH_HEX_GLINT_CYCLE)
+                glint_progress = glint_age / self.PATH_HEX_GLINT_LIFETIME
+                glint_strength = (1 - glint_progress)**1.5
+                half_spawn_width = (
+                    math.sqrt(3)/2*hex_size - self.PATH_HEX_GLINT_MARGIN
+                )
+                spawn_x = (
+                    (cycle_index*29 + particle_index*17) % (2*half_spawn_width)
+                    - half_spawn_width
+                )
+                half_spawn_height = (
+                    hex_size
+                    - abs(spawn_x)/math.sqrt(3)
+                    - self.PATH_HEX_GLINT_MARGIN
+                )
+                spawn_y = (
+                    (cycle_index*19 + particle_index*31) % (2*half_spawn_height)
+                    - half_spawn_height
+                )
+                spawn_center = hex_center + pygame.Vector2(spawn_x, spawn_y)
+                center = spawn_center - pygame.Vector2(
+                    0,
+                    self.PATH_HEX_GLINT_DRIFT*glint_progress,
+                )
+                glint_length = 1 + round(
+                    (self.PATH_HEX_GLINT_MAX_LENGTH - 1)*glint_strength
+                )
+                glint_color = tuple(
+                    round(channel*glint_strength)
+                    for channel in Color.LOCKED_ZONE_OUTLINE
+                )
+                glint_surface = pygame.Surface(
+                    (
+                        2*self.PATH_HEX_GLINT_MAX_LENGTH + 1,
+                        2*self.PATH_HEX_GLINT_MAX_LENGTH + 1,
+                    )
+                )
+                glint_surface_center = pygame.Vector2(
+                    self.PATH_HEX_GLINT_MAX_LENGTH,
+                    self.PATH_HEX_GLINT_MAX_LENGTH,
+                )
+                pygame.draw.line(
+                    glint_surface,
+                    glint_color,
+                    glint_surface_center - pygame.Vector2(glint_length, 0),
+                    glint_surface_center + pygame.Vector2(glint_length, 0),
+                )
+                pygame.draw.line(
+                    glint_surface,
+                    glint_color,
+                    glint_surface_center - pygame.Vector2(0, glint_length),
+                    glint_surface_center + pygame.Vector2(0, glint_length),
+                )
+                surface.blit(
+                    glint_surface,
+                    glint_surface.get_rect(center=center),
+                    special_flags=pygame.BLEND_RGB_ADD,
+                )
+
     def draw_tray_overlay(self, surface, font_registry):
         self.draw_tray_wood_grain(surface, self.tray_overlay)
         pygame.draw.rect(surface, self.TRAY_BEZEL_COLOR, self.tray_overlay, width=6*Box.OUTLINE_WIDTH)
@@ -309,6 +444,7 @@ class FleetSelectionMenu:
         return False
 
     def update(self, dt, events):
+        self.path_hex_effect_time += dt
         for event in events:
             if event.type == pygame.MOUSEMOTION:
                 self.exit_fleet_selection_menu_button.hover(event.pos)
@@ -396,18 +532,7 @@ class FleetSelectionMenu:
                 dash_polygon
             )
 
-        for point in self.path_hexes:
-            icon = DataFiles.sprites["user_interface"]["uncleared"]
-            icon_rect = icon.get_rect()
-            icon_rect.center = point
-            glow = DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
-            glow_rect = glow.get_rect()
-            glow_rect.midbottom = icon_rect.center
-            surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
-            polygon = [pygame.Vector2(icon_rect.center) + get_vec(Box.WIDTH/2, math.radians(30 + i * 60)) for i in range(6)]
-            pygame.draw.polygon(surface, Color.LOCKED_ZONE_FILL_HOVER, polygon)
-            pygame.draw.polygon(surface, Color.WHITE, polygon, width=Box.OUTLINE_WIDTH)
-            surface.blit(icon, icon_rect)
+        self.draw_path_hexes(surface)
 
         for slot, shipgirl in zip(
             self.fleet_slots + self.backup_fleet_slots,

@@ -2,7 +2,7 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, get_vec, pixel_to_hex, hex_to_pixel, get_cluster_edges, adjacent_hexes
+from engine.util import get_rect, get_vec, pixel_to_hex, hex_to_pixel, hex_corners, get_cluster_edges, adjacent_hexes
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -15,6 +15,13 @@ def anchor():
 class SortieNode:
     SIZE = Box.WIDTH/2
     center = pygame.Vector2(screen_x(0.5), screen_y(0.5))
+    SELECTION_PULSE_DURATION = 2.4
+    SELECTION_GLINT_CYCLE = 0.9
+    SELECTION_GLINT_LIFETIME = 0.7
+    SELECTION_GLINTS_PER_HEX = 4
+    SELECTION_GLINT_MAX_LENGTH = 5
+    SELECTION_GLINT_MARGIN = 6
+    SELECTION_GLINT_DRIFT = 12
 
     def __init__(self, index, sortie_info):
         self.chapter = sortie_info["chapter"]
@@ -95,13 +102,52 @@ class SortieNode:
             icon_rect.center = pygame.Vector2(x,y) + anchor()
             surface.blit(icon, icon_rect)
 
-    def draw_selection_effect(self, surface):
-        glow = self.get_selection_glow_sprite()
+    def draw_selection_effect(self, surface, effect_time):
+        pulse = (
+            math.sin(effect_time * math.tau / self.SELECTION_PULSE_DURATION) + 1
+        ) / 2
+        glow_base = self.get_selection_glow_sprite().copy()
+        glow_base.set_alpha(int(128 + 127*pulse))
+        glow = pygame.Surface(glow_base.get_size())
+        glow.blit(glow_base)
+
+        node_anchor = anchor()
+        glow_instances = []
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
-            glow_rect = glow.get_rect()
-            glow_rect.midbottom = pygame.Vector2(x, y) + anchor()
-            surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
+            hex_center = pygame.Vector2(x, y) + node_anchor
+            corners = [
+                pygame.Vector2(corner) + node_anchor
+                for corner in hex_corners(x, y, self.SIZE)
+            ]
+            glow_left = int(min(corner.x for corner in corners))
+            glow_right = int(max(corner.x for corner in corners))
+            glow_rect = pygame.Rect(
+                glow_left,
+                0,
+                glow_right - glow_left + 1,
+                glow.get_height(),
+            )
+            glow_rect.bottom = hex_center.y
+            hex_glow = pygame.transform.smoothscale(glow, glow_rect.size)
+            glow_instances.append((hex_glow, glow_rect, hex_center))
+
+        glow_bounds = glow_instances[0][1].unionall(
+            [glow_rect for _, glow_rect, _ in glow_instances[1:]]
+        )
+        combined_glow = pygame.Surface(glow_bounds.size)
+        for hex_glow, glow_rect, _ in glow_instances:
+            local_rect = glow_rect.move(-glow_bounds.left, -glow_bounds.top)
+            combined_glow.blit(
+                hex_glow,
+                local_rect,
+                special_flags=pygame.BLEND_RGB_MAX,
+            )
+        surface.blit(
+            combined_glow,
+            glow_bounds,
+            special_flags=pygame.BLEND_RGB_ADD,
+        )
 
         _, outline, icon = self.get_styling()
         polygon = [point + anchor() for point in self.polygon]
@@ -112,6 +158,79 @@ class SortieNode:
             icon_rect = icon.get_rect()
             icon_rect.center = pygame.Vector2(x,y) + anchor()
             surface.blit(icon, icon_rect)
+
+        glint_count = len(glow_instances) * self.SELECTION_GLINTS_PER_HEX
+        for hex_index, (_, _, hex_center) in enumerate(glow_instances):
+            for glint_index in range(self.SELECTION_GLINTS_PER_HEX):
+                particle_index = glint_index*len(glow_instances) + hex_index
+                glint_time = (
+                    effect_time
+                    + particle_index*self.SELECTION_GLINT_CYCLE/glint_count
+                )
+                glint_age = glint_time % self.SELECTION_GLINT_CYCLE
+                if glint_age >= self.SELECTION_GLINT_LIFETIME:
+                    continue
+
+                cycle_index = math.floor(
+                    glint_time / self.SELECTION_GLINT_CYCLE
+                )
+                glint_progress = glint_age / self.SELECTION_GLINT_LIFETIME
+                glint_strength = (1 - glint_progress)**1.5
+                half_spawn_width = (
+                    math.sqrt(3)/2*self.SIZE - self.SELECTION_GLINT_MARGIN
+                )
+                spawn_x = (
+                    (cycle_index*29 + particle_index*17) % (2*half_spawn_width)
+                    - half_spawn_width
+                )
+                half_spawn_height = (
+                    self.SIZE
+                    - abs(spawn_x)/math.sqrt(3)
+                    - self.SELECTION_GLINT_MARGIN
+                )
+                spawn_y = (
+                    (cycle_index*19 + particle_index*31) % (2*half_spawn_height)
+                    - half_spawn_height
+                )
+                spawn_center = hex_center + pygame.Vector2(spawn_x, spawn_y)
+                center = spawn_center - pygame.Vector2(
+                    0,
+                    self.SELECTION_GLINT_DRIFT*glint_progress,
+                )
+                glint_length = 1 + round(
+                    (self.SELECTION_GLINT_MAX_LENGTH - 1)*glint_strength
+                )
+                glint_color = tuple(
+                    round(channel*glint_strength)
+                    for channel in outline
+                )
+                glint_surface = pygame.Surface(
+                    (
+                        2*self.SELECTION_GLINT_MAX_LENGTH + 1,
+                        2*self.SELECTION_GLINT_MAX_LENGTH + 1,
+                    )
+                )
+                glint_surface_center = pygame.Vector2(
+                    self.SELECTION_GLINT_MAX_LENGTH,
+                    self.SELECTION_GLINT_MAX_LENGTH,
+                )
+                pygame.draw.line(
+                    glint_surface,
+                    glint_color,
+                    glint_surface_center - pygame.Vector2(glint_length, 0),
+                    glint_surface_center + pygame.Vector2(glint_length, 0),
+                )
+                pygame.draw.line(
+                    glint_surface,
+                    glint_color,
+                    glint_surface_center - pygame.Vector2(0, glint_length),
+                    glint_surface_center + pygame.Vector2(0, glint_length),
+                )
+                surface.blit(
+                    glint_surface,
+                    glint_surface.get_rect(center=center),
+                    special_flags=pygame.BLEND_RGB_ADD,
+                )
 
     def get_bounding_rect(self):
         points = [point + anchor() for point in self.polygon]
@@ -711,6 +830,7 @@ class SortieSelectionMenu:
         self.mousedown = False
 
         self.selected_sortie_node = None
+        self.selection_effect_time = 0
         self.sortie_nodes = [
             SortieNode(sortie_index, sortie_info)
             for sortie_index, sortie_info in enumerate(DataFiles.sortie_data)
@@ -925,6 +1045,7 @@ class SortieSelectionMenu:
             self.sortie_order_card.button.active = self.selected_sortie_node is not None
 
     def update(self, dt, events):
+        self.selection_effect_time += dt
         for event in events:
             if self.sortie_order_card.authorizing:
                 continue
@@ -1022,7 +1143,10 @@ class SortieSelectionMenu:
             sortie_node.draw(surface)
 
         if self.selected_sortie_node is not None:
-            self.selected_sortie_node.draw_selection_effect(surface)
+            self.selected_sortie_node.draw_selection_effect(
+                surface,
+                self.selection_effect_time,
+            )
 
         for chapter_name_ribbon in self.chapter_name_ribbons:
             chapter_name_ribbon.draw(surface, font_registry)
