@@ -15,12 +15,8 @@ from live2d.live2d import Live2D
 class FleetNameRibbon(NameRibbon):
     def get_rect(self, font_registry):
         width = self.get_width(font_registry)
-        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height() * self.FONT_SCALE
+        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height() * self.scale
         return get_rect(width=width, height=height, center=self.position)
-
-
-class HeaderNameRibbon(FleetNameRibbon):
-    FONT_SCALE = 1.5
 
 
 class FleetSelectionMenu:
@@ -39,6 +35,10 @@ class FleetSelectionMenu:
     SELECTION_GLINT_DRIFT = 12
     PATH_HEX_GLINTS_PER_HEX = 4
     PATH_HEX_GLINT_MARGIN = 6
+    PROP_MIN_OFFSET = 64
+    PROP_MAX_OFFSET = 96
+    PROP_PLACEMENT_ATTEMPTS = 64
+    PROP_SPACING = 8
     MARKER_GLINT_COUNT = 4
     MARKER_GLINT_MARGIN = 6
     MARKER_PROJECTION_ALPHA = 192
@@ -153,10 +153,12 @@ class FleetSelectionMenu:
         )
 
         self.sortie_index = -1
-        self.header_ribbon = HeaderNameRibbon((screen_x(0.5), Box.TOP_OF_SCREEN), "")
+        self.header_ribbon = FleetNameRibbon((screen_x(0.5), Box.TOP_OF_SCREEN), "", scale=1.5)
 
         self.path = []
         self.path_hexes = []
+        self.empty_loop_position = None
+        self.sortie_props = []
         self.selection_effect_time = 0
 
         self.background = Background()
@@ -338,7 +340,8 @@ class FleetSelectionMenu:
 
     def generate_path(self):
         num_encounters = len(DataFiles.sortie_data[self.sortie_index]["encounters"])
-        encounter_counter = num_encounters
+        extra_loops = 1
+        encounter_counter = num_encounters + extra_loops
         radius = 48
         sign = random.choice([1, -1])
         straight_distance = random.uniform(5, 10)
@@ -369,15 +372,15 @@ class FleetSelectionMenu:
         angle = 0.0
         pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
         draw_hex = False
+        candidate_hexes = []
         self.path = [(pos, angle)]
-        self.path_hexes = []
         for checkpoint in checkpoints:
             to_target = checkpoint - pos
             while to_target.length() > 5:
                 pos = pos + get_vec(step, angle)
                 if record_every_counter == 0:
                     if draw_hex:
-                        self.path_hexes.append(pos)
+                        candidate_hexes.append(pos)
                         draw_hex = False
                     self.path.append((pos, angle))
                     record_every_counter = record_every
@@ -406,10 +409,98 @@ class FleetSelectionMenu:
         if record_every_counter < record_every:
             pos = pos + get_vec(record_every_counter, angle)
             self.path.append((pos, angle))
-        if len(self.path_hexes) < num_encounters:
-            self.path_hexes.append(pos)
+        if len(candidate_hexes) < num_encounters + extra_loops:
+            candidate_hexes.append(pos)
+        encounter_loop_hexes = random.sample(
+            candidate_hexes[:-1],
+            k=num_encounters - 1,
+        )
+        self.empty_loop_position = next(
+            candidate
+            for candidate in candidate_hexes[:-1]
+            if candidate not in encounter_loop_hexes
+        )
+        self.path_hexes = encounter_loop_hexes + [candidate_hexes[-1]]
 
         self.start_sortie_button.rect.center = self.path[0][0]
+        self.generate_sortie_props()
+
+    def generate_sortie_props(self):
+        self.sortie_props = []
+        prop_sets = DataFiles.sortie_selection_details.get(
+            "fleet_selection_props",
+            [],
+        )
+        if not 0 <= self.sortie_index < len(prop_sets):
+            return
+
+        prop_anchors = {
+            "start": pygame.Vector2(self.start_sortie_button.rect.center),
+            "end": self.path_hexes[-1],
+            "empty_loop": self.empty_loop_position,
+        }
+        for prop_info in prop_sets[self.sortie_index]:
+            prop_key = prop_info["prop"]
+            position = self.get_random_prop_position(
+                prop_anchors[prop_info["anchor"]],
+                DataFiles.sprites["sortie_selection"][prop_key],
+            )
+            self.sortie_props.append((prop_key, position))
+
+    def get_random_prop_position(self, anchor, prop):
+        screen_rect = pygame.Rect((0, 0), (screen_x(1), screen_y(1)))
+        header_rect = pygame.Rect(0, 0, screen_x(1), 80)
+        protected_rects = [
+            header_rect,
+            self.exit_fleet_selection_menu_button.rect,
+            self.backup_fleet_box.inflate(2*Box.PADDING, 2*Box.PADDING),
+            self.primary_fleet_box.inflate(2*Box.PADDING, 2*Box.PADDING),
+            self.tray_overlay.inflate(2*Box.PADDING, 2*Box.PADDING),
+        ]
+        marker_centers = [
+            pygame.Vector2(self.start_sortie_button.rect.center),
+            *self.path_hexes,
+        ]
+        placed_prop_rects = [
+            DataFiles.sprites["sortie_selection"][prop_key].get_rect(
+                center=position,
+            )
+            for prop_key, position in self.sortie_props
+        ]
+
+        for _ in range(self.PROP_PLACEMENT_ATTEMPTS):
+            position = anchor + get_vec(
+                random.uniform(self.PROP_MIN_OFFSET, self.PROP_MAX_OFFSET),
+                random.uniform(0, math.tau),
+            )
+            prop_rect = prop.get_rect(center=position)
+            if not screen_rect.contains(prop_rect):
+                continue
+            if any(prop_rect.colliderect(rect) for rect in protected_rects):
+                continue
+            if any(
+                position.distance_to(marker_center) < self.PROP_MIN_OFFSET
+                for marker_center in marker_centers
+            ):
+                continue
+            if any(
+                prop_rect.inflate(
+                    self.PROP_SPACING,
+                    self.PROP_SPACING,
+                ).colliderect(rect)
+                for rect in placed_prop_rects
+            ):
+                continue
+            return position
+
+        # The anchor regions have ample room in normal layouts. Retain the final
+        # randomized candidate if an unusually constrained route exhausts retries.
+        return position
+
+    def draw_sortie_props(self, surface):
+        for prop_key, position in self.sortie_props:
+            prop = DataFiles.sprites["sortie_selection"][prop_key]
+            surface.blit(prop, prop.get_rect(center=position))
 
     def _get_launch_marker_polygon(self, center):
         return [
@@ -1023,6 +1114,7 @@ class FleetSelectionMenu:
 
     def draw(self, surface, font_registry):
         self.background.draw(surface)
+        self.draw_sortie_props(surface)
         mpos = pygame.mouse.get_pos()
 
         for point, angle in self.path:

@@ -22,157 +22,186 @@
 		]
 	},
 	"props": [
-		{
-			"prop": "port_ne",
-			"hex": [-2, 1]
-		},
-		{
-			"prop": "port_se",
-			"hex": [1, -2]
-		},
-		{
-			"prop": "port_sw",
-			"hex": [6, 0]
-		},
-		{
-			"prop": "port_nw",
-			"hex": [4, 2]
-		},
-		{
-			"prop": "lighthouse",
-			"hex": [1, 3]
-		},
-		{
-			"prop": "island3",
-			"hex": [7, -6]
-		},
-		{
-			"prop": "island4",
-			"hex": [11, -1]
-		},
-		{
-			"prop": "island1",
-			"hex": [11, -7]
-		},
-		{
-			"prop": "island2",
-			"hex": [15, -2]
-		},
-		{
-			"prop": "island5",
-			"hex": [17, -9]
-		},
-		{
-			"prop": "isle1",
-			"hex": [20, -4]
-		},
-		{
-			"prop": "isle2",
-			"hex": [20, -9]
-		},
-		{
-			"prop": "isle3",
-			"hex": [23, -12]
-		},
-		{
-			"prop": "isle4",
-			"hex": [25, -5]
-		},
-		{
-			"prop": "isle5",
-			"hex": [27, -8]
-		},
-		{
-			"prop": "archipelago",
-			"hex": [29, -14]
-		},
-		{
-			"prop": "atoll",
-			"hex": [34, -15]
-		},
-		{
-			"prop": "mountain1",
-			"hex": [33, -10]
-		},
-		{
-			"prop": "mountain2",
-			"hex": [32, -6]
-		},
-		{
-			"prop": "volcano",
-			"hex": [26, -16]
-		},
-		{
-			"prop": "isle5",
-			"hex": [3, -7]
-		},
-		{
-			"prop": "isle4",
-			"hex": [8, -11]
-		},
-		{
-			"prop": "isle3",
-			"hex": [2, -11]
-		},
-		{
-			"prop": "island4",
-			"hex": [26, -1]
-		},
-		{
-			"prop": "island1",
-			"hex": [32, -2]
-		},
-		{
-			"prop": "island2",
-			"hex": [-4, -2]
-		},
-		{
-			"prop": "island3",
-			"hex": [-2, -8]
-		},
-		{
-			"prop": "island5",
-			"hex": [20, 1]
-		},
-		{
-			"prop": "glacier5",
-			"hex": [15, -12]
-		},
-		{
-			"prop": "glacier3",
-			"hex": [22, -13]
-		},
-		{
-			"prop": "glacier2",
-			"hex": [22, -16]
-		},
-		{
-			"prop": "glacier1",
-			"hex": [16, -15]
-		},
-		{
-			"prop": "glacier4",
-			"hex": [19, -14]
-		},
-		{
-			"prop": "glacier4",
-			"hex": [16, 2]
-		},
-		{
-			"prop": "glacier5",
-			"hex": [14, 4]
-		},
-		{
-			"prop": "glacier3",
-			"hex": [10, 4]
-		},
-		{
-			"prop": "glacier2",
-			"hex": [6, 4]
-		},
-		{
-			"prop": "glacier1",
-			"hex": [11, 1]
-		}
+		{ "prop": "port_ne", "hex": [-2, 1] },
+		{ "prop": "port_se", "hex": [1, -2] },
+		{ "prop": "port_sw", "hex": [6, 0] },
+		{ "prop": "lighthouse", "hex": [0, 4] },
+
+		{ "prop": "port_ne", "hex": [5, -6] },
+		{ "prop": "lighthouse", "hex": [9, -7] },
+		{ "prop": "port_sw", "hex": [13, -8] },
+		{ "prop": "isle3", "hex": [11, -7] },
+
+		{ "prop": "atoll", "hex": [21, -11] },
+		{ "prop": "archipelago", "hex": [24, -6] },
+		{ "prop": "isle1", "hex": [19, -9] },
+		{ "prop": "tides", "hex": [24, -12] },
+
+		{ "prop": "storm1", "hex": [-13, -10] },
+		{ "prop": "storm2", "hex": [-7, -10] },
+		{ "prop": "hurricane", "hex": [-10, -13] },
+		{ "prop": "tides", "hex": [-8, -13] },
+
+		{ "prop": "storm1", "hex": [0, -8] },
+		{ "prop": "storm2", "hex": [4, -8] },
+		{ "prop": "hurricane", "hex": [2, -6] },
+		{ "prop": "whirlpool", "hex": [2, -10] },
+
+		{ "prop": "archipelago", "hex": [6, -12] },
+		{ "prop": "island3", "hex": [11, -10] },
+		{ "prop": "atoll", "hex": [8, -10] },
+		{ "prop": "lighthouse", "hex": [9, -14] },
+
+		{ "prop": "glacier1", "hex": [11, 1] },
+		{ "prop": "glacier2", "hex": [15, 1] },
+		{ "prop": "glacier3", "hex": [13, 3] },
+		{ "prop": "glacier5", "hex": [13, -1] },
+
+		{ "prop": "glacier1", "hex": [16, -13] },
+		{ "prop": "glacier2", "hex": [21, -13] },
+		{ "prop": "glacier4", "hex": [19, -15] },
+		{ "prop": "glacier5", "hex": [19, -11] },
+
+		{ "prop": "storm1", "hex": [34, -12] },
+		{ "prop": "storm2", "hex": [38, -12] },
+		{ "prop": "tides", "hex": [36, -10] },
+		{ "prop": "whirlpool", "hex": [36, -14] },
+
+		{ "prop": "archipelago", "hex": [19, 2] },
+		{ "prop": "island5", "hex": [21, 4] },
+		{ "prop": "atoll", "hex": [23, 0] },
+		{ "prop": "lighthouse", "hex": [25, 1] },
+
+		{ "prop": "volcano", "hex": [25, -14] },
+		{ "prop": "mountain1", "hex": [29, -16] },
+		{ "prop": "mountain2", "hex": [25, -17] },
+		{ "prop": "island2", "hex": [28, -14] }
+	],
+	"fleet_selection_props": [
+		[
+			{ "prop": "port_ne", "anchor": "start" },
+			{ "prop": "lighthouse", "anchor": "end" },
+			{ "prop": "port_sw", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "port_se", "anchor": "start" },
+			{ "prop": "port_ne", "anchor": "end" },
+			{ "prop": "lighthouse", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "port_sw", "anchor": "start" },
+			{ "prop": "lighthouse", "anchor": "end" },
+			{ "prop": "port_nw", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "port_nw", "anchor": "start" },
+			{ "prop": "port_se", "anchor": "end" },
+			{ "prop": "lighthouse", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "port_ne", "anchor": "start" },
+			{ "prop": "lighthouse", "anchor": "end" },
+			{ "prop": "isle3", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "port_sw", "anchor": "start" },
+			{ "prop": "isle3", "anchor": "end" },
+			{ "prop": "lighthouse", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "lighthouse", "anchor": "start" },
+			{ "prop": "port_ne", "anchor": "end" },
+			{ "prop": "port_sw", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "port_sw", "anchor": "start" },
+			{ "prop": "isle3", "anchor": "end" },
+			{ "prop": "lighthouse", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "port_ne", "anchor": "start" },
+			{ "prop": "lighthouse", "anchor": "end" },
+			{ "prop": "isle3", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "port_sw", "anchor": "start" },
+			{ "prop": "isle3", "anchor": "end" },
+			{ "prop": "lighthouse", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "lighthouse", "anchor": "start" },
+			{ "prop": "port_ne", "anchor": "end" },
+			{ "prop": "port_sw", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "atoll", "anchor": "start" },
+			{ "prop": "archipelago", "anchor": "end" },
+			{ "prop": "isle1", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "isle1", "anchor": "start" },
+			{ "prop": "tides", "anchor": "end" },
+			{ "prop": "atoll", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "archipelago", "anchor": "start" },
+			{ "prop": "atoll", "anchor": "end" },
+			{ "prop": "tides", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "atoll", "anchor": "start" },
+			{ "prop": "isle1", "anchor": "end" },
+			{ "prop": "archipelago", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "archipelago", "anchor": "start" },
+			{ "prop": "tides", "anchor": "end" },
+			{ "prop": "isle1", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "isle1", "anchor": "start" },
+			{ "prop": "atoll", "anchor": "end" },
+			{ "prop": "tides", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "tides", "anchor": "start" },
+			{ "prop": "archipelago", "anchor": "end" },
+			{ "prop": "atoll", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "atoll", "anchor": "start" },
+			{ "prop": "tides", "anchor": "end" },
+			{ "prop": "isle1", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "archipelago", "anchor": "start" },
+			{ "prop": "isle1", "anchor": "end" },
+			{ "prop": "tides", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "isle1", "anchor": "start" },
+			{ "prop": "tides", "anchor": "end" },
+			{ "prop": "atoll", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "atoll", "anchor": "start" },
+			{ "prop": "archipelago", "anchor": "end" },
+			{ "prop": "isle1", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "tides", "anchor": "start" },
+			{ "prop": "isle1", "anchor": "end" },
+			{ "prop": "archipelago", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "archipelago", "anchor": "start" },
+			{ "prop": "atoll", "anchor": "end" },
+			{ "prop": "tides", "anchor": "empty_loop" }
+		],
+		[
+			{ "prop": "storm1", "anchor": "start" },
+			{ "prop": "whirlpool", "anchor": "end" },
+			{ "prop": "hurricane", "anchor": "empty_loop" }
+		]
 	]
 }

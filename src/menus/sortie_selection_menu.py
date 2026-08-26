@@ -323,46 +323,40 @@ class SortieProp:
 
 class NameRibbon:
     PADDING_X = 24
-    FONT_SCALE = 1
     
-    def __init__(self, position, name):
+    def __init__(self, position, name, scale=1.0):
         self.text = name
         self.position = pygame.Vector2(position)
+        self.scale = scale
     
     def get_width(self, font_registry):
         left = pygame.transform.scale_by(
-            DataFiles.sprites["sortie_selection"]["name_left"],
-            self.FONT_SCALE
+            DataFiles.sprites["sortie_selection"]["name_left"], self.scale
         )
         right = pygame.transform.scale_by(
-            DataFiles.sprites["sortie_selection"]["name_right"],
-            self.FONT_SCALE
+            DataFiles.sprites["sortie_selection"]["name_right"], self.scale
         )
         middle = pygame.transform.scale_by(
-            DataFiles.sprites["sortie_selection"]["name_middle"],
-            self.FONT_SCALE
+            DataFiles.sprites["sortie_selection"]["name_middle"], self.scale
         )
-        text_width = font_registry["handwritten"].get_width(self.text, self.FONT_SCALE, 0) - Box.WIDTH
+        text_width = font_registry["handwritten"].get_width(self.text, self.scale, 0) - Box.WIDTH
         middle_width = max(middle.get_width(), text_width + 2 * self.PADDING_X)
         return left.get_width() + middle_width + right.get_width()
 
     def get_rect(self, font_registry):
         width = self.get_width(font_registry)
-        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height() * self.FONT_SCALE
+        height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height() * self.scale
         return get_rect(width=width, height=height, center=self.position + anchor())
 
     def draw(self, surface, font_registry):
         left = pygame.transform.scale_by(
-            DataFiles.sprites["sortie_selection"]["name_left"],
-            self.FONT_SCALE
+            DataFiles.sprites["sortie_selection"]["name_left"], self.scale
         )
         right = pygame.transform.scale_by(
-            DataFiles.sprites["sortie_selection"]["name_right"],
-            self.FONT_SCALE
+            DataFiles.sprites["sortie_selection"]["name_right"], self.scale
         )
         middle = pygame.transform.scale_by(
-            DataFiles.sprites["sortie_selection"]["name_middle"],
-            self.FONT_SCALE
+            DataFiles.sprites["sortie_selection"]["name_middle"], self.scale
         )
         rect = self.get_rect(font_registry)
 
@@ -382,7 +376,7 @@ class NameRibbon:
         right_rect = right.get_rect(topright=rect.topright)
         surface.blit(right, right_rect)
 
-        font_registry["handwritten"].render(surface, self.text, rect.center, Color.BLACK, self.FONT_SCALE, style="center")
+        font_registry["handwritten"].render(surface, self.text, rect.center, Color.BLACK, self.scale, style="center")
 
 class ChapterNameRibbon:
     CHAPTER_NAMES = [
@@ -903,11 +897,13 @@ class SortieSelectionMenu:
         self.generate_paths()
 
         self.sea_location_labels = [
-            NameRibbon((-42, -431), "stormy"),
-            NameRibbon((747, 69), "glaciers"),
-            NameRibbon((670, -618), "glaciers"),
-            NameRibbon((1588, -169), "stormy"),
-            NameRibbon((1658, -587), "stormy"),
+            NameRibbon((-105, -390), "stormy", scale=0.75),
+            NameRibbon((747, 69), "glaciers", scale=0.75),
+            NameRibbon((670, -618), "glaciers", scale=0.75),
+            NameRibbon((1658, -587), "stormy", scale=0.75),
+            NameRibbon((188, -565), "northwind archipelago", scale=0.75),
+            NameRibbon((1250, 100), "sunward archipelago", scale=0.75),
+            NameRibbon((1045, -790), "cinder isles", scale=0.75),
         ]
 
     def generate_paths(self):
