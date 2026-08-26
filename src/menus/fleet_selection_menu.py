@@ -20,7 +20,7 @@ class FleetNameRibbon(NameRibbon):
 
 
 class FleetSelectionMenu:
-    Y_ALIGN = screen_y(0.45)
+    Y_ALIGN = screen_y(0.4)
     PATH_DASH_LENGTH = 16
     PATH_DASH_WIDTH = 4
     LAUNCH_MARKER_RADIUS = 32
@@ -139,21 +139,23 @@ class FleetSelectionMenu:
             ) for slot in self.fleet_slots
         ]
 
-        self.primary_fleet_box = self.fleet_slots[0].unionall(self.fleet_slots[1:]).inflate(Box.WIDTH, Box.HEIGHT)
-        self.backup_fleet_box = self.backup_fleet_slots[0].unionall(self.backup_fleet_slots[1:]).inflate(Box.WIDTH, Box.HEIGHT)
+        self.primary_fleet_box = self.fleet_slots[0].unionall(self.fleet_slots[1:]).inflate(2*Box.PADDING, 2*Box.PADDING)
+        self.backup_fleet_box = self.backup_fleet_slots[0].unionall(self.backup_fleet_slots[1:]).inflate(2*Box.PADDING, 2*Box.PADDING)
 
         banner_height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
         self.primary_fleet_ribbon = FleetNameRibbon(
             (self.primary_fleet_box.centerx, self.primary_fleet_box.bottom + Box.PADDING + banner_height / 2),
             "primary",
+            scale=0.75
         )
         self.backup_fleet_ribbon = FleetNameRibbon(
             (self.backup_fleet_box.centerx, self.backup_fleet_box.bottom + Box.PADDING + banner_height / 2),
             "backup",
+            scale=0.75
         )
 
         self.sortie_index = -1
-        self.header_ribbon = FleetNameRibbon((screen_x(0.5), Box.TOP_OF_SCREEN), "", scale=1.5)
+        self.header_ribbon = FleetNameRibbon((screen_x(0.5), Box.TOP_OF_SCREEN), "", scale=1.0)
 
         self.path = []
         self.path_hexes = []
@@ -1138,7 +1140,7 @@ class FleetSelectionMenu:
         self.draw_path_hexes(surface)
         self.draw_launch_marker(surface)
 
-        # self.background.draw_markings(surface, font_registry)
+        self.background.draw_markings(surface, font_registry)
         
         self._draw_dashed_rect(surface, self.backup_fleet_box)
         self._draw_dashed_rect(surface, self.primary_fleet_box)
