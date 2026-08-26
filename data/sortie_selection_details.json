@@ -21,26 +21,42 @@
 			[715.0, -181.0]
 		]
 	},
+	"chapter_boundaries": {
+		"0": [
+			[-3, 1], [0, -3], [4, -3], [4, -2], [7, -1], [7, 0], [5, 2], [1, 5], [-2, 4]
+		],
+		"1": [
+			[4, -7], [9, -8], [14, -9], [15, -7], [14, -5],
+			[13, -3], [7, 0], [7, -1], [4, -2], [4, -3], [3, -3]
+		],
+		"2": [
+			[15, -7], [20, -12], [24, -14], [28, -15], [32, -14],
+			[33, -12], [32, -10], [25, -5], [20, -4], [13, -3]
+		],
+		"3": [
+			[-14, -10], [-11, -14], [-7, -14], [-6, -10], [-8, -8], [-12, -8]
+		]
+	},
 	"props": [
-		{ "prop": "port_ne", "hex": [-2, 1] },
-		{ "prop": "port_se", "hex": [1, -2] },
-		{ "prop": "port_sw", "hex": [6, 0] },
-		{ "prop": "lighthouse", "hex": [0, 4] },
+		{ "prop": "port_ne", "hex": [-2, 1], "chapter": 0 },
+		{ "prop": "port_se", "hex": [1, -2], "chapter": 0 },
+		{ "prop": "port_sw", "hex": [6, 0], "chapter": 0 },
+		{ "prop": "lighthouse", "hex": [0, 4], "chapter": 0 },
 
-		{ "prop": "port_ne", "hex": [5, -6] },
-		{ "prop": "lighthouse", "hex": [9, -7] },
-		{ "prop": "port_sw", "hex": [13, -8] },
-		{ "prop": "isle3", "hex": [11, -7] },
+		{ "prop": "port_ne", "hex": [5, -6], "chapter": 1 },
+		{ "prop": "lighthouse", "hex": [9, -7], "chapter": 1 },
+		{ "prop": "port_sw", "hex": [13, -8], "chapter": 1 },
+		{ "prop": "isle3", "hex": [11, -7], "chapter": 1 },
 
-		{ "prop": "atoll", "hex": [21, -11] },
-		{ "prop": "archipelago", "hex": [24, -6] },
-		{ "prop": "isle1", "hex": [19, -9] },
-		{ "prop": "tides", "hex": [24, -12] },
+		{ "prop": "atoll", "hex": [21, -11], "chapter": 2 },
+		{ "prop": "archipelago", "hex": [24, -6], "chapter": 2 },
+		{ "prop": "isle1", "hex": [19, -9], "chapter": 2 },
+		{ "prop": "tides", "hex": [24, -12], "chapter": 2 },
 
-		{ "prop": "storm1", "hex": [-13, -10] },
-		{ "prop": "storm2", "hex": [-7, -10] },
-		{ "prop": "hurricane", "hex": [-10, -13] },
-		{ "prop": "tides", "hex": [-8, -13] },
+		{ "prop": "storm1", "hex": [-13, -10], "chapter": 3 },
+		{ "prop": "storm2", "hex": [-7, -10], "chapter": 3 },
+		{ "prop": "hurricane", "hex": [-10, -13], "chapter": 3 },
+		{ "prop": "tides", "hex": [-8, -13], "chapter": 3 },
 
 		{ "prop": "storm1", "hex": [0, -8] },
 		{ "prop": "storm2", "hex": [4, -8] },

@@ -240,6 +240,86 @@ class SortieNode:
         bottom = max(point.y for point in points)
         return pygame.Rect(left, top, right - left, bottom - top)
 
+
+class ChapterRegion:
+    OUTLINE_WIDTH = 2
+    HATCH_SPACING = 14
+    FILL_ALPHA = 28
+    HATCH_ALPHA = 96
+    OUTLINE_ALPHA = 190
+
+    def __init__(self, chapter, boundary_hexes, sortie_nodes):
+        self.chapter = chapter
+        self.sortie_nodes = sortie_nodes
+        polygon = [
+            hex_to_pixel(*hex_coordinate, SortieNode.SIZE)
+            for hex_coordinate in boundary_hexes
+        ]
+
+        left = math.floor(min(point[0] for point in polygon)) - self.OUTLINE_WIDTH
+        top = math.floor(min(point[1] for point in polygon)) - self.OUTLINE_WIDTH
+        right = math.ceil(max(point[0] for point in polygon)) + self.OUTLINE_WIDTH
+        bottom = math.ceil(max(point[1] for point in polygon)) + self.OUTLINE_WIDTH
+        self.position = pygame.Vector2(left, top)
+        self.size = (right - left + 1, bottom - top + 1)
+        self.polygon = [
+            pygame.Vector2(point) - self.position
+            for point in polygon
+        ]
+        self.styled_surfaces = {}
+
+    def get_state(self):
+        if all(node.cleared for node in self.sortie_nodes):
+            return "cleared"
+        if any(node.unlocked for node in self.sortie_nodes):
+            return "uncleared"
+        return "locked"
+
+    def create_styled_surface(self, state):
+        colors = {
+            "cleared": (Color.CLEARED_ZONE_FILL, Color.CLEARED_ZONE_OUTLINE),
+            "uncleared": (Color.UNCLEARED_ZONE_FILL, Color.UNCLEARED_ZONE_OUTLINE),
+            "locked": (Color.LOCKED_ZONE_FILL, Color.LOCKED_ZONE_OUTLINE),
+        }
+        fill_color, outline_color = colors[state]
+
+        styled_surface = pygame.Surface(self.size, pygame.SRCALPHA)
+        pygame.draw.polygon(
+            styled_surface,
+            (*fill_color, self.FILL_ALPHA),
+            self.polygon,
+        )
+
+        hatch_surface = pygame.Surface(self.size, pygame.SRCALPHA)
+        width, height = self.size
+        for x in range(-height, width + height, self.HATCH_SPACING):
+            pygame.draw.line(
+                hatch_surface,
+                (*outline_color, self.HATCH_ALPHA),
+                (x, height),
+                (x + height, 0),
+                width=Box.OUTLINE_WIDTH
+            )
+        region_mask = pygame.Surface(self.size, pygame.SRCALPHA)
+        pygame.draw.polygon(region_mask, (255, 255, 255, 255), self.polygon)
+        hatch_surface.blit(region_mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        styled_surface.blit(hatch_surface, (0, 0))
+
+        pygame.draw.polygon(
+            styled_surface,
+            (*outline_color, self.OUTLINE_ALPHA),
+            self.polygon,
+            width=self.OUTLINE_WIDTH,
+        )
+        return styled_surface
+
+    def draw(self, surface):
+        state = self.get_state()
+        if state not in self.styled_surfaces:
+            self.styled_surfaces[state] = self.create_styled_surface(state)
+        surface.blit(self.styled_surfaces[state], self.position + anchor())
+
+
 class Fog:
     def __init__(self, sortie_nodes, disperse=False):
         self.centroids = []
@@ -883,6 +963,7 @@ class SortieSelectionMenu:
         )
 
         self.background = Background()
+        self.chapter_regions = self.create_chapter_regions()
         self.chapter_name_ribbons = self.create_chapter_name_ribbons()
 
         self.fogs = [
@@ -956,6 +1037,19 @@ class SortieSelectionMenu:
 
     def get_chapters(self):
         return sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
+
+    def create_chapter_regions(self):
+        regions = []
+        boundary_data = DataFiles.sortie_selection_details["chapter_boundaries"]
+        for chapter in self.get_chapters():
+            chapter_nodes = [
+                sortie_node for sortie_node in self.sortie_nodes
+                if sortie_node.chapter == chapter
+            ]
+            regions.append(
+                ChapterRegion(chapter, boundary_data[str(chapter)], chapter_nodes)
+            )
+        return regions
 
     def create_chapter_name_ribbons(self):
         ribbons = []
@@ -1122,6 +1216,9 @@ class SortieSelectionMenu:
 
     def draw(self, surface, font_registry):
         self.background.draw(surface)
+
+        for chapter_region in self.chapter_regions:
+            chapter_region.draw(surface)
 
         for chapter in range(DataFiles.save_file["chapter_progress"]+1):
             path = self.paths.get(chapter, [])
