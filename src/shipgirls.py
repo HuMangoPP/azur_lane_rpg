@@ -6,7 +6,7 @@ import pygame
 from engine.util import get_rect, get_vec, draw_annulus
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y, Decorations
-from src.vfx import shell_position, SHELL_SCALE
+from src.vfx import shell_path, SHELL_SCALE
 from live2d.live2d import Live2D
 
 class Smoke:
@@ -381,7 +381,7 @@ class ShipgirlBattleComponent:
         relpos = target_pos - start_pos
         distance = relpos.length()
         scale = distance * SHELL_SCALE
-        shell_pos = shell_position(start_pos, target_pos, t)
+        shell_pos = shell_path(start_pos, target_pos, t)
         shell_incline = math.degrees(math.atan(relpos.x / abs(relpos.x) * scale * (2*t - 1)))
         shell_angle = math.degrees(math.atan2(relpos.y, relpos.x))
         render_angle = shell_angle + shell_incline
@@ -704,39 +704,67 @@ class ShipgirlBattleComponent:
     def draw_effects(self, surface, rect, vfx_manager):
         if not self.active:
             return
-        
         if self.attack_timer > 0:
             self._draw_attack(surface, rect, vfx_manager)
-
         if self.evasion_gauge >= 1:
             self.evasion_smoke.draw(surface, rect)
-
         if not self.is_player:
             return
-        
         if self.target is not None:
+            target_color = (
+                Color.TARGET_INDICATOR if self.attack_animation or self.attack_timer > 0
+                else Color.MUTED_TARGET_INDICATOR
+            )
             dash_length = 8
             dash_width = 2
-            start_pos = pygame.Vector2(rect.center)
-            curr_pos = start_pos
-            end_pos = pygame.Vector2(self.target.rect.center)
-            parallel = (end_pos - start_pos).normalize()
-            perpendicular = pygame.Vector2(parallel.y, -parallel.x)
-            polygon = [
-                dash_width/2 * perpendicular,
-                dash_width/2 * perpendicular + dash_length * parallel,
-                -dash_width/2 * perpendicular + dash_length * parallel,
-                -dash_width/2 * perpendicular,
-            ]
-            for _ in range(100):
+            if self.hull_type in ["DD", "CL", "CA", "BB"]:
+                start_pos = pygame.Vector2(rect.center)
+                curr_pos = start_pos
+                end_pos = pygame.Vector2(self.target.rect.center)
+            else:
+                start_pos = pygame.Vector2(rect.centerx, rect.bottom - rect.height/5)
+                curr_pos = start_pos
+                target_rect = self.target.rect
+                end_pos = pygame.Vector2(target_rect.centerx, target_rect.bottom - target_rect.height/5)
+            distance = (end_pos - start_pos).length()
+            for dash_start in range(0, round(distance), 2 * dash_length):
+                start_t = dash_start / distance
+                end_t = min((dash_start + dash_length) / distance, 1)
+                if self.hull_type in ["DD", "CL", "CA", "BB"]:
+                    curr_pos = shell_path(start_pos, end_pos, start_t)
+                    dash_end_pos = shell_path(start_pos, end_pos, end_t)
+                else:
+                    curr_pos = start_pos.lerp(end_pos, start_t)
+                    dash_end_pos = start_pos.lerp(end_pos, end_t)
+                parallel = (dash_end_pos - curr_pos).normalize()
+                perpendicular = pygame.Vector2(parallel.y, -parallel.x)
+                polygon = [
+                    curr_pos + dash_width/2 * perpendicular,
+                    dash_end_pos + dash_width/2 * perpendicular,
+                    dash_end_pos - dash_width/2 * perpendicular,
+                    curr_pos - dash_width/2 * perpendicular,
+                ]
                 pygame.draw.polygon(
                     surface,
-                    Color.WHITE,
-                    [curr_pos + point for point in polygon]
+                    target_color,
+                    polygon,
                 )
-                if (end_pos - curr_pos).length() < 2 * dash_length:
-                    break
-                curr_pos += 2 * dash_length * parallel
+
+            reticle_size = 24
+            duplex_size = 16
+            pygame.draw.circle(surface, target_color, end_pos, reticle_size, 2)
+            for line in [
+                [(end_pos.x - reticle_size, end_pos.y), (end_pos.x + reticle_size, end_pos.y)],
+                [(end_pos.x, end_pos.y - reticle_size), (end_pos.x, end_pos.y + reticle_size)]
+            ]:
+                pygame.draw.line(surface, target_color, line[0], line[1], 1)
+            for line in [
+                [(end_pos.x - reticle_size, end_pos.y), (end_pos.x - reticle_size + duplex_size, end_pos.y)],
+                [(end_pos.x + reticle_size, end_pos.y), (end_pos.x + reticle_size - duplex_size, end_pos.y)],
+                [(end_pos.x, end_pos.y - reticle_size), (end_pos.x, end_pos.y - reticle_size + duplex_size)],
+                [(end_pos.x, end_pos.y + reticle_size), (end_pos.x, end_pos.y + reticle_size - duplex_size)]
+            ]:
+                pygame.draw.line(surface, target_color, line[0], line[1], 3)
 
 class Shipgirl:
     SPRITE_SIZE = 96 # TODO get this from the actual sprite?
@@ -991,14 +1019,6 @@ class SirenFleet:
             self.dummy_target = DummyTarget(menu_manager)
 
         for siren in self.fleet:
-            if siren.battle_component.hp <= 0:
-                siren.battle_component.active = False
-                siren.sprite.set_animation(Live2D.SINK_ANIMATION)
-            elif siren.battle_component.attack_animation:
-                siren.sprite.set_animation(Live2D.ATTACK_ANIMATION)
-                if siren.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
-                    siren.battle_component.attack(siren.rect, vfx_manager)
-
             if siren.battle_component.target is None:
                 if siren.battle_component.target_pref == "highest_hp":
                     siren.battle_component.target = menu_manager.player_fleet.highest_hp
@@ -1006,6 +1026,13 @@ class SirenFleet:
                     siren.battle_component.target = self.dummy_target
                 else:
                     siren.battle_component.target = menu_manager.player_fleet.front
+            if siren.battle_component.hp <= 0:
+                siren.battle_component.active = False
+                siren.sprite.set_animation(Live2D.SINK_ANIMATION)
+            elif siren.battle_component.attack_animation:
+                siren.sprite.set_animation(Live2D.ATTACK_ANIMATION)
+                if siren.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
+                    siren.battle_component.attack(siren.rect, vfx_manager)
             siren.battle_component.update(dt, siren.rect, menu_manager.player_fleet, vfx_manager)
 
             siren.animate(dt)

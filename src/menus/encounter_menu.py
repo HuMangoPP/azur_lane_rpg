@@ -576,7 +576,7 @@ class EncounterMenu:
         self.fleet_slots = [
             get_rect(
                 width=slot_size, height=slot_size,
-                centerx=screen_x(0.25) + slot_size - (slot_index-fleet_slot_offset)*slot_size/2,
+                centerx=screen_x(0.275) + slot_size - (slot_index-fleet_slot_offset)*slot_size/2,
                 centery=screen_y(0.5) + (slot_index-fleet_slot_offset)*slot_size
             ) for slot_index in range(num_fleet_slots)
         ]
@@ -928,9 +928,6 @@ class EncounterMenu:
 
     def draw(self, surface, font_registry):
         self.background.draw(surface, font_registry, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
-
-        self.menu_manager.player_fleet.draw_battle_effects(surface, self.vfx_manager)
-        self.menu_manager.siren_fleet.draw_battle_effects(surface, self.vfx_manager)
         self.vfx_manager.draw(surface, font_registry)
 
         for shipgirl in self.menu_manager.player_fleet.fleet:
@@ -940,6 +937,8 @@ class EncounterMenu:
         for siren in self.menu_manager.siren_fleet.fleet:
             siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
 
+        self.menu_manager.player_fleet.draw_battle_effects(surface, self.vfx_manager)
+        self.menu_manager.siren_fleet.draw_battle_effects(surface, self.vfx_manager)
 
         self.next_encounter_button.draw(surface, font_registry)
         self.open_reward_cache_button.draw(surface, font_registry)

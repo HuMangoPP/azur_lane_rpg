@@ -105,6 +105,9 @@ class Color:
     HOLOGRAM_GLOW = (51, 55, 128)
     SIREN_HOLOGRAM_GLOW = (128, 55, 51)
 
+    TARGET_INDICATOR = (225, 240, 255)
+    MUTED_TARGET_INDICATOR = (192, 208, 224)
+
 class Equipment:
     NUM_EQUIPS = 3
     WEAPON = 0

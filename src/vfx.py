@@ -50,7 +50,7 @@ DAMAGE_COUNTER_COLORS = {
 
 SHELL_SCALE = 1/1000
 
-def shell_position(start_pos, target_pos, t):
+def shell_path(start_pos, target_pos, t):
     relpos = target_pos - start_pos
     distance = relpos.length()
     scale = distance * SHELL_SCALE
