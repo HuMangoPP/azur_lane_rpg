@@ -459,6 +459,7 @@ class NameRibbon:
         font_registry["handwritten"].render(surface, self.text, rect.center, Color.BLACK, self.scale, style="center")
 
 class ChapterNameRibbon:
+    Y_OFFSET_IN_HEXES = 4
     CHAPTER_NAMES = [
         "training exercise",
         "patrol route",
@@ -485,10 +486,218 @@ class ChapterNameRibbon:
         left = min(position.x for position in hex_positions)
         right = max(position.x for position in hex_positions)
         bottom = max(position.y for position in hex_positions)
-        return pygame.Vector2((left + right) / 2, bottom + 3 * SortieNode.SIZE)
+        return pygame.Vector2(
+            (left + right) / 2,
+            bottom + self.Y_OFFSET_IN_HEXES*SortieNode.SIZE,
+        )
 
     def draw(self, surface, font_registry):
         self.ribbon.draw(surface, font_registry)
+
+
+class ChapterProgressAnnotation:
+    TEXT_SCALE = 1.0
+    TEXT_OFFSET = 24
+    TEXT_SURFACE_PADDING = 2
+    MIN_WIDTH = 160
+    CURVE_SAMPLE_SPACING = 6
+    DASH_LENGTH = 9
+    DASH_GAP = 6
+    LINE_WIDTH = 2
+    ARROWHEAD_LENGTH = 12
+    ARROWHEAD_ANGLE = math.radians(32)
+
+    def __init__(self, chapter, sortie_nodes):
+        self.chapter = chapter
+        self.sortie_nodes = sortie_nodes
+
+        hex_centers = [
+            pygame.Vector2(hex_to_pixel(*hex_tile, SortieNode.SIZE))
+            for sortie_node in sortie_nodes
+            for hex_tile in sortie_node.hexes
+        ]
+        leftmost_hex = min(hex_centers, key=lambda point: point.x)
+        rightmost_hex = max(hex_centers, key=lambda point: point.x)
+
+        width_extension = max(
+            0,
+            (self.MIN_WIDTH - (rightmost_hex.x - leftmost_hex.x))/2,
+        )
+        start_point = leftmost_hex + pygame.Vector2(-width_extension, 64)
+        end_point = rightmost_hex + pygame.Vector2(width_extension, 64)
+        mid_point = start_point.lerp(end_point, 0.5) + pygame.Vector2(0, 32)
+
+        self.curve_points = self.create_circular_curve(
+            start_point,
+            mid_point,
+            end_point,
+        )
+        mid_index = min(
+            range(len(self.curve_points)),
+            key=lambda index: self.curve_points[index].distance_squared_to(mid_point),
+        )
+        previous_point = self.curve_points[max(0, mid_index - 1)]
+        next_point = self.curve_points[min(len(self.curve_points) - 1, mid_index + 1)]
+        text_direction = (next_point - previous_point).normalize()
+        text_normal = pygame.Vector2(-text_direction.y, text_direction.x)
+        if text_normal.y < 0:
+            text_normal *= -1
+        self.text_position = (
+            self.curve_points[mid_index] + text_normal*self.TEXT_OFFSET
+        )
+        self.text_angle = math.degrees(math.atan2(
+            -text_direction.y,
+            text_direction.x,
+        ))
+
+    @classmethod
+    def create_circular_curve(cls, start_point, mid_point, end_point):
+        start_x, start_y = start_point
+        mid_x, mid_y = mid_point
+        end_x, end_y = end_point
+        determinant = 2*(
+            start_x*(mid_y - end_y)
+            + mid_x*(end_y - start_y)
+            + end_x*(start_y - mid_y)
+        )
+        if abs(determinant) < 0.001:
+            return [start_point, mid_point, end_point]
+
+        start_length_squared = start_point.length_squared()
+        mid_length_squared = mid_point.length_squared()
+        end_length_squared = end_point.length_squared()
+        center = pygame.Vector2(
+            (
+                start_length_squared*(mid_y - end_y)
+                + mid_length_squared*(end_y - start_y)
+                + end_length_squared*(start_y - mid_y)
+            ) / determinant,
+            (
+                start_length_squared*(end_x - mid_x)
+                + mid_length_squared*(start_x - end_x)
+                + end_length_squared*(mid_x - start_x)
+            ) / determinant,
+        )
+        radius = center.distance_to(start_point)
+
+        start_angle = math.atan2(start_y - center.y, start_x - center.x)
+        mid_angle = math.atan2(mid_y - center.y, mid_x - center.x)
+        end_angle = math.atan2(end_y - center.y, end_x - center.x)
+        counterclockwise_span = (end_angle - start_angle) % math.tau
+        counterclockwise_mid_span = (mid_angle - start_angle) % math.tau
+        if counterclockwise_mid_span <= counterclockwise_span:
+            angle_span = counterclockwise_span
+        else:
+            angle_span = -((start_angle - end_angle) % math.tau)
+
+        arc_length = radius*abs(angle_span)
+        num_segments = max(2, math.ceil(arc_length / cls.CURVE_SAMPLE_SPACING))
+        return [
+            center + get_vec(
+                radius,
+                start_angle + angle_span*segment/num_segments,
+            )
+            for segment in range(num_segments + 1)
+        ]
+
+    def get_text(self):
+        if all(node.cleared for node in self.sortie_nodes):
+            return "secured waters"
+
+        current_sortie = DataFiles.save_file["sortie_progress"]
+        if any(node.index == current_sortie for node in self.sortie_nodes):
+            return "operation plan"
+        return None
+
+    def get_curve_points(self):
+        return [point + anchor() for point in self.curve_points]
+
+    def draw_text(self, surface, font_registry, text):
+        font = font_registry["handwritten"]
+        text_size = (
+            math.ceil(font.get_width(text, self.TEXT_SCALE, 0)),
+            math.ceil(font.get_height(text, self.TEXT_SCALE, 0)),
+        )
+        text_surface = pygame.Surface(
+            (
+                text_size[0] + 2*self.TEXT_SURFACE_PADDING,
+                text_size[1] + 2*self.TEXT_SURFACE_PADDING,
+            ),
+            pygame.SRCALPHA,
+        )
+        font.render(
+            text_surface,
+            text,
+            text_surface.get_rect().center,
+            Color.WHITE,
+            self.TEXT_SCALE,
+            style="center",
+        )
+        rotated_text = pygame.transform.rotate(text_surface, self.text_angle)
+        rotated_text_rect = rotated_text.get_rect(
+            center=self.text_position + anchor()
+        )
+        surface.blit(rotated_text, rotated_text_rect)
+
+    @classmethod
+    def draw_dashed_curve(cls, surface, points):
+        drawing_dash = True
+        distance_until_toggle = cls.DASH_LENGTH
+
+        for segment_start, segment_end in zip(points, points[1:]):
+            direction = segment_end - segment_start
+            segment_length = direction.length()
+            if segment_length == 0:
+                continue
+            direction /= segment_length
+            position = segment_start
+            distance_remaining = segment_length
+
+            while distance_remaining > 0:
+                step = min(distance_remaining, distance_until_toggle)
+                next_position = position + direction*step
+                if drawing_dash:
+                    pygame.draw.line(
+                        surface,
+                        Color.WHITE,
+                        position,
+                        next_position,
+                        width=cls.LINE_WIDTH,
+                    )
+                position = next_position
+                distance_remaining -= step
+                distance_until_toggle -= step
+
+                if distance_until_toggle <= 0.001:
+                    drawing_dash = not drawing_dash
+                    distance_until_toggle = (
+                        cls.DASH_LENGTH if drawing_dash else cls.DASH_GAP
+                    )
+
+    def draw(self, surface, font_registry):
+        text = self.get_text()
+        if text is None:
+            return
+
+        curve_points = self.get_curve_points()
+        self.draw_dashed_curve(surface, curve_points)
+
+        arrow_direction = (curve_points[-1] - curve_points[-2]).normalize()
+        backwards_angle = math.atan2(-arrow_direction.y, -arrow_direction.x)
+        for angle_offset in (-self.ARROWHEAD_ANGLE, self.ARROWHEAD_ANGLE):
+            arrow_side = curve_points[-1] + get_vec(
+                self.ARROWHEAD_LENGTH,
+                backwards_angle + angle_offset,
+            )
+            pygame.draw.line(
+                surface,
+                Color.WHITE,
+                curve_points[-1],
+                arrow_side,
+                width=self.LINE_WIDTH,
+            )
+
+        self.draw_text(surface, font_registry, text)
 
 
 class Background:
@@ -965,6 +1174,7 @@ class SortieSelectionMenu:
         self.background = Background()
         self.chapter_regions = self.create_chapter_regions()
         self.chapter_name_ribbons = self.create_chapter_name_ribbons()
+        self.chapter_progress_annotations = self.create_chapter_progress_annotations()
 
         self.fogs = [
             Fog(
@@ -1062,6 +1272,20 @@ class SortieSelectionMenu:
                 continue
             ribbons.append(ChapterNameRibbon(chapter, chapter_nodes))
         return ribbons
+
+    def create_chapter_progress_annotations(self):
+        annotations = []
+        for chapter in self.get_chapters():
+            chapter_nodes = [
+                sortie_node for sortie_node in self.sortie_nodes
+                if sortie_node.chapter == chapter
+            ]
+            if len(chapter_nodes) == 0:
+                continue
+            annotations.append(
+                ChapterProgressAnnotation(chapter, chapter_nodes)
+            )
+        return annotations
 
     @classmethod
     def clamp_camera_center(cls, center):
@@ -1265,6 +1489,9 @@ class SortieSelectionMenu:
             location_ribbon.draw(surface, font_registry)
 
         self.background.draw_markings(surface, font_registry)
+
+        for chapter_progress_annotation in self.chapter_progress_annotations:
+            chapter_progress_annotation.draw(surface, font_registry)
         
         current_sortie_node = next(
             (
@@ -1274,10 +1501,10 @@ class SortieSelectionMenu:
             None
         )
         if current_sortie_node is not None:
-            arrow = DataFiles.sprites["sortie_selection"]["arrow"]
-            arrow_rect = arrow.get_rect()
-            arrow_rect.midbottom = current_sortie_node.get_bounding_rect().midtop
-            surface.blit(arrow, arrow_rect)
+            current_objective = DataFiles.sprites["sortie_selection"]["current_objective"]
+            current_objective_rect = current_objective.get_rect()
+            current_objective_rect.midbottom = current_sortie_node.get_bounding_rect().midtop
+            surface.blit(current_objective, current_objective_rect)
 
         for fog in self.fogs:
             fog.draw(surface)
