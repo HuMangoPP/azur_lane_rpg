@@ -208,7 +208,8 @@
 		"interact": { "left": 320, "top": 256, "width": 64, "height": 64 },
 		"close": { "left": 320, "top": 192, "width": 64, "height": 64 },
 
-		"cache": { "left": 256, "top": 320, "width": 64, "height": 64 },
+		"closed_reward_cache": { "left": 256, "top": 320, "width": 64, "height": 64 },
+		"open_reward_cache": { "left": 320, "top": 320, "width": 64, "height": 64 },
 
 		"hull_type": { "left": 0, "top": 320, "width": 32, "height": 32 },
 		"medal": { "left": 32, "top": 320, "width": 32, "height": 32 },

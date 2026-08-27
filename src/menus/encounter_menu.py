@@ -473,19 +473,16 @@ class EncounterMenu:
         )
 
         def open_reward_cache():
-            if self.current_sortie == DataFiles.save_file["sortie_progress"]:
-                rewards = DataFiles.sortie_data[self.current_sortie]["rewards"]
-                for reward in rewards:
-                    self.drops.append(Drop(reward, pygame.Vector2(screen_x(0.75), screen_y(0.5))))
+            rewards = DataFiles.sortie_data[self.current_sortie]["rewards"]
+            for reward in rewards:
+                self.drops.append(Drop(reward, pygame.Vector2(self.open_reward_cache_button.rect.center)))
 
-            self.open_reward_cache_button.active = False
             self.return_to_port_button.active = True
 
             DataFiles.sfx["open"].play()
-        
-        button_sprite = DataFiles.sprites["user_interface"]["cache"]
+
+        button_sprite = DataFiles.sprites["user_interface"]["closed_reward_cache"]
         button_rect = button_sprite.get_rect()
-        button_rect.center = (screen_x(0.75), screen_y(0.5))
         self.open_reward_cache_button = Button(
             button_rect,
             open_reward_cache,
@@ -494,7 +491,7 @@ class EncounterMenu:
         )
 
         def return_to_port():
-            if self.end_encounter_banner.text == "victory":
+            if self.end_encounter_banner.text == "operation complete":
                 new_sortie_progress = self.current_sortie + 1
                 if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
                     DataFiles.save_file["sortie_progress"] = new_sortie_progress
@@ -634,11 +631,15 @@ class EncounterMenu:
 
         sortie_data = DataFiles.sortie_data[self.current_sortie]
         num_encounters = len(sortie_data["encounters"])
+        self.end_encounter_banner.text = ""
         if self.current_encounter == num_encounters:
+            self.end_encounter_banner.text = "operation complete"
+            self.open_reward_cache_button.active = True
             if self.current_sortie < DataFiles.save_file["sortie_progress"]:
                 self.return_to_port_button.active = True
+                self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["open_reward_cache"]
             else:
-                self.open_reward_cache_button.active = True
+                self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["closed_reward_cache"]
 
             self.menu_manager.siren_fleet._front = []
             self.menu_manager.siren_fleet._back = []
@@ -754,13 +755,18 @@ class EncounterMenu:
                 click = (
                     click
                     or self.next_encounter_button.click(event.pos)
-                    or self.open_reward_cache_button.click(event.pos)
                     or self.return_to_port_button.click(event.pos)
                     or self.retreat_button.click(event.pos)
                 )
 
                 if click:
                     DataFiles.sfx["click"].play()
+                elif (
+                    self.current_sortie == DataFiles.save_file["sortie_progress"]
+                    and self.open_reward_cache_button.click(event.pos)
+                ):
+                    self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["open_reward_cache"]
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_f:
                     self.fast_forward = not self.fast_forward
@@ -855,6 +861,71 @@ class EncounterMenu:
         self.vfx_manager.update(dt)
         self.background.update(dt)
 
+        self.open_reward_cache_button.rect.center = (
+            pygame.Vector2(screen_x(0.75), screen_y(0.575))
+            + pygame.Vector2(96*math.sin(self.background.wave_timers[3]), 6*math.sin(2*self.background.wave_timers[3]))
+        )
+
+    def draw_encounter_progress(self, surface):
+        encounters = DataFiles.sortie_data[self.current_sortie]["encounters"]
+        icon_spacing = 128
+        first_icon_x = screen_x(0.5) - icon_spacing * (len(encounters) - 1) / 2
+        icon_center_y = Box.BOTTOM_OF_SCREEN - 16
+
+        prev_icon_rect = None
+        dash_length = 8
+        dash_gap = 8
+        for encounter_index, encounter in enumerate(encounters):
+            current_encounter_cleared = (
+                encounter_index == self.current_encounter
+                and not self.encounter_end_flag
+                and self.end_encounter_banner.text == "victory"
+            )
+            if encounter_index < self.current_encounter or current_encounter_cleared:
+                icon_name = "cleared"
+            else:
+                enemies = encounter["front"] + encounter["back"]
+                is_boss = any(
+                    enemy_encoding.split(":", 1)[0] == "tester"
+                    for enemy_encoding in enemies
+                )
+                icon_name = "boss" if is_boss else "uncleared"
+
+            icon = DataFiles.sprites["user_interface"][icon_name]
+            icon_rect = icon.get_rect(
+                centerx=first_icon_x + encounter_index * icon_spacing,
+                bottom=Box.BOTTOM_OF_SCREEN,
+            )
+            surface.blit(icon, icon_rect)
+
+            if prev_icon_rect is None:
+                prev_icon_rect = icon_rect
+                continue
+            dash_x = prev_icon_rect.right + Box.PADDING
+            path_end_x = icon_rect.left - Box.PADDING
+            while dash_x < path_end_x:
+                pygame.draw.line(
+                    surface,
+                    Color.BLUEPRINT_INK_MUTED,
+                    (dash_x, icon_center_y),
+                    (min(dash_x + dash_length, path_end_x), icon_center_y),
+                    width=Box.OUTLINE_WIDTH,
+                )
+                dash_x += dash_length + dash_gap
+            prev_icon_rect = icon_rect
+
+        if self.current_encounter < len(encounters):
+            current_icon_x = first_icon_x + self.current_encounter * icon_spacing
+            current_icon = DataFiles.sprites["user_interface"]["uncleared"]
+            current_icon_top = Box.BOTTOM_OF_SCREEN - current_icon.get_height()
+            pointer_tip_y = current_icon_top - 4
+            pointer = [
+                (current_icon_x - 8, pointer_tip_y - 10),
+                (current_icon_x + 8, pointer_tip_y - 10),
+                (current_icon_x, pointer_tip_y),
+            ]
+            pygame.draw.polygon(surface, Color.WHITE, pointer)
+
     def draw(self, surface, font_registry):
         self.background.draw(surface, font_registry, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
 
@@ -874,6 +945,7 @@ class EncounterMenu:
         self.open_reward_cache_button.draw(surface, font_registry)
         self.return_to_port_button.draw(surface, font_registry)
         self.retreat_button.draw(surface, font_registry)
+        self.draw_encounter_progress(surface)
 
         for drop in self.drops:
             drop.draw(surface, font_registry)
