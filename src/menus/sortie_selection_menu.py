@@ -507,7 +507,7 @@ class ChapterProgressAnnotation:
     ARROWHEAD_LENGTH = 12
     ARROWHEAD_ANGLE = math.radians(32)
 
-    def __init__(self, chapter, sortie_nodes):
+    def __init__(self, chapter, sortie_nodes, text_shift=16):
         self.chapter = chapter
         self.sortie_nodes = sortie_nodes
 
@@ -543,7 +543,9 @@ class ChapterProgressAnnotation:
         if text_normal.y < 0:
             text_normal *= -1
         self.text_position = (
-            self.curve_points[mid_index] + text_normal*self.TEXT_OFFSET
+            self.curve_points[mid_index]
+            + text_normal*self.TEXT_OFFSET
+            + text_direction*text_shift
         )
         self.text_angle = math.degrees(math.atan2(
             -text_direction.y,

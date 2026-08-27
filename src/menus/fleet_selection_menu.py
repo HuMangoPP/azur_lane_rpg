@@ -7,7 +7,11 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.quests_data import first_sortie_quest
-from src.menus.sortie_selection_menu import NameRibbon, Background
+from src.menus.sortie_selection_menu import (
+    Background,
+    ChapterProgressAnnotation,
+    NameRibbon,
+)
 
 from live2d.live2d import Live2D
 
@@ -17,6 +21,131 @@ class FleetNameRibbon(NameRibbon):
         width = self.get_width(font_registry)
         height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height() * self.scale
         return get_rect(width=width, height=height, center=self.position)
+
+
+class FleetPathAnnotation:
+    TEXT_SCALE = 1.0
+    TEXT_OFFSET = 20
+    TEXT_SURFACE_PADDING = 2
+    DASH_LENGTH = 9
+    DASH_GAP = 6
+    LINE_WIDTH = 2
+    ARROWHEAD_LENGTH = 12
+    ARROWHEAD_ANGLE = math.radians(32)
+
+    def __init__(self, start_point, end_point, bend, text, text_above=False):
+        self.text = text
+        mid_point = start_point.lerp(end_point, 0.5) + pygame.Vector2(0, bend)
+        self.curve_points = ChapterProgressAnnotation.create_circular_curve(
+            start_point,
+            mid_point,
+            end_point,
+        )
+
+        mid_index = min(
+            range(len(self.curve_points)),
+            key=lambda index: self.curve_points[index].distance_squared_to(mid_point),
+        )
+        previous_point = self.curve_points[max(0, mid_index - 1)]
+        next_point = self.curve_points[min(len(self.curve_points) - 1, mid_index + 1)]
+        text_direction = (next_point - previous_point).normalize()
+        text_normal = pygame.Vector2(-text_direction.y, text_direction.x)
+        if (text_above and text_normal.y > 0) or (
+            not text_above and text_normal.y < 0
+        ):
+            text_normal *= -1
+        self.text_position = (
+            self.curve_points[mid_index]
+            + text_normal*self.TEXT_OFFSET
+        )
+        self.text_angle = math.degrees(math.atan2(
+            -text_direction.y,
+            text_direction.x,
+        ))
+
+    @classmethod
+    def draw_dashed_curve(cls, surface, points):
+        drawing_dash = True
+        distance_until_toggle = cls.DASH_LENGTH
+
+        for segment_start, segment_end in zip(points, points[1:]):
+            direction = segment_end - segment_start
+            segment_length = direction.length()
+            if segment_length == 0:
+                continue
+            direction /= segment_length
+            position = segment_start
+            distance_remaining = segment_length
+
+            while distance_remaining > 0:
+                step = min(distance_remaining, distance_until_toggle)
+                next_position = position + direction*step
+                if drawing_dash:
+                    pygame.draw.line(
+                        surface,
+                        Color.WHITE,
+                        position,
+                        next_position,
+                        width=cls.LINE_WIDTH,
+                    )
+                position = next_position
+                distance_remaining -= step
+                distance_until_toggle -= step
+
+                if distance_until_toggle <= 0.001:
+                    drawing_dash = not drawing_dash
+                    distance_until_toggle = (
+                        cls.DASH_LENGTH if drawing_dash else cls.DASH_GAP
+                    )
+
+    def draw_text(self, surface, font_registry):
+        font = font_registry["handwritten"]
+        text_size = (
+            math.ceil(font.get_width(self.text, self.TEXT_SCALE, 0)),
+            math.ceil(font.get_height(self.text, self.TEXT_SCALE, 0)),
+        )
+        text_surface = pygame.Surface(
+            (
+                text_size[0] + 2*self.TEXT_SURFACE_PADDING,
+                text_size[1] + 2*self.TEXT_SURFACE_PADDING,
+            ),
+            pygame.SRCALPHA,
+        )
+        font.render(
+            text_surface,
+            self.text,
+            text_surface.get_rect().center,
+            Color.WHITE,
+            self.TEXT_SCALE,
+            style="center",
+        )
+        rotated_text = pygame.transform.rotate(text_surface, self.text_angle)
+        surface.blit(
+            rotated_text,
+            rotated_text.get_rect(center=self.text_position),
+        )
+
+    def draw(self, surface, font_registry):
+        self.draw_dashed_curve(surface, self.curve_points)
+
+        arrow_direction = (
+            self.curve_points[-1] - self.curve_points[-2]
+        ).normalize()
+        backwards_angle = math.atan2(-arrow_direction.y, -arrow_direction.x)
+        for angle_offset in (-self.ARROWHEAD_ANGLE, self.ARROWHEAD_ANGLE):
+            arrow_side = self.curve_points[-1] + get_vec(
+                self.ARROWHEAD_LENGTH,
+                backwards_angle + angle_offset,
+            )
+            pygame.draw.line(
+                surface,
+                Color.WHITE,
+                self.curve_points[-1],
+                arrow_side,
+                width=self.LINE_WIDTH,
+            )
+
+        self.draw_text(surface, font_registry)
 
 
 class FleetSelectionMenu:
@@ -159,6 +288,7 @@ class FleetSelectionMenu:
 
         self.path = []
         self.path_hexes = []
+        self.path_annotations = []
         self.empty_loop_position = None
         self.sortie_props = []
         self.selection_effect_time = 0
@@ -423,9 +553,32 @@ class FleetSelectionMenu:
             if candidate not in encounter_loop_hexes
         )
         self.path_hexes = encounter_loop_hexes + [candidate_hexes[-1]]
+        self.generate_path_annotations()
 
         self.start_sortie_button.rect.center = self.path[0][0]
         self.generate_sortie_props()
+
+    def generate_path_annotations(self):
+        final_path_hex = self.path_hexes[-1]
+        upper_hex_edge = final_path_hex + pygame.Vector2(-24, -16)
+        lower_hex_edge = final_path_hex + pygame.Vector2(-24, 16)
+        self.path_annotations = [
+            FleetPathAnnotation(
+                pygame.Vector2(self.primary_fleet_box.topright)
+                + pygame.Vector2(Box.PADDING, -Box.PADDING),
+                upper_hex_edge,
+                -40,
+                "initial strike group",
+                text_above=True,
+            ),
+            FleetPathAnnotation(
+                pygame.Vector2(self.backup_fleet_box.bottomright)
+                + pygame.Vector2(Box.PADDING, Box.PADDING),
+                lower_hex_edge,
+                64,
+                "delayed strike group",
+            ),
+        ]
 
     def generate_sortie_props(self):
         self.sortie_props = []
@@ -1188,6 +1341,9 @@ class FleetSelectionMenu:
 
         self.draw_tray_overlay(surface, font_registry)
         self.header_ribbon.draw(surface, font_registry)
+
+        for path_annotation in self.path_annotations:
+            path_annotation.draw(surface, font_registry)
 
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
         self._draw_dragged_marker(surface, mpos)
