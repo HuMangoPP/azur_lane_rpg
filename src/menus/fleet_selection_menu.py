@@ -16,6 +16,39 @@ from src.menus.sortie_selection_menu import (
 from live2d.live2d import Live2D
 
 
+def draw_rotated_handwritten_text(
+    surface,
+    font_registry,
+    text,
+    position,
+    angle,
+    scale=1.0,
+    padding=2,
+):
+    font = font_registry["handwritten"]
+    text_size = (
+        math.ceil(font.get_width(text, scale, 0)),
+        math.ceil(font.get_height(text, scale, 0)),
+    )
+    text_surface = pygame.Surface(
+        (
+            text_size[0] + 2*padding,
+            text_size[1] + 2*padding,
+        ),
+        pygame.SRCALPHA,
+    )
+    font.render(
+        text_surface,
+        text,
+        text_surface.get_rect().center,
+        Color.WHITE,
+        scale,
+        style="center",
+    )
+    rotated_text = pygame.transform.rotate(text_surface, angle)
+    surface.blit(rotated_text, rotated_text.get_rect(center=position))
+
+
 class FleetNameRibbon(NameRibbon):
     def get_rect(self, font_registry):
         width = self.get_width(font_registry)
@@ -99,30 +132,14 @@ class FleetPathAnnotation:
                     )
 
     def draw_text(self, surface, font_registry):
-        font = font_registry["handwritten"]
-        text_size = (
-            math.ceil(font.get_width(self.text, self.TEXT_SCALE, 0)),
-            math.ceil(font.get_height(self.text, self.TEXT_SCALE, 0)),
-        )
-        text_surface = pygame.Surface(
-            (
-                text_size[0] + 2*self.TEXT_SURFACE_PADDING,
-                text_size[1] + 2*self.TEXT_SURFACE_PADDING,
-            ),
-            pygame.SRCALPHA,
-        )
-        font.render(
-            text_surface,
+        draw_rotated_handwritten_text(
+            surface,
+            font_registry,
             self.text,
-            text_surface.get_rect().center,
-            Color.WHITE,
-            self.TEXT_SCALE,
-            style="center",
-        )
-        rotated_text = pygame.transform.rotate(text_surface, self.text_angle)
-        surface.blit(
-            rotated_text,
-            rotated_text.get_rect(center=self.text_position),
+            self.text_position,
+            self.text_angle,
+            scale=self.TEXT_SCALE,
+            padding=self.TEXT_SURFACE_PADDING,
         )
 
     def draw(self, surface, font_registry):
@@ -183,6 +200,9 @@ class FleetSelectionMenu:
     TRAY_MARKER_SHADOW_OFFSET = (2, 2)
     TRAY_MARKER_HOVER_LIFT = 4
     TRAY_DRAG_SHADOW_OFFSET = (4, 6)
+    SET_SAIL_TEXT = "set sail?"
+    SET_SAIL_TEXT_OFFSET = 56
+    SET_SAIL_TEXT_ANGLE = 8
 
     def __init__(self, menu_manager):
         self.menu_manager = menu_manager
@@ -291,6 +311,7 @@ class FleetSelectionMenu:
         self.path_annotations = []
         self.empty_loop_position = None
         self.sortie_props = []
+        self.start_sortie_prop_position = None
         self.selection_effect_time = 0
 
         self.background = Background()
@@ -582,6 +603,7 @@ class FleetSelectionMenu:
 
     def generate_sortie_props(self):
         self.sortie_props = []
+        self.start_sortie_prop_position = None
         prop_sets = DataFiles.sortie_selection_details.get(
             "fleet_selection_props",
             [],
@@ -601,6 +623,8 @@ class FleetSelectionMenu:
                 DataFiles.sprites["sortie_selection"][prop_key],
             )
             self.sortie_props.append((prop_key, position))
+            if prop_info["anchor"] == "start":
+                self.start_sortie_prop_position = pygame.Vector2(position)
 
     def get_random_prop_position(self, anchor, prop):
         screen_rect = pygame.Rect((0, 0), (screen_x(1), screen_y(1)))
@@ -656,6 +680,28 @@ class FleetSelectionMenu:
         for prop_key, position in self.sortie_props:
             prop = DataFiles.sprites["sortie_selection"][prop_key]
             surface.blit(prop, prop.get_rect(center=position))
+
+    def draw_set_sail_annotation(self, surface, font_registry):
+        if not self.start_sortie_button.active:
+            return
+
+        marker_center = pygame.Vector2(self.start_sortie_button.rect.center)
+        prop_is_above = (
+            self.start_sortie_prop_position is not None
+            and self.start_sortie_prop_position.y < marker_center.y
+        )
+        text_side = 1 if prop_is_above else -1
+        text_position = marker_center + pygame.Vector2(
+            -4, text_side*self.SET_SAIL_TEXT_OFFSET,
+        )
+        text_angle = -self.SET_SAIL_TEXT_ANGLE*text_side
+        draw_rotated_handwritten_text(
+            surface,
+            font_registry,
+            self.SET_SAIL_TEXT,
+            text_position,
+            text_angle,
+        )
 
     def _get_launch_marker_polygon(self, center):
         return [
@@ -843,6 +889,9 @@ class FleetSelectionMenu:
                 )
                 for corner_index in range(6)
             ]
+
+            shadow_polygon = [point + pygame.Vector2(2, 4) for point in polygon]
+            pygame.draw.polygon(surface, self.TRAY_CAST_SHADOW, shadow_polygon)
 
             glow_left = int(min(corner.x for corner in polygon))
             glow_right = int(max(corner.x for corner in polygon))
@@ -1344,6 +1393,7 @@ class FleetSelectionMenu:
 
         for path_annotation in self.path_annotations:
             path_annotation.draw(surface, font_registry)
+        self.draw_set_sail_annotation(surface, font_registry)
 
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
         self._draw_dragged_marker(surface, mpos)
