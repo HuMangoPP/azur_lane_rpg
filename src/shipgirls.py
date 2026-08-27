@@ -48,6 +48,13 @@ class ShipgirlBattleComponent:
     TORPEDO_SPEED = 100
     AIRCRAFT_SPEED = 100
     SONAR_DISTANCE = 250
+    BATTLESTATION_PULSE_DURATION = 2.4
+    BATTLESTATION_GLINT_CYCLE = 0.9
+    BATTLESTATION_GLINT_LIFETIME = 0.7
+    BATTLESTATION_GLINT_MAX_LENGTH = 5
+    BATTLESTATION_GLINT_DRIFT = 12
+    BATTLESTATION_GLINT_COUNT = 4
+    BATTLESTATION_GLINT_MARGIN = 6
 
     def __init__(self, name, is_player):
         self.active = False
@@ -65,6 +72,7 @@ class ShipgirlBattleComponent:
             info = DataFiles.siren_data[name]
             info["exp"] = int(Stats.EXP_BASE * (1 - Stats.EXP_GROWTH**int(level)) / (1 - Stats.EXP_GROWTH))
 
+        self.name = name
         stat_keys = ["max_hp", "evasion", "firepower", "reload"]
         self.base_stats = {
             stat_key: info[stat_key]
@@ -93,6 +101,7 @@ class ShipgirlBattleComponent:
         self.exp_timer = 0
         self.last_level = Stats.level(self.last_exp)
         self.level_timer = 0
+        self.battlestation_effect_time = 0
 
         self.shake_time = 0
 
@@ -258,6 +267,7 @@ class ShipgirlBattleComponent:
         self._spawn_sfx()
 
     def update(self, dt, rect, fleet, vfx_manager):
+        self.battlestation_effect_time += dt
         self.shake_time = max(0, self.shake_time - dt)
 
         if self.last_exp < self.exp:
@@ -407,35 +417,147 @@ class ShipgirlBattleComponent:
             battlestation_glow_rect.centerx = rigging_rect.centerx + Box.WIDTH/4
         battlestation_glow_rect.bottom = rigging_rect.centery
         surface.blit(rigging_sprite, rigging_rect)
-        surface.blit(battlestation_glow, battlestation_glow_rect, special_flags=pygame.BLEND_RGB_ADD)
+        pulse = (
+            math.sin(
+                self.battlestation_effect_time
+                * math.tau
+                / self.BATTLESTATION_PULSE_DURATION
+            )
+            + 1
+        ) / 2
+        battlestation_alpha = int(192 + 63*pulse)
+        battlestation_glow = battlestation_glow.copy()
+        battlestation_glow.set_alpha(battlestation_alpha)
+        pulsing_glow = pygame.Surface(battlestation_glow.get_size())
+        pulsing_glow.blit(battlestation_glow, (0, 0))
+        surface.blit(
+            pulsing_glow,
+            battlestation_glow_rect,
+            special_flags=pygame.BLEND_RGB_ADD,
+        )
+        vertical_spawn_range = (
+            battlestation_glow_rect.height - 2*self.BATTLESTATION_GLINT_MARGIN
+        )
+        for glint_index in range(self.BATTLESTATION_GLINT_COUNT):
+            glint_time = (
+                self.battlestation_effect_time
+                + glint_index
+                * self.BATTLESTATION_GLINT_CYCLE
+                / self.BATTLESTATION_GLINT_COUNT
+            )
+            glint_age = glint_time % self.BATTLESTATION_GLINT_CYCLE
+            if glint_age >= self.BATTLESTATION_GLINT_LIFETIME:
+                continue
+
+            cycle_index = math.floor(glint_time / self.BATTLESTATION_GLINT_CYCLE)
+            glint_progress = glint_age / self.BATTLESTATION_GLINT_LIFETIME
+            glint_strength = (1 - glint_progress)**1.5
+            spawn_y = (
+                self.BATTLESTATION_GLINT_MARGIN
+                + (cycle_index*19 + glint_index*31) % vertical_spawn_range
+            )
+            y_ratio = spawn_y / (battlestation_glow_rect.height - 1)
+            cone_width = round(
+                battlestation_glow_rect.width
+                - (battlestation_glow_rect.width - 2)*y_ratio
+            )
+            half_spawn_width = cone_width/2 - self.BATTLESTATION_GLINT_MARGIN
+            spawn_x = (
+                (cycle_index*29 + glint_index*17) % (2*half_spawn_width)
+                - half_spawn_width
+            )
+            spawn_center = pygame.Vector2(
+                battlestation_glow_rect.centerx + spawn_x,
+                battlestation_glow_rect.top + spawn_y,
+            )
+            glint_center = spawn_center - pygame.Vector2(
+                0,
+                self.BATTLESTATION_GLINT_DRIFT*glint_progress,
+            )
+            if glint_center.y < battlestation_glow_rect.top:
+                continue
+            self._draw_battlestation_glint(
+                surface,
+                glint_center,
+                Color.HOLOGRAM_GLOW if self.is_player else Color.SIREN_HOLOGRAM_GLOW,
+                glint_strength,
+            )
         # TODO cleanup magic numbers
         if self.is_player:
-            battlestation_surf = pygame.Surface((48 + 64 + 4*Box.PADDING, 48 + 2*Box.PADDING))
-            battlestation_rect = battlestation_surf.get_rect()
+            battlestation_back = pygame.Surface((battlestation_glow_rect.width, 48 + 2*Box.PADDING))
+            battlestation_surf = pygame.Surface((battlestation_glow_rect.width, 48 + 2*Box.PADDING), flags=pygame.SRCALPHA)
         else:
-            battlestation_surf = pygame.Surface((64 + 2*Box.PADDING, 16 + 2*Box.PADDING))
-            battlestation_rect = battlestation_surf.get_rect()
+            battlestation_back = pygame.Surface((battlestation_glow_rect.width, 40 + 3*Box.PADDING))
+            battlestation_surf = pygame.Surface((battlestation_glow_rect.width, 40 + 3*Box.PADDING), flags=pygame.SRCALPHA)
+        battlestation_rect = battlestation_back.get_rect()
         battlestation_rect.midbottom = battlestation_glow_rect.midtop
-        battlestation_surf.fill([c//3 for c in Color.HOLOGRAM_GLOW])
-        surface.blit(battlestation_surf, battlestation_rect, special_flags=pygame.BLEND_RGB_ADD)
+        battlestation_panel_color = (
+            Color.HOLOGRAM_GLOW if self.is_player else Color.SIREN_HOLOGRAM_GLOW
+        )
+        battlestation_back.fill([c//3 for c in battlestation_panel_color])
 
-        hp_pct = self.hp / self.stat("max_hp")
         hull_sprite = pygame.transform.flip(
             DataFiles.sprites["encounter"]["hull"],
             flip_x=not self.is_player, flip_y=False
         )
         hull_rect = hull_sprite.get_rect()
         if self.is_player:
-            hull_rect.right = battlestation_rect.right - Box.PADDING
-            hull_rect.bottom = battlestation_rect.centery - Box.PADDING/2
+            hull_rect.right = battlestation_rect.width - Box.PADDING
+            hull_rect.centery = Box.PADDING + hull_rect.height/2
         else:
-            hull_rect.centerx = battlestation_rect.centerx
-            hull_rect.centery = battlestation_rect.centery
+            hull_rect.centerx = battlestation_rect.width/2
+            hull_rect.bottom = battlestation_rect.height - Box.PADDING
+        hull_panel_rect = hull_rect.inflate(Box.PADDING, Box.PADDING)
+        pygame.draw.rect(battlestation_back, [c//2 for c in battlestation_panel_color], hull_panel_rect)
+        pygame.draw.rect(battlestation_back, battlestation_panel_color, hull_panel_rect, width=Box.OUTLINE_WIDTH)
+
+        if self.is_player:
+            star_icon = DataFiles.sprites["encounter"]["star"]
+            star_rect = star_icon.get_rect()
+            bar_width = 56
+            bar_height = 8
+            bar_background = get_rect(
+                width=bar_width, height=bar_height,
+                right=battlestation_rect.width - Box.PADDING,
+                centery=battlestation_rect.height - Box.PADDING - star_rect.height/2
+            )
+            star_rect.center = bar_background.midleft
+            exp_panel_rect = bar_background.union(star_rect).inflate(
+                Box.PADDING,
+                Box.PADDING,
+            )
+            pygame.draw.rect(battlestation_back, [c//2 for c in battlestation_panel_color], exp_panel_rect)
+            pygame.draw.rect(battlestation_back, battlestation_panel_color, exp_panel_rect, width=Box.OUTLINE_WIDTH)
+
+            outer_radius = 24
+            center = (
+                pygame.Vector2(outer_radius, outer_radius)
+                + pygame.Vector2(Box.PADDING, Box.PADDING)
+            )
+            reload_panel_rect = get_rect(
+                width=2*outer_radius + Box.PADDING,
+                height=2*outer_radius + Box.PADDING,
+                centerx=center.x,
+                centery=center.y,
+            )
+            pygame.draw.rect(battlestation_back, [c//2 for c in battlestation_panel_color], reload_panel_rect)
+            pygame.draw.rect(battlestation_back, battlestation_panel_color, reload_panel_rect, width=Box.OUTLINE_WIDTH)
+        else:
+            siren_info_panel = get_rect(
+                width=battlestation_rect.width - Box.PADDING,
+                height=24,
+                centerx=battlestation_rect.width/2,
+                top=Box.PADDING/2,
+            )
+            pygame.draw.rect(battlestation_back, [c//2 for c in battlestation_panel_color], siren_info_panel)
+            pygame.draw.rect(battlestation_back, battlestation_panel_color, siren_info_panel, width=Box.OUTLINE_WIDTH)
+
+        hp_pct = self.hp / self.stat("max_hp")
         hull_back = pygame.Surface(hull_sprite.get_size())
         hull_back.fill(Color.EXP_BAR_BG)
         hull_back.blit(hull_sprite)
         hull_back.set_colorkey((255,0,0))
-        surface.blit(hull_back, hull_rect)
+        battlestation_surf.blit(hull_back, hull_rect)
         
         hull_fill = pygame.Surface(hull_sprite.get_size())
         hull_fill.fill((0, 255, 205) if self.is_player else (255, 0, 50))
@@ -445,32 +567,60 @@ class ShipgirlBattleComponent:
             missing_hp_rect.right = hull_rect.width
         pygame.draw.rect(hull_fill, (255,0,0), missing_hp_rect)
         hull_fill.set_colorkey((255,0,0))
-        surface.blit(hull_fill, hull_rect)
+        battlestation_surf.blit(hull_fill, hull_rect)
 
         if not self.is_player:
+            star_icon = DataFiles.sprites["encounter"]["star"]
+            star_rect = star_icon.get_rect(
+                topleft=(Box.PADDING, Box.PADDING)
+            )
+            battlestation_surf.blit(star_icon, star_rect)
+            font_registry["big_pixel"].render(
+                battlestation_surf,
+                str(Stats.level(self.exp)),
+                star_rect.center,
+                Color.WHITE,
+                1,
+                style="center",
+                outline_color=Color.BLACK,
+            )
+            font_registry["big_pixel"].render(
+                battlestation_surf,
+                f"{self.name} [{self.hull_type}]",
+                (star_rect.right + Box.PADDING, star_rect.centery),
+                Color.WHITE,
+                1,
+                style="centerleft",
+                outline_color=Color.BLACK,
+            )
+
+            battlestation_back.set_alpha(battlestation_alpha)
+            pulsing_battlestation_back = pygame.Surface(battlestation_back.get_size())
+            pulsing_battlestation_back.blit(battlestation_back, (0, 0))
+            surface.blit(
+                pulsing_battlestation_back,
+                battlestation_rect,
+                special_flags=pygame.BLEND_RGB_ADD,
+            )
+            battlestation_surf.set_alpha(battlestation_alpha)
+            pulsing_battlestation_surf = pygame.Surface(battlestation_surf.get_size(), flags=pygame.SRCALPHA)
+            pulsing_battlestation_surf.blit(battlestation_surf, (0, 0))
+            surface.blit(
+                pulsing_battlestation_surf,
+                battlestation_rect,
+            )
             return
-        
-        bar_width = 64
-        bar_height = 8
+
         exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
-        bar_background = get_rect(
-            width=bar_width, height=bar_height,
-            right=battlestation_rect.right - Box.PADDING,
-            top=battlestation_rect.centery + Box.PADDING/2
-        )
         bar_fill = get_rect(
             width=bar_width*Stats.level_progress(exp_animation), height=bar_background.height,
             left=bar_background.left, top=bar_background.top
         )
-        pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
-        pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
-        pygame.draw.rect(surface, Color.BLACK, bar_background, width=1)
-        star_icon = DataFiles.sprites["encounter"]["star"]
-        star_rect = star_icon.get_rect()
-        star_rect.center = bar_background.midleft
-        surface.blit(star_icon, star_rect)
+        pygame.draw.rect(battlestation_surf, Color.EXP_BAR_BG, bar_background)
+        pygame.draw.rect(battlestation_surf, Color.EXP_BAR_FILL, bar_fill)
+        battlestation_surf.blit(star_icon, star_rect)
         font_registry["big_pixel"].render(
-            surface,
+            battlestation_surf,
             str(self.last_level),
             star_rect.center,
             Color.WHITE,
@@ -482,22 +632,16 @@ class ShipgirlBattleComponent:
         if self.level_timer > 0:
             t = 1 - self.level_timer
             y = rect.top - rect.height * t
-            font_registry["big_pixel"].render(surface,"level up!",(rect.centerx, y),Color.WHITE,1,style="center")
+            font_registry["big_pixel"].render(surface, "level up!", (rect.centerx, y), Color.WHITE, 1, style="center")
         
         # TODO clean up magic numbers
         inner_radius = 12
         outer_radius = 24
-        center = (
-            pygame.Vector2(battlestation_rect.topleft)
-            + pygame.Vector2(outer_radius, outer_radius)
-            + pygame.Vector2(Box.PADDING, Box.PADDING)
-        )
         start_angle = -90
         stop_angle = start_angle + (1 - self.cooldown_timer) * 360
         color = (50,200,50) if self.target is not None else (200,50,50)
-        draw_annulus(surface, Color.EXP_BAR_BG, center, inner_radius, outer_radius, 0, 360)
-        draw_annulus(surface, color, center, inner_radius, outer_radius, start_angle, stop_angle)
-        pygame.draw.circle(surface, Color.BLACK, center, outer_radius+1, width=1)
+        draw_annulus(battlestation_surf, Color.EXP_BAR_BG, center, inner_radius, outer_radius, 0, 360)
+        draw_annulus(battlestation_surf, color, center, inner_radius, outer_radius, start_angle, stop_angle)
         if self.hull_type == "CV":
             attack_icon = DataFiles.sprites["user_interface"]["air_attack"]
         elif self.hull_type == "SS":
@@ -506,7 +650,56 @@ class ShipgirlBattleComponent:
             attack_icon = DataFiles.sprites["user_interface"]["shell_attack"]
         attack_icon_rect = attack_icon.get_rect()
         attack_icon_rect.center = center
-        surface.blit(attack_icon, attack_icon_rect)
+        battlestation_surf.blit(attack_icon, attack_icon_rect)
+
+        battlestation_back.set_alpha(battlestation_alpha)
+        pulsing_battlestation_back = pygame.Surface(battlestation_back.get_size())
+        pulsing_battlestation_back.blit(battlestation_back, (0, 0))
+        surface.blit(
+            pulsing_battlestation_back,
+            battlestation_rect,
+            special_flags=pygame.BLEND_RGB_ADD,
+        )
+        battlestation_surf.set_alpha(battlestation_alpha)
+        pulsing_battlestation_surf = pygame.Surface(battlestation_surf.get_size(), flags=pygame.SRCALPHA)
+        pulsing_battlestation_surf.blit(battlestation_surf, (0, 0))
+        surface.blit(
+            pulsing_battlestation_surf,
+            battlestation_rect,
+        )
+
+    def _draw_battlestation_glint(self, surface, center, color, strength):
+        glint_length = 1 + round(
+            (self.BATTLESTATION_GLINT_MAX_LENGTH - 1)*strength
+        )
+        glint_color = tuple(round(channel*strength) for channel in color)
+        glint_surface = pygame.Surface(
+            (
+                2*self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
+                2*self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
+            )
+        )
+        glint_surface_center = pygame.Vector2(
+            self.BATTLESTATION_GLINT_MAX_LENGTH,
+            self.BATTLESTATION_GLINT_MAX_LENGTH,
+        )
+        pygame.draw.line(
+            glint_surface,
+            glint_color,
+            glint_surface_center - pygame.Vector2(glint_length, 0),
+            glint_surface_center + pygame.Vector2(glint_length, 0),
+        )
+        pygame.draw.line(
+            glint_surface,
+            glint_color,
+            glint_surface_center - pygame.Vector2(0, glint_length),
+            glint_surface_center + pygame.Vector2(0, glint_length),
+        )
+        surface.blit(
+            glint_surface,
+            glint_surface.get_rect(center=center),
+            special_flags=pygame.BLEND_RGB_ADD,
+        )
 
     def draw_effects(self, surface, rect, vfx_manager):
         if not self.active:

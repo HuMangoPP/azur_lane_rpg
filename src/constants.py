@@ -102,7 +102,8 @@ class Color:
     CLIPBOARD_CLIP = (150, 150, 150)
     CLIPBOARD_CLIP_FRONT = (175, 175, 175)
 
-    HOLOGRAM_GLOW = (51, 55, 64)
+    HOLOGRAM_GLOW = (51, 55, 128)
+    SIREN_HOLOGRAM_GLOW = (128, 55, 51)
 
 class Equipment:
     NUM_EQUIPS = 3
@@ -373,7 +374,7 @@ for y in range(fleet_marker_selection_glow_size[1]):
     )
 DataFiles.sprites["fleet_selection"]["marker_selection_glow"] = fleet_marker_selection_glow
 
-battlestation_glow_top_width = math.ceil(48 + 64 + 3*Box.PADDING)
+battlestation_glow_top_width = math.ceil(48 + 64 + 4*Box.PADDING)
 battlestation_glow_bottom_width = 2
 battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT/1.5))
 battlestation_glow = pygame.Surface(battlestation_glow_size)
@@ -395,11 +396,11 @@ for y in range(battlestation_glow_size[1]):
     )
 DataFiles.sprites["encounter"]["shipgirl_battlestation_glow"] = battlestation_glow
 
-battlestation_glow_top_width = math.ceil(64 + 2*Box.PADDING)
+battlestation_glow_top_width = math.ceil(48 + 64 + 4*Box.PADDING)
 battlestation_glow_bottom_width = 2
 battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT/1.5))
 battlestation_glow = pygame.Surface(battlestation_glow_size)
-battlestation_glow_color = Color.HOLOGRAM_GLOW
+battlestation_glow_color = Color.SIREN_HOLOGRAM_GLOW
 for y in range(battlestation_glow_size[1]):
     y_ratio = y / (battlestation_glow_size[1] - 1)
     cone_width = round(
