@@ -529,6 +529,19 @@ class FleetSelectionMenu:
         self.path = [(pos, angle)]
         for checkpoint in checkpoints:
             to_target = checkpoint - pos
+            checkpoint_turn_amount = turn_amount
+            distance_squared = to_target.length_squared()
+            if distance_squared > 0:
+                heading = get_vec(1, angle)
+                # Curvature of the circle tangent to the current heading that
+                # passes through this checkpoint.
+                required_curvature = abs(
+                    2 * heading.cross(to_target) / distance_squared
+                )
+                checkpoint_turn_amount = max(
+                    checkpoint_turn_amount,
+                    required_curvature * step,
+                )
             while to_target.length() > 5:
                 pos = pos + get_vec(step, angle)
                 if record_every_counter == 0:
@@ -543,9 +556,9 @@ class FleetSelectionMenu:
                 to_target = checkpoint - pos
                 dot_product = left_side * to_target
                 if dot_product > 0:
-                    new_angle = angle - turn_amount
+                    new_angle = angle - checkpoint_turn_amount
                 else:
-                    new_angle = angle + turn_amount
+                    new_angle = angle + checkpoint_turn_amount
                 if (
                     (angle < 0 and new_angle >= 0)
                     or (angle > 0 and new_angle < 0)

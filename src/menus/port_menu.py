@@ -2194,7 +2194,10 @@ class PortMenu:
             DataFiles.save_file["inventory"].get("decoration_coin", 0)
             >= self.DECORATION_PRICE
         )
-        stamp_box_color = Color.BLACK if has_funds else Color.CLIPBOARD_CLIP
+        stamp_box_color = (
+            (Color.RED if self.decoration_signature_button.hovered else Color.BLACK)
+            if has_funds else Color.CLIPBOARD_CLIP
+        )
         self.draw_dashed_rect(
             surface,
             stamp_box_color,
