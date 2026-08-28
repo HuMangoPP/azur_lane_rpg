@@ -232,12 +232,8 @@ class FleetSelectionMenu:
         def start_sortie():
             if all(shipgirl is None for shipgirl in self.menu_manager.player_fleet.shipgirls):
                 return
-            self.menu_manager.current_menu = self.menu_manager.encounter_menu
             self.start_sortie_button.active = False
-            
-            self._position_shipgirls_for_battle()
-            self.menu_manager.player_fleet.begin_sortie()
-            self.menu_manager.encounter_menu.begin_sortie()
+            self.menu_manager.encounter_menu.start_sortie_transition()
 
         self.start_sortie_button = Button(
             get_rect(
@@ -1210,25 +1206,6 @@ class FleetSelectionMenu:
                     lifted=marker_hovered,
                 )
 
-    def _position_shipgirls_for_battle(self):
-        for shipgirl, slot in zip(
-            self.menu_manager.player_fleet.shipgirls,
-            self.menu_manager.encounter_menu.fleet_slots,
-        ):
-            if shipgirl is not None:
-                shipgirl.rect.center = slot.center
-                shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-                shipgirl.facing_left = False
-
-        for shipgirl, slot in zip(
-            self.menu_manager.player_fleet.backups,
-            self.menu_manager.encounter_menu.backup_fleet_slots,
-        ):
-            if shipgirl is not None:
-                shipgirl.rect.center = slot.center
-                shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-                shipgirl.facing_left = False
-
     def _align_shipgirl_with_fleet_selection_slot(self, shipgirl, slot):
         if shipgirl is not None:
             shipgirl.rect.centerx = slot.centerx
@@ -1259,6 +1236,11 @@ class FleetSelectionMenu:
 
     def update(self, dt, events):
         self.selection_effect_time += dt
+        if self.menu_manager.encounter_menu.transition_active:
+            self.menu_manager.encounter_menu.update(dt, ())
+            self.background.update(dt)
+            return
+
         for event in events:
             if event.type == pygame.MOUSEMOTION:
                 self.exit_fleet_selection_menu_button.hover(event.pos)
@@ -1314,6 +1296,14 @@ class FleetSelectionMenu:
 
                 if click:
                     DataFiles.sfx["click"].play()
+
+                if self.menu_manager.encounter_menu.transition_active:
+                    break
+
+        if self.menu_manager.encounter_menu.transition_active:
+            self.menu_manager.encounter_menu.update(dt, ())
+            self.background.update(dt)
+            return
 
         if first_sortie_quest.quest_id in self.menu_manager.quest_manager.started_quests:
             self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 1
@@ -1410,3 +1400,6 @@ class FleetSelectionMenu:
 
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
         self._draw_dragged_marker(surface, mpos)
+
+        if self.menu_manager.encounter_menu.transition_active:
+            self.menu_manager.encounter_menu._draw_transition_wave_wipe(surface)

@@ -2539,6 +2539,13 @@ class PortMenu:
                         self.selected_decoration_in_depot = None
 
     def update(self, dt, events):
+        encounter_menu = self.menu_manager.encounter_menu
+        if encounter_menu.transition_active:
+            encounter_menu.update(dt, ())
+
+        if encounter_menu._transition_state == encounter_menu.TRANSITION_WAVE_COVER:
+            return
+
         if self.decoration_stamp_animation_timer > 0:
             self.decoration_stamp_animation_timer -= dt
             if self.decoration_stamp_animation_timer <= 0:
@@ -2840,6 +2847,8 @@ class PortMenu:
 
         if self.is_decorating:
             self.draw_decoration_mode_overlay(surface, font_registry)
+            if self.menu_manager.encounter_menu.transition_active:
+                self.menu_manager.encounter_menu._draw_transition_wave_wipe(surface)
             return
         self.toggle_decoration_mode_button.draw(surface, font_registry)
         
@@ -2876,3 +2885,6 @@ class PortMenu:
         self.menu_manager.quest_manager.draw(surface, font_registry)
         for choose_faction_button in self.choose_faction_buttons:
             choose_faction_button.draw(surface, font_registry)
+
+        if self.menu_manager.encounter_menu.transition_active:
+            self.menu_manager.encounter_menu._draw_transition_wave_wipe(surface)

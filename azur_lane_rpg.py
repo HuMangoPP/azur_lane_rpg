@@ -99,9 +99,10 @@ while running:
     # TODO clean up magic numbers
     display.fill((50,20,20))
     menu_manager.current_menu.draw(display, font_registry)
-    for quest in menu_manager.quest_manager.started_quests.values():
-        if quest.started and not quest.completed:
-            quest.tutorial_draw(menu_manager, display, font_registry)
+    if not menu_manager.encounter_menu.transition_active:
+        for quest in menu_manager.quest_manager.started_quests.values():
+            if quest.started and not quest.completed:
+                quest.tutorial_draw(menu_manager, display, font_registry)
     font_registry["big_pixel"].render(
         display,
         str(fps),

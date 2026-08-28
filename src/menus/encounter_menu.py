@@ -443,14 +443,14 @@ class Drop:
 class EncounterMenu:
     TRANSITION_IDLE = "idle"
     TRANSITION_EXITING = "exiting"
-    TRANSITION_FADE_TO_BLACK = "fade_to_black"
-    TRANSITION_BLACK_INTERLUDE = "black_interlude"
-    TRANSITION_FADE_FROM_BLACK = "fade_from_black"
+    TRANSITION_WAVE_COVER = "wave_cover"
+    TRANSITION_WAVE_REVEAL = "wave_reveal"
     TRANSITION_ENTERING = "entering"
 
     TRANSITION_MOVE_SPEED = 200
-    TRANSITION_FADE_DURATION = 0.35
-    TRANSITION_INTERLUDE_DURATION = 0.25
+    TRANSITION_WAVE_DURATION = 1.5
+    TRANSITION_WAVE_INDICES = (3, 2, 0)
+    TRANSITION_WAVE_STAGGERS = (0.0, 0.12, 0.24)
     OPENED_REWARD_REPORT_DELAY = 0.5
 
     MELEE_SHIPS = ["DD", "CL", "SS"]
@@ -523,6 +523,9 @@ class EncounterMenu:
         self._transition_timer = 0
         self._transition_shipgirls = []
         self._transition_slot_positions = {}
+        self._transition_starts_sortie = False
+        self._transition_to_port = False
+        self._transition_port_callback = None
         self._opened_reward_report_timer = None
 
         def next_encounter():
@@ -604,7 +607,7 @@ class EncounterMenu:
             -2*Box.PADDING,
         )
 
-        def return_to_port():
+        def finish_return_to_port():
             if self.sortie_completed:
                 new_sortie_progress = self.current_sortie + 1
                 if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
@@ -634,6 +637,9 @@ class EncounterMenu:
             self.slow_down = False
 
             self.menu_manager.encounter_menu.return_to_port_button.active = False
+
+        def return_to_port():
+            self.start_port_transition(finish_return_to_port)
 
         button_rect = get_rect(
             width=2*Box.WIDTH + 2*Box.PADDING,
@@ -669,7 +675,7 @@ class EncounterMenu:
             active=False,
         )
 
-        def retreat():
+        def finish_retreat():
             self.menu_manager.current_menu = self.menu_manager.port_menu
             DataFiles.sfx["waves"].fadeout(3000)
 
@@ -678,6 +684,9 @@ class EncounterMenu:
             self.vfx_manager.clear()
             self.fast_forward = False
             self.slow_down = False
+
+        def retreat():
+            self.start_port_transition(finish_retreat)
 
         
         button_sprite = DataFiles.sprites["user_interface"]["port"]
@@ -757,6 +766,64 @@ class EncounterMenu:
                 slot_positions[shipgirl] = pygame.Vector2(slot.center)
         return slot_positions
 
+    def _prepare_transition_shipgirls(self):
+        self._transition_slot_positions = self._get_fleet_slot_positions()
+        self._transition_shipgirls = [
+            shipgirl
+            for shipgirl in self._transition_slot_positions
+            if shipgirl.battle_component.hp > 0
+        ]
+        for shipgirl in self._transition_shipgirls:
+            shipgirl.facing_left = False
+            shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
+
+    def _position_transition_shipgirls_for_entry(self):
+        for shipgirl, target in self._transition_slot_positions.items():
+            shipgirl.rect.center = target
+
+        if not self._transition_shipgirls:
+            return
+
+        rightmost_edge = max(
+            self._transition_slot_positions[shipgirl].x
+            + shipgirl.rect.width / 2
+            for shipgirl in self._transition_shipgirls
+        )
+        entry_offset = -rightmost_edge
+        for shipgirl in self._transition_shipgirls:
+            target = self._transition_slot_positions[shipgirl]
+            shipgirl.rect.center = target + pygame.Vector2(entry_offset, 0)
+            shipgirl.facing_left = False
+            shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
+
+    def start_sortie_transition(self):
+        if self.transition_active:
+            return
+
+        # Choose the encounter weather before the wipe starts so the same
+        # palette is used on both sides of the menu handoff.
+        self.roll_time_weather()
+        self._transition_starts_sortie = True
+        self._transition_to_port = False
+        self._transition_port_callback = None
+        self._transition_shipgirls = []
+        self._transition_slot_positions = {}
+        self._set_transition_state(self.TRANSITION_WAVE_COVER)
+
+    def start_port_transition(self, destination_callback):
+        if self.transition_active:
+            return
+
+        self.mouse_start_drag = None
+        self.selected_shipgirl = None
+        self.selected_shipgirl_index = None
+        self._transition_starts_sortie = False
+        self._transition_to_port = True
+        self._transition_port_callback = destination_callback
+        self._transition_shipgirls = []
+        self._transition_slot_positions = {}
+        self._set_transition_state(self.TRANSITION_WAVE_COVER)
+
     def start_encounter_transition(self):
         if self.transition_active:
             return
@@ -773,37 +840,30 @@ class EncounterMenu:
         self.selected_shipgirl = None
         self.selected_shipgirl_index = None
 
-        self._transition_slot_positions = self._get_fleet_slot_positions()
-        self._transition_shipgirls = [
-            shipgirl
-            for shipgirl in self._transition_slot_positions
-            if shipgirl.battle_component.hp > 0
-        ]
-        for shipgirl in self._transition_shipgirls:
-            shipgirl.facing_left = False
-            shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
-
+        self._transition_starts_sortie = False
+        self._transition_to_port = False
+        self._transition_port_callback = None
+        self._prepare_transition_shipgirls()
         self._set_transition_state(self.TRANSITION_EXITING)
 
     def _load_transition_destination(self):
+        if self._transition_to_port:
+            destination_callback = self._transition_port_callback
+            self._transition_port_callback = None
+            destination_callback()
+            return
+
+        if self._transition_starts_sortie:
+            self.menu_manager.player_fleet.begin_sortie()
+            self.begin_sortie(roll_time_weather=False)
+            self._prepare_transition_shipgirls()
+            self._position_transition_shipgirls_for_entry()
+            self.menu_manager.current_menu = self
+            return
+
         self.current_encounter += 1
         self.begin_encounter()
-
-        for shipgirl, target in self._transition_slot_positions.items():
-            shipgirl.rect.center = target
-
-        if self._transition_shipgirls:
-            rightmost_edge = max(
-                self._transition_slot_positions[shipgirl].x
-                + shipgirl.rect.width / 2
-                for shipgirl in self._transition_shipgirls
-            )
-            entry_offset = -rightmost_edge
-            for shipgirl in self._transition_shipgirls:
-                target = self._transition_slot_positions[shipgirl]
-                shipgirl.rect.center = target + pygame.Vector2(entry_offset, 0)
-                shipgirl.facing_left = False
-                shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
+        self._position_transition_shipgirls_for_entry()
 
     def _finish_encounter_transition(self):
         for shipgirl in self._transition_shipgirls:
@@ -813,6 +873,9 @@ class EncounterMenu:
 
         self._transition_shipgirls = []
         self._transition_slot_positions = {}
+        self._transition_starts_sortie = False
+        self._transition_to_port = False
+        self._transition_port_callback = None
         self._set_transition_state(self.TRANSITION_IDLE)
 
     def _update_transition_shipgirl_animation(self, dt):
@@ -832,23 +895,21 @@ class EncounterMenu:
                 shipgirl.rect.left >= screen_x(1)
                 for shipgirl in self._transition_shipgirls
             ):
-                self._set_transition_state(self.TRANSITION_FADE_TO_BLACK)
+                self._set_transition_state(self.TRANSITION_WAVE_COVER)
 
-        elif state == self.TRANSITION_FADE_TO_BLACK:
+        elif state == self.TRANSITION_WAVE_COVER:
             self._transition_timer += dt
-            if self._transition_timer >= self.TRANSITION_FADE_DURATION:
+            if self._transition_timer >= self.TRANSITION_WAVE_DURATION:
                 self._load_transition_destination()
-                self._set_transition_state(self.TRANSITION_BLACK_INTERLUDE)
+                self._set_transition_state(self.TRANSITION_WAVE_REVEAL)
 
-        elif state == self.TRANSITION_BLACK_INTERLUDE:
+        elif state == self.TRANSITION_WAVE_REVEAL:
             self._transition_timer += dt
-            if self._transition_timer >= self.TRANSITION_INTERLUDE_DURATION:
-                self._set_transition_state(self.TRANSITION_FADE_FROM_BLACK)
-
-        elif state == self.TRANSITION_FADE_FROM_BLACK:
-            self._transition_timer += dt
-            if self._transition_timer >= self.TRANSITION_FADE_DURATION:
-                self._set_transition_state(self.TRANSITION_ENTERING)
+            if self._transition_timer >= self.TRANSITION_WAVE_DURATION:
+                if self._transition_to_port:
+                    self._finish_encounter_transition()
+                else:
+                    self._set_transition_state(self.TRANSITION_ENTERING)
 
         elif state == self.TRANSITION_ENTERING:
             distance = self.TRANSITION_MOVE_SPEED * dt
@@ -874,54 +935,73 @@ class EncounterMenu:
         self.vfx_manager.update(dt)
         self.background.update(dt)
 
-    def _transition_overlay_alpha(self):
-        if self._transition_state == self.TRANSITION_FADE_TO_BLACK:
-            progress = min(
-                1,
-                self._transition_timer / self.TRANSITION_FADE_DURATION,
-            )
-            return int(255 * progress)
-        if self._transition_state == self.TRANSITION_BLACK_INTERLUDE:
-            return 255
-        if self._transition_state == self.TRANSITION_FADE_FROM_BLACK:
-            progress = min(
-                1,
-                self._transition_timer / self.TRANSITION_FADE_DURATION,
-            )
-            return int(255 * (1 - progress))
-        return 0
+    @staticmethod
+    def _smoothstep(progress):
+        return progress * progress * (3 - 2 * progress)
 
-    def _transition_interlude_progress(self):
-        if self._transition_state == self.TRANSITION_BLACK_INTERLUDE:
-            return min(
-                1,
-                self._transition_timer / self.TRANSITION_INTERLUDE_DURATION,
-            )
-        if self._transition_state == self.TRANSITION_FADE_FROM_BLACK:
-            return 1
-        return 0
+    @classmethod
+    def _staggered_wave_progress(cls, progress, stagger):
+        progress = max(
+            0.0,
+            min(1.0, (progress - stagger) / (1 - stagger)),
+        )
+        return cls._smoothstep(progress)
 
-    def draw_transition_interlude(self, surface, font_registry, progress):
-        """Draw the obscured portion of an encounter transition.
-
-        Extend this method with future interstitial animation. ``progress`` runs
-        from zero to one during the fully obscured interlude.
-        """
-        surface.fill(Color.BLACK)
-
-    def _draw_transition_overlay(self, surface, font_registry):
-        alpha = self._transition_overlay_alpha()
-        if alpha <= 0:
+    def _draw_transition_wave_wipe(self, surface):
+        if self._transition_state not in (
+            self.TRANSITION_WAVE_COVER,
+            self.TRANSITION_WAVE_REVEAL,
+        ):
             return
 
-        interlude_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-        self.draw_transition_interlude(
-            interlude_surface,
-            font_registry,
-            self._transition_interlude_progress(),
+        progress = min(
+            1.0,
+            self._transition_timer / self.TRANSITION_WAVE_DURATION,
         )
-        interlude_surface.set_alpha(alpha)
-        surface.blit(interlude_surface, (0, 0))
+        covering = self._transition_state == self.TRANSITION_WAVE_COVER
+        staggers = (
+            self.TRANSITION_WAVE_STAGGERS
+            if covering
+            else reversed(self.TRANSITION_WAVE_STAGGERS)
+        )
+
+        wave_sets = DataFiles.sprites["background"]["wave_sets"]
+        wave_set = wave_sets[self.time_weather]
+        wave_sprites = [
+            wave_set[index]
+            for index in self.TRANSITION_WAVE_INDICES
+        ]
+
+        for wave, stagger in zip(wave_sprites, staggers):
+            layer_progress = self._staggered_wave_progress(progress, stagger)
+            if not covering:
+                layer_progress = 1 - layer_progress
+
+            wave_width, wave_height = wave.get_size()
+            wave_top = round(
+                surface.get_height()
+                + (-wave_height - surface.get_height()) * layer_progress
+            )
+            first_wave_left = round(-wave_width)
+            wave_left = first_wave_left
+            while wave_left < surface.get_width():
+                surface.blit(wave, (wave_left, wave_top))
+                wave_left += wave_width
+
+            solid_top = wave_top + wave_height
+            if solid_top < surface.get_height():
+                wave_color = wave.get_at((0, wave_height - 1))[:3]
+                solid_top = max(0, solid_top)
+                pygame.draw.rect(
+                    surface,
+                    wave_color,
+                    (
+                        0,
+                        solid_top,
+                        surface.get_width(),
+                        surface.get_height() - solid_top,
+                    ),
+                )
 
     def roll_time_weather(self):
         weather_names = list(self.TIME_WEATHER_STYLES.keys())
@@ -943,13 +1023,17 @@ class EncounterMenu:
         )
         self.background.set_night_sky(self.time_weather == "nighttime")
 
-    def begin_sortie(self):
+    def begin_sortie(self, roll_time_weather=True):
         self._transition_state = self.TRANSITION_IDLE
         self._transition_timer = 0
         self._transition_shipgirls = []
         self._transition_slot_positions = {}
+        self._transition_starts_sortie = False
+        self._transition_to_port = False
+        self._transition_port_callback = None
         self._opened_reward_report_timer = None
-        self.roll_time_weather()
+        if roll_time_weather:
+            self.roll_time_weather()
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
         self.sortie_completed = False
@@ -1785,14 +1869,14 @@ class EncounterMenu:
             siren_fleet=self.menu_manager.siren_fleet,
             player_shipgirl_filter=(
                 (lambda shipgirl: shipgirl.battle_component.hp > 0)
-                if self.transition_active
+                if self.transition_active and not self._transition_to_port
                 else None
             ),
         )
         self.vfx_manager.draw(surface, font_registry)
 
-        if self.transition_active:
-            self._draw_transition_overlay(surface, font_registry)
+        if self.transition_active and not self._transition_to_port:
+            self._draw_transition_wave_wipe(surface)
             return
 
         for shipgirl in self.menu_manager.player_fleet.fleet:
@@ -1904,3 +1988,6 @@ class EncounterMenu:
                     attack_icon_rect = attack_icon.get_rect()
                     attack_icon_rect.center = drawpos
                     surface.blit(attack_icon, attack_icon_rect)
+
+        if self._transition_to_port:
+            self._draw_transition_wave_wipe(surface)
