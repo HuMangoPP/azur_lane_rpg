@@ -292,6 +292,8 @@ def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
                 False, False
             )
     elif menu_manager.current_menu == menu_manager.encounter_menu:
+        if menu_manager.encounter_menu.transition_active:
+            return
         if not menu_manager.encounter_menu.encounter_started:
             for siren in menu_manager.siren_fleet.front:
                 pygame.draw.rect(surface, Color.RED, siren.rect, width=Box.OUTLINE_WIDTH)

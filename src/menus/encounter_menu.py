@@ -322,7 +322,14 @@ class Background:
             self.cloud_timer = 0
             self.cloud_spawn_time = random.uniform(5, 10)
 
-    def draw(self, surface, font_registry, player_fleet=None, siren_fleet=None):
+    def draw(
+        self,
+        surface,
+        font_registry,
+        player_fleet=None,
+        siren_fleet=None,
+        player_shipgirl_filter=None,
+    ):
         sky_surf = self.sky_surf
         sky_surf_rect = sky_surf.get_rect()
         sky_surf_rect.top = 0
@@ -344,6 +351,12 @@ class Background:
 
         if player_fleet is not None:
             shipgirl_draw_indices = player_fleet.get_draw_indices()
+            if player_shipgirl_filter is not None:
+                shipgirl_draw_indices = [
+                    (draw_index, shipgirl)
+                    for draw_index, shipgirl in shipgirl_draw_indices
+                    if player_shipgirl_filter(shipgirl)
+                ]
         else:
             shipgirl_draw_indices = None
 
@@ -428,6 +441,18 @@ class Drop:
         surface.blit(image, rect)
 
 class EncounterMenu:
+    TRANSITION_IDLE = "idle"
+    TRANSITION_EXITING = "exiting"
+    TRANSITION_FADE_TO_BLACK = "fade_to_black"
+    TRANSITION_BLACK_INTERLUDE = "black_interlude"
+    TRANSITION_FADE_FROM_BLACK = "fade_from_black"
+    TRANSITION_ENTERING = "entering"
+
+    TRANSITION_MOVE_SPEED = 600
+    TRANSITION_FADE_DURATION = 0.35
+    TRANSITION_INTERLUDE_DURATION = 0.25
+    OPENED_REWARD_REPORT_DELAY = 0.5
+
     MELEE_SHIPS = ["DD", "CL", "SS"]
     REPORT_PAGE_COUNT = 2
     REWARDS_SECTION_TOP = 56
@@ -494,11 +519,14 @@ class EncounterMenu:
         self.encounter_started = False
         self.vfx_manager = VFXManager()
 
-        def next_encounter():
-            self.claim_drops()
+        self._transition_state = self.TRANSITION_IDLE
+        self._transition_timer = 0
+        self._transition_shipgirls = []
+        self._transition_slot_positions = {}
+        self._opened_reward_report_timer = None
 
-            self.current_encounter += 1
-            self.begin_encounter()
+        def next_encounter():
+            self.start_encounter_transition()
 
         button_sprite = DataFiles.sprites["user_interface"]["next"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,centery=screen_y(0.5))
@@ -710,6 +738,196 @@ class EncounterMenu:
         )
         self.apply_time_weather_style()
 
+    @property
+    def transition_active(self):
+        return self._transition_state != self.TRANSITION_IDLE
+
+    def _set_transition_state(self, state):
+        self._transition_state = state
+        self._transition_timer = 0
+
+    def _get_fleet_slot_positions(self):
+        slot_positions = {}
+        for shipgirl, slot in zip(
+            self.menu_manager.player_fleet.shipgirls,
+            self.fleet_slots,
+        ):
+            if shipgirl is not None:
+                slot_positions[shipgirl] = pygame.Vector2(slot.center)
+        for shipgirl, slot in zip(
+            self.menu_manager.player_fleet.backups,
+            self.backup_fleet_slots,
+        ):
+            if shipgirl is not None:
+                slot_positions[shipgirl] = pygame.Vector2(slot.center)
+        return slot_positions
+
+    def start_encounter_transition(self):
+        if self.transition_active:
+            return
+
+        self.claim_drops()
+        self.next_encounter_button.active = False
+        self.open_reward_cache_button.active = False
+        self.return_to_port_button.active = False
+        self.retreat_button.active = False
+        self.report_page_prev_button.active = False
+        self.report_page_next_button.active = False
+
+        self.mouse_start_drag = None
+        self.selected_shipgirl = None
+        self.selected_shipgirl_index = None
+
+        self._transition_slot_positions = self._get_fleet_slot_positions()
+        self._transition_shipgirls = [
+            shipgirl
+            for shipgirl in self._transition_slot_positions
+            if shipgirl.battle_component.hp > 0
+        ]
+        for shipgirl in self._transition_shipgirls:
+            shipgirl.facing_left = False
+            shipgirl.sprite.set_animation(shipgirl.sprite.WALK_ANIMATION)
+
+        self._set_transition_state(self.TRANSITION_EXITING)
+
+    def _load_transition_destination(self):
+        self.current_encounter += 1
+        self.begin_encounter()
+
+        for shipgirl, target in self._transition_slot_positions.items():
+            shipgirl.rect.center = target
+
+        if self._transition_shipgirls:
+            rightmost_edge = max(
+                self._transition_slot_positions[shipgirl].x
+                + shipgirl.rect.width / 2
+                for shipgirl in self._transition_shipgirls
+            )
+            entry_offset = -rightmost_edge
+            for shipgirl in self._transition_shipgirls:
+                target = self._transition_slot_positions[shipgirl]
+                shipgirl.rect.center = target + pygame.Vector2(entry_offset, 0)
+                shipgirl.facing_left = False
+                shipgirl.sprite.set_animation(shipgirl.sprite.WALK_ANIMATION)
+
+    def _finish_encounter_transition(self):
+        for shipgirl in self._transition_shipgirls:
+            shipgirl.rect.center = self._transition_slot_positions[shipgirl]
+            shipgirl.facing_left = False
+            shipgirl.sprite.set_animation(shipgirl.sprite.IDLE_ANIMATION)
+
+        self._transition_shipgirls = []
+        self._transition_slot_positions = {}
+        self._set_transition_state(self.TRANSITION_IDLE)
+
+    def _update_transition_shipgirl_animation(self, dt):
+        for shipgirl in self._transition_shipgirls:
+            shipgirl.sprite.set_animation(shipgirl.sprite.WALK_ANIMATION)
+            shipgirl.animate(dt)
+
+    def _update_encounter_transition(self, dt):
+        state = self._transition_state
+
+        if state == self.TRANSITION_EXITING:
+            distance = self.TRANSITION_MOVE_SPEED * dt
+            for shipgirl in self._transition_shipgirls:
+                shipgirl.rect.centerx += distance
+            self._update_transition_shipgirl_animation(dt)
+            if not self._transition_shipgirls or all(
+                shipgirl.rect.left >= screen_x(1)
+                for shipgirl in self._transition_shipgirls
+            ):
+                self._set_transition_state(self.TRANSITION_FADE_TO_BLACK)
+
+        elif state == self.TRANSITION_FADE_TO_BLACK:
+            self._transition_timer += dt
+            if self._transition_timer >= self.TRANSITION_FADE_DURATION:
+                self._load_transition_destination()
+                self._set_transition_state(self.TRANSITION_BLACK_INTERLUDE)
+
+        elif state == self.TRANSITION_BLACK_INTERLUDE:
+            self._transition_timer += dt
+            if self._transition_timer >= self.TRANSITION_INTERLUDE_DURATION:
+                self._set_transition_state(self.TRANSITION_FADE_FROM_BLACK)
+
+        elif state == self.TRANSITION_FADE_FROM_BLACK:
+            self._transition_timer += dt
+            if self._transition_timer >= self.TRANSITION_FADE_DURATION:
+                self._set_transition_state(self.TRANSITION_ENTERING)
+
+        elif state == self.TRANSITION_ENTERING:
+            distance = self.TRANSITION_MOVE_SPEED * dt
+            for shipgirl in self._transition_shipgirls:
+                target_x = self._transition_slot_positions[shipgirl].x
+                shipgirl.rect.centerx = min(
+                    target_x,
+                    shipgirl.rect.centerx + distance,
+                )
+            self._update_transition_shipgirl_animation(dt)
+            if not self._transition_shipgirls or all(
+                shipgirl.rect.centerx >= self._transition_slot_positions[shipgirl].x
+                for shipgirl in self._transition_shipgirls
+            ):
+                self._finish_encounter_transition()
+
+        if self._transition_state in (
+            self.TRANSITION_EXITING,
+            self.TRANSITION_ENTERING,
+        ):
+            self.spawn_shipgirl_wakes(self.menu_manager.player_fleet)
+
+        self.vfx_manager.update(dt)
+        self.background.update(dt)
+
+    def _transition_overlay_alpha(self):
+        if self._transition_state == self.TRANSITION_FADE_TO_BLACK:
+            progress = min(
+                1,
+                self._transition_timer / self.TRANSITION_FADE_DURATION,
+            )
+            return int(255 * progress)
+        if self._transition_state == self.TRANSITION_BLACK_INTERLUDE:
+            return 255
+        if self._transition_state == self.TRANSITION_FADE_FROM_BLACK:
+            progress = min(
+                1,
+                self._transition_timer / self.TRANSITION_FADE_DURATION,
+            )
+            return int(255 * (1 - progress))
+        return 0
+
+    def _transition_interlude_progress(self):
+        if self._transition_state == self.TRANSITION_BLACK_INTERLUDE:
+            return min(
+                1,
+                self._transition_timer / self.TRANSITION_INTERLUDE_DURATION,
+            )
+        if self._transition_state == self.TRANSITION_FADE_FROM_BLACK:
+            return 1
+        return 0
+
+    def draw_transition_interlude(self, surface, font_registry, progress):
+        """Draw the obscured portion of an encounter transition.
+
+        Extend this method with future interstitial animation. ``progress`` runs
+        from zero to one during the fully obscured interlude.
+        """
+        surface.fill(Color.BLACK)
+
+    def _draw_transition_overlay(self, surface, font_registry):
+        alpha = self._transition_overlay_alpha()
+        if alpha <= 0:
+            return
+
+        interlude_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        self.draw_transition_interlude(
+            interlude_surface,
+            font_registry,
+            self._transition_interlude_progress(),
+        )
+        interlude_surface.set_alpha(alpha)
+        surface.blit(interlude_surface, (0, 0))
+
     def roll_time_weather(self):
         weather_names = list(self.TIME_WEATHER_STYLES.keys())
         weather_weights = [
@@ -731,6 +949,11 @@ class EncounterMenu:
         self.background.set_night_sky(self.time_weather == "nighttime")
 
     def begin_sortie(self):
+        self._transition_state = self.TRANSITION_IDLE
+        self._transition_timer = 0
+        self._transition_shipgirls = []
+        self._transition_slot_positions = {}
+        self._opened_reward_report_timer = None
         self.roll_time_weather()
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
@@ -763,6 +986,7 @@ class EncounterMenu:
         self.next_encounter_button.active = False
         self.vfx_manager.clear()
         self.defeat_pending = False
+        self._opened_reward_report_timer = None
 
         sortie_data = DataFiles.sortie_data[self.current_sortie]
         num_encounters = len(sortie_data["encounters"])
@@ -771,7 +995,10 @@ class EncounterMenu:
             self.sortie_completed = True
             self.open_reward_cache_button.active = True
             if self.current_sortie < DataFiles.save_file["sortie_progress"]:
-                self.return_to_port_button.active = True
+                self.return_to_port_button.active = False
+                self._opened_reward_report_timer = (
+                    self.OPENED_REWARD_REPORT_DELAY
+                )
                 self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["open_reward_cache"]
             else:
                 self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["closed_reward_cache"]
@@ -800,6 +1027,18 @@ class EncounterMenu:
         else:
             self.encounter_started = True
 
+    def _update_opened_reward_report(self, dt):
+        if self._opened_reward_report_timer is None:
+            return
+
+        self._opened_reward_report_timer = max(
+            0,
+            self._opened_reward_report_timer - dt,
+        )
+        if self._opened_reward_report_timer == 0:
+            self._opened_reward_report_timer = None
+            self.return_to_port_button.active = True
+
     def spawn_shipgirl_wakes(self, fleet):
         for shipgirl in fleet.fleet:
             if shipgirl is None or shipgirl.battle_component.hp <= 0:
@@ -822,8 +1061,15 @@ class EncounterMenu:
             )
 
     def update(self, dt, events):
+        if self.transition_active:
+            self._update_encounter_transition(dt)
+            return
+
+        self._update_opened_reward_report(dt)
         self.refresh_report_page_buttons()
         for event in events:
+            if self.transition_active:
+                break
             if event.type == pygame.MOUSEMOTION:
                 self.next_encounter_button.hover(event.pos)
                 self.retreat_button.hover(event.pos)
@@ -833,8 +1079,6 @@ class EncounterMenu:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
                     if shipgirl is None:
-                        continue
-                    if not shipgirl.battle_component.active:
                         continue
                     if shipgirl.battle_component.attack_animation:
                         continue
@@ -866,6 +1110,8 @@ class EncounterMenu:
                 if self.selected_shipgirl is not None:
                     for i, backup_shipgirl in enumerate(self.menu_manager.player_fleet.backups):
                         if backup_shipgirl is None:
+                            continue
+                        if backup_shipgirl.battle_component.hp <= 0:
                             continue
                         if not backup_shipgirl.rect.collidepoint(mouse_end_drag):
                             continue
@@ -912,6 +1158,10 @@ class EncounterMenu:
                     self.fast_forward = not self.fast_forward
                 if event.key == pygame.K_d:
                     self.slow_down = not self.slow_down
+
+        if self.transition_active:
+            self._update_encounter_transition(dt)
+            return
         
         if self.fast_forward:
             dt = dt * 2
@@ -1489,8 +1739,22 @@ class EncounterMenu:
             )
 
     def draw(self, surface, font_registry):
-        self.background.draw(surface, font_registry, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
+        self.background.draw(
+            surface,
+            font_registry,
+            player_fleet=self.menu_manager.player_fleet,
+            siren_fleet=self.menu_manager.siren_fleet,
+            player_shipgirl_filter=(
+                (lambda shipgirl: shipgirl.battle_component.hp > 0)
+                if self.transition_active
+                else None
+            ),
+        )
         self.vfx_manager.draw(surface, font_registry)
+
+        if self.transition_active:
+            self._draw_transition_overlay(surface, font_registry)
+            return
 
         for shipgirl in self.menu_manager.player_fleet.fleet:
             if shipgirl is None:
