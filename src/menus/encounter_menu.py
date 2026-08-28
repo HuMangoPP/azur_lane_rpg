@@ -46,20 +46,6 @@ class Cloud:
         surface.blit(self.sprite, rect)
 
 
-class BackgroundProp:
-    def __init__(self, sprite_name, x, top, draw_index):
-        self.sprite = DataFiles.sprites["background"][sprite_name]
-        self.x = x
-        self.top = top
-        self.draw_index = draw_index
-
-    def draw(self, surface):
-        rect = self.sprite.get_rect()
-        rect.centerx = self.x
-        rect.top = self.top
-        surface.blit(self.sprite, rect)
-
-
 class SeaFoam:
     FADE_IN_DURATION = 0.5
     FADE_OUT_DURATION = 1.0
@@ -360,7 +346,7 @@ class Background:
         else:
             shipgirl_draw_indices = None
 
-        landmark_y = self.wave_ys[0] - 4
+        landmark_y = self.wave_ys[0] + 4
 
         left_landmarks = DataFiles.sprites["background"]["left_landmarks"]
         left_landmarks_rect = left_landmarks.get_rect()
@@ -514,6 +500,7 @@ class EncounterMenu:
         self.current_sortie = 0
         self.current_encounter = 0
         self.sortie_completed = False
+        self.sortie_suspended = False
         self.selected_shipgirl = None
         self.selected_shipgirl_index = None
         self.encounter_started = False
@@ -675,18 +662,24 @@ class EncounterMenu:
             active=False,
         )
 
-        def finish_retreat():
-            self.menu_manager.current_menu = self.menu_manager.port_menu
-            DataFiles.sfx["waves"].fadeout(3000)
-
-            self.menu_manager.player_fleet.end_encounter()        
+        def retreat():
+            self.menu_manager.player_fleet.end_encounter()
             self.menu_manager.siren_fleet.end_encounter()
             self.vfx_manager.clear()
             self.fast_forward = False
             self.slow_down = False
 
-        def retreat():
-            self.start_port_transition(finish_retreat)
+            self.encounter_end_flag = False
+            self.defeat_pending = False
+            self.encounter_started = False
+            self.end_encounter_banner.text = ""
+            self.next_encounter_button.active = False
+            self.open_reward_cache_button.active = False
+            self.retreat_button.active = False
+            self.sortie_suspended = True
+            self.report_page = 0
+            self.return_to_port_button.active = True
+            self.refresh_report_page_buttons()
 
         
         button_sprite = DataFiles.sprites["user_interface"]["port"]
@@ -972,7 +965,7 @@ class EncounterMenu:
             for index in self.TRANSITION_WAVE_INDICES
         ]
 
-        for wave, stagger in zip(wave_sprites, staggers):
+        for idx, (wave, stagger) in enumerate(zip(wave_sprites, staggers)):
             layer_progress = self._staggered_wave_progress(progress, stagger)
             if not covering:
                 layer_progress = 1 - layer_progress
@@ -982,7 +975,7 @@ class EncounterMenu:
                 surface.get_height()
                 + (-wave_height - surface.get_height()) * layer_progress
             )
-            first_wave_left = round(-wave_width)
+            first_wave_left = -wave_width + idx / len(wave_sprites) * wave_width
             wave_left = first_wave_left
             while wave_left < surface.get_width():
                 surface.blit(wave, (wave_left, wave_top))
@@ -1037,6 +1030,7 @@ class EncounterMenu:
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
         self.sortie_completed = False
+        self.sortie_suspended = False
         self.sortie_rewards = {}
         self.defeated_sirens = {}
         self.report_page = 0
@@ -1584,11 +1578,12 @@ class EncounterMenu:
         self.refresh_report_page_buttons()
         self.draw_dossier_page(surface)
 
-        header_text = (
-            "operation completed"
-            if self.sortie_completed
-            else "operation failed"
-        )
+        if self.sortie_completed:
+            header_text = "operation completed"
+        elif self.sortie_suspended:
+            header_text = "operation suspended"
+        else:
+            header_text = "operation failed"
         header_y = self.dossier_page.top + Box.PADDING
         font_registry["big_pixel"].render(
             surface,
