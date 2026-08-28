@@ -429,6 +429,10 @@ class Drop:
 
 class EncounterMenu:
     MELEE_SHIPS = ["DD", "CL", "SS"]
+    REPORT_PAGE_COUNT = 2
+    REWARDS_SECTION_TOP = 56
+    SIREN_CARDS_PER_ROW = 3
+    SIREN_CARD_WIDTH = 152
     SHIPGIRL_WAKE_CONFIG = {
         "upward_bias": -0.4,
         "spark_chance": 1.0,
@@ -484,14 +488,14 @@ class EncounterMenu:
         self.time_weather = "daytime"
         self.current_sortie = 0
         self.current_encounter = 0
+        self.sortie_completed = False
         self.selected_shipgirl = None
         self.selected_shipgirl_index = None
         self.encounter_started = False
         self.vfx_manager = VFXManager()
 
         def next_encounter():
-            for drop in self.drops:
-                DataFiles.save_file["inventory"][drop.item] = DataFiles.save_file["inventory"].get(drop.item, 0) + 1
+            self.claim_drops()
 
             self.current_encounter += 1
             self.begin_encounter()
@@ -512,8 +516,12 @@ class EncounterMenu:
 
         def open_reward_cache():
             rewards = DataFiles.sortie_data[self.current_sortie]["rewards"]
-            for reward in rewards:
-                self.drops.append(Drop(reward, pygame.Vector2(self.open_reward_cache_button.rect.center)))
+            for reward, amount in rewards.items():
+                self.add_sortie_drop(
+                    reward,
+                    pygame.Vector2(self.open_reward_cache_button.rect.center),
+                    amount,
+                )
 
             self.return_to_port_button.active = True
 
@@ -529,7 +537,7 @@ class EncounterMenu:
         )
 
         def return_to_port():
-            if self.end_encounter_banner.text == "operation complete":
+            if self.sortie_completed:
                 new_sortie_progress = self.current_sortie + 1
                 if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
                     DataFiles.save_file["sortie_progress"] = new_sortie_progress
@@ -549,8 +557,7 @@ class EncounterMenu:
                 self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True
                 self.menu_manager.port_menu.update_encountered_sirens()
                 
-                for drop in self.drops:
-                    DataFiles.save_file["inventory"][drop.item] = DataFiles.save_file["inventory"].get(drop.item, 0) + 1
+                self.claim_drops()
 
             self.menu_manager.current_menu = self.menu_manager.port_menu
             DataFiles.sfx["waves"].fadeout(3000)
@@ -572,6 +579,71 @@ class EncounterMenu:
                 "opacity": 160
             },
             hover_styling={"opacity": 200}
+        )
+
+        # Size the end-of-sortie report for the largest Siren record set in the
+        # sortie data, arranged in three columns.
+        max_siren_records = max(
+            len({
+                siren
+                for encounter in sortie["encounters"]
+                for siren in encounter["front"] + encounter["back"]
+            })
+            for sortie in DataFiles.sortie_data
+        )
+        max_siren_rows = math.ceil(
+            max_siren_records / self.SIREN_CARDS_PER_ROW
+        )
+        report_page_width = (
+            2*Box.PADDING
+            + self.SIREN_CARDS_PER_ROW*self.SIREN_CARD_WIDTH
+            + (self.SIREN_CARDS_PER_ROW - 1)*Box.PADDING
+        )
+        report_page_height = (
+            self.REWARDS_SECTION_TOP
+            + 2*Box.PADDING
+            + max_siren_rows*Box.HEIGHT
+            + (max_siren_rows - 1)*Box.PADDING
+            + 3*Box.PADDING
+        )
+        self.dossier_overlay = get_rect(
+            width=report_page_width + 2*Box.PADDING,
+            height=report_page_height + 2*Box.PADDING + Box.HEIGHT/2,
+            center=(screen_x(0.5), screen_y(0.5)),
+        )
+        self.dossier_bg = self.dossier_overlay.inflate(
+            0,
+            -Box.HEIGHT/2,
+        )
+        self.dossier_bg.bottom = self.dossier_overlay.bottom
+        self.dossier_page = self.dossier_bg.inflate(
+            -2*Box.PADDING,
+            -2*Box.PADDING,
+        )
+        self.return_to_port_button.rect.center = (
+            self.dossier_overlay.right + Box.WIDTH/2,
+            self.dossier_overlay.bottom - Box.HEIGHT/2,
+        )
+        self.report_page = 0
+        self.report_page_prev_button = Button(
+            get_rect(
+                width=48,
+                height=48,
+                left=self.dossier_page.left,
+                top=self.dossier_page.top,
+            ),
+            lambda: self.change_report_page(-1),
+            active=False,
+        )
+        self.report_page_next_button = Button(
+            get_rect(
+                width=48,
+                height=48,
+                right=self.dossier_page.right,
+                bottom=self.dossier_page.bottom,
+            ),
+            lambda: self.change_report_page(1),
+            active=False,
         )
 
         def retreat():
@@ -600,8 +672,11 @@ class EncounterMenu:
 
         self.end_encounter_banner = FleetNameRibbon(pygame.Vector2(screen_x(0.5), screen_y(0.1)), "")
         self.encounter_end_flag = True
+        self.defeat_pending = False
 
         self.drops = []
+        self.sortie_rewards = {}
+        self.defeated_sirens = {}
         self.research_exp = 0
         self.exp_timer = 0
 
@@ -659,19 +734,41 @@ class EncounterMenu:
         self.roll_time_weather()
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
+        self.sortie_completed = False
+        self.sortie_rewards = {}
+        self.defeated_sirens = {}
+        self.report_page = 0
+        self.refresh_report_page_buttons()
 
         self.begin_encounter()
+
+    def add_sortie_drop(self, item, pos, amount=1):
+        for _ in range(amount):
+            self.drops.append(Drop(
+                item,
+                pygame.Vector2(pos),
+            ))
+
+    def claim_drops(self):
+        for drop in self.drops:
+            DataFiles.save_file["inventory"][drop.item] = (
+                DataFiles.save_file["inventory"].get(drop.item, 0) + 1
+            )
+            self.sortie_rewards[drop.item] = (
+                self.sortie_rewards.get(drop.item, 0) + 1
+            )
 
     def begin_encounter(self):
         self.drops = []
         self.next_encounter_button.active = False
         self.vfx_manager.clear()
+        self.defeat_pending = False
 
         sortie_data = DataFiles.sortie_data[self.current_sortie]
         num_encounters = len(sortie_data["encounters"])
         self.end_encounter_banner.text = ""
         if self.current_encounter == num_encounters:
-            self.end_encounter_banner.text = "operation complete"
+            self.sortie_completed = True
             self.open_reward_cache_button.active = True
             if self.current_sortie < DataFiles.save_file["sortie_progress"]:
                 self.return_to_port_button.active = True
@@ -725,11 +822,14 @@ class EncounterMenu:
             )
 
     def update(self, dt, events):
+        self.refresh_report_page_buttons()
         for event in events:
             if event.type == pygame.MOUSEMOTION:
                 self.next_encounter_button.hover(event.pos)
                 self.retreat_button.hover(event.pos)
                 self.return_to_port_button.hover(event.pos)
+                self.report_page_prev_button.hover(event.pos)
+                self.report_page_next_button.hover(event.pos)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
                     if shipgirl is None:
@@ -793,6 +893,8 @@ class EncounterMenu:
                 click = (
                     click
                     or self.next_encounter_button.click(event.pos)
+                    or self.report_page_prev_button.click(event.pos)
+                    or self.report_page_next_button.click(event.pos)
                     or self.return_to_port_button.click(event.pos)
                     or self.retreat_button.click(event.pos)
                 )
@@ -825,7 +927,7 @@ class EncounterMenu:
                     siren_data = DataFiles.siren_data[siren.name]
                     for drop, drop_rate in siren_data["drops"].items():
                         if random.randint(0, 99) < drop_rate:
-                            self.drops.append(Drop(drop, pygame.Vector2(siren.rect.center)))
+                            self.add_sortie_drop(drop, siren.rect.center)
             self.menu_manager.siren_fleet.update(dt, self.menu_manager, self.vfx_manager)
 
             for drop in self.drops:
@@ -859,7 +961,10 @@ class EncounterMenu:
 
                     unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) == 0:
-                        self.drops.append(Drop(unique_item, pygame.Vector2(screen_x(0.5), screen_y(0.5))))
+                        self.add_sortie_drop(
+                            unique_item,
+                            (screen_x(0.5), screen_y(0.5)),
+                        )
                 self.research_exp = 0
         elif self.exp_timer > 0:
             self.exp_timer -= dt
@@ -869,16 +974,21 @@ class EncounterMenu:
         if self.encounter_end_flag:
             if not self.menu_manager.player_fleet.afloat:
                 self.encounter_end_flag = False
-                self.end_encounter_banner.text = "defeat"
+                self.end_encounter_banner.text = ""
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()
-                self.return_to_port_button.active = True
                 self.retreat_button.active = False
+                self.defeat_pending = True
 
             if not self.menu_manager.siren_fleet.afloat:
                 self.encounter_end_flag = False
                 self.end_encounter_banner.text = "victory"
                 for siren in self.menu_manager.siren_fleet.fleet:
+                    siren_level = Stats.level(siren.battle_component.exp)
+                    siren_key = (siren.name, siren_level)
+                    self.defeated_sirens[siren_key] = (
+                        self.defeated_sirens.get(siren_key, 0) + 1
+                    )
                     siren_reward_exp = Stats.stat(
                         *DataFiles.siren_data[siren.name]["reward_exp"],
                         exp=siren.battle_component.exp,
@@ -893,6 +1003,19 @@ class EncounterMenu:
                 self.menu_manager.siren_fleet.end_encounter()
                 self.next_encounter_button.active = True
                 self.retreat_button.active = False
+
+        if self.defeat_pending:
+            sunk_shipgirls = [
+                shipgirl
+                for shipgirl in self.menu_manager.player_fleet.fleet
+                if shipgirl is not None and shipgirl.battle_component.hp <= 0
+            ]
+            if sunk_shipgirls and all(
+                shipgirl.sprite.animation_finished(shipgirl.sprite.SINK_ANIMATION)
+                for shipgirl in sunk_shipgirls
+            ):
+                self.defeat_pending = False
+                self.return_to_port_button.active = True
 
         self.spawn_shipgirl_wakes(self.menu_manager.player_fleet)
         self.spawn_shipgirl_wakes(self.menu_manager.siren_fleet)
@@ -967,6 +1090,404 @@ class EncounterMenu:
             ]
             pygame.draw.polygon(surface, Color.WHITE, pointer)
 
+    def refresh_report_page_buttons(self):
+        report_visible = self.return_to_port_button.active
+        self.report_page_prev_button.active = (
+            report_visible and self.report_page > 0
+        )
+        self.report_page_next_button.active = (
+            report_visible and self.report_page < self.REPORT_PAGE_COUNT - 1
+        )
+        if not self.report_page_prev_button.active:
+            self.report_page_prev_button.hovered = False
+        if not self.report_page_next_button.active:
+            self.report_page_next_button.hovered = False
+
+    def change_report_page(self, delta):
+        self.report_page = min(
+            self.REPORT_PAGE_COUNT - 1,
+            max(0, self.report_page + delta),
+        )
+        self.refresh_report_page_buttons()
+
+    def draw_dossier_page(self, surface):
+        page_turn_size = self.report_page_next_button.rect.width
+        prev_fold_hovered = self.report_page_prev_button.hovered
+        prev_fold_size = (
+            page_turn_size if prev_fold_hovered
+            else page_turn_size - Box.PADDING
+        )
+        next_fold_hovered = self.report_page_next_button.hovered
+        next_fold_size = (
+            page_turn_size if next_fold_hovered
+            else page_turn_size - Box.PADDING
+        )
+
+        page_polygon = []
+        if self.report_page_prev_button.active:
+            page_polygon.append((
+                self.dossier_page.left + prev_fold_size,
+                self.dossier_page.top,
+            ))
+        else:
+            page_polygon.append(self.dossier_page.topleft)
+        page_polygon.append(self.dossier_page.topright)
+
+        if self.report_page_next_button.active:
+            fold_top = (
+                self.dossier_page.right,
+                self.dossier_page.bottom - next_fold_size,
+            )
+            fold_left = (
+                self.dossier_page.right - next_fold_size,
+                self.dossier_page.bottom,
+            )
+            fold_tip = (
+                self.dossier_page.right - next_fold_size,
+                self.dossier_page.bottom - next_fold_size,
+            )
+            page_polygon.extend([fold_top, fold_left])
+        else:
+            page_polygon.append(self.dossier_page.bottomright)
+
+        page_polygon.append(self.dossier_page.bottomleft)
+        if self.report_page_prev_button.active:
+            page_polygon.append((
+                self.dossier_page.left,
+                self.dossier_page.top + prev_fold_size,
+            ))
+        pygame.draw.polygon(surface, Color.DOSSIER_PAGE, page_polygon)
+
+        if self.report_page_next_button.active:
+            fold_shadow = (
+                Color.DOSSIER_FOLD_SHADOW_HOVER
+                if next_fold_hovered
+                else Color.DOSSIER_FOLD_SHADOW
+            )
+            pygame.draw.polygon(
+                surface,
+                Color.DOSSIER_PAPER_UNDERSIDE,
+                [fold_top, fold_left, fold_tip],
+            )
+            pygame.draw.line(
+                surface,
+                fold_shadow,
+                fold_top,
+                fold_left,
+                width=Box.OUTLINE_WIDTH + int(next_fold_hovered),
+            )
+            pygame.draw.line(
+                surface,
+                Color.DOSSIER_RULE,
+                fold_left,
+                fold_tip,
+            )
+
+    def draw_dossier_prev_page_fold(self, surface):
+        if not self.report_page_prev_button.active:
+            return
+
+        page_turn_size = self.report_page_prev_button.rect.width
+        fold_hovered = self.report_page_prev_button.hovered
+        fold_size = (
+            page_turn_size if fold_hovered
+            else page_turn_size - Box.PADDING
+        )
+        fold_top = pygame.Vector2(
+            self.dossier_page.left + fold_size,
+            self.dossier_page.top,
+        )
+        fold_left = pygame.Vector2(
+            self.dossier_page.left,
+            self.dossier_page.top + fold_size,
+        )
+        page_topleft = pygame.Vector2(self.dossier_page.topleft)
+        fold_height = 2*Box.PADDING
+        fold_polygon = [
+            fold_top - pygame.Vector2(0, fold_height),
+            fold_top,
+            fold_left,
+            fold_left - pygame.Vector2(fold_height, 0),
+            page_topleft - pygame.Vector2(fold_height, fold_height),
+        ]
+        pygame.draw.polygon(surface, Color.DOSSIER_CARD, fold_polygon)
+        pygame.draw.line(
+            surface,
+            (
+                Color.DOSSIER_FOLD_SHADOW_HOVER
+                if fold_hovered
+                else Color.DOSSIER_FOLD_SHADOW
+            ),
+            fold_polygon[1],
+            fold_polygon[2],
+            width=Box.OUTLINE_WIDTH + int(fold_hovered),
+        )
+
+    def draw_dossier_overlay(self, surface, font_registry):
+        """Draw the empty dossier and report page used after a sortie."""
+        pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
+
+        tab = [
+            pygame.Vector2(self.dossier_overlay.topleft),
+            pygame.Vector2(self.dossier_overlay.topleft)
+            + pygame.Vector2(2*Box.WIDTH - Box.PADDING, 0),
+            pygame.Vector2(self.dossier_overlay.topleft)
+            + pygame.Vector2(2*Box.WIDTH + Box.PADDING, Box.HEIGHT/2),
+            pygame.Vector2(self.dossier_overlay.topleft)
+            + pygame.Vector2(0, Box.HEIGHT/2),
+        ]
+        pygame.draw.polygon(surface, Color.DOSSIER, tab)
+
+        undersheets = [
+            (-2, pygame.Vector2(-3, 4), Color.DOSSIER_PAPER_UNDERSIDE),
+            (2, pygame.Vector2(4, 2), Color.DOSSIER_CARD),
+        ]
+        for angle, offset, color in undersheets:
+            pygame.draw.polygon(
+                surface,
+                color,
+                Box.get_rotated_rect_polygon(
+                    self.dossier_page,
+                    angle,
+                    offset,
+                ),
+            )
+        self.refresh_report_page_buttons()
+        self.draw_dossier_page(surface)
+
+        header_text = (
+            "operation completed"
+            if self.sortie_completed
+            else "operation failed"
+        )
+        header_y = self.dossier_page.top + Box.PADDING
+        font_registry["big_pixel"].render(
+            surface,
+            header_text,
+            (
+                self.dossier_page.centerx,
+                header_y + font_registry["big_pixel"].font_height,
+            ),
+            Color.DOSSIER_INK,
+            2,
+            style="center",
+        )
+        pygame.draw.line(
+            surface,
+            Color.DOSSIER_RULE,
+            (self.dossier_page.left + Box.PADDING, header_y + 32),
+            (self.dossier_page.right - Box.PADDING, header_y + 32),
+        )
+
+        if self.report_page == 0:
+            self.draw_sortie_rewards(surface, font_registry)
+        else:
+            self.draw_defeated_sirens(
+                surface,
+                font_registry,
+                self.dossier_page.top + self.REWARDS_SECTION_TOP,
+            )
+
+        font_registry["big_pixel"].render(
+            surface,
+            f"sheet {self.report_page + 1:02d} of {self.REPORT_PAGE_COUNT:02d}",
+            (self.dossier_page.centerx, self.dossier_page.bottom - Box.PADDING),
+            Color.DOSSIER_RULE,
+            1,
+            style="center",
+        )
+        paperclip_sprite = DataFiles.sprites["props"]["diagonal_paperclip"]
+        paperclip_rect = paperclip_sprite.get_rect()
+        paperclip_rect.left = self.dossier_page.left - 20
+        paperclip_rect.top = self.dossier_page.top - 20
+        surface.blit(paperclip_sprite, paperclip_rect)
+        self.draw_dossier_prev_page_fold(surface)
+
+    def draw_sortie_rewards(self, surface, font_registry):
+        font = font_registry["big_pixel"]
+        section_left = self.dossier_page.left + Box.PADDING
+        section_top = self.dossier_page.top + self.REWARDS_SECTION_TOP
+        font.render(
+            surface,
+            "recovered materials",
+            (section_left, section_top),
+            Color.DOSSIER_RULE,
+            1,
+        )
+
+        cards_top = section_top + font.font_height + Box.PADDING
+        if not self.sortie_rewards:
+            font.render(
+                surface,
+                "no materials recovered",
+                (self.dossier_page.centerx, cards_top + Box.HEIGHT/2),
+                Color.DOSSIER_RULE,
+                2,
+                style="center",
+            )
+            return cards_top + Box.HEIGHT
+
+        cards_per_row = max(
+            1,
+            (self.dossier_page.width - Box.PADDING)
+            // (Box.WIDTH + Box.PADDING),
+        )
+        for index, (reward, amount) in enumerate(self.sortie_rewards.items()):
+            reward_rect = get_rect(
+                width=Box.WIDTH,
+                height=Box.HEIGHT,
+                left=(
+                    section_left
+                    + (index % cards_per_row)*(Box.WIDTH + Box.PADDING)
+                ),
+                top=(
+                    cards_top
+                    + (index // cards_per_row)*(Box.HEIGHT + Box.PADDING)
+                ),
+            )
+            pygame.draw.rect(
+                surface,
+                Color.DOSSIER_CARD_SHADOW,
+                reward_rect.move(2, 2),
+            )
+            pygame.draw.rect(surface, Color.DOSSIER_CARD, reward_rect)
+            reward_sprite = DataFiles.get_entity_sprite(reward)
+            surface.blit(
+                reward_sprite,
+                reward_sprite.get_rect(center=reward_rect.center),
+            )
+
+            quantity_rect = pygame.Rect(
+                reward_rect.left,
+                reward_rect.bottom - 14,
+                reward_rect.width,
+                14,
+            )
+            pygame.draw.rect(surface, Color.DOSSIER_CARD, quantity_rect)
+            pygame.draw.line(
+                surface,
+                Color.DOSSIER_RULE,
+                quantity_rect.topleft,
+                quantity_rect.topright,
+            )
+            font.render(
+                surface,
+                f"qty {amount:02d}",
+                quantity_rect.center,
+                Color.DOSSIER_INK,
+                1,
+                style="center",
+            )
+            pygame.draw.rect(
+                surface,
+                Color.DOSSIER_INK,
+                reward_rect,
+                width=1,
+            )
+
+        reward_rows = (
+            len(self.sortie_rewards) + cards_per_row - 1
+        ) // cards_per_row
+        return (
+            cards_top
+            + reward_rows*Box.HEIGHT
+            + (reward_rows - 1)*Box.PADDING
+        )
+
+    def draw_defeated_sirens(self, surface, font_registry, section_top):
+        font = font_registry["big_pixel"]
+        section_left = self.dossier_page.left + Box.PADDING
+        font.render(
+            surface,
+            "enemy sirens sunk",
+            (section_left, section_top),
+            Color.DOSSIER_RULE,
+            1,
+        )
+
+        cards_top = section_top + font.font_height + Box.PADDING
+        if not self.defeated_sirens:
+            font.render(
+                surface,
+                "no confirmed siren vessels sunk",
+                (self.dossier_page.centerx, cards_top + Box.HEIGHT/2),
+                Color.DOSSIER_RULE,
+                2,
+                style="center",
+            )
+            return
+
+        card_width = self.SIREN_CARD_WIDTH
+        cards_per_row = self.SIREN_CARDS_PER_ROW
+        for index, ((siren_name, siren_level), amount) in enumerate(
+            self.defeated_sirens.items()
+        ):
+            card_rect = get_rect(
+                width=card_width,
+                height=Box.HEIGHT,
+                left=(
+                    section_left
+                    + (index % cards_per_row)*(card_width + Box.PADDING)
+                ),
+                top=(
+                    cards_top
+                    + (index // cards_per_row)*(Box.HEIGHT + Box.PADDING)
+                ),
+            )
+            pygame.draw.rect(
+                surface,
+                Color.DOSSIER_CARD_SHADOW,
+                card_rect.move(2, 2),
+            )
+            pygame.draw.rect(surface, Color.DOSSIER_CARD, card_rect)
+
+            portrait_rect = get_rect(
+                width=Box.WIDTH,
+                height=Box.HEIGHT,
+                left=card_rect.left,
+                top=card_rect.top,
+            )
+            siren_sprite = DataFiles.get_entity_sprite(siren_name)
+            surface.blit(
+                siren_sprite,
+                siren_sprite.get_rect(center=portrait_rect.center),
+            )
+            pygame.draw.line(
+                surface,
+                Color.DOSSIER_RULE,
+                portrait_rect.topright,
+                portrait_rect.bottomright,
+            )
+
+            text_left = portrait_rect.right + Box.PADDING
+            font.render(
+                surface,
+                siren_name.replace("_", " "),
+                (text_left, card_rect.top + Box.PADDING),
+                Color.DOSSIER_INK,
+                1,
+            )
+            font.render(
+                surface,
+                f"level {siren_level:02d}",
+                (text_left, card_rect.top + Box.PADDING + 16),
+                Color.DOSSIER_RULE,
+                1,
+            )
+            font.render(
+                surface,
+                f"qty {amount:02d}",
+                (text_left, card_rect.top + Box.PADDING + 32),
+                Color.DOSSIER_INK,
+                1,
+            )
+            pygame.draw.rect(
+                surface,
+                Color.DOSSIER_INK,
+                card_rect,
+                width=1,
+            )
+
     def draw(self, surface, font_registry):
         self.background.draw(surface, font_registry, player_fleet=self.menu_manager.player_fleet, siren_fleet=self.menu_manager.siren_fleet)
         self.vfx_manager.draw(surface, font_registry)
@@ -983,7 +1504,6 @@ class EncounterMenu:
 
         self.next_encounter_button.draw(surface, font_registry)
         self.open_reward_cache_button.draw(surface, font_registry)
-        self.return_to_port_button.draw(surface, font_registry)
         self.retreat_button.draw(surface, font_registry)
         self.draw_encounter_progress(surface)
 
@@ -1035,6 +1555,11 @@ class EncounterMenu:
                 1,
                 style="center"
             )
+
+        if self.return_to_port_button.active:
+            self.draw_dossier_overlay(surface, font_registry)
+
+        self.return_to_port_button.draw(surface, font_registry)
         
         if self.end_encounter_banner.text:
             self.end_encounter_banner.draw(surface, font_registry)

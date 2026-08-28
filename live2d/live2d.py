@@ -305,6 +305,26 @@ class Live2D:
             self.animation = animation
             self.t = 0
 
+    def animation_finished(self, animation=None):
+        animation_name = animation or self.animation
+        if self.animation != animation_name:
+            return False
+
+        animation_data = self.animations.get(animation_name, {})
+        if not animation_data.get(NO_LOOP_KEY, False):
+            return False
+
+        keyframes = animation_keyframes(animation_data)
+        if len(keyframes) <= 1:
+            return True
+
+        final_keyframe = max(int(index) for index in keyframes)
+        keyframe_duration = animation_data.get(
+            KEYFRAME_DURATION_KEY,
+            self.KEYFRAME_DURATION,
+        )
+        return self.t >= final_keyframe * keyframe_duration
+
     def get_facial_expression(self):
         animation = self.animations.get(self.animation, {})
         expression = animation.get(FACIAL_EXPRESSION_KEY, FACIAL_EXPRESSION_PART_NAMES[0])
