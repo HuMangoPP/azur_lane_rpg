@@ -564,51 +564,6 @@ class EncounterMenu:
             background_styling={"background_img": button_sprite}
         )
 
-        def return_to_port():
-            if self.sortie_completed:
-                new_sortie_progress = self.current_sortie + 1
-                if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
-                    DataFiles.save_file["sortie_progress"] = new_sortie_progress
-                    if new_sortie_progress == 3:
-                        self.menu_manager.quest_manager.quests[craft_weapon_quest.quest_id] = craft_weapon_quest
-                        DataFiles.save_file["quests"][craft_weapon_quest.quest_id] = "new"
-                    if new_sortie_progress == 4:
-                        self.menu_manager.quest_manager.quests[buy_decoration_quest.quest_id] = buy_decoration_quest
-                        DataFiles.save_file["quests"][buy_decoration_quest.quest_id] = "new"
-
-                new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
-                if DataFiles.save_file["chapter_progress"] < new_chapter_progress:
-                    DataFiles.save_file["chapter_progress"] = new_chapter_progress
-                    self.menu_manager.sortie_selection_menu.fogs[new_chapter_progress].disperse = True
-                
-                self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
-                self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True
-                self.menu_manager.port_menu.update_encountered_sirens()
-                
-                self.claim_drops()
-
-            self.menu_manager.current_menu = self.menu_manager.port_menu
-            DataFiles.sfx["waves"].fadeout(3000)
-            self.vfx_manager.clear()
-            self.fast_forward = False
-            self.slow_down = False
-
-            self.menu_manager.encounter_menu.return_to_port_button.active = False
-
-        button_sprite = DataFiles.sprites["user_interface"]["port"]
-        button_rect = get_rect(width=48,height=48,centerx=screen_x(0.5),centery=screen_y(0.75))
-        self.return_to_port_button = Button(
-            button_rect,
-            return_to_port,
-            active=False,
-            background_styling={
-                "background_color": Color.BLACK,
-                "background_img": button_sprite,
-                "opacity": 160
-            },
-            hover_styling={"opacity": 200}
-        )
-
         # Size the end-of-sortie report for the largest Siren record set in the
         # sortie data, arranged in three columns.
         max_siren_records = max(
@@ -648,10 +603,50 @@ class EncounterMenu:
             -2*Box.PADDING,
             -2*Box.PADDING,
         )
-        self.return_to_port_button.rect.center = (
-            self.dossier_overlay.right + Box.WIDTH/2,
-            self.dossier_overlay.bottom - Box.HEIGHT/2,
+
+        def return_to_port():
+            if self.sortie_completed:
+                new_sortie_progress = self.current_sortie + 1
+                if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
+                    DataFiles.save_file["sortie_progress"] = new_sortie_progress
+                    if new_sortie_progress == 3:
+                        self.menu_manager.quest_manager.quests[craft_weapon_quest.quest_id] = craft_weapon_quest
+                        DataFiles.save_file["quests"][craft_weapon_quest.quest_id] = "new"
+                    if new_sortie_progress == 4:
+                        self.menu_manager.quest_manager.quests[buy_decoration_quest.quest_id] = buy_decoration_quest
+                        DataFiles.save_file["quests"][buy_decoration_quest.quest_id] = "new"
+
+                new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
+                if DataFiles.save_file["chapter_progress"] < new_chapter_progress:
+                    DataFiles.save_file["chapter_progress"] = new_chapter_progress
+                    self.menu_manager.sortie_selection_menu.fogs[new_chapter_progress].disperse = True
+                
+                self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
+                self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True
+                self.menu_manager.port_menu.update_encountered_sirens()
+                
+                self.claim_drops()
+
+            self.menu_manager.current_menu = self.menu_manager.port_menu
+            DataFiles.sfx["waves"].fadeout(3000)
+            self.vfx_manager.clear()
+            self.fast_forward = False
+            self.slow_down = False
+
+            self.menu_manager.encounter_menu.return_to_port_button.active = False
+
+        button_rect = get_rect(
+            width=2*Box.WIDTH + 2*Box.PADDING,
+            height=2*Box.HEIGHT + 2*Box.PADDING,
+            right=self.dossier_page.right + Box.WIDTH + Box.PADDING,
+            centery=self.dossier_page.top,
         )
+        self.return_to_port_button = Button(
+            button_rect,
+            return_to_port,
+            active=False,
+        )
+
         self.report_page = 0
         self.report_page_prev_button = Button(
             get_rect(
@@ -1553,6 +1548,50 @@ class EncounterMenu:
         surface.blit(paperclip_sprite, paperclip_rect)
         self.draw_dossier_prev_page_fold(surface)
 
+    def draw_return_to_port_sticky_note(self, surface, font_registry):
+        note_rect = self.return_to_port_button.rect
+        misaligned_pages = [
+            (4, pygame.Vector2(-5, 4), Color.STICKY_NOTE_BACK),
+            (-5, pygame.Vector2(5, -3), (239, 207, 87)),
+            (2, pygame.Vector2(2, 4), (247, 220, 105)),
+        ]
+        for angle, offset, color in misaligned_pages:
+            pygame.draw.polygon(
+                surface,
+                color,
+                Box.get_rotated_rect_polygon(
+                    note_rect,
+                    angle,
+                    offset,
+                ),
+            )
+        pygame.draw.rect(
+            surface,
+            Color.STICKY_NOTE,
+            note_rect,
+        )
+
+        home_icon = DataFiles.recolor_sprite("user_interface", "port", Color.STICKY_NOTE_HANDWRITING)
+        home_icon_rect = home_icon.get_rect(
+            center=(
+                note_rect.centerx,
+                note_rect.top + 0.75*note_rect.height,
+            ),
+        )
+        surface.blit(home_icon, home_icon_rect)
+        font_registry["handwritten"].render(
+            surface,
+            "return to port?",
+            (
+                note_rect.centerx,
+                note_rect.top + 0.35*note_rect.height,
+            ),
+            Color.STICKY_NOTE_HANDWRITING,
+            1,
+            style="center",
+            box_width=note_rect.width,
+        )
+
     def draw_sortie_rewards(self, surface, font_registry):
         font = font_registry["big_pixel"]
         section_left = self.dossier_page.left + Box.PADDING
@@ -1822,8 +1861,7 @@ class EncounterMenu:
 
         if self.return_to_port_button.active:
             self.draw_dossier_overlay(surface, font_registry)
-
-        self.return_to_port_button.draw(surface, font_registry)
+            self.draw_return_to_port_sticky_note(surface, font_registry)
         
         if self.end_encounter_banner.text:
             self.end_encounter_banner.draw(surface, font_registry)
