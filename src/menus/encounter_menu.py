@@ -131,7 +131,8 @@ class RainDrop:
 class Background:
     Y_GAP = 48
     NUM_WAVE_REPS = 5
-    SEA_FOAM_SPAWN_TIME_RANGE = (0.5, 1)
+    WAVE_HORIZONTAL_AMPLITUDE = 48
+    WAVE_VERTICAL_AMPLITUDE = 8
     RAIN_SPAWN_RATE = 90
     NUM_STARS = 65
     STAR_COLORS = [
@@ -154,10 +155,13 @@ class Background:
         self.stars = []
         self.moon_pos = pygame.Vector2(screen_x(0.36), screen_y(0.12))
         self.sea_foam_sprite = DataFiles.sprites["background"]["sea_foam"]
-        self.sea_foam_timer = 0
-        self.sea_foam_spawn_time = random.uniform(*self.SEA_FOAM_SPAWN_TIME_RANGE)
         self.sea_foams = []
         num_waves = DataFiles.sprites["background"]["num_waves"]
+        self.wave_speeds = [
+            (wave_index + 1) / num_waves
+            for wave_index in range(num_waves)
+        ]
+        self.sea_foam_spawned_this_rise = [False] * num_waves
         self.wave_ys = [
             screen_y(0.5) + self.Y_GAP*(i-num_waves/2) + 8
             for i in range(num_waves)
@@ -179,6 +183,23 @@ class Background:
 
     def set_wave_sprites(self, weather):
         self.wave_sprites = DataFiles.sprites["background"]["wave_sets"][weather]
+
+    @staticmethod
+    def wave_vertical_offset(wave_timer):
+        return -math.cos(2 * wave_timer)
+
+    @staticmethod
+    def wave_is_rising(wave_timer):
+        return math.sin(2 * wave_timer) < 0
+
+    @classmethod
+    def sea_foam_is_ready(cls, wave_timer, wave_speed):
+        if not cls.wave_is_rising(wave_timer):
+            return False
+
+        upcoming_crest = math.pi if wave_timer < math.pi else math.tau
+        time_until_crest = (upcoming_crest - wave_timer) / wave_speed
+        return time_until_crest <= SeaFoam.FADE_IN_DURATION
 
     def set_cloud_sprites(self, weather):
         self.cloud_sprites = DataFiles.sprites["background"]["cloud_sets"][weather]
@@ -228,10 +249,9 @@ class Background:
             pygame.draw.circle(surface, star_color, star_pos, star_radius)
 
     def update(self, dt):
-        num_waves = DataFiles.sprites["background"]["num_waves"]
         self.wave_timers = [
-            (wave_timer + (i+1)/num_waves*dt)%math.radians(360)
-            for i, wave_timer in enumerate(self.wave_timers)
+            (wave_timer + wave_speed * dt) % math.tau
+            for wave_timer, wave_speed in zip(self.wave_timers, self.wave_speeds)
         ]
 
         if self.raining:
@@ -269,17 +289,25 @@ class Background:
             if not sea_foam.expired
         ]
 
-        self.sea_foam_timer += dt
-        if self.sea_foam_timer > self.sea_foam_spawn_time:
-            wave_index = random.randrange(num_waves)
-            self.sea_foams.append(SeaFoam(
-                self.sea_foam_sprite,
-                wave_index,
-                random.randrange(self.NUM_WAVE_REPS),
-                math.cos(self.wave_timers[wave_index]) < 0,
-            ))
-            self.sea_foam_timer = 0
-            self.sea_foam_spawn_time = random.uniform(*self.SEA_FOAM_SPAWN_TIME_RANGE)
+        for wave_index, (wave_timer, wave_speed) in enumerate(zip(
+            self.wave_timers,
+            self.wave_speeds,
+        )):
+            if not self.wave_is_rising(wave_timer):
+                self.sea_foam_spawned_this_rise[wave_index] = False
+                continue
+
+            if (
+                not self.sea_foam_spawned_this_rise[wave_index]
+                and self.sea_foam_is_ready(wave_timer, wave_speed)
+            ):
+                self.sea_foams.append(SeaFoam(
+                    self.sea_foam_sprite,
+                    wave_index,
+                    random.randrange(self.NUM_WAVE_REPS),
+                    math.cos(wave_timer) < 0,
+                ))
+                self.sea_foam_spawned_this_rise[wave_index] = True
 
         self.cloud_timer += dt
         if self.cloud_timer > self.cloud_spawn_time:
@@ -358,8 +386,18 @@ class Background:
             move_amt = i / num_waves
             wave = self.wave_sprites[i]
             wave_rect = wave.get_rect()
-            wave_rect.top = wave_y + 4 * (move_amt + 1) * math.sin(2*wave_timer)
-            centerx = 64 * (move_amt + 1) * math.sin(wave_timer) + screen_x(0.5)
+            wave_rect.top = (
+                wave_y
+                + self.WAVE_VERTICAL_AMPLITUDE
+                * (move_amt + 1)
+                * self.wave_vertical_offset(wave_timer)
+            )
+            centerx = (
+                self.WAVE_HORIZONTAL_AMPLITUDE
+                * (move_amt + 1)
+                * math.sin(wave_timer)
+                + screen_x(0.5)
+            )
             for j in range(num_wave_reps):
                 wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
                 surface.blit(wave, wave_rect)
@@ -863,7 +901,10 @@ class EncounterMenu:
 
         self.open_reward_cache_button.rect.center = (
             pygame.Vector2(screen_x(0.75), screen_y(0.575))
-            + pygame.Vector2(96*math.sin(self.background.wave_timers[3]), 6*math.sin(2*self.background.wave_timers[3]))
+            + pygame.Vector2(
+                72 * math.sin(self.background.wave_timers[3]),
+                12 * self.background.wave_vertical_offset(self.background.wave_timers[3]),
+            )
         )
 
     def draw_encounter_progress(self, surface):
