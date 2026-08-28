@@ -1047,9 +1047,9 @@ class PortMenu:
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             left_overlay = self.dossier_bg
             entity_filters = getattr(self, f"{self.current_overlay}_filters")
-            for _, filter_rect in zip(entity_filters, self.dossier_tabs):
-                if filter_rect.collidepoint(mouseup_event.pos):
-                    return False
+            filter_rects = [filter_rect for _, filter_rect in zip(entity_filters, self.dossier_tabs)]
+            if filter_rects[0].unionall(filter_rects[1:]).collidepoint(mouseup_event.pos):
+                return False
             right_overlay = self.blueprint_page
             if self.overlay_selected_entity is not None:
                 action_button = self.get_current_overlay_action_button()
