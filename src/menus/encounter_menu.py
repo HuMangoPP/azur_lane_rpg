@@ -448,7 +448,7 @@ class EncounterMenu:
     TRANSITION_FADE_FROM_BLACK = "fade_from_black"
     TRANSITION_ENTERING = "entering"
 
-    TRANSITION_MOVE_SPEED = 600
+    TRANSITION_MOVE_SPEED = 200
     TRANSITION_FADE_DURATION = 0.35
     TRANSITION_INTERLUDE_DURATION = 0.25
     OPENED_REWARD_REPORT_DELAY = 0.5
@@ -781,7 +781,7 @@ class EncounterMenu:
         ]
         for shipgirl in self._transition_shipgirls:
             shipgirl.facing_left = False
-            shipgirl.sprite.set_animation(shipgirl.sprite.WALK_ANIMATION)
+            shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
 
         self._set_transition_state(self.TRANSITION_EXITING)
 
@@ -803,7 +803,7 @@ class EncounterMenu:
                 target = self._transition_slot_positions[shipgirl]
                 shipgirl.rect.center = target + pygame.Vector2(entry_offset, 0)
                 shipgirl.facing_left = False
-                shipgirl.sprite.set_animation(shipgirl.sprite.WALK_ANIMATION)
+                shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
 
     def _finish_encounter_transition(self):
         for shipgirl in self._transition_shipgirls:
@@ -817,7 +817,7 @@ class EncounterMenu:
 
     def _update_transition_shipgirl_animation(self, dt):
         for shipgirl in self._transition_shipgirls:
-            shipgirl.sprite.set_animation(shipgirl.sprite.WALK_ANIMATION)
+            shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
             shipgirl.animate(dt)
 
     def _update_encounter_transition(self, dt):
@@ -869,7 +869,7 @@ class EncounterMenu:
             self.TRANSITION_EXITING,
             self.TRANSITION_ENTERING,
         ):
-            self.spawn_shipgirl_wakes(self.menu_manager.player_fleet)
+            self.spawn_shipgirl_wakes(self.menu_manager.player_fleet, True)
 
         self.vfx_manager.update(dt)
         self.background.update(dt)
@@ -1034,7 +1034,7 @@ class EncounterMenu:
             self._opened_reward_report_timer = None
             self.return_to_port_button.active = True
 
-    def spawn_shipgirl_wakes(self, fleet):
+    def spawn_shipgirl_wakes(self, fleet, is_player):
         for shipgirl in fleet.fleet:
             if shipgirl is None or shipgirl.battle_component.hp <= 0:
                 continue
@@ -1042,12 +1042,12 @@ class EncounterMenu:
             wake_pos = pygame.Vector2(
                 (
                     shipgirl.rect.centerx
-                    + (-1 if shipgirl.rect.x < screen_x(0.5) else 1)
+                    + (-1 if is_player else 1)
                     * random.uniform(-shipgirl.rect.width * 0.1, shipgirl.rect.width * 0.3)
                 ),
                 shipgirl.rect.bottom - random.uniform(11, 16),
             )
-            torpedo_angle = 0 if shipgirl.rect.x < screen_x(0.5) else math.pi
+            torpedo_angle = 0 if is_player else math.radians(180)
             self.vfx_manager.spawn_wake(
                 wake_pos,
                 torpedo_angle,
@@ -1262,8 +1262,8 @@ class EncounterMenu:
                 self.defeat_pending = False
                 self.return_to_port_button.active = True
 
-        self.spawn_shipgirl_wakes(self.menu_manager.player_fleet)
-        self.spawn_shipgirl_wakes(self.menu_manager.siren_fleet)
+        self.spawn_shipgirl_wakes(self.menu_manager.player_fleet, True)
+        self.spawn_shipgirl_wakes(self.menu_manager.siren_fleet, False)
         self.vfx_manager.update(dt)
         self.background.update(dt)
 
