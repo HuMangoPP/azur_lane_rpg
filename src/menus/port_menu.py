@@ -191,21 +191,14 @@ class PortMenu:
         self.overlay_pages = {}
         self.visited_depot = False
         self.visited_intel_center = False
-        self.depot_notification = True
-        self.intel_center_notification = True
-        self.shipyard_notification = True
-        self.gear_lab_notification = True
-        self.decoration_store_notification = True
 
         # Overlay buttons
         overlay_buttons_flexbox_width = self.open_select_sortie_menu_button.rect.left
         num_overlay_buttons = 5
-        def open_overlay_button_factory(index, overlay_enum, has_notification=True):
+        def open_overlay_button_factory(index, overlay_enum):
             def open_overlay():
                 self.current_overlay = overlay_enum
                 self.overlay_pages.setdefault(overlay_enum, 0)
-                if has_notification:
-                    setattr(self, f"{overlay_enum}_notification", False)
 
                 if overlay_enum == self.SHIPYARD:
                     if DataFiles.save_file["research_target"] is not None:
@@ -690,15 +683,6 @@ class PortMenu:
                 for encoded_siren in encounter["front"] + encounter["back"]:
                     encountered_sirens.add(encoded_siren)
         self.encountered_sirens = sorted(list(encountered_sirens))
-
-    def draw_button_notification(self, surface, button, notification):
-        if not button.active or not notification:
-            return
-
-        notification_sprite = DataFiles.sprites["user_interface"]["notification"]
-        notification_rect = notification_sprite.get_rect()
-        notification_rect.center = button.rect.topright
-        surface.blit(notification_sprite, notification_rect)
 
     def get_selected_shipyard_reqs(self):
         if self.overlay_selected_entity is None:
@@ -2842,6 +2826,11 @@ class PortMenu:
             if interacting_shipgirl is not None:
                 interacting_shipgirl.draw(surface, font_registry)
 
+        for choose_faction_button in self.choose_faction_buttons:
+            choose_faction_button.draw(surface, font_registry)
+
+        self.menu_manager.quest_manager.draw(surface, font_registry)
+
         if self.is_decorating:
             self.draw_decoration_mode_overlay(surface, font_registry)
             if self.menu_manager.encounter_menu.transition_active:
@@ -2860,17 +2849,8 @@ class PortMenu:
             self.open_decoration_store_overlay_button,
             self.open_select_sortie_menu_button,
         ]
-        notifications = [
-            self.depot_notification,
-            self.intel_center_notification,
-            self.shipyard_notification,
-            self.gear_lab_notification,
-            self.decoration_store_notification,
-            False,
-        ]
-        for button, notification in zip(buttons, notifications):
+        for button in buttons:
             button.draw(surface, font_registry)
-            self.draw_button_notification(surface, button, notification)
 
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             self.draw_warehouse_overlay(surface, font_registry)
@@ -2878,11 +2858,6 @@ class PortMenu:
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             self.draw_dossier_overlay(surface, font_registry)
             self.draw_blueprint_overlay(surface, font_registry)
-
-        for choose_faction_button in self.choose_faction_buttons:
-            choose_faction_button.draw(surface, font_registry)
-
-        self.menu_manager.quest_manager.draw(surface, font_registry)
 
         if self.menu_manager.encounter_menu.transition_active:
             self.menu_manager.encounter_menu._draw_transition_wave_wipe(surface)

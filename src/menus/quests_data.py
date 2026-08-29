@@ -94,8 +94,9 @@ def choose_faction_tutorial_draw(menu_manager, surface, font_registry):
     pass
 
 def choose_faction_on_start(menu_manager):
+    faction_selection_pending = not DataFiles.save_file["unlocked_factions"]
     for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
-        choose_faction_button.active = True
+        choose_faction_button.active = faction_selection_pending
 
 def choose_faction_on_complete(menu_manager, save_file_load=False):
     if not save_file_load:

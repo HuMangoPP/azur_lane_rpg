@@ -913,6 +913,7 @@ class EncounterMenu:
                     shipgirl.rect.centerx + distance,
                 )
             self._update_transition_shipgirl_animation(dt)
+            self.menu_manager.siren_fleet.animate(dt)
             if not self._transition_shipgirls or all(
                 shipgirl.rect.centerx >= self._transition_slot_positions[shipgirl].x
                 for shipgirl in self._transition_shipgirls
@@ -1231,15 +1232,13 @@ class EncounterMenu:
                     self.fast_forward = not self.fast_forward
                 if event.key == pygame.K_d:
                     self.slow_down = not self.slow_down
-
-        if self.transition_active:
-            self._update_encounter_transition(dt)
-            return
         
         if self.fast_forward:
             dt = dt * 2
         if self.slow_down:
             dt = dt / 2
+        self.menu_manager.player_fleet.animate(dt)
+        self.menu_manager.siren_fleet.animate(dt)
         if self.encounter_started:
             afloat_sirens_before = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
             self.menu_manager.player_fleet.update(dt, self.vfx_manager)

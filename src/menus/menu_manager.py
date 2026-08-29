@@ -41,6 +41,12 @@ class MenuManager:
             if quest_progress == "new":
                 self.quest_manager.quests[quest_id] = quest
             elif quest_progress == "in_progress":
+                # The quest being in progress means its briefing was already
+                # accepted, even though individual dialogue pages are not
+                # persisted. Resume at the objective page so a later
+                # completion cannot be hidden behind stale briefing dialogue.
+                quest.pre_quest_dialogue_index = len(quest.pre_quest_dialogue)
+                quest.pre_quest_finished = True
                 quest.started = True
                 quest.on_start(self)
                 self.quest_manager.quests[quest_id] = quest

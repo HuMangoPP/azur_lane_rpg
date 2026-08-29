@@ -918,19 +918,24 @@ class PlayerFleet:
                 shipgirl.battle_component.attack_timer = 0
                 shipgirl.battle_component.active = False
 
+    def animate(self, dt):
+        for shipgirl in self.fleet:
+            if shipgirl is not None:
+                if shipgirl.battle_component.hp <= 0:
+                    shipgirl.sprite.set_animation(Live2D.SINK_ANIMATION)
+                elif shipgirl.battle_component.attack_animation:
+                    shipgirl.sprite.set_animation(Live2D.ATTACK_ANIMATION)
+                shipgirl.animate(dt)
+
     def update(self, dt, vfx_manager):
         for shipgirl in self.fleet:
             if shipgirl is not None:
                 if shipgirl.battle_component.hp <= 0:
                     shipgirl.battle_component.active = False
-                    shipgirl.sprite.set_animation(Live2D.SINK_ANIMATION)
                 elif shipgirl.battle_component.attack_animation:
-                    shipgirl.sprite.set_animation(Live2D.ATTACK_ANIMATION)
                     if shipgirl.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
                         shipgirl.battle_component.attack(shipgirl.rect, vfx_manager)
                 shipgirl.battle_component.update(dt, shipgirl.rect, None, vfx_manager)
-
-                shipgirl.animate(dt)
 
     def draw_shipgirl(self, surface, font_registry):
         for shipgirl in self.shipgirls:
@@ -1014,6 +1019,14 @@ class SirenFleet:
             siren.battle_component.attack_timer = 0
             siren.battle_component.active = False
 
+    def animate(self, dt):
+        for siren in self.fleet:
+            if siren.battle_component.hp <= 0:
+                siren.sprite.set_animation(Live2D.SINK_ANIMATION)
+            elif siren.battle_component.attack_animation:
+                siren.sprite.set_animation(Live2D.ATTACK_ANIMATION)
+            siren.animate(dt)
+
     def update(self, dt, menu_manager, vfx_manager):
         if self.dummy_target is None:
             self.dummy_target = DummyTarget(menu_manager)
@@ -1028,14 +1041,10 @@ class SirenFleet:
                     siren.battle_component.target = menu_manager.player_fleet.front
             if siren.battle_component.hp <= 0:
                 siren.battle_component.active = False
-                siren.sprite.set_animation(Live2D.SINK_ANIMATION)
             elif siren.battle_component.attack_animation:
-                siren.sprite.set_animation(Live2D.ATTACK_ANIMATION)
                 if siren.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
                     siren.battle_component.attack(siren.rect, vfx_manager)
             siren.battle_component.update(dt, siren.rect, menu_manager.player_fleet, vfx_manager)
-
-            siren.animate(dt)
 
     def get_draw_indices(self):
         draw_indices = []
