@@ -621,15 +621,8 @@ class PortMenu:
         if any(button.active and button.contains_point(pos) for button in annular_buttons):
             return False
 
-        for i in range(len(self.menu_manager.quest_manager.quests)):
-            quest_rect = get_rect(
-                width=Box.WIDTH,
-                height=Box.HEIGHT,
-                left=Box.PADDING,
-                top=Box.PADDING + (Box.HEIGHT + Box.PADDING) * i
-            )
-            if quest_rect.collidepoint(pos):
-                return False
+        if self.menu_manager.quest_manager.notifications_collidepoint(pos):
+            return False
 
         return not any(shipgirl.rect.collidepoint(pos) for shipgirl in self.menu_manager.available_shipgirls)
 
@@ -2539,6 +2532,7 @@ class PortMenu:
                         self.selected_decoration_in_depot = None
 
     def update(self, dt, events):
+        self.menu_manager.quest_manager.update(dt)
         encounter_menu = self.menu_manager.encounter_menu
         if encounter_menu.transition_active:
             encounter_menu.update(dt, ())
