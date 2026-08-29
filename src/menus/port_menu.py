@@ -940,6 +940,8 @@ class PortMenu:
 
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.menu_manager.quest_manager.selected_quest is not None:
+                    continue
                 if event.button == 1 and self.can_start_no_overlay_camera_drag(event.pos):
                     self.camera_dragging = True
                     continue
@@ -947,7 +949,8 @@ class PortMenu:
             if event.type == pygame.MOUSEMOTION:
                 if self.update_camera_drag(event):
                     continue
-
+                if self.menu_manager.quest_manager.selected_quest is not None:
+                    continue
                 buttons = [
                     self.open_select_sortie_menu_button,
                     self.open_depot_overlay_button,
@@ -2875,10 +2878,11 @@ class PortMenu:
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             self.draw_dossier_overlay(surface, font_registry)
             self.draw_blueprint_overlay(surface, font_registry)
-    
-        self.menu_manager.quest_manager.draw(surface, font_registry)
+
         for choose_faction_button in self.choose_faction_buttons:
             choose_faction_button.draw(surface, font_registry)
+
+        self.menu_manager.quest_manager.draw(surface, font_registry)
 
         if self.menu_manager.encounter_menu.transition_active:
             self.menu_manager.encounter_menu._draw_transition_wave_wipe(surface)

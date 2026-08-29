@@ -367,43 +367,57 @@ class QuestManager:
                 )
 
         if self.selected_quest is not None:
-            self.selected_quest.draw(surface, font_registry)
+            self.selected_quest.draw(
+                surface,
+                font_registry,
+                self.notification_effect_time,
+            )
 
 class Quest:
     DIALOGUE_OVERLAY = get_rect(
-        width=7*30 + 2*Box.PADDING + 2*Box.PADDING,
-        height=9*4 + 4*3 + 2*Box.PADDING + 2*Box.PADDING + Box.HEIGHT/2,
+        width=512,
+        height=104,
         centerx=screen_x(0.5), centery=screen_y(0.5)
     )
     DIALOGUE_BOX = get_rect(
-        width=DIALOGUE_OVERLAY.width - 2*Box.PADDING,
-        height=DIALOGUE_OVERLAY.height - 2*Box.PADDING - Box.HEIGHT/2,
-        left=DIALOGUE_OVERLAY.left + Box.PADDING,
-        top=DIALOGUE_OVERLAY.top + Box.PADDING
+        width=408,
+        height=64,
+        left=DIALOGUE_OVERLAY.left + 92,
+        top=DIALOGUE_OVERLAY.top + 32
     )
 
     QUEST_LINE_OVERLAY = get_rect(
-        width=7*30 + 2*Box.PADDING + 2*Box.PADDING,
-        height=9*2 + 4*1 + 2*Box.PADDING + 4*Box.PADDING + Box.HEIGHT/2 + 2*Box.HEIGHT,
-        centerx=screen_x(0.5), centery=screen_y(0.5)
+        width=512,
+        height=104,
+        centerx=screen_x(0.5), top=142
     )
     QUEST_LINE_BOX = get_rect(
-        width=QUEST_LINE_OVERLAY.width - 2*Box.PADDING,
-        height=QUEST_LINE_OVERLAY.height - 4*Box.PADDING - Box.HEIGHT/2 - 2*Box.HEIGHT,
-        left=QUEST_LINE_OVERLAY.left + Box.PADDING,
-        top=QUEST_LINE_OVERLAY.top + Box.PADDING
+        width=408,
+        height=64,
+        left=QUEST_LINE_OVERLAY.left + 92,
+        top=QUEST_LINE_OVERLAY.top + 32
+    )
+    REWARD_PANEL = get_rect(
+        width=512,
+        height=112,
+        centerx=screen_x(0.5),
+        top=QUEST_LINE_OVERLAY.bottom + Box.PADDING,
     )
 
     NEXT_BUTTON = get_rect(
-        width=96, height=32,
+        width=144, height=32,
         centerx=DIALOGUE_OVERLAY.centerx,
         centery=DIALOGUE_OVERLAY.bottom
     )
     QUEST_BUTTON = get_rect(
-        width=96, height=32,
-        centerx=QUEST_LINE_OVERLAY.centerx,
-        centery=QUEST_LINE_OVERLAY.bottom
+        width=144, height=32,
+        centerx=REWARD_PANEL.centerx,
+        centery=REWARD_PANEL.bottom
     )
+
+    PANEL_CUT = 7
+    CONTENT_SEPARATOR_X = 80
+    REWARD_GAP = Box.PADDING
 
     def __init__(
         self,
@@ -436,15 +450,20 @@ class Quest:
         self.on_complete = on_complete
 
         self.rewards = rewards
-        num_reward_rects_in_row = (self.QUEST_LINE_OVERLAY.width - 2*Box.PADDING) // Box.WIDTH
-        reward_rect_padding = ((self.QUEST_LINE_OVERLAY.width - 2*Box.PADDING) - Box.WIDTH*num_reward_rects_in_row) / (num_reward_rects_in_row-1)
+        reward_count = len(self.rewards)
+        rewards_width = (
+            reward_count*Box.WIDTH
+            + max(0, reward_count-1)*self.REWARD_GAP
+        )
+        rewards_left = self.REWARD_PANEL.centerx - rewards_width/2
         self.reward_rects = [
             get_rect(
-                width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.QUEST_LINE_OVERLAY.left + Box.PADDING + (i%num_reward_rects_in_row)*(Box.WIDTH+reward_rect_padding),
-                top=self.QUEST_LINE_BOX.bottom + Box.PADDING + (i//num_reward_rects_in_row)*(Box.HEIGHT+Box.PADDING)
+                width=Box.WIDTH,
+                height=Box.HEIGHT,
+                left=rewards_left + i*(Box.WIDTH + self.REWARD_GAP),
+                top=self.REWARD_PANEL.top + 24,
             )
-            for i in range(2*num_reward_rects_in_row)
+            for i in range(reward_count)
         ]
 
     def go_next(self, menu_manager, mpos):
@@ -482,83 +501,339 @@ class Quest:
                 self.pre_quest_finished = True
         return False
 
-    def draw(self, surface, font_registry):
-        shipgirls = DataFiles.get_faction_shipgirls()
-
-        if self.rewards_collected:
-            overlay = self.DIALOGUE_OVERLAY
-            box = self.DIALOGUE_BOX
-            button = self.NEXT_BUTTON
-            button_text = "next"
-            if self.post_quest_dialogue_index == len(self.post_quest_dialogue) - 1:
-                button_text = "ok"
-            text = self.post_quest_dialogue[self.post_quest_dialogue_index]
-            show_reward = False
-        elif self.completed:
-            overlay = self.QUEST_LINE_OVERLAY
-            box = self.QUEST_LINE_BOX
-            button = self.QUEST_BUTTON
-            button_text = "get reward"
-            text = self.quest_line
-            show_reward = True
-        elif self.pre_quest_finished:
-            overlay = self.QUEST_LINE_OVERLAY
-            box = self.QUEST_LINE_BOX
-            button = self.QUEST_BUTTON
-            button_text = "ok"
-            text = self.quest_line
-            show_reward = True
-        else:
-            overlay = self.DIALOGUE_OVERLAY
-            box = self.DIALOGUE_BOX
-            button = self.NEXT_BUTTON
-            button_text = "next"
-            if self.pre_quest_dialogue_index == len(self.pre_quest_dialogue) - 1:
-                button_text = "ok"
-            text = self.pre_quest_dialogue[self.pre_quest_dialogue_index]
-            show_reward = False
-        
-        pygame.draw.rect(surface, Color.DIALOGUE_OVERLAY, overlay)
-        pygame.draw.rect(surface, Color.DIALOGUE_BOX, box)
-        middleleft = pygame.Vector2(box.left, box.centery)
-        polygon = [
-            middleleft + pygame.Vector2(0, Box.PADDING),
-            middleleft + pygame.Vector2(0, -Box.PADDING),
-            middleleft + pygame.Vector2(-Box.WIDTH/2, 0)
+    @classmethod
+    def _panel_polygon(cls, size):
+        width, height = size
+        return [
+            (0, 0),
+            (width-cls.PANEL_CUT, 0),
+            (width, cls.PANEL_CUT),
+            (width, height),
+            (cls.PANEL_CUT, height),
+            (0, height-cls.PANEL_CUT),
         ]
-        pygame.draw.polygon(surface, Color.DIALOGUE_BOX, polygon)
-        tb_sprite = DataFiles.sprites["user_interface"]["TB"]
-        rect = tb_sprite.get_rect()
-        rect.right = polygon[-1].x
-        rect.centery = polygon[-1].y
-        surface.blit(tb_sprite, rect)
 
-        text_width = box.width - 2*Box.PADDING
-        font_registry["big_pixel"].render(
+    @staticmethod
+    def _format_text(text):
+        shipgirls = DataFiles.get_faction_shipgirls()
+        return text.format(**{
+            f"{hull_type}_shipgirl": " ".join(shipgirl.split("_"))
+            for hull_type, shipgirl in shipgirls.items()
+        })
+
+    def _draw_panel(self, surface, rect, accent, effect_time, intensity=1):
+        pulse = (math.sin(effect_time*math.tau/2.4)+1)/2
+        panel = pygame.Surface(rect.size, pygame.SRCALPHA)
+        polygon = self._panel_polygon(rect.size)
+        pygame.draw.polygon(
+            panel,
+            (*Color.QUEST_NOTIFICATION_PANEL, 225),
+            polygon,
+        )
+        pygame.draw.polygon(
+            panel,
+            (*accent, round(145 + 85*pulse)),
+            polygon,
+            width=1,
+        )
+        surface.blit(panel, rect)
+        self._draw_panel_glints(
             surface,
-            text.format(**{
-                f"{hull_type}_shipgirl": " ".join(shipgirl.split("_"))
-                for hull_type, shipgirl in shipgirls.items()
-            }),
-            pygame.Vector2(box.topleft) + pygame.Vector2(Box.PADDING, Box.PADDING),
-            Color.WHITE,
-            1, 
-            box_width=text_width
+            rect,
+            accent,
+            effect_time,
+            max(2, round(3*intensity)),
+            intensity,
         )
 
-        pygame.draw.rect(surface, Color.DIALOGUE_BUTTON, button)
-        if button_text == "next":
-            next_sprite = DataFiles.sprites["user_interface"]["next"]
-            next_sprite_rect = next_sprite.get_rect()
-            next_sprite_rect.center = button.center
-            surface.blit(next_sprite, next_sprite_rect)
-        else:
-            font_registry["big_pixel"].render(surface, button_text, button.center, Color.WHITE, 1, style="center")
+    @staticmethod
+    def _draw_panel_glints(
+        surface,
+        rect,
+        color,
+        effect_time,
+        count,
+        intensity,
+    ):
+        cycle = 1.35
+        lifetime = 0.7
+        max_length = 4
+        previous_clip = surface.get_clip()
+        surface.set_clip(rect)
 
-        if show_reward:
-            for rect, (reward, amt) in zip(self.reward_rects, self.rewards.items()):
-                if reward.startswith("placeholder"):
-                    reward = "placeholder"
-                pygame.draw.rect(surface, Color.WHITE, rect, width=Box.OUTLINE_WIDTH)
-                surface.blit(DataFiles.get_entity_sprite(reward), rect)
-                font_registry["big_pixel"].render(surface, str(amt), rect.center, Color.WHITE, 1, style="center")
+        for glint_index in range(count):
+            glint_time = effect_time + glint_index*cycle/count
+            age = glint_time % cycle
+            if age >= lifetime:
+                continue
+
+            cycle_index = math.floor(glint_time/cycle)
+            progress = age/lifetime
+            strength = min(1, (1-progress)**1.5*intensity)
+            if glint_index % 2 == 0:
+                center = pygame.Vector2(
+                    rect.left + 12
+                    + (cycle_index*31 + glint_index*43) % (rect.width-24),
+                    rect.top + 3 + 3*progress,
+                )
+            else:
+                center = pygame.Vector2(
+                    rect.left + 3 + 3*progress,
+                    rect.top + 12
+                    + (cycle_index*23 + glint_index*37) % (rect.height-24),
+                )
+
+            length = 1 + round((max_length-1)*strength)
+            glint_color = tuple(round(channel*strength) for channel in color)
+            glint = pygame.Surface(
+                (2*max_length+1, 2*max_length+1),
+                pygame.SRCALPHA,
+            )
+            glint_center = pygame.Vector2(max_length, max_length)
+            pygame.draw.line(
+                glint,
+                (*glint_color, 255),
+                glint_center-pygame.Vector2(length, 0),
+                glint_center+pygame.Vector2(length, 0),
+            )
+            pygame.draw.line(
+                glint,
+                (*glint_color, 255),
+                glint_center-pygame.Vector2(0, length),
+                glint_center+pygame.Vector2(0, length),
+            )
+            surface.blit(
+                glint,
+                glint.get_rect(center=center),
+                special_flags=pygame.BLEND_RGBA_ADD,
+            )
+        surface.set_clip(previous_clip)
+
+    def _draw_content_panel(
+        self,
+        surface,
+        font_registry,
+        overlay,
+        text_box,
+        context_label,
+        text,
+        accent,
+        effect_time,
+        intensity=1,
+    ):
+        self._draw_panel(surface, overlay, accent, effect_time, intensity)
+
+        tb_sprite = DataFiles.sprites["user_interface"]["TB"]
+        tb_rect = tb_sprite.get_rect(
+            left=overlay.left + Box.PADDING,
+            centery=overlay.centery,
+        )
+        surface.blit(tb_sprite, tb_rect)
+
+        separator_x = overlay.left + self.CONTENT_SEPARATOR_X
+        pygame.draw.line(
+            surface,
+            accent,
+            (separator_x, overlay.top+8),
+            (separator_x, overlay.bottom-8),
+            width=3,
+        )
+        font_registry["big_pixel"].render(
+            surface,
+            context_label,
+            (text_box.left, overlay.top+12),
+            accent,
+            1,
+        )
+        font_registry["big_pixel"].render(
+            surface,
+            self._format_text(text),
+            text_box.topleft,
+            Color.QUEST_NOTIFICATION_TEXT,
+            1,
+            box_width=text_box.width,
+        )
+
+    def _draw_reward_panel(
+        self,
+        surface,
+        font_registry,
+        accent,
+        effect_time,
+        intensity,
+    ):
+        self._draw_panel(
+            surface,
+            self.REWARD_PANEL,
+            accent,
+            effect_time,
+            intensity,
+        )
+        font_registry["big_pixel"].render(
+            surface,
+            "reward allocation",
+            (self.REWARD_PANEL.left+14, self.REWARD_PANEL.top+8),
+            accent,
+            1,
+        )
+
+        for rect, (reward, amount) in zip(
+            self.reward_rects,
+            self.rewards.items(),
+        ):
+            sprite_key = (
+                "placeholder"
+                if reward.startswith("placeholder")
+                else reward
+            )
+            tile = pygame.Surface(rect.size, pygame.SRCALPHA)
+            tile.fill((*Color.QUEST_NOTIFICATION_HEADER, 225))
+            surface.blit(tile, rect)
+            reward_sprite = DataFiles.get_entity_sprite(sprite_key)
+            surface.blit(
+                reward_sprite,
+                reward_sprite.get_rect(center=rect.center),
+            )
+            pygame.draw.rect(surface, accent, rect, width=1)
+
+            quantity_rect = get_rect(
+                width=24,
+                height=14,
+                right=rect.right-2,
+                bottom=rect.bottom-2,
+            )
+            quantity_panel = pygame.Surface(quantity_rect.size, pygame.SRCALPHA)
+            quantity_panel.fill((*Color.QUEST_NOTIFICATION_PANEL, 235))
+            surface.blit(quantity_panel, quantity_rect)
+            pygame.draw.rect(surface, accent, quantity_rect, width=1)
+            font_registry["pixel"].render(
+                surface,
+                f"x{amount}",
+                quantity_rect.center,
+                Color.QUEST_NOTIFICATION_TEXT,
+                1,
+                style="center",
+            )
+
+    def _draw_action_button(
+        self,
+        surface,
+        font_registry,
+        rect,
+        label,
+        accent,
+    ):
+        hovered = rect.collidepoint(pygame.mouse.get_pos())
+        button = pygame.Surface(rect.size, pygame.SRCALPHA)
+        polygon = self._panel_polygon(rect.size)
+        pygame.draw.polygon(
+            button,
+            (*Color.QUEST_NOTIFICATION_PANEL, 240 if hovered else 215),
+            polygon,
+        )
+        pygame.draw.polygon(button, (*accent, 235), polygon, width=1)
+        surface.blit(button, rect)
+
+        if label == "next":
+            next_sprite = DataFiles.sprites["user_interface"]["next"]
+            surface.blit(next_sprite, next_sprite.get_rect(center=rect.center))
+        else:
+            font_registry["big_pixel"].render(
+                surface,
+                label,
+                rect.center,
+                Color.QUEST_NOTIFICATION_TEXT,
+                1,
+                style="center",
+            )
+
+    def draw(self, surface, font_registry, effect_time=0):
+        if self.rewards_collected:
+            final_page = (
+                self.post_quest_dialogue_index
+                == len(self.post_quest_dialogue)-1
+            )
+            self._draw_content_panel(
+                surface,
+                font_registry,
+                self.DIALOGUE_OVERLAY,
+                self.DIALOGUE_BOX,
+                "tb // mission debrief",
+                self.post_quest_dialogue[self.post_quest_dialogue_index],
+                Color.QUEST_NOTIFICATION_NEW,
+                effect_time,
+            )
+            self._draw_action_button(
+                surface,
+                font_registry,
+                self.NEXT_BUTTON,
+                "close" if final_page else "next",
+                Color.QUEST_NOTIFICATION_NEW,
+            )
+            return
+
+        if not self.pre_quest_finished:
+            final_page = (
+                self.pre_quest_dialogue_index
+                == len(self.pre_quest_dialogue)-1
+            )
+            self._draw_content_panel(
+                surface,
+                font_registry,
+                self.DIALOGUE_OVERLAY,
+                self.DIALOGUE_BOX,
+                "tb // mission briefing",
+                self.pre_quest_dialogue[self.pre_quest_dialogue_index],
+                Color.QUEST_NOTIFICATION_NEW,
+                effect_time,
+            )
+            self._draw_action_button(
+                surface,
+                font_registry,
+                self.NEXT_BUTTON,
+                "view briefing" if final_page else "next",
+                Color.QUEST_NOTIFICATION_NEW,
+            )
+            return
+
+        if self.completed:
+            context_label = "task complete // final report"
+            accent = Color.QUEST_NOTIFICATION_COMPLETE
+            button_label = "collect rewards"
+            intensity = 1.3
+        elif self.started:
+            context_label = "task in progress // objective"
+            accent = Color.QUEST_NOTIFICATION_ACTIVE
+            button_label = "close"
+            intensity = 0.65
+        else:
+            context_label = "new briefing // objective"
+            accent = Color.QUEST_NOTIFICATION_NEW
+            button_label = "accept task"
+            intensity = 1
+
+        self._draw_content_panel(
+            surface,
+            font_registry,
+            self.QUEST_LINE_OVERLAY,
+            self.QUEST_LINE_BOX,
+            context_label,
+            self.quest_line,
+            accent,
+            effect_time,
+            intensity,
+        )
+        self._draw_reward_panel(
+            surface,
+            font_registry,
+            accent,
+            effect_time,
+            intensity,
+        )
+        self._draw_action_button(
+            surface,
+            font_registry,
+            self.QUEST_BUTTON,
+            button_label,
+            accent,
+        )
