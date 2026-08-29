@@ -6,6 +6,13 @@ from src.constants import DataFiles, Box, Color, Equipment, Decorations
 from src.menus.quests import Quest
 from src.menus.sortie_selection_menu import SortieNode
 
+def assign_quest(menu_manager, quest):
+    if quest.quest_id in DataFiles.save_file["quests"]:
+        return
+
+    menu_manager.quest_manager.quests[quest.quest_id] = quest
+    DataFiles.save_file["quests"][quest.quest_id] = menu_manager.quest_manager.STATUS_NEW
+
 def draw_tb(surface, font_registry, text, point_pos, point_down, point_right):
     point_pos = pygame.Vector2(point_pos)
 
@@ -109,10 +116,7 @@ def choose_faction_on_complete(menu_manager, save_file_load=False):
                 DataFiles.save_file["inventory"]["wisdom_cube"] -= 1
                 specialized_wisdom_cubes[shipgirl] = 0
 
-    quest_name = construct_shipgirls_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = construct_shipgirls_quest
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
+    assign_quest(menu_manager, construct_shipgirls_quest)
     
     for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
         choose_faction_button.active = False
@@ -143,7 +147,9 @@ construct_shipgirls_pre_quest_dialogue = [
     "The available candidates are {DD_shipgirl} and {BB_shipgirl}.",
     "Navigate to the shipyard and construct both shipgirls.",
 ]
-construct_shipgirls_quest_line = "Construct {DD_shipgirl} and {BB_shipgirl} in the shipyard."
+construct_shipgirls_quest_line = (
+    "Construct {DD_shipgirl} and {BB_shipgirl} in the shipyard."
+)
 construct_shipgirls_post_quest_dialogue = [
     "Construction complete.",
     "{DD_shipgirl} and {BB_shipgirl} are now registered to your fleet.",
@@ -212,10 +218,7 @@ def construct_shipgirls_on_start(menu_manager):
     menu_manager.port_menu.open_shipyard_overlay_button.active = True
 
 def construct_shipgirls_on_complete(menu_manager, save_file_load=False):
-    quest_name = first_sortie_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = first_sortie_quest
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
+    assign_quest(menu_manager, first_sortie_quest)
 
 decoration_voucher_reward = {
     "decoration_coin": 1
@@ -329,10 +332,7 @@ def first_sortie_on_start(menu_manager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
 
 def first_sortie_on_complete(menu_manager, save_file_load=False):
-    quest_name = inventory_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = inventory_quest
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
+    assign_quest(menu_manager, inventory_quest)
 
 first_sortie_quest = Quest(
     "first_sortie",
@@ -387,10 +387,7 @@ def inventory_on_start(menu_manager):
     menu_manager.port_menu.open_depot_overlay_button.active = True
 
 def inventory_on_complete(menu_manager, save_file_load=False):
-    quest_name = intel_center_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = intel_center_quest
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
+    assign_quest(menu_manager, intel_center_quest)
 
 inventory_quest = Quest(
     "inventory",
@@ -448,10 +445,7 @@ def intel_center_on_start(menu_manager):
     menu_manager.port_menu.open_intel_center_overlay_button.active = True
 
 def intel_center_on_complete(menu_manager, save_file_load=False):
-    quest_name = research_shipgirl_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = research_shipgirl_quest
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
+    assign_quest(menu_manager, research_shipgirl_quest)
 
 intel_center_quest = Quest(
     "intel_center",
@@ -578,10 +572,7 @@ def craft_weapon_on_start(menu_manager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
 
 def craft_weapon_on_complete(menu_manager, save_file_load=False):
-    quest_name = equip_weapon_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = equip_weapon_quest
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
+    assign_quest(menu_manager, equip_weapon_quest)
 
 craft_weapon_quest = Quest(
     "craft_weapon",
@@ -692,10 +683,7 @@ def buy_decoration_on_start(menu_manager):
     menu_manager.port_menu.open_decoration_store_overlay_button.active = True
 
 def buy_decoration_on_complete(menu_manager, save_file_load=False):
-    quest_name = decorate_port_quest.quest_id
-    menu_manager.quest_manager.quests[quest_name] = decorate_port_quest
-    if quest_name not in DataFiles.save_file["quests"]:
-        DataFiles.save_file["quests"][quest_name] = "new"
+    assign_quest(menu_manager, decorate_port_quest)
 
 buy_decoration_quest = Quest(
     "buy_decoration",
@@ -949,7 +937,8 @@ def decorate_port_on_start(menu_manager):
     port_menu.shipgirl_interacted_with_bed = False
 
 def decorate_port_on_complete(menu_manager, save_file_load=False):
-    pass
+    assign_quest(menu_manager, construct_additional_shipgirls_quest)
+    assign_quest(menu_manager, construct_additional_weapons_quest)
 
 decorate_port_quest = Quest(
     "decorate_port",
@@ -960,6 +949,175 @@ decorate_port_quest = Quest(
     decorate_port_tutorial_draw,
     decorate_port_on_start,
     decorate_port_on_complete,
+    decoration_voucher_reward
+)
+
+def empty_tutorial_draw(menu_manager, surface, font_registry):
+    pass
+
+def _owns_equipment(equipment):
+    if DataFiles.save_file["equipment"].get(equipment, 0) > 0:
+        return True
+
+    return any(
+        equipment in shipgirl_data["equipment"]
+        for shipgirl_data in DataFiles.save_file["shipgirls"].values()
+    )
+
+construct_additional_shipgirls_pre_quest_dialogue = [
+    "Operations in the next maritime region will require a more versatile fleet.",
+    "Upcoming sorties will provide the materials needed to initiate three additional research projects.",
+    "Each project will also require combat data before its unique construction item can be synthesized.",
+    "As resources become available, research and construct {CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}.",
+]
+construct_additional_shipgirls_quest_line = (
+    "Research and construct {CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}."
+)
+construct_additional_shipgirls_post_quest_dialogue = [
+    "Fleet expansion complete.",
+    "{CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl} are now registered to your fleet.",
+    "Your available hull types now support a broader range of fleet compositions.",
+]
+
+def construct_additional_shipgirls_completion_criteria(menu_manager):
+    faction_shipgirls = DataFiles.get_faction_shipgirls()
+    return all(
+        faction_shipgirls[hull_type] in DataFiles.save_file["shipgirls"]
+        for hull_type in ["CL", "SS", "CV"]
+    )
+
+def construct_additional_shipgirls_on_start(menu_manager):
+    menu_manager.port_menu.open_shipyard_overlay_button.active = True
+
+def construct_additional_shipgirls_on_complete(menu_manager, save_file_load=False):
+    pass
+
+construct_additional_shipgirls_quest = Quest(
+    "construct_additional_shipgirls",
+    construct_additional_shipgirls_pre_quest_dialogue,
+    construct_additional_shipgirls_quest_line,
+    construct_additional_shipgirls_post_quest_dialogue,
+    construct_additional_shipgirls_completion_criteria,
+    empty_tutorial_draw,
+    construct_additional_shipgirls_on_start,
+    construct_additional_shipgirls_on_complete,
+    decoration_voucher_reward
+)
+
+construct_additional_weapons_pre_quest_dialogue = [
+    "Sorties in the next maritime region will provide blueprints and materials for additional weapon classes.",
+    "The gear lab can produce new weapons for {BB_shipgirl}, {CA_shipgirl}, {CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}.",
+    "Construct one weapon for each of these five hull types as the required materials are recovered.",
+]
+construct_additional_weapons_quest_line = (
+    "Construct weapons for {BB_shipgirl}, {CA_shipgirl}, {CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}."
+)
+construct_additional_weapons_post_quest_dialogue = [
+    "Weapon production objectives complete.",
+    "The gear lab has produced a weapon for every currently supported hull type.",
+    "Assign each weapon according to the hull type listed in its equipment record.",
+]
+
+def construct_additional_weapons_completion_criteria(menu_manager):
+    required_hull_types = {"BB", "CA", "CL", "SS", "CV"}
+    required_weapons = [
+        equipment for equipment, equipment_data in DataFiles.equipment_data.items()
+        if equipment_data["type"] == "weapon"
+        and equipment_data["equippable_by"] in required_hull_types
+    ]
+    return all(_owns_equipment(equipment) for equipment in required_weapons)
+
+def construct_additional_weapons_on_start(menu_manager):
+    menu_manager.port_menu.open_gear_lab_overlay_button.active = True
+
+def construct_additional_weapons_on_complete(menu_manager, save_file_load=False):
+    pass
+
+construct_additional_weapons_quest = Quest(
+    "construct_additional_weapons",
+    construct_additional_weapons_pre_quest_dialogue,
+    construct_additional_weapons_quest_line,
+    construct_additional_weapons_post_quest_dialogue,
+    construct_additional_weapons_completion_criteria,
+    empty_tutorial_draw,
+    construct_additional_weapons_on_start,
+    construct_additional_weapons_on_complete,
+    decoration_voucher_reward
+)
+
+construct_auxiliary_equipment_pre_quest_dialogue = [
+    "Operations in the next maritime region are expected to place greater demands on every fleet role.",
+    "Auxiliary equipment can improve attributes such as durability, evasion, firepower, and reload speed.",
+    "Materials recovered throughout the operation will be sufficient to produce every auxiliary equipment design.",
+    "Construct one of each auxiliary equipment item in the gear lab.",
+]
+construct_auxiliary_equipment_quest_line = (
+    "Construct one of every auxiliary equipment item in the gear lab."
+)
+construct_auxiliary_equipment_post_quest_dialogue = [
+    "Auxiliary equipment production complete.",
+    "All current auxiliary designs are now available for fleet loadouts.",
+    "Distribute them according to the attributes required by each shipgirl.",
+]
+
+def construct_auxiliary_equipment_completion_criteria(menu_manager):
+    auxiliary_equipment = [
+        equipment for equipment, equipment_data in DataFiles.equipment_data.items()
+        if equipment_data["type"] == "aux"
+    ]
+    return all(_owns_equipment(equipment) for equipment in auxiliary_equipment)
+
+def construct_auxiliary_equipment_on_start(menu_manager):
+    menu_manager.port_menu.open_gear_lab_overlay_button.active = True
+
+def construct_auxiliary_equipment_on_complete(menu_manager, save_file_load=False):
+    pass
+
+construct_auxiliary_equipment_quest = Quest(
+    "construct_auxiliary_equipment",
+    construct_auxiliary_equipment_pre_quest_dialogue,
+    construct_auxiliary_equipment_quest_line,
+    construct_auxiliary_equipment_post_quest_dialogue,
+    construct_auxiliary_equipment_completion_criteria,
+    empty_tutorial_draw,
+    construct_auxiliary_equipment_on_start,
+    construct_auxiliary_equipment_on_complete,
+    decoration_voucher_reward
+)
+
+complete_final_sortie_pre_quest_dialogue = [
+    "The final accessible sector has been unlocked.",
+    "Siren resistance in this area exceeds all previously recorded encounters.",
+    "Review fleet composition and equipment before deployment.",
+    "Complete the final sortie and secure the remaining operational area.",
+]
+complete_final_sortie_quest_line = "Complete the final available sortie."
+complete_final_sortie_post_quest_dialogue = [
+    "Final sortie complete.",
+    "All currently accessible ocean sectors have been secured.",
+    "Continue developing the fleet in preparation for future operations.",
+]
+
+def complete_final_sortie_completion_criteria(menu_manager):
+    # The last sortie data entry is an inaccessible development dummy. The
+    # accessible final sortie is complete when progress reaches its index.
+    return DataFiles.save_file["sortie_progress"] >= len(DataFiles.sortie_data) - 1
+
+def complete_final_sortie_on_start(menu_manager):
+    menu_manager.port_menu.open_select_sortie_menu_button.active = True
+
+def complete_final_sortie_on_complete(menu_manager, save_file_load=False):
+    pass
+
+complete_final_sortie_quest = Quest(
+    "complete_final_sortie",
+    complete_final_sortie_pre_quest_dialogue,
+    complete_final_sortie_quest_line,
+    complete_final_sortie_post_quest_dialogue,
+    complete_final_sortie_completion_criteria,
+    empty_tutorial_draw,
+    complete_final_sortie_on_start,
+    complete_final_sortie_on_complete,
     decoration_voucher_reward
 )
 
@@ -975,4 +1133,8 @@ quests = [
     equip_weapon_quest,
     buy_decoration_quest,
     decorate_port_quest,
+    construct_additional_shipgirls_quest,
+    construct_additional_weapons_quest,
+    construct_auxiliary_equipment_quest,
+    complete_final_sortie_quest,
 ]

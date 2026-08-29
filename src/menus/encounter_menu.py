@@ -10,10 +10,13 @@ from src.shipgirls import Shipgirl
 from src.vfx import VFXManager
 from src.menus.fleet_selection_menu import FleetNameRibbon
 from src.menus.quests_data import (
+    assign_quest,
     first_sortie_quest,
     construct_shipgirl_quest,
     craft_weapon_quest,
-    buy_decoration_quest
+    buy_decoration_quest,
+    construct_auxiliary_equipment_quest,
+    complete_final_sortie_quest,
 )
 
 
@@ -600,11 +603,13 @@ class EncounterMenu:
                 if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
                     DataFiles.save_file["sortie_progress"] = new_sortie_progress
                     if new_sortie_progress == 3:
-                        self.menu_manager.quest_manager.quests[craft_weapon_quest.quest_id] = craft_weapon_quest
-                        DataFiles.save_file["quests"][craft_weapon_quest.quest_id] = "new"
+                        assign_quest(self.menu_manager, craft_weapon_quest)
                     if new_sortie_progress == 4:
-                        self.menu_manager.quest_manager.quests[buy_decoration_quest.quest_id] = buy_decoration_quest
-                        DataFiles.save_file["quests"][buy_decoration_quest.quest_id] = "new"
+                        assign_quest(self.menu_manager, buy_decoration_quest)
+                    if new_sortie_progress == 11:
+                        assign_quest(self.menu_manager, construct_auxiliary_equipment_quest)
+                    if new_sortie_progress == len(DataFiles.sortie_data) - 2:
+                        assign_quest(self.menu_manager, complete_final_sortie_quest)
 
                 new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
                 if DataFiles.save_file["chapter_progress"] < new_chapter_progress:
@@ -1278,8 +1283,7 @@ class EncounterMenu:
                 exp_req = Stats.exp_to_level(avg_shipgirl_level)
                 if specialized_wisdom_cubes[research_target] >= exp_req:
                     if research_target == DataFiles.get_faction_shipgirls()["CA"]:
-                        self.menu_manager.quest_manager.quests[construct_shipgirl_quest.quest_id] = construct_shipgirl_quest
-                        DataFiles.save_file["quests"][construct_shipgirl_quest.quest_id] = "new"
+                        assign_quest(self.menu_manager, construct_shipgirl_quest)
 
                     unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) == 0:

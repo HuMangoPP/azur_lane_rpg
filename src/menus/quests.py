@@ -17,8 +17,8 @@ class QuestManager:
     NOTIFICATION_PANEL_HOVER_ALPHA = 230
 
     STATUS_NEW = "new"
-    STATUS_ACTIVE = "active"
-    STATUS_COMPLETE = "complete"
+    STATUS_ACTIVE = "in_progress"
+    STATUS_COMPLETE = "completed"
 
     STATUS_STYLES = {
         STATUS_NEW: (
@@ -473,7 +473,7 @@ class Quest:
                 self.post_quest_dialogue_index += 1
             if self.post_quest_dialogue_index == len(self.post_quest_dialogue):
                 self.on_complete(menu_manager)
-                DataFiles.save_file["quests"][self.quest_id] = "completed"
+                DataFiles.save_file["quests"][self.quest_id] = self.menu_manager.STATUS_COMPLETED
                 menu_manager.quest_manager.quests.pop(self.quest_id)
                 return True
             return False
@@ -490,7 +490,7 @@ class Quest:
                 if not self.started:
                     self.started = True
                     self.on_start(menu_manager)
-                    DataFiles.save_file["quests"][self.quest_id] = "in_progress"
+                    DataFiles.save_file["quests"][self.quest_id] = menu_manager.STATUS_ACTIVE
                 return True
             return False
         else:

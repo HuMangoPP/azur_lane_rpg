@@ -961,9 +961,9 @@ class PortMenu:
                     close_dialogue = selected_quest.go_next(self.menu_manager, event.pos)
                     if close_dialogue:
                         if selected_quest.completed:
-                            DataFiles.save_file["quests"][selected_quest.quest_id] = "completed"
+                            DataFiles.save_file["quests"][selected_quest.quest_id] = self.menu_manager.STATUS_COMPLETE
                         elif selected_quest.started:
-                            DataFiles.save_file["quests"][selected_quest.quest_id] = "in_progress"
+                            DataFiles.save_file["quests"][selected_quest.quest_id] = self.menu_manager.STATUS_ACTIVE
                         self.menu_manager.quest_manager.selected_quest = None
                     continue
                 

@@ -38,9 +38,9 @@ class MenuManager:
                 continue
 
             quest_progress = DataFiles.save_file["quests"][quest_id]
-            if quest_progress == "new":
+            if quest_progress == self.quest_manager.STATUS_NEW:
                 self.quest_manager.quests[quest_id] = quest
-            elif quest_progress == "in_progress":
+            elif quest_progress == self.quest_manager.STATUS_ACTIVE:
                 # The quest being in progress means its briefing was already
                 # accepted, even though individual dialogue pages are not
                 # persisted. Resume at the objective page so a later
@@ -50,7 +50,7 @@ class MenuManager:
                 quest.started = True
                 quest.on_start(self)
                 self.quest_manager.quests[quest_id] = quest
-            elif quest_progress == "completed":
+            elif quest_progress == self.quest_manager.STATUS_COMPLETE:
                 quest.started = True
                 quest.on_start(self)
                 quest.completed = True
