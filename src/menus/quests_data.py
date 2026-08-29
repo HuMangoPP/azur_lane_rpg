@@ -63,15 +63,16 @@ def draw_tb(surface, font_registry, text, point_pos, point_down, point_right):
         )
 
 choose_faction_pre_quest_dialogue = [
-    "Hello, Commander. My name is TB. I am your virtual assistant.",
-    "Before we begin, you will need to choose a faction.",
-    "Your chosen faction will determine which shipgirls can join your fleet.",
-    "Take your time and choose the faction you like best."
+    "Greetings, Commander.",
+    "I am TB, your virtual assistant and navigator.",
+    "To complete port registration, you must select a faction to support.",
+    "This choice determines which faction's shipgirls can initially join your fleet.",
+    "Review the available factions before making your selection.",
 ]
 choose_faction_quest_line = "Choose a faction."
 choose_faction_post_quest_dialogue = [
-    "Faction registration successful. An excellent choice.",
-    "Welcome to the Azur Lane port, Commander.",
+    "Faction registration successful.",
+    "Your port authorization is now active, Commander.",
 ]
 
 def choose_faction_completion_criteria(menu_manager):
@@ -137,15 +138,16 @@ choose_faction_quest = Quest(
 )
 
 construct_shipgirls_pre_quest_dialogue = [
-    "Your port is currently empty. You should starting building your fleet.",
-    "High command has prepared enough materials for you to construct {DD_shipgirl} and {BB_shipgirl}.",
-    "Navigate to the shipyard and construct both shipgirls."
+    "Currently, there are no shipgirls registered to your fleet.",
+    "High Command has supplied the blueprints, Wisdom Cubes, and materials required for two constructions.",
+    "The available candidates are {DD_shipgirl} and {BB_shipgirl}.",
+    "Navigate to the shipyard and construct both shipgirls.",
 ]
 construct_shipgirls_quest_line = "Construct {DD_shipgirl} and {BB_shipgirl} in the shipyard."
 construct_shipgirls_post_quest_dialogue = [
     "Construction complete.",
-    "{DD_shipgirl} and {BB_shipgirl} have joined your port.",
-    "Your fleet is still small, but this is only the beginning."
+    "{DD_shipgirl} and {BB_shipgirl} are now registered to your fleet.",
+    "The fleet has the minimum personnel required for deployment.",
 ]
 
 def construct_shipgirls_completion_criteria(menu_manager):
@@ -232,16 +234,16 @@ construct_shipgirls_quest = Quest(
 )
 
 first_sortie_pre_quest_dialogue = [
-    "Your fleet is ready for deployment. It's time to go on your first sortie.",
-    "Sorties are combat operations where your fleet engages enemy sirens to secures zones and extract resources.",
-    "Let us set sail.",
+    "Your fleet is ready for its first deployment.",
+    "Sorties are combat operations used to engage Siren forces, secure ocean sectors, and recover resources.",
+    "Select sector 1 and issue the sortie order.",
 ]
-first_sortie_quest_line = "Sortie into zone 1."
+first_sortie_quest_line = "Complete a sortie in sector 1."
 first_sortie_post_quest_dialogue = [
     "Sortie complete.",
-    "Your fleet performed well in combat thanks to your leadership.",
-    "This is the first step towards protecting our seas from the siren invaders.",
-    "More missions are becoming available. Continue preparing your fleet for future battles."
+    "Sector 1 is secure, and the recovered resources have been transferred to the port.",
+    "Further sorties will expand our operational range and provide materials for fleet development.",
+    "Additional port assignments are now available.",
 ]
 
 def first_sortie_completion_criteria(menu_manager):
@@ -345,15 +347,15 @@ first_sortie_quest = Quest(
 )
 
 inventory_pre_quest_dialogue = [
-    "The resource you extracted from the sortie have been delivered to your depot.",
-    "The depot stores all items you've collected from battles and missions.",
-    "Let's go to the depot to review your inventory."
+    "The resources you extracted from the sortie have been delivered to your depot.",
+    "The depot stores items collected from battles, missions, and other port activities.",
+    "Open the depot to review the available inventory.",
 ]
 inventory_quest_line = "Visit the depot."
 inventory_post_quest_dialogue = [
     "Depot access confirmed.",
-    "Keeping track of your supplies is important for managing the port.",
-    "As your fleet grows, the depot will continue to fill with new materials."
+    "Monitor stored supplies when planning construction, research, and equipment upgrades.",
+    "Newly acquired materials will be recorded here automatically.",
 ]
 
 def inventory_completion_criteria(menu_manager):
@@ -403,17 +405,17 @@ inventory_quest = Quest(
 )
 
 intel_center_pre_quest_dialogue = [
-    "All combat data from your sorties is recorded. You can review this information in the intel center.",
-    "The intel center stores data on sirens your fleet has encountered.",
+    "Combat data from every sortie is recorded in the intel center.",
+    "Its records contain information on Siren units your fleet has encountered.",
     "Different enemies have different strengths and weaknesses.",
-    "Studying enemy data will help you strategize for future battles.",
-    "Go to the intel center and review the available records."
+    "Reviewing these records can help you prepare suitable fleets and equipment for future battles.",
+    "Open the intel center and inspect the available records.",
 ]
 intel_center_quest_line = "Visit the intel center."
 intel_center_post_quest_dialogue = [
     "Intel center access confirmed.",
-    "Enemy data will continue to update as your fleet encounters new threats.",
-    "Use this information carefully, Commander. Good preparation can decide the outcome of battle."
+    "Enemy records will update as your fleet encounters new threats.",
+    "Consult this information before entering unfamiliar sectors.",
 ]
 
 def intel_center_completion_criteria(menu_manager):
@@ -464,19 +466,18 @@ intel_center_quest = Quest(
 )
 
 research_shipgirl_pre_quest_dialogue = [
-    "Growing your fleet will be important as you sortie into more dangerous territory",
+    "A larger fleet will be required as operations extend into more dangerous territory.",
     "Each shipgirl has a unique item that is required for construction.",
-    "You can obtain these items by starting a research project and collecting combat exp during sorties.",
-    "Once enough exp has been collected, the shipgirl's unique item can be synthesized.",
-    "Provided that you have the required additional materials, the shipgirl can be constructed in the shipyard.",
-    "Let us begin researching {CA_shipgirl}.",
-    "Go to the shipyard and start the research project."
+    "To obtain one, begin a research project and collect combat data during sorties.",
+    "Once sufficient data has been collected, the project will synthesize the unique item.",
+    "The shipgirl can then be constructed if the remaining material requirements are met.",
+    "Open the shipyard and begin research on {CA_shipgirl}.",
 ]
 research_shipgirl_quest_line = "Begin researching {CA_shipgirl} in the shipyard."
 research_shipgirl_post_quest_dialogue = [
     "Research project started.",
-    "Your fleet can now collect combat exp for {CA_shipgirl} during sorties.",
-    "Let us set sail and explore the new unlocked zone."
+    "Future sorties will now contribute combat data to {CA_shipgirl}'s research project.",
+    "Continue into the newly unlocked sector to gather the required data.",
 ]
 
 def research_shipgirl_completion_criteria(menu_manager):
@@ -504,14 +505,14 @@ research_shipgirl_quest = Quest(
 construct_shipgirl_pre_quest_dialogue = [
     "The research project is complete, Commander.",
     "{CA_shipgirl}'s unique item has been successfully synthesized.",
-    "We are ready for another member to join your port.",
-    "Go to the shipyard and construct {CA_shipgirl}."
+    "All requirements for construction are now available.",
+    "Return to the shipyard and construct {CA_shipgirl}.",
 ]
 construct_shipgirl_quest_line = "Construct {CA_shipgirl} in the shipyard."
 construct_shipgirl_post_quest_dialogue = [
     "Construction complete.",
-    "{CA_shipgirl} has joined your fleet, Commander.",
-    "Continue expanding your fleet and preparing for stronger enemies ahead."
+    "{CA_shipgirl} is now registered to your fleet.",
+    "Additional fleet compositions are now available for future operations.",
 ]
 
 def construct_shipgirl_completion_criteria(menu_manager):
@@ -536,16 +537,16 @@ construct_shipgirl_quest = Quest(
 )
 
 craft_weapon_pre_quest_dialogue = [
-    "Zone 3 has been cleared.",
-    "We managed to extract materials for crafting new equipment.",
-    "The gear lab has been unlocked. Let us craft a new gun for {DD_shipgirl}.",
-    "Open the gear lab and begin crafting."
+    "Sector 3 has been secured.",
+    "The recovered materials are sufficient to craft new equipment.",
+    "The gear lab is now available for equipment production.",
+    "Open the gear lab and craft a twin 120mm gun for {DD_shipgirl}.",
 ]
 craft_weapon_quest_line = "Craft the twin 120mm gun in the gear lab."
 craft_weapon_post_quest_dialogue = [
     "Crafting complete.",
-    "The weapon is ready to be equipped.",
-    "Crafting new equipment is an important part of strengthening your fleet.",
+    "The twin 120mm gun has been added to the equipment inventory.",
+    "Crafted equipment must be assigned to a shipgirl before it can be used in combat.",
 ]
 
 def craft_weapon_completion_criteria(menu_manager):
@@ -595,14 +596,14 @@ craft_weapon_quest = Quest(
 )
 
 equip_weapon_pre_quest_dialogue = [
-    "New equipment should be assigned to a shipgirl to be used in battle.",
-    "Let us visit {DD_shipgirl} in the dock and equip her with the new weapon.",
+    "The new weapon must be assigned to a shipgirl before it can be used in battle.",
+    "Open {DD_shipgirl}'s equipment screen from the dock and equip the twin 120mm gun.",
 ]
 equip_weapon_quest_line = "Equip {DD_shipgirl} with the twin 120mm gun."
 equip_weapon_post_quest_dialogue = [
     "Weapon equipped successfully.",
-    "{DD_shipgirl} has become stronger.",
-    "Your fleet is now stronger and ready for the next operation."
+    "{DD_shipgirl}'s combat loadout has been updated.",
+    "Review each shipgirl's equipment as stronger options become available.",
 ]
 
 def equip_weapon_completion_criteria(menu_manager):
@@ -650,17 +651,16 @@ equip_weapon_quest = Quest(
 )
 
 buy_decoration_pre_quest_dialogue = [
-    "By completing missions, you can earn decoration coins.",
-    "These coin can be used in the store to purchase new decorations.",
-    "Decorations let you customize the port menu in the style you like best.",
-    "Open the decoration store and purchase one decoration."
+    "Completed assignments may award decoration coins.",
+    "These coins can be exchanged for port furnishings in the decoration store.",
+    "Purchased decorations are stored in the decoration depot until placed.",
+    "Open the decoration store and purchase a bed.",
 ]
-buy_decoration_quest_line = "Purchase a decoration from the decoration store."
+buy_decoration_quest_line = "Purchase a bed from the decoration store."
 buy_decoration_post_quest_dialogue = [
     "Purchase complete.",
-    "The new decoration has been added to your collection.",
-    "You can use decorations to make the port feel more personal.",
-    "Try placing it in the port when you are ready."
+    "The bed has been added to your decoration depot.",
+    "It can now be placed by entering the port's edit mode.",
 ]
 
 def buy_decoration_completion_criteria(menu_manager):
@@ -710,18 +710,17 @@ buy_decoration_quest = Quest(
 )
 
 decorate_port_pre_quest_dialogue = [
-    "Your new decoration is ready to be placed, Commander.",
-    "You can customize the port by placing decorations wherever you like.",
-    "If you don't like how something looks, you can remove the decoration or flip it horizontally.",
-    "Some decorations can also be used by your shipgirls.",
-    "Try arranging the new bed, then let one of your shipgirls rest on it."
+    "The new bed is ready to be placed.",
+    "In edit mode, decorations can be positioned, flipped horizontally, or returned to the depot.",
+    "Some decorations also support interactions with shipgirls.",
+    "Practice each editing function with the bed, then assign a shipgirl to rest on it.",
 ]
-decorate_port_quest_line = "Place a bed in the port and have a shipgirl sleep on it."
+decorate_port_quest_line = "Arrange a bed in the port and assign a shipgirl to rest on it."
 decorate_port_post_quest_dialogue = [
     "Decoration setup complete.",
-    "The port is starting to feel more lively, Commander.",
-    "You can return to the edit menu at any time to change the layout.",
-    "Collect more decorations to further customize the port."
+    "The bed is placed and its interaction point is functioning correctly.",
+    "You can return to edit mode at any time to revise the port layout.",
+    "Additional furnishings are available from the decoration store.",
 ]
 
 def decorate_port_completion_criteria(menu_manager):
