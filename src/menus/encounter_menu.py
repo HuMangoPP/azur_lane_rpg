@@ -9,7 +9,7 @@ import random
 import pygame
 
 from engine.util import get_rect, get_vec
-from engine.button import Button
+from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
 from src.menus.base_menu import Menu
@@ -513,7 +513,7 @@ class EncounterMenu(Menu):
         self.encounter_started = False
         self.vfx_manager = VFXManager()
 
-        self._transition_state = self.TRANSITION_IDLE
+        self.transition_state = self.TRANSITION_IDLE
         self._transition_timer = 0
         self._transition_shipgirls = []
         self._transition_slot_positions = {}
@@ -527,7 +527,7 @@ class EncounterMenu(Menu):
 
         button_sprite = DataFiles.sprites["user_interface"]["next"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,centery=screen_y(0.5))
-        self.next_encounter_button = Button(
+        self.next_encounter_button = RectangularButton(
             button_rect,
             next_encounter,
             active=False,
@@ -555,7 +555,7 @@ class EncounterMenu(Menu):
 
         button_sprite = DataFiles.sprites["user_interface"]["closed_reward_cache"]
         button_rect = button_sprite.get_rect()
-        self.open_reward_cache_button = Button(
+        self.open_reward_cache_button = RectangularButton(
             button_rect,
             open_reward_cache,
             active=False,
@@ -638,14 +638,14 @@ class EncounterMenu(Menu):
             right=self.dossier_page.right + Box.WIDTH + Box.PADDING,
             centery=self.dossier_page.top,
         )
-        self.return_to_port_button = Button(
+        self.return_to_port_button = RectangularButton(
             button_rect,
             return_to_port,
             active=False,
         )
 
         self.report_page = 0
-        self.report_page_prev_button = Button(
+        self.report_page_prev_button = RectangularButton(
             get_rect(
                 width=48,
                 height=48,
@@ -655,7 +655,7 @@ class EncounterMenu(Menu):
             lambda: self.change_report_page(-1),
             active=False,
         )
-        self.report_page_next_button = Button(
+        self.report_page_next_button = RectangularButton(
             get_rect(
                 width=48,
                 height=48,
@@ -688,7 +688,7 @@ class EncounterMenu(Menu):
         
         button_sprite = DataFiles.sprites["user_interface"]["port"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
-        self.retreat_button = Button(
+        self.retreat_button = RectangularButton(
             button_rect,
             retreat,
             background_styling={
@@ -741,10 +741,10 @@ class EncounterMenu(Menu):
 
     @property
     def transition_active(self):
-        return self._transition_state != self.TRANSITION_IDLE
+        return self.transition_state != self.TRANSITION_IDLE
 
     def _set_transition_state(self, state):
-        self._transition_state = state
+        self.transition_state = state
         self._transition_timer = 0
 
     def _get_fleet_slot_positions(self):
@@ -881,7 +881,7 @@ class EncounterMenu(Menu):
             shipgirl.animate(dt)
 
     def _update_encounter_transition(self, dt):
-        state = self._transition_state
+        state = self.transition_state
 
         if state == self.TRANSITION_EXITING:
             distance = self.TRANSITION_MOVE_SPEED * dt
@@ -924,7 +924,7 @@ class EncounterMenu(Menu):
             ):
                 self._finish_encounter_transition()
 
-        if self._transition_state in (
+        if self.transition_state in (
             self.TRANSITION_EXITING,
             self.TRANSITION_ENTERING,
         ):
@@ -953,7 +953,7 @@ class EncounterMenu(Menu):
         return cls._smoothstep(progress)
 
     def _draw_transition_wave_wipe(self, surface):
-        if self._transition_state not in (
+        if self.transition_state not in (
             self.TRANSITION_WAVE_COVER,
             self.TRANSITION_WAVE_REVEAL,
         ):
@@ -963,7 +963,7 @@ class EncounterMenu(Menu):
             1.0,
             self._transition_timer / self.TRANSITION_WAVE_DURATION,
         )
-        covering = self._transition_state == self.TRANSITION_WAVE_COVER
+        covering = self.transition_state == self.TRANSITION_WAVE_COVER
         staggers = (
             self.TRANSITION_WAVE_STAGGERS
             if covering
@@ -1029,7 +1029,7 @@ class EncounterMenu(Menu):
         self.background.set_night_sky(self.time_weather == "nighttime")
 
     def begin_sortie(self, roll_time_weather=True):
-        self._transition_state = self.TRANSITION_IDLE
+        self.transition_state = self.TRANSITION_IDLE
         self._transition_timer = 0
         self._transition_shipgirls = []
         self._transition_slot_positions = {}

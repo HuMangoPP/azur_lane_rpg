@@ -9,7 +9,7 @@ import random
 import pygame
 
 from engine.util import get_rect, get_vec, pixel_to_hex, hex_to_pixel, hex_corners, get_cluster_edges, adjacent_hexes
-from engine.button import Button
+from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.base_menu import Menu
@@ -803,7 +803,7 @@ class SortieOrderCard:
         }
         self.authorization_stamp = DataFiles.sprites["props"]["stamp"]
 
-        self.button = Button(
+        self.button = RectangularButton(
             get_rect(
                 width=self.WIDTH - 4*Box.PADDING,
                 height=self.AUTHORIZATION_HEIGHT,
@@ -1169,7 +1169,7 @@ class SortieSelectionMenu(Menu):
 
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
-        self.exit_sortie_selection_menu_button = Button(
+        self.exit_sortie_selection_menu_button = RectangularButton(
             button_rect,
             exit_sortie_selection_menu,
             background_styling={

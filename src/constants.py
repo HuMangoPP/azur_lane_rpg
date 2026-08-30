@@ -122,6 +122,19 @@ class Equipment:
     AUX1 = 1
     AUX2 = 2
 
+    WEAPON_KEY = "weapon"
+    AUX_KEY = "aux"
+
+    HULL_TYPE_MAPPING = {
+        "DD": "destroyer",
+        "CL": "light cruiser",
+        "CA": "heavy cruiser",
+        "BB": "battleship",
+        "SS": "submarine",
+        "CV": "aircraft carrier",
+        "AUX": "universal",
+    }
+
 class Stats:
     EXP_BASE = 12
     EXP_GROWTH = 2

@@ -697,7 +697,7 @@ def equip_weapon_tutorial_draw(menu_manager, surface, font_registry):
     if menu_manager.current_menu == menu_manager.port_menu:
         if menu_manager.port_menu.shipgirl_dialogue_options[0].active:
             button = menu_manager.port_menu.shipgirl_dialogue_options[0]
-            point = button.center + get_vec((button.inner_radius+button.outer_radius)/2, button.angle)
+            point = button.get_wedge_centroid()
             draw_tb(surface, font_registry, None, point, False, False)
         else:
             shipgirls = DataFiles.get_faction_shipgirls()

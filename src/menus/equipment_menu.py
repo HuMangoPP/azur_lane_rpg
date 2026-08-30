@@ -9,7 +9,7 @@ import random
 import pygame
 
 from engine.util import get_rect, get_vec
-from engine.button import Button
+from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x, screen_y
 from src.menus.base_menu import Menu
@@ -92,7 +92,7 @@ class EquipmentMenu(Menu):
         self.hovered_equipment = None
         self.equipment_pages = {}
 
-        self.equipment_page_prev_button = Button(
+        self.equipment_page_prev_button = RectangularButton(
             get_rect(width=48, height=48, left=0, top=0),
             lambda: self.change_equipment_page(-1),
             active=False,
@@ -103,7 +103,7 @@ class EquipmentMenu(Menu):
             },
             hover_styling={"opacity": 32}
         )
-        self.equipment_page_next_button = Button(
+        self.equipment_page_next_button = RectangularButton(
             get_rect(width=48, height=48, left=0, top=0),
             lambda: self.change_equipment_page(1),
             active=False,
@@ -190,7 +190,7 @@ class EquipmentMenu(Menu):
 
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
-        self.exit_equipment_menu_button = Button(
+        self.exit_equipment_menu_button = RectangularButton(
             button_rect,
             exit_equipment_menu,
             background_styling={

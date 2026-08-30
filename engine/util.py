@@ -124,3 +124,26 @@ def adjacent_hexes(q, r, steps):
     for dq, dr in HEX_DIRECTIONS:
         adjacent |= adjacent_hexes(q + dq, r + dr, steps-1)
     return adjacent
+
+def draw_dashed_rect(
+    surface: pygame.Surface,
+    color: tuple[int, int, int],
+    rect: pygame.Rect,
+    dash_length: int,
+    gap_length: int,
+    width: int,
+):
+    """Draw a rectangle with a dashed border."""
+    right = rect.right - 1
+    bottom = rect.bottom - 1
+    dash_step = dash_length + gap_length
+
+    for x in range(rect.left, right + 1, dash_step):
+        dash_right = min(x + dash_length, right)
+        pygame.draw.line(surface, color, (x, rect.top), (dash_right, rect.top), width)
+        pygame.draw.line(surface, color, (x, bottom), (dash_right, bottom), width)
+
+    for y in range(rect.top, bottom + 1, dash_step):
+        dash_bottom = min(y + dash_length, bottom)
+        pygame.draw.line(surface, color, (rect.left, y), (rect.left, dash_bottom), width)
+        pygame.draw.line(surface, color, (right, y), (right, dash_bottom), width)

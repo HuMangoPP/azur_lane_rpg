@@ -10,7 +10,7 @@ import pygame
 import random
 
 from engine.util import get_rect, get_vec
-from engine.button import Button
+from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.quests_data import first_sortie_quest
@@ -242,7 +242,7 @@ class FleetSelectionMenu(Menu):
             self.start_sortie_button.active = False
             self.menu_manager.encounter_menu.start_sortie_transition()
 
-        self.start_sortie_button = Button(
+        self.start_sortie_button = RectangularButton(
             get_rect(
                 width=self.LAUNCH_MARKER_HIT_SIZE,
                 height=self.LAUNCH_MARKER_HIT_SIZE,
@@ -264,7 +264,7 @@ class FleetSelectionMenu(Menu):
         
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
-        self.exit_fleet_selection_menu_button = Button(
+        self.exit_fleet_selection_menu_button = RectangularButton(
             button_rect,
             exit_fleet_selection_menu,
             background_styling={

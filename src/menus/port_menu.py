@@ -2,105 +2,20 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from engine.font import Font
+    from engine.button import Button
     from src.menus.menu_manager import MenuManager
 
 import math
-import random
 import functools
 import pygame
 
-from engine.util import draw_annulus, get_rect, get_vec
-from engine.button import Button
+from engine.util import get_rect, draw_dashed_rect
+from engine.button import RectangularButton, AnnularSectorButton
 
-from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, Decorations
+from src.constants import DataFiles, Color, Box, Equipment, Stats, screen_x, screen_y, Decorations
 from src.shipgirls import Shipgirl
 from src.menus.base_menu import Menu
 from live2d.live2d import Live2D
-
-
-class AnnularSectorButton:
-    SPRITE_SIZE = 96
-    ANGLE_WIDTH = math.radians(60)
-    ANGLE_PADDING = 2
-
-    def __init__(
-        self,
-        callback,
-        active=True,
-        background_styling=None,
-        hover_styling=None,
-        inner_radius=SPRITE_SIZE / 2,
-        outer_radius=SPRITE_SIZE / 2 + Box.WIDTH,
-        angle_width=ANGLE_WIDTH,
-    ):
-        background_styling = background_styling or {}
-        hover_styling = hover_styling or {}
-
-        self.active = active
-        self.callback = callback
-        self.center = pygame.Vector2(0, 0)
-        self.angle = 0
-        self.angle_width = angle_width
-        self.inner_radius = round(inner_radius)
-        self.outer_radius = round(outer_radius)
-
-        self.background_color = background_styling.get("background_color")
-        self.background_img = background_styling.get("background_img")
-        self.opacity = background_styling.get("opacity")
-
-        self.hover_background_color = hover_styling.get("background_color", self.background_color)
-        self.hover_opacity = hover_styling.get("opacity", self.opacity)
-        self.hovered = False
-
-    def contains_point(self, mpos):
-        relpos = pygame.Vector2(mpos) - self.center
-        distance = relpos.length()
-        if distance < self.inner_radius or distance > self.outer_radius:
-            return False
-
-        point_angle = math.atan2(relpos.y, relpos.x)
-        angle_delta = (point_angle - self.angle + math.pi) % (2 * math.pi) - math.pi
-        return abs(angle_delta) <= self.angle_width / 2
-
-    def hover(self, mpos):
-        self.hovered = self.active and self.contains_point(mpos)
-        return self.hovered
-
-    def click(self, mpos):
-        if not self.active or not self.contains_point(mpos):
-            return False
-
-        self.callback()
-        return True
-
-    def draw(self, surface, font_registry):
-        if not self.active:
-            return
-
-        background_color = self.hover_background_color if self.hovered else self.background_color
-        opacity = self.hover_opacity if self.hovered else self.opacity
-        if background_color is not None:
-            wedge_surface = pygame.Surface((2 * self.outer_radius, 2 * self.outer_radius))
-            draw_annulus(
-                wedge_surface,
-                background_color,
-                (self.outer_radius, self.outer_radius),
-                self.inner_radius,
-                self.outer_radius,
-                math.degrees(self.angle - self.angle_width / 2) + self.ANGLE_PADDING,
-                math.degrees(self.angle + self.angle_width / 2) - self.ANGLE_PADDING,
-                resolution=4
-            )
-            if opacity is not None:
-                wedge_surface.set_alpha(opacity)
-            wedge_surface.set_colorkey((0, 0, 0))
-            wedge_rect = wedge_surface.get_rect(center=self.center)
-            surface.blit(wedge_surface, wedge_rect)
-
-        if self.background_img is not None:
-            img_rect = self.background_img.get_rect()
-            img_rect.center = self.center + get_vec((self.inner_radius + self.outer_radius) / 2, self.angle)
-            surface.blit(self.background_img, img_rect)
 
 
 class PortMenu(Menu):
@@ -117,19 +32,10 @@ class PortMenu(Menu):
         GEAR_LAB: "armaments index",
     }
 
-    HULL_TYPE_MAPPING = {
-        "DD": "destroyer",
-        "CL": "light cruiser",
-        "CA": "heavy cruiser",
-        "BB": "battleship",
-        "SS": "submarine",
-        "CV": "aircraft carrier",
-        "AUX": "universal",
-    }
-
     DECORATION_DEPOT = "decoration_depot"
     DELETE_DECORATION = "__delete_decoration__"
 
+    # TODO since there is another location for this, I wonder if it could be moved out into a shared helper
     DECORATION_STAMP_ANIMATION_DURATION = 1
     DECORATION_STAMP_DOWN_TIME = 0.15
     DECORATION_STAMP_LIFT_TIME = 0.30
@@ -137,10 +43,9 @@ class PortMenu(Menu):
     DECORATION_PRICE = 1
 
     def __init__(self, menu_manager: MenuManager):
-        # MenuManager object
         self.menu_manager = menu_manager
 
-        # Factions and choose faction buttons
+        # Choose faction buttons.
         factions = ["USS", "HMS", "IJN", "KMS"]
         def choose_faction_factory(faction):
             def choose_faction():
@@ -149,7 +54,7 @@ class PortMenu(Menu):
                     choose_faction_button.active = False
             return choose_faction
         
-        self.choose_faction_buttons = []
+        self.choose_faction_buttons: list[AnnularSectorButton] = []
         choose_faction_center = pygame.Vector2(screen_x(0.5), screen_y(0.5))
         choose_faction_angles = [
             math.radians(-135),
@@ -159,6 +64,9 @@ class PortMenu(Menu):
         ]
         for faction, angle in zip(factions, choose_faction_angles):
             choose_faction_button = AnnularSectorButton(
+                inner_radius=Box.WIDTH,
+                outer_radius=Box.WIDTH * 2.5,
+                angle_width=math.radians(90),
                 callback=choose_faction_factory(faction),
                 active=False,
                 background_styling={
@@ -167,23 +75,20 @@ class PortMenu(Menu):
                     "opacity": 160
                 },
                 hover_styling={"opacity": 200},
-                inner_radius=Box.WIDTH,
-                outer_radius=Box.WIDTH * 2.5,
-                angle_width=math.radians(90),
             )
             choose_faction_button.center = choose_faction_center
             choose_faction_button.angle = angle
             self.choose_faction_buttons.append(choose_faction_button)
 
-        # Sortie button
+        # Open SelectSortieMenu button.
         def open_select_sortie_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
             DataFiles.sfx["waves"].play(loops=-1)
 
             close_shipgirl_dialogue_options()
 
-        self.open_select_sortie_menu_button = Button(
-            get_rect(width=2*Box.WIDTH,height=Box.HEIGHT,right=Box.RIGHT_OF_SCREEN,bottom=Box.BOTTOM_OF_SCREEN),
+        self.open_select_sortie_menu_button = RectangularButton(
+            get_rect(width=2 * Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, bottom=Box.BOTTOM_OF_SCREEN),
             open_select_sortie_menu,
             active=False,
             background_styling={
@@ -193,13 +98,14 @@ class PortMenu(Menu):
             hover_styling={"background_color": Color.HOVER_START_SORTIE_BUTTON}
         )
 
-        # Overlay state
+        # Overlay state.
         self.current_overlay = self.NO_OVERLAY
-        self.overlay_pages = {}
+        
+        # State for quests.
         self.visited_depot = False
         self.visited_intel_center = False
 
-        # Overlay buttons
+        # Open overlay buttons.
         overlay_buttons_flexbox_width = self.open_select_sortie_menu_button.rect.left
         num_overlay_buttons = 5
         def open_overlay_button_factory(index, overlay_enum):
@@ -210,7 +116,7 @@ class PortMenu(Menu):
                 if overlay_enum == self.SHIPYARD:
                     if DataFiles.save_file["research_target"] is not None:
                         self.overlay_selected_entity = DataFiles.save_file["research_target"]
-                        self.refresh_overlay_action_buttons()
+                        self._refresh_overlay_action_buttons()
                     
                     for i, faction in enumerate(self.shipyard_filters):
                         if DataFiles.save_file["unlocked_factions"][0] == faction:
@@ -219,10 +125,10 @@ class PortMenu(Menu):
                 
                 close_shipgirl_dialogue_options()
 
-            return Button(
+            return RectangularButton(
                 get_rect(
                     width=Box.WIDTH, height=Box.HEIGHT,
-                    centerx=(index+1)/(num_overlay_buttons+1) * overlay_buttons_flexbox_width,
+                    centerx=(index + 1) / (num_overlay_buttons + 1) * overlay_buttons_flexbox_width,
                     bottom=Box.BOTTOM_OF_SCREEN
                 ),
                 open_overlay,
@@ -238,49 +144,49 @@ class PortMenu(Menu):
         for index, enum in enumerate(overlay_enums):
             setattr(self, f"open_{enum}_overlay_button", open_overlay_button_factory(index, enum))
 
-        # Intel center, shipyard, gear lab filters
+        # Intel center, shipyard, gear lab filters.
         self.overlay_selected_filter = 0
         self.intel_center_filters = ["DD", "CL", "CA", "BB", "SS", "CV"]
         self.shipyard_filters = ["USS", "HMS", "IJN", "KMS"]
         self.gear_lab_filters = ["DD", "CL", "CA", "BB", "SS", "CV", "AUX"]
 
-        # Dossier-themed left panel
-        # Full overlay left panel area
+        # Dossier-themed left panel.
+        # Full overlay left panel area.
         num_items_in_row = 5
         num_items_in_col = 4
         dossier_page_margin = 48
-        dossier_icon_grid_width = num_items_in_row*Box.WIDTH + (num_items_in_row - 1)*Box.PADDING
-        dossier_icon_grid_height = num_items_in_col*Box.HEIGHT + (num_items_in_col - 1)*Box.PADDING
+        dossier_icon_grid_width = num_items_in_row * Box.WIDTH + (num_items_in_row - 1) * Box.PADDING
+        dossier_icon_grid_height = num_items_in_col * Box.HEIGHT + (num_items_in_col - 1) * Box.PADDING
         self.dossier_overlay = get_rect(
-            width=dossier_icon_grid_width + 2*dossier_page_margin + 2*Box.PADDING,
-            height=dossier_icon_grid_height + 2*dossier_page_margin + Box.HEIGHT + 2*Box.PADDING,
-            right=screen_x(0.5) + Box.WIDTH/2,
-            centery=screen_y(0.5) - Box.HEIGHT/2
+            width=dossier_icon_grid_width + 2 * dossier_page_margin + 2 * Box.PADDING,
+            height=dossier_icon_grid_height + 2 * dossier_page_margin + Box.HEIGHT + 2 * Box.PADDING,
+            right=screen_x(0.5) + Box.WIDTH / 2,
+            centery=screen_y(0.5) - Box.HEIGHT / 2
         )
-        # Manila folder background
+        # Manila folder background.
         self.dossier_bg = get_rect(
             width=self.dossier_overlay.width,
             height=self.dossier_overlay.height - Box.HEIGHT,
             left=self.dossier_overlay.left,
             bottom=self.dossier_overlay.bottom
         )
-        # Folder tabs
+        # Folder tabs.
         num_dossier_tabs = len(self.gear_lab_filters)
         tab_size = 48
         self.dossier_tabs = [
             get_rect(
                 width=tab_size, height=tab_size,
-                left=self.dossier_bg.left+i*Box.WIDTH,
+                left=self.dossier_bg.left + i * Box.WIDTH,
                 bottom=self.dossier_bg.top
             ) for i in range(num_dossier_tabs)
         ]
-        # Paper foreground where the entities are listed
+        # Paper foreground where the entities are listed.
         self.dossier_page = get_rect(
-            width=self.dossier_bg.width - 2*Box.PADDING,
-            height=self.dossier_bg.height - 2*Box.PADDING,
+            width=self.dossier_bg.width - 2 * Box.PADDING,
+            height=self.dossier_bg.height - 2 * Box.PADDING,
             center=self.dossier_bg.center
         )
-        # Document regions and icons on page
+        # Document regions and icons on page.
         dossier_icon_grid_left = self.dossier_page.centerx - dossier_icon_grid_width / 2
         dossier_icon_grid_top = self.dossier_page.centery - dossier_icon_grid_height / 2
         self.dossier_grid = get_rect(
@@ -304,52 +210,55 @@ class PortMenu(Menu):
         self.dossier_icons = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=dossier_icon_grid_left+(i%num_items_in_row)*(Box.WIDTH+Box.PADDING),
-                top=dossier_icon_grid_top+(i//num_items_in_row)*(Box.HEIGHT+Box.PADDING)
+                left=dossier_icon_grid_left + (i % num_items_in_row) * (Box.WIDTH + Box.PADDING),
+                top=dossier_icon_grid_top + (i // num_items_in_row) * (Box.HEIGHT + Box.PADDING),
             ) for i in range(num_items_in_row * num_items_in_col)
         ]
 
-        # Blueprint-themed right panel
+        # Blueprint-themed right panel.
         self.blueprint_page = get_rect(
-            width=5*Box.WIDTH + 2*Box.PADDING,
-            height=7.5*Box.HEIGHT + 2*Box.PADDING,
-            left=self.dossier_overlay.right+Box.PADDING,
+            width=5 * Box.WIDTH + 2 * Box.PADDING,
+            height=7.5 * Box.HEIGHT + 2 * Box.PADDING,
+            left=self.dossier_overlay.right + Box.PADDING,
             centery=screen_y(0.5),
         )
         # Sticky-note confirm surface attached to the blueprint's top-right corner.
         self.sticky_note_page = get_rect(
-            width=2*Box.WIDTH + 2*Box.PADDING,
-            height=2*Box.HEIGHT + 2*Box.PADDING,
+            width=2 * Box.WIDTH + 2 * Box.PADDING,
+            height=2 * Box.HEIGHT + 2 * Box.PADDING,
             right=self.blueprint_page.right + Box.WIDTH + Box.PADDING,
-            top=max(Box.PADDING, self.blueprint_page.top - Box.HEIGHT/2 - Box.PADDING),
+            top=max(Box.PADDING, self.blueprint_page.top - Box.HEIGHT / 2 - Box.PADDING),
         )
 
-        # Warehouse-themed left panel
+        # Warehouse-themed left panel.
         num_items_in_row = 5
         num_items_in_col = 4
-        warehouse_overlay_content_height = num_items_in_col*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+        warehouse_overlay_content_height = num_items_in_col * (Box.HEIGHT + Box.PADDING) + Box.PADDING
         self.warehouse_overlay = get_rect(
-            width=num_items_in_row*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+            width=num_items_in_row * (Box.WIDTH + Box.PADDING) + Box.PADDING,
             height=warehouse_overlay_content_height,
-            right=screen_x(0.5) + Box.WIDTH/2,
-            top=screen_y(0.4) - warehouse_overlay_content_height/2
+            right=screen_x(0.5) + Box.WIDTH / 2,
+            top=screen_y(0.4) - warehouse_overlay_content_height / 2
         )
         self.warehouse_icons = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.warehouse_overlay.left+Box.PADDING+(i%num_items_in_row)*(Box.WIDTH+Box.PADDING),
-                top=self.warehouse_overlay.top+Box.PADDING+(i//num_items_in_row)*(Box.HEIGHT+Box.PADDING)
+                left=self.warehouse_overlay.left + Box.PADDING + (i % num_items_in_row) * (Box.WIDTH + Box.PADDING),
+                top=self.warehouse_overlay.top + Box.PADDING + (i // num_items_in_row) * (Box.HEIGHT + Box.PADDING)
             ) for i in range(num_items_in_row * num_items_in_col)
         ]
         self.warehouse_selected_item = None
+        # Manjuu forklift animation at the bottom of the panel.
         self.forklift_x = 0
         self.forklift_dx = 1
         self.forklift_pause = 0
 
-        # Overlay paging buttons
-        self.overlay_page_prev_button = Button(
-            get_rect(width=48, height=48, left=0, top=0),
-            lambda: self.change_overlay_page(-1),
+        # Overlay pagination state.
+        self.overlay_pages = {}
+        pagination_button_size = 48
+        self.overlay_page_prev_button = RectangularButton(
+            get_rect(width=pagination_button_size, height=pagination_button_size, left=0, top=0),
+            lambda: self._change_overlay_page(-1),
             active=False,
             background_styling={
                 "background_color": Color.WHITE,
@@ -358,9 +267,9 @@ class PortMenu(Menu):
             },
             hover_styling={"opacity": 32}
         )
-        self.overlay_page_next_button = Button(
-            get_rect(width=48, height=48, left=0, top=0),
-            lambda: self.change_overlay_page(1),
+        self.overlay_page_next_button = RectangularButton(
+            get_rect(width=pagination_button_size, height=pagination_button_size, left=0, top=0),
+            lambda: self._change_overlay_page(1),
             active=False,
             background_styling={
                 "background_color": Color.WHITE,
@@ -370,27 +279,35 @@ class PortMenu(Menu):
             hover_styling={"opacity": 32}
         )
 
-        # Clipboard-themed right panel
+        # Clipboard-themed right panel.
         self.clipboard_bg = get_rect(
-            width=4*Box.WIDTH + 4*Box.PADDING,
-            height=5*Box.HEIGHT + 4*Box.PADDING,
-            left=self.warehouse_overlay.right + Box.WIDTH/2,
-            centery=screen_y(0.5) - Box.HEIGHT/2
+            width=4 * Box.WIDTH + 4 * Box.PADDING,
+            height=5 * Box.HEIGHT + 4 * Box.PADDING,
+            left=self.warehouse_overlay.right + Box.WIDTH / 2,
+            centery=screen_y(0.5) - Box.HEIGHT / 2
         )
         self.clipboard_page = get_rect(
-            width=self.clipboard_bg.width - 2*Box.PADDING,
-            height=self.clipboard_bg.height - 2*Box.PADDING - Box.HEIGHT/4,
+            width=self.clipboard_bg.width - 2 * Box.PADDING,
+            height=self.clipboard_bg.height - 2 * Box.PADDING - Box.HEIGHT / 4,
             centerx=self.clipboard_bg.centerx,
             bottom=self.clipboard_bg.bottom - Box.PADDING
         )
 
-        # Overlay logic state
+        # Overlay logic.
+        self.overlay_selected_entity = None
+
         def confirm_shipyard_sticky_note():
+            """Sticky note action button for the shipyard.
+            
+            Depending on the player's save file, this button can either enable
+            construct of a new shipgirl, research of a new shipgirl, or will do
+            nothing.
+            """
             if self.overlay_selected_entity is None:
                 return
             inventory = DataFiles.save_file["inventory"]
             specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
-            if self.can_construct_selected_shipgirl():
+            if self._can_construct_selected_shipgirl():
                 DataFiles.sfx["knock"].play()
                 shipgirl_exp = specialized_wisdom_cubes[self.overlay_selected_entity]
                 DataFiles.save_file["shipgirls"][self.overlay_selected_entity] = {
@@ -399,20 +316,20 @@ class PortMenu(Menu):
                 }
                 shipgirl = Shipgirl(self.overlay_selected_entity, True)
                 self.menu_manager.available_shipgirls.append(shipgirl)
-                for ingredient, req in self.get_selected_shipyard_reqs().items():
+                for ingredient, req in self._get_selected_shipyard_reqs().items():
                     inventory[ingredient] -= req
                 specialized_wisdom_cubes.pop(self.overlay_selected_entity)
                 if DataFiles.save_file["research_target"] == self.overlay_selected_entity:
                     DataFiles.save_file["research_target"] = None
                 self.overlay_selected_entity = None
-            elif self.can_start_selected_shipgirl_research():
+            elif self._can_start_selected_shipgirl_research():
                 DataFiles.sfx["frequency"].play()
                 inventory["wisdom_cube"] -= 1
                 specialized_wisdom_cubes[self.overlay_selected_entity] = 0
                 DataFiles.save_file["research_target"] = self.overlay_selected_entity
-            self.refresh_overlay_action_buttons()
+            self._refresh_overlay_action_buttons()
         
-        self.shipyard_sticky_note_button = Button(
+        self.shipyard_sticky_note_button = RectangularButton(
             self.sticky_note_page.copy(),
             confirm_shipyard_sticky_note,
             active=False,
@@ -423,7 +340,12 @@ class PortMenu(Menu):
         )
 
         def confirm_gear_lab_sticky_note():
-            if not self.can_craft_selected_equipment():
+            """Sticky note action button for the gear lab.
+            
+            Depending on the player's save file, this button can either enable
+            crafting of a new weapon, or will do nothing.
+            """
+            if not self._can_craft_selected_equipment():
                 return
 
             DataFiles.sfx["knock"].play()
@@ -434,9 +356,9 @@ class PortMenu(Menu):
             for ingredient, req in selected_entity_reqs.items():
                 DataFiles.save_file["inventory"][ingredient] -= req
 
-            self.refresh_overlay_action_buttons()
+            self._refresh_overlay_action_buttons()
         
-        self.gear_lab_sticky_note_button = Button(
+        self.gear_lab_sticky_note_button = RectangularButton(
             self.sticky_note_page.copy(),
             confirm_gear_lab_sticky_note,
             active=False,
@@ -448,7 +370,12 @@ class PortMenu(Menu):
         )
 
         def confirm_decoration_signature():
-            if not self.can_purchase_selected_decoration():
+            """Decoration signature action button for the decoration store.
+            
+            Depending on the player's save file and animation state, this can either
+            enable the player to purchase the selected decoration or do nothing.
+            """
+            if not self._can_purchase_selected_decoration():
                 return
             if self.decoration_stamp_animation_timer > 0:
                 return
@@ -462,11 +389,12 @@ class PortMenu(Menu):
             )
             self.decoration_stamp_animation_timer = self.DECORATION_STAMP_ANIMATION_DURATION
             self.decoration_stamp_animation_pos = pygame.Vector2(pygame.mouse.get_pos())
-            self.refresh_overlay_action_buttons()
+            self._refresh_overlay_action_buttons()
 
+        # Animation state for the decoration stamp button.
         self.decoration_stamp_animation_timer = 0
         self.decoration_stamp_animation_pos = pygame.Vector2((0, 0))
-        self.decoration_signature_button = Button(
+        self.decoration_signature_button = RectangularButton(
             get_rect(
                 width=2*Box.WIDTH,
                 height=Box.HEIGHT,
@@ -476,20 +404,22 @@ class PortMenu(Menu):
             confirm_decoration_signature,
             active=False,
         )
-        self.overlay_selected_entity = None
 
+        # Decoration mode.
+        self.is_decorating = False
         def toggle_decoration_mode():
+            """Toggle between being in and not in decoration mode."""
             self.is_decorating = not self.is_decorating
             if self.is_decorating:
                 self.overlay_pages.setdefault(self.DECORATION_DEPOT, 0)
-                self.refresh_overlay_page_buttons()
+                self._refresh_overlay_page_buttons()
             else:
                 self.overlay_page_prev_button.active = False
                 self.overlay_page_next_button.active = False
 
             close_shipgirl_dialogue_options()
 
-        self.toggle_decoration_mode_button = Button(
+        self.toggle_decoration_mode_button = RectangularButton(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
             callback=toggle_decoration_mode,
             active=False,
@@ -500,37 +430,42 @@ class PortMenu(Menu):
             },
             hover_styling={"opacity": 200}
         )
-        self.is_decorating = False
-
-        decoration_depot_content_height = 3*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+        # Warehouse-themed decoration depot overlay.
+        decoration_depot_content_height = 3 * (Box.HEIGHT + Box.PADDING) + Box.PADDING
         self.decoration_depot_overlay = get_rect(
-            width=3*(Box.WIDTH+Box.PADDING) + Box.PADDING,
+            width=3 * (Box.WIDTH + Box.PADDING) + Box.PADDING,
             height=decoration_depot_content_height,
             left=Box.WIDTH,
             top=screen_y(1) - Box.HEIGHT - decoration_depot_content_height
         )
+        # Decoration depot and editing state.
         self.selected_decoration_in_depot = None
         self.decoration_flipped = False
         self.deleting_decoration = False
         self.decoration_depot_drag_offset = None
+        # Decoration depot and editing state for quests.
         self.dragged_shipgirl = None
         self.moved_decoration_depot_overlay = False
         self.flipped_decoration = False
         self.placed_bed_decoration = False
         self.removed_bed_decoration = False
         self.shipgirl_interacted_with_bed = False
-
+        # Floor and background camera controls.
         Decorations.floor_rect.center = (screen_x(0.5), screen_y(0.5))
         self.camera_dragging = False
 
+        # Equipment menu entrypoint
         self.hovered_shipgirl = None
         def open_equipment_menu():
+            """Open the equipment menu."""
             self.menu_manager.equipment_menu.selected_shipgirl = self.hovered_shipgirl
             self.menu_manager.current_menu = self.menu_manager.equipment_menu
 
             close_shipgirl_dialogue_options()
 
+        # Shipgirl dialogue options.
         def close_shipgirl_dialogue_options():
+            """Close the dialogue options for the currently hovered shipgirl."""
             if self.hovered_shipgirl is not None:
                 self.hovered_shipgirl.pick_new_wander_target()
             self.hovered_shipgirl = None
@@ -539,10 +474,13 @@ class PortMenu(Menu):
 
         shipgirl_dialogue_option_data = [
             (open_equipment_menu, "equip"),
-            (lambda : True, "interact"),
+            (lambda : None, "interact"),
         ]
         self.shipgirl_dialogue_options = [
             AnnularSectorButton(
+                inner_radius=48,
+                outer_radius=48+Box.WIDTH,
+                angle_width=math.radians(60),
                 callback=callback,
                 active=False,
                 background_styling={
@@ -555,9 +493,24 @@ class PortMenu(Menu):
             for callback, sprite in shipgirl_dialogue_option_data
         ]
 
+        # Update the encountered sirens from the save file.
         self.update_encountered_sirens()
 
-    def position_shipgirl_dialogue_options(self):
+    def update_encountered_sirens(self):
+        """Update the encountered sirens list.
+        
+        Computed by using the sortie progress in the save file.
+        """
+        encountered_sirens = set()
+        for i in range(DataFiles.save_file["sortie_progress"]):
+            encounters = DataFiles.sortie_data[i]["encounters"]
+            for encounter in encounters:
+                for encoded_siren in encounter["front"] + encounter["back"]:
+                    encountered_sirens.add(encoded_siren)
+        self.encountered_sirens = sorted(list(encountered_sirens))
+
+    def _position_shipgirl_dialogue_options(self):
+        """Position the shipgirl dialogue options buttons above the hovered shipgirl."""
         if self.hovered_shipgirl is None:
             return
 
@@ -565,11 +518,15 @@ class PortMenu(Menu):
         dialogue_options_offset = (len(self.shipgirl_dialogue_options) - 1) / 2
         top_angle = math.radians(-90)
         for i, option in enumerate(self.shipgirl_dialogue_options):
-            angle = top_angle + (i - dialogue_options_offset) * AnnularSectorButton.ANGLE_WIDTH
+            angle = top_angle + (i - dialogue_options_offset) * option.angle_width
             option.center = pygame.Vector2(circle_center)
             option.angle = angle
 
-    def update_camera_drag(self, event):
+    def _update_camera_drag(self, event: pygame.Event) -> bool:
+        """Update the virtual camera offset.
+        
+        The event is specifically the pygame.MOUSEMOTION event.
+        """
         if not self.camera_dragging:
             return False
 
@@ -595,14 +552,15 @@ class PortMenu(Menu):
             shipgirl.wander_target += actual_delta
             shipgirl.rect.center = shipgirl.pos
 
-        self.position_shipgirl_dialogue_options()
+        self._position_shipgirl_dialogue_options()
         return True
 
-    def can_start_no_overlay_camera_drag(self, pos):
+    def _can_start_no_overlay_camera_drag(self, pos: tuple[int, int]) -> bool:
+        """Check if the camera can be dragged when no overlay is present."""
         if self.menu_manager.quest_manager.selected_quest is not None:
             return False
 
-        rectangular_buttons = [
+        rectangular_buttons: list[RectangularButton] = [
             self.open_select_sortie_menu_button,
             self.open_depot_overlay_button,
             self.open_shipyard_overlay_button,
@@ -614,7 +572,7 @@ class PortMenu(Menu):
         if any(button.active and button.rect.collidepoint(pos) for button in rectangular_buttons):
             return False
 
-        annular_buttons = [
+        annular_buttons: list[AnnularSectorButton] = [
             *self.choose_faction_buttons,
             *self.shipgirl_dialogue_options
         ]
@@ -626,72 +584,38 @@ class PortMenu(Menu):
 
         return not any(shipgirl.rect.collidepoint(pos) for shipgirl in self.menu_manager.available_shipgirls)
 
-    def can_start_decorate_camera_drag(self, pos):
-        if self.decoration_depot_overlay.collidepoint(pos):
-            return False
-        if (
-            self.overlay_page_prev_button.active
-            and self.overlay_page_prev_button.rect.collidepoint(pos)
-        ) or (
-            self.overlay_page_next_button.active
-            and self.overlay_page_next_button.rect.collidepoint(pos)
-        ):
-            return False
-        if (
-            self.toggle_decoration_mode_button.active
-            and self.toggle_decoration_mode_button.rect.collidepoint(pos)
-        ):
-            return False
-        if self.selected_decoration_in_depot is not None:
-            return False
-        
-        if self.deleting_decoration:
-            clicked_tilepos = Decorations.get_isometric_tilepos(pos)
-            for decoration_data in DataFiles.save_file["decorations"]:
-                decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
-                if clicked_tilepos in Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor):
-                    return False
+    def _select_decoration_depot_entity(self, pos: tuple[int, int], allow_delete_toggle: bool) -> str:
+        """Select the decoration whose icon rect contains the point.
 
-        return not any(shipgirl.rect.collidepoint(pos) for shipgirl in self.menu_manager.available_shipgirls)
-
-    def get_decoration_depot_entity_at_pos(self, pos):
-        entities = self.get_visible_overlay_entities()
-        rects = self.get_overlay_icon_rects()
+        If allow_delete_toggle is True, then allow the deletion toggle to switch if its
+        rect is clicked.
+        """
+        selected_entity = None
+        entities = self._get_visible_overlay_entities()
+        rects = self._get_overlay_icon_rects()
         for entity, rect in zip(entities, rects):
             if rect.collidepoint(pos):
-                return entity
-        return None
+                selected_entity = entity
+        if selected_entity is None:
+            return None
 
-    def select_decoration_depot_entity(self, pos, allow_delete_toggle):
-        entity = self.get_decoration_depot_entity_at_pos(pos)
-        if entity is None:
-            return False
-
-        if entity == self.DELETE_DECORATION:
+        if selected_entity == self.DELETE_DECORATION:
             if allow_delete_toggle:
                 DataFiles.sfx["click"].play()
                 self.deleting_decoration = not self.deleting_decoration
                 self.selected_decoration_in_depot = None
-            return True
+            return selected_entity
 
         DataFiles.sfx["click"].play()
-        if self.selected_decoration_in_depot == entity:
+        if self.selected_decoration_in_depot == selected_entity:
             self.selected_decoration_in_depot = None
         else:
-            self.selected_decoration_in_depot = entity
+            self.selected_decoration_in_depot = selected_entity
             self.deleting_decoration = False
-        return True
+        return selected_entity
 
-    def update_encountered_sirens(self):
-        encountered_sirens = set()
-        for i in range(DataFiles.save_file["sortie_progress"]):
-            encounters = DataFiles.sortie_data[i]["encounters"]
-            for encounter in encounters:
-                for encoded_siren in encounter["front"] + encounter["back"]:
-                    encountered_sirens.add(encoded_siren)
-        self.encountered_sirens = sorted(list(encountered_sirens))
-
-    def get_selected_shipyard_reqs(self):
+    def _get_selected_shipyard_reqs(self) -> dict[str, int]:
+        """Get the construction requirements for the selected shipgirl."""
         if self.overlay_selected_entity is None:
             return {}
 
@@ -703,7 +627,8 @@ class PortMenu(Menu):
             unique_item: 1
         }
 
-    def can_construct_selected_shipgirl(self):
+    def _can_construct_selected_shipgirl(self) -> bool:
+        """Check if the player can construct the selected shipgirl."""
         if self.overlay_selected_entity is None:
             return False
 
@@ -713,11 +638,12 @@ class PortMenu(Menu):
             self.overlay_selected_entity in specialized_wisdom_cubes
             and all(
                 inventory.get(ingredient, 0) >= req
-                for ingredient, req in self.get_selected_shipyard_reqs().items()
+                for ingredient, req in self._get_selected_shipyard_reqs().items()
             )
         )
 
-    def can_start_selected_shipgirl_research(self):
+    def _can_start_selected_shipgirl_research(self) -> bool:
+        """Check if the player can start research on the selected shipgirl."""
         if self.overlay_selected_entity is None:
             return False
 
@@ -727,13 +653,8 @@ class PortMenu(Menu):
             and DataFiles.save_file["inventory"].get("wisdom_cube", 0) > 0
         )
 
-    def has_selected_shipgirl_research_project(self):
-        return (
-            self.overlay_selected_entity is not None
-            and self.overlay_selected_entity in DataFiles.save_file["specialized_wisdom_cubes"]
-        )
-
-    def can_craft_selected_equipment(self):
+    def _can_craft_selected_equipment(self) -> bool:
+        """Check if the player can craft the selected equipment."""
         if self.overlay_selected_entity is None:
             return False
 
@@ -744,34 +665,31 @@ class PortMenu(Menu):
             for ingredient, req in selected_entity_reqs.items()
         )
 
-    def can_purchase_selected_decoration(self):
+    def _can_purchase_selected_decoration(self) -> bool:
+        """Check if the player can purchase the selected decoration"""
         return (
             self.overlay_selected_entity is not None
             and DataFiles.save_file["inventory"].get("decoration_coin", 0) >= self.DECORATION_PRICE
             and self.decoration_stamp_animation_timer <= 0
         )
 
-    def get_owned_decoration_count(self, decoration):
-        owned_count = DataFiles.save_file["decoration_depot"].get(decoration, 0)
-        for decoration_data in DataFiles.save_file["decorations"]:
-            placed_decoration, _, _ = Decorations.unpack_decoration_data(decoration_data)
-            if placed_decoration == decoration:
-                owned_count += 1
-        return owned_count
-
-    def refresh_overlay_action_buttons(self):
+    def _refresh_overlay_action_buttons(self):
+        """Refresh the state of overlay action buttons."""
         self.shipyard_sticky_note_button.active = False
         self.gear_lab_sticky_note_button.active = False
         self.decoration_signature_button.active = False
 
         if self.current_overlay == self.SHIPYARD:
-            if self.can_construct_selected_shipgirl():
+            if self._can_construct_selected_shipgirl():
                 self.shipyard_sticky_note_button.active = True
                 self.shipyard_sticky_note_button.text = "construct?"
-            elif self.can_start_selected_shipgirl_research():
+            elif self._can_start_selected_shipgirl_research():
                 self.shipyard_sticky_note_button.active = True
                 self.shipyard_sticky_note_button.text = "research?"
-            elif self.has_selected_shipgirl_research_project():
+            elif (
+                self.overlay_selected_entity is not None
+                and self.overlay_selected_entity in DataFiles.save_file["specialized_wisdom_cubes"]
+            ):
                 self.shipyard_sticky_note_button.active = True
                 research_exp = DataFiles.save_file["specialized_wisdom_cubes"].get(self.overlay_selected_entity, 0)
                 avg_shipgirl_level = int(
@@ -785,11 +703,12 @@ class PortMenu(Menu):
                 research_percentage = int(100 * min(1, research_exp / exp_req))
                 self.shipyard_sticky_note_button.text = f"research progress {research_percentage}%"
         elif self.current_overlay == self.GEAR_LAB:
-            self.gear_lab_sticky_note_button.active = self.can_craft_selected_equipment()
+            self.gear_lab_sticky_note_button.active = self._can_craft_selected_equipment()
         elif self.current_overlay == self.DECORATION_STORE:
-            self.decoration_signature_button.active = self.can_purchase_selected_decoration()
+            self.decoration_signature_button.active = self._can_purchase_selected_decoration()
 
-    def get_current_overlay_action_button(self):
+    def _get_current_overlay_action_button(self) -> RectangularButton | None:
+        """Get the action button based on the current overlay."""
         if self.current_overlay == self.SHIPYARD:
             return self.shipyard_sticky_note_button
         if self.current_overlay == self.GEAR_LAB:
@@ -798,12 +717,14 @@ class PortMenu(Menu):
             return self.decoration_signature_button
         return None
 
-    def get_overlay_page_key(self):
+    def _get_overlay_page_key(self) -> str:
+        """Get the page key for the current overlay."""
         if self.is_decorating:
             return self.DECORATION_DEPOT
         return self.current_overlay
 
-    def get_overlay_entities(self):
+    def _get_overlay_entities(self) -> list[str]:
+        """Get the names of entities based on the current overlay and overlay filters."""
         if self.is_decorating:
             decorations = [
                 decoration
@@ -829,29 +750,32 @@ class PortMenu(Menu):
                 and shipgirl_info["faction"] == self.shipyard_filters[self.overlay_selected_filter]
             ]
         if self.current_overlay == self.GEAR_LAB:
-            if self.gear_lab_filters[self.overlay_selected_filter] == "AUX":
+            if self.gear_lab_filters[self.overlay_selected_filter] == self.gear_lab_filters[-1]:
                 return [
                     equip for equip, equip_data in DataFiles.equipment_data.items()
-                    if equip_data["type"] == "aux"
+                    if equip_data["type"] == Equipment.AUX_KEY
                 ]
             return [
                 equip for equip, equip_data in DataFiles.equipment_data.items()
-                if equip_data["type"] == "weapon"
+                if equip_data["type"] == Equipment.WEAPON_KEY
                 and equip_data["equippable_by"] == self.gear_lab_filters[self.overlay_selected_filter]
             ]
         if self.current_overlay == self.DECORATION_STORE:
             return [decoration for decoration in DataFiles.decoration_store]
         return []
 
-    def get_overlay_icon_rects(self):
+    def _get_overlay_icon_rects(self) -> list[pygame.Rect]:
+        """Get the icon rects base on the current overlay."""
         if self.is_decorating:
+            num_icons_in_row = 3
+            num_icons_in_col = 3
             return [
                 get_rect(
                     width=Box.WIDTH, height=Box.HEIGHT,
-                    left=self.decoration_depot_overlay.left + (i%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-                    top=self.decoration_depot_overlay.top + (i//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+                    left=self.decoration_depot_overlay.left + (i % num_icons_in_row) * (Box.WIDTH + Box.PADDING) + Box.PADDING,
+                    top=self.decoration_depot_overlay.top + (i // num_icons_in_row) * (Box.HEIGHT + Box.PADDING) + Box.PADDING
                 )
-                for i in range(9)
+                for i in range(num_icons_in_row * num_icons_in_col)
             ]
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             return self.warehouse_icons
@@ -859,44 +783,46 @@ class PortMenu(Menu):
             return self.dossier_icons
         return []
 
-    def get_overlay_page_count(self, entities=None):
+    def _get_overlay_page_count(self, entities: list[str] = None) -> int:
+        """Get the total number of pages based on the current overlay."""
         if entities is None:
-            entities = self.get_overlay_entities()
+            entities = self._get_overlay_entities()
 
-        page_size = len(self.get_overlay_icon_rects())
+        page_size = len(self._get_overlay_icon_rects())
         if page_size == 0:
             return 1
         return max(1, math.ceil(len(entities) / page_size))
 
-    def get_overlay_page(self, entities=None):
-        page_count = self.get_overlay_page_count(entities)
-        page_key = self.get_overlay_page_key()
+    def _get_overlay_page(self, entities=None) -> int:
+        """Get the page index of the current overlay."""
+        page_count = self._get_overlay_page_count(entities)
+        page_key = self._get_overlay_page_key()
         page = min(self.overlay_pages.get(page_key, 0), page_count - 1)
         page = max(0, page)
         self.overlay_pages[page_key] = page
         return page
 
-    def get_visible_overlay_entities(self, entities=None):
+    def _get_visible_overlay_entities(self, entities=None) -> list[str]:
+        """Clip the list of entities to those visible on-screen due to pagination."""
         if entities is None:
-            entities = self.get_overlay_entities()
+            entities = self._get_overlay_entities()
 
-        page_size = len(self.get_overlay_icon_rects())
+        page_size = len(self._get_overlay_icon_rects())
         if page_size == 0:
             return []
 
-        page = self.get_overlay_page(entities)
+        page = self._get_overlay_page(entities)
         start = page * page_size
         return entities[start:start + page_size]
 
-    def position_overlay_page_buttons(self):
+    def _position_overlay_page_buttons(self):
+        """Position the pagination controls based on the current overlay."""
         if self.is_decorating:
             self.overlay_page_prev_button.rect.center = self.decoration_depot_overlay.bottomleft
             self.overlay_page_next_button.rect.center = self.decoration_depot_overlay.bottomright
-            return
         elif self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             self.overlay_page_prev_button.rect.topleft = self.warehouse_overlay.bottomleft
             self.overlay_page_next_button.rect.topright = self.warehouse_overlay.bottomright
-            return
         elif self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             self.overlay_page_prev_button.rect.topleft = (
                 self.dossier_page.left,
@@ -906,26 +832,26 @@ class PortMenu(Menu):
                 self.dossier_page.right,
                 self.dossier_page.bottom
             )
-            return
-        else:
-            return
 
-    def refresh_overlay_page_buttons(self):
-        entities = self.get_overlay_entities()
-        page_count = self.get_overlay_page_count(entities)
-        page = self.get_overlay_page(entities)
-        self.position_overlay_page_buttons()
+    def _refresh_overlay_page_buttons(self):
+        """Refresh the pagination controls for the current overlay."""
+        entities = self._get_overlay_entities()
+        page_count = self._get_overlay_page_count(entities)
+        page = self._get_overlay_page(entities)
+        self._position_overlay_page_buttons()
         self.overlay_page_prev_button.active = page_count > 1 and page > 0
         self.overlay_page_next_button.active = page_count > 1 and page < page_count - 1
 
-    def change_overlay_page(self, delta):
-        entities = self.get_overlay_entities()
-        page_count = self.get_overlay_page_count(entities)
-        page = self.get_overlay_page(entities)
-        self.overlay_pages[self.get_overlay_page_key()] = min(page_count - 1, max(0, page + delta))
-        self.refresh_overlay_page_buttons()
+    def _change_overlay_page(self, delta: int):
+        """Increment or decreate the page of the current overlay."""
+        entities = self._get_overlay_entities()
+        page_count = self._get_overlay_page_count(entities)
+        page = self._get_overlay_page(entities)
+        self.overlay_pages[self._get_overlay_page_key()] = min(page_count - 1, max(0, page + delta))
+        self._refresh_overlay_page_buttons()
 
-    def update_no_overlay(self, events):
+    def _update_no_overlay(self, events: list[pygame.Event]):
+        """Update when there is no overlay."""
         for quest in self.menu_manager.quest_manager.started_quests.values():
             quest.completed = quest.completed or quest.completion_criteria(self.menu_manager)
 
@@ -933,16 +859,16 @@ class PortMenu(Menu):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.menu_manager.quest_manager.selected_quest is not None:
                     continue
-                if event.button == 1 and self.can_start_no_overlay_camera_drag(event.pos):
+                if event.button == 1 and self._can_start_no_overlay_camera_drag(event.pos):
                     self.camera_dragging = True
                     continue
 
             if event.type == pygame.MOUSEMOTION:
-                if self.update_camera_drag(event):
+                if self._update_camera_drag(event):
                     continue
                 if self.menu_manager.quest_manager.selected_quest is not None:
                     continue
-                buttons = [
+                buttons: list[Button] = [
                     self.open_select_sortie_menu_button,
                     self.open_depot_overlay_button,
                     self.open_shipyard_overlay_button,
@@ -959,9 +885,9 @@ class PortMenu(Menu):
                 if event.button == 1 and self.camera_dragging:
                     self.camera_dragging = False
                     continue
-
                 click = False
 
+                # Quest controls.
                 selected_quest = self.menu_manager.quest_manager.selected_quest
                 if selected_quest is not None:
                     selected_quest = self.menu_manager.quest_manager.selected_quest
@@ -973,8 +899,9 @@ class PortMenu(Menu):
                             DataFiles.save_file["quests"][selected_quest.quest_id] = self.menu_manager.quest_manager.STATUS_ACTIVE
                         self.menu_manager.quest_manager.selected_quest = None
                     continue
-                
-                buttons = [
+
+                # Button interactions.
+                buttons: list[RectangularButton] = [
                     self.open_select_sortie_menu_button,
                     self.open_depot_overlay_button,
                     self.open_shipyard_overlay_button,
@@ -1006,17 +933,24 @@ class PortMenu(Menu):
                         self.hovered_shipgirl = None
                     continue
 
+                # Shipgirl interactions.
                 for shipgirl in self.menu_manager.available_shipgirls:
                     if shipgirl.rect.collidepoint(event.pos):
                         DataFiles.sfx["click"].play()
                         self.hovered_shipgirl = shipgirl
                         if self.hovered_shipgirl.interacting_decoration is None:
                             self.hovered_shipgirl.sprite.set_animation(Live2D.BOUNCE_ANIMATION)
-                        self.position_shipgirl_dialogue_options()
+                        self._position_shipgirl_dialogue_options()
                         for option in self.shipgirl_dialogue_options:
                             option.active = True
 
-    def exit_overlay(self, mouseup_event):
+    def _exit_overlay(self, mouseup_event: pygame.Event) -> bool:
+        """Logic for exiting the current overlay.
+        
+        To exit an overlay, the player must click on space not occupied by the overlay,
+        which can include the overlay itself and pagination controls. Hidden overlays
+        or pagination controls do not prevent exiting the overlay.
+        """
         if (
             self.overlay_page_prev_button.active
             and self.overlay_page_prev_button.rect.collidepoint(mouseup_event.pos)
@@ -1033,20 +967,23 @@ class PortMenu(Menu):
             right_overlay = self.clipboard_bg
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
             left_overlay = self.dossier_bg
+
+            # Check collision with filters, as they extend slightly beyond the left overlay.
             entity_filters = getattr(self, f"{self.current_overlay}_filters")
             filter_rects = [filter_rect for _, filter_rect in zip(entity_filters, self.dossier_tabs)]
             if filter_rects[0].unionall(filter_rects[1:]).collidepoint(mouseup_event.pos):
                 return False
             right_overlay = self.blueprint_page
+            # Check collision with action button, as it extends slightly beyond the right overlay.
             if self.overlay_selected_entity is not None:
-                action_button = self.get_current_overlay_action_button()
+                action_button = self._get_current_overlay_action_button()
                 if (
                     action_button is not None
                     and action_button.active
                     and action_button.rect.collidepoint(mouseup_event.pos)
                 ):
                     return False
-
+        # Check collisions with the basic left and right overlays.
         if left_overlay.collidepoint(mouseup_event.pos):
             return False
         if (
@@ -1057,50 +994,57 @@ class PortMenu(Menu):
 
         self.current_overlay = self.NO_OVERLAY
         self.overlay_selected_entity = None
-        self.refresh_overlay_action_buttons()
+        self._refresh_overlay_action_buttons()
         self.overlay_page_prev_button.active = False
         self.overlay_page_next_button.active = False
         self.overlay_selected_filter = 0
         return True
 
-    def select_filter(self, mouseup_event):
+    def _select_filter(self, mouseup_event: pygame.Event):
+        "Select a filter, based on the current overlay."
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             return
         
         entity_filters = getattr(self, f"{self.current_overlay}_filters")
-        for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
+        for i, (_, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
             if rect.collidepoint(mouseup_event.pos):
                 DataFiles.sfx["click"].play()
                 self.overlay_selected_filter = i
                 self.overlay_pages[self.current_overlay] = 0
-                self.refresh_overlay_page_buttons()
+                self._refresh_overlay_page_buttons()
 
-    def select_entity(self, mouseup_event):
-        entities = self.get_visible_overlay_entities()
-        rects = self.get_overlay_icon_rects()
+    def _select_entity(self, mouseup_event: pygame.Event):
+        "Select an entity, based on the current overlay."
+        entities = self._get_visible_overlay_entities()
+        rects = self._get_overlay_icon_rects()
 
         for entity, rect in zip(entities, rects):
             if rect.collidepoint(mouseup_event.pos):
                 DataFiles.sfx["click"].play()
                 self.overlay_selected_entity = entity
 
+                # Set these two flags for quests.
                 if self.current_overlay in [self.DEPOT, self.INTEL_CENTER]:
                     setattr(self, f"visited_{self.current_overlay}", True)
 
-                self.refresh_overlay_action_buttons()
+                self._refresh_overlay_action_buttons()
 
-    def draw_overlay_page_buttons(self, surface, font_registry):
-        self.refresh_overlay_page_buttons()
-        if self.get_overlay_page_count() <= 1:
+    def _draw_overlay_page_buttons(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the pagination controls for the current overlay."""
+        self._refresh_overlay_page_buttons()
+        if self._get_overlay_page_count() <= 1:
             return
 
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
+            # The dossier-themed overlays have custom button rendering.
             return
 
         self.overlay_page_prev_button.draw(surface, font_registry)
         self.overlay_page_next_button.draw(surface, font_registry)
 
-    def draw_dossier_page(self, surface):
+    def _draw_dossier_page(self, surface: pygame.Surface):
+        """Draw the dossier page and next page control button, if active."""
+        # Draw the dossier page, accounting for whether the pagination controls are active.
         page_turn_size = self.overlay_page_next_button.rect.width
         prev_fold_hovered = self.overlay_page_prev_button.hovered
         prev_fold_size = page_turn_size if prev_fold_hovered else page_turn_size - Box.PADDING
@@ -1136,6 +1080,7 @@ class PortMenu(Menu):
             page_polygon.append((self.dossier_page.left, self.dossier_page.top + prev_fold_size))
         pygame.draw.polygon(surface, Color.DOSSIER_PAGE, page_polygon)
 
+        # Draw the next page button.
         if self.overlay_page_next_button.active:
             pygame.draw.polygon(
                 surface,
@@ -1156,7 +1101,8 @@ class PortMenu(Menu):
             )
             pygame.draw.line(surface, Color.DOSSIER_RULE, fold_left, fold_tip)
 
-    def draw_dossier_prev_page_fold(self, surface):
+    def _draw_dossier_prev_page_fold(self, surface: pygame.Surface):
+        """Draw the prev page control button for the dossier page overlay."""
         if not self.overlay_page_prev_button.active:
             return
 
@@ -1172,7 +1118,7 @@ class PortMenu(Menu):
         fold_top = pygame.Vector2(self.dossier_page.left + fold_size, self.dossier_page.top)
         fold_left = pygame.Vector2(self.dossier_page.left, self.dossier_page.top + fold_size)
         page_topleft = pygame.Vector2(self.dossier_page.topleft)
-        fold_height = 2*Box.PADDING
+        fold_height = 2 * Box.PADDING
         fold_polygon = [
             fold_top - pygame.Vector2(0, fold_height),
             fold_top,
@@ -1193,7 +1139,14 @@ class PortMenu(Menu):
             width=crease_width,
         )
 
-    def draw_dossier_document_text(self, surface, font_registry, entity_filters, entities):
+    def _draw_dossier_document_text(
+        self,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        entity_filters: list[str],
+        entities: list[str],
+    ):
+        """Draw the dossier document text, like the header and page number."""
         font = font_registry["big_pixel"]
         section = entity_filters[self.overlay_selected_filter]
         section_text = f"section: {section}"
@@ -1217,19 +1170,19 @@ class PortMenu(Menu):
         font.render(
             surface,
             self.DOSSIER_TITLES[self.current_overlay],
-            (self.dossier_header.left, self.dossier_header.bottom - 2*font.font_height),
+            (self.dossier_header.left, self.dossier_header.bottom - 2 * font.font_height),
             Color.DOSSIER_INK,
             2,
         )
         pygame.draw.line(
             surface,
             Color.DOSSIER_RULE,
-            (self.dossier_grid.left, self.dossier_grid.top - Box.PADDING/2),
-            (self.dossier_grid.right, self.dossier_grid.top - Box.PADDING/2),
+            (self.dossier_grid.left, self.dossier_grid.top - Box.PADDING / 2),
+            (self.dossier_grid.right, self.dossier_grid.top - Box.PADDING / 2),
         )
 
-        page = self.get_overlay_page() + 1
-        page_count = self.get_overlay_page_count()
+        page = self._get_overlay_page() + 1
+        page_count = self._get_overlay_page_count()
         font.render(
             surface,
             f"sheet {page:02d} of {page_count:02d}",
@@ -1249,7 +1202,9 @@ class PortMenu(Menu):
                 style="center",
             )
 
-    def draw_dossier_overlay(self, surface, font_registry):
+    def _draw_dossier_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the dossier overlay."""
+        # Draw the dossier tabs.
         entity_filters = getattr(self, f"{self.current_overlay}_filters")
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
         for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
@@ -1267,13 +1222,12 @@ class PortMenu(Menu):
             pygame.draw.polygon(surface, color, tab_polygon)
             icon = DataFiles.sprites["user_interface"][cat]
             icon_rect = icon.get_rect()
-            icon_rect.centerx = rect.left + rect.height/2
-            icon_rect.centery = rect.top + rect.height/2
+            icon_rect.centerx = rect.left + rect.height / 2
+            icon_rect.centery = rect.top + rect.height / 2
             surface.blit(icon, icon_rect)
 
-        entities = self.get_visible_overlay_entities()
-        self.refresh_overlay_page_buttons()
-        misaligned_pages = [
+        # Misaligned pages added depth.
+        misaligned_pages = [ # TODO maigc numbers
             (-5, pygame.Vector2(-8, 6), (224, 218, 201)),
             (4, pygame.Vector2(6, -4), (235, 229, 212)),
             (-2, pygame.Vector2(3, 5), (244, 239, 224)),
@@ -1284,7 +1238,7 @@ class PortMenu(Menu):
                 color,
                 Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
             )
-
+        # Sticky tab props on the left-edge of the dossier.
         sticky_tabs = [
             (-7, 78, "yellow"),
             (-5, 159, "green"),
@@ -1297,12 +1251,15 @@ class PortMenu(Menu):
             sticky_tab_rect.centery = self.dossier_page.top + sticky_tab_offsety
             surface.blit(sticky_tab_sprite, sticky_tab_rect)
 
-        self.draw_dossier_page(surface)
-        self.draw_dossier_document_text(surface, font_registry, entity_filters, entities)
+        entities = self._get_visible_overlay_entities()
+        self._refresh_overlay_page_buttons()
+        self._draw_dossier_page(surface)
+        self._draw_dossier_document_text(surface, font_registry, entity_filters, entities)
 
+        # The red circle marks the currently selected entity on the dossier.
         red_circle_sprite = DataFiles.sprites["props"]["red_circle"]
         red_circle_rect = red_circle_sprite.get_rect()
-        red_circle_rect.topleft = (-2*Box.WIDTH, -2*Box.HEIGHT)
+        red_circle_rect.topleft = (-2 * Box.WIDTH, -2 * Box.HEIGHT)
         for entity, rect in zip(entities, self.dossier_icons):
             card_shadow_rect = rect.move(2, 2)
             pygame.draw.rect(surface, Color.DOSSIER_CARD_SHADOW, card_shadow_rect)
@@ -1316,12 +1273,13 @@ class PortMenu(Menu):
             pygame.draw.rect(surface, Color.DOSSIER_INK, rect, width=Box.OUTLINE_WIDTH)
         surface.blit(red_circle_sprite, red_circle_rect)
 
+        # Props
         paperclip_sprite = DataFiles.sprites["props"]["diagonal_paperclip"]
         paperclip_rect = paperclip_sprite.get_rect()
-        paperclip_rect.left = self.dossier_bg.left - 16 # TODO paper clip offset magic number
+        paperclip_rect.left = self.dossier_bg.left - 16 # TODO magic number
         paperclip_rect.top = self.dossier_bg.top - 8
         surface.blit(paperclip_sprite, paperclip_rect)
-        self.draw_dossier_prev_page_fold(surface)
+        self._draw_dossier_prev_page_fold(surface)
 
         classified_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["classified"], 1.5)
         classified_rect = classified_sprite.get_rect()
@@ -1332,13 +1290,16 @@ class PortMenu(Menu):
         coffee_ring_rect = coffee_ring_sprite.get_rect()
         coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
         surface.blit(coffee_ring_sprite, coffee_ring_rect)
-        self.draw_overlay_page_buttons(surface, font_registry)
 
-    def draw_sticky_note_overlay(self, surface, font_registry):
-        action_button = self.get_current_overlay_action_button()
+        self._draw_overlay_page_buttons(surface, font_registry)
+
+    def _draw_sticky_note_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the sticky note action button."""
+        action_button = self._get_current_overlay_action_button()
         if action_button is None or not action_button.active:
             return
-
+        # Misaligned pages add depth.
+        # TODO magic number
         misaligned_pages = [
             (4, pygame.Vector2(-5, 4), Color.STICKY_NOTE_BACK),
             (-5, pygame.Vector2(5, -3), (239, 207, 87)),
@@ -1353,7 +1314,8 @@ class PortMenu(Menu):
         pygame.draw.rect(surface, Color.STICKY_NOTE, self.sticky_note_page)
         action_button.draw(surface, font_registry)
 
-    def get_blueprint_document_data(self):
+    def _get_blueprint_document_data(self) -> dict:
+        """Get the data that is rendered onto the blueprint for the current overlay."""
         display_name = self.overlay_selected_entity.replace("_", " ")
 
         if self.current_overlay == self.INTEL_CENTER:
@@ -1407,7 +1369,7 @@ class PortMenu(Menu):
                 "name": display_name,
                 "subtitle": (
                     f"{selected_shipgirl['faction']} - "
-                    f"{selected_shipgirl['class']}-class {self.HULL_TYPE_MAPPING[hull_type]}"
+                    f"{selected_shipgirl['class']}-class {Equipment.HULL_TYPE_MAPPING[hull_type]}"
                 ),
                 "specifications_header": "projected specifications",
                 "materials_header": "construction requisition",
@@ -1449,7 +1411,7 @@ class PortMenu(Menu):
         approved_hulls = selected_equipment.get("equippable_by", "AUX")
         return {
             "name": display_name,
-            "subtitle": f"{display_type} - {self.HULL_TYPE_MAPPING[approved_hulls]} fitment",
+            "subtitle": f"{display_type} - {Equipment.HULL_TYPE_MAPPING[approved_hulls]} fitment",
             "specifications_header": "technical specifications",
             "materials_header": "bill of materials",
             "empty_materials": "no components specified",
@@ -1467,7 +1429,14 @@ class PortMenu(Menu):
             ],
         }
 
-    def draw_blueprint_corner_brackets(self, surface, rect, color, length=8):
+    def _draw_blueprint_corner_brackets(
+        self,
+        surface: pygame.Surface,
+        rect: pygame.Rect,
+        color: tuple[int, int, int],
+        length: int = 8,
+    ):
+        """Corner bracket rendering helper for the blueprint overlay."""
         corners = [
             (rect.topleft, (1, 1)),
             (rect.topright, (-1, 1)),
@@ -1477,10 +1446,12 @@ class PortMenu(Menu):
         for corner, direction in corners:
             corner = pygame.Vector2(corner)
             dx, dy = direction
-            pygame.draw.line(surface, color, corner, corner + pygame.Vector2(dx*length, 0))
-            pygame.draw.line(surface, color, corner, corner + pygame.Vector2(0, dy*length))
+            pygame.draw.line(surface, color, corner, corner + pygame.Vector2(dx * length, 0))
+            pygame.draw.line(surface, color, corner, corner + pygame.Vector2(0, dy * length))
 
-    def draw_blueprint_page(self, surface):
+    def _draw_blueprint_page(self, surface: pygame.Surface):
+        """Draw the blueprint page background."""
+        # Misaligned pages add depth.
         misaligned_pages = [
             (-5, pygame.Vector2(-7, 6), Color.BLUEPRINT_PAGE_BACK),
             (4, pygame.Vector2(7, -4), (34, 62, 125)),
@@ -1494,6 +1465,7 @@ class PortMenu(Menu):
             )
         pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
 
+        # Grid lines
         grid_step = 2*Box.PADDING
         for index, x in enumerate(range(
             self.blueprint_page.left + grid_step + Box.PADDING,
@@ -1510,10 +1482,13 @@ class PortMenu(Menu):
             color = Color.BLUEPRINT_GRID_MAJOR if index % 4 == 0 else Color.BLUEPRINT_GRID_MINOR
             pygame.draw.line(surface, color, (self.blueprint_page.left, y), (self.blueprint_page.right, y))
 
+        # Inset border.
         inset_rect = self.blueprint_page.inflate(-2*Box.PADDING, -2*Box.PADDING)
         pygame.draw.rect(surface, Color.BLUEPRINT_GRID_MAJOR, inset_rect, width=Box.OUTLINE_WIDTH)
 
-    def draw_blueprint_title_and_profile(self, surface, font_registry, document):
+    def _draw_blueprint_title_and_profile(self, surface: pygame.Surface, font_registry: dict[str, Font], document: dict):
+        """Draw helper to render the header and profile icon for the blueprint overlay."""
+        # Header text.
         title_left = self.blueprint_page.left + 2*Box.PADDING
         title_top = self.blueprint_page.top + 12
         title_safe_right = self.blueprint_page.right - Box.WIDTH - Box.PADDING
@@ -1529,6 +1504,8 @@ class PortMenu(Menu):
             Color.BLUEPRINT_INK_MUTED,
             1,
         )
+
+        # Profile icon and markings.
         profile_rect = get_rect(
             width=Box.WIDTH + Box.PADDING,
             height=Box.HEIGHT + Box.PADDING,
@@ -1547,7 +1524,7 @@ class PortMenu(Menu):
             (profile_rect.centerx, profile_rect.top - Box.PADDING),
             (profile_rect.centerx, profile_rect.bottom + Box.PADDING),
         )
-        self.draw_blueprint_corner_brackets(
+        self._draw_blueprint_corner_brackets(
             surface,
             profile_rect,
             Color.BLUEPRINT_SLOT_BORDER_GLOW,
@@ -1557,12 +1534,20 @@ class PortMenu(Menu):
         profile_sprite_rect = profile_sprite.get_rect(center=profile_rect.center)
         surface.blit(profile_sprite, profile_sprite_rect)
 
-    def draw_blueprint_section_header(self, surface, font_registry, number, label, top):
+    def _draw_blueprint_section_header(
+        self,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        number: str,
+        label: str,
+        top: int,
+    ):
+        """Helper to render the section header for a blueprint section."""
         header_font = font_registry["big_pixel"]
         section_rect = get_rect(
-            width=self.blueprint_page.width - 4*Box.PADDING,
+            width=self.blueprint_page.width - 4 * Box.PADDING,
             height=header_font.font_height + Box.PADDING,
-            left=self.blueprint_page.left + 2*Box.PADDING,
+            left=self.blueprint_page.left + 2 * Box.PADDING,
             top=top,
         )
         pygame.draw.rect(surface, Color.BLUEPRINT_TITLE_BLOCK, section_rect)
@@ -1587,11 +1572,22 @@ class PortMenu(Menu):
         )
         return section_rect
 
-    def draw_blueprint_specifications(self, surface, font_registry, specifications, top):
+    def _draw_blueprint_specifications(
+        self,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        specifications: list[tuple],
+        top: int
+    ):
+        """Helper to render the specifications section of the blueprint.
+        
+        The specifications section of the blueprint is a two-column section which
+        displays the stats of the selected entity with icon and footer text.
+        """
         specifications = [specification for specification in specifications if specification[2] is not None]
-        content_left = self.blueprint_page.left + 2*Box.PADDING
+        content_left = self.blueprint_page.left + 2 * Box.PADDING
         column_gap = Box.PADDING
-        cell_width = (self.blueprint_page.width - 4*Box.PADDING - column_gap) / 2
+        cell_width = (self.blueprint_page.width - 4 * Box.PADDING - column_gap) / 2
         cell_height = 32
 
         for index, (icon_name, label, value) in enumerate(specifications):
@@ -1600,8 +1596,8 @@ class PortMenu(Menu):
             cell_rect = get_rect(
                 width=cell_width,
                 height=cell_height,
-                left=content_left + column*(cell_width + column_gap),
-                top=top + row*cell_height,
+                left=content_left + column * (cell_width + column_gap),
+                top=top + row * cell_height,
             )
             icon = DataFiles.sprites["user_interface"][icon_name]
             surface.blit(icon, icon.get_rect(midleft=cell_rect.midleft))
@@ -1623,10 +1619,26 @@ class PortMenu(Menu):
                 1,
             )
 
-    def draw_blueprint_materials(self, surface, font_registry, materials, empty_text, top):
+    def _draw_blueprint_materials(
+        self,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        materials: list[tuple],
+        empty_text: str,
+        top: int
+    ):
+        """Helper to render the materials section of the blueprint.
+        
+        The materials section displays a list of materials in two rows of three.
+        If no materials are inputted, then a default empty section text is rendered
+        instead.
+        """
         font = font_registry["big_pixel"]
-        materials = materials[:6]
+        num_rows = 2
+        num_items_in_row = 3
+        materials = materials[: num_rows * num_items_in_row]
         if not materials:
+            # No materials, render a default empty section text.
             font.render(
                 surface,
                 empty_text,
@@ -1639,20 +1651,20 @@ class PortMenu(Menu):
 
         slot_width = Box.WIDTH + Box.PADDING
         slot_height = Box.HEIGHT + Box.PADDING
-        slot_gap = 2*Box.PADDING
-        row_gap = 1.5*Box.PADDING
-        for row in range(2):
-            row_materials = materials[row*3:(row+1)*3]
+        slot_gap = 2 * Box.PADDING
+        row_gap = 1.5 * Box.PADDING
+        for row in range(num_rows):
+            row_materials = materials[row * num_items_in_row : (row + 1) * num_items_in_row]
             if not row_materials:
                 continue
-            row_width = len(row_materials)*slot_width + (len(row_materials)-1)*slot_gap
-            row_left = self.blueprint_page.centerx - row_width/2
+            row_width = len(row_materials) * slot_width + (len(row_materials) - 1) * slot_gap
+            row_left = self.blueprint_page.centerx - row_width / 2
             for column, (material, quantity, sufficient) in enumerate(row_materials):
                 slot_rect = get_rect(
                     width=slot_width,
                     height=slot_height,
-                    left=row_left + column*(slot_width + slot_gap),
-                    top=top + row*(slot_height + row_gap),
+                    left=row_left + column * (slot_width + slot_gap),
+                    top=top + row * (slot_height + row_gap),
                 )
                 icon_frame = get_rect(
                     width=Box.WIDTH + Box.PADDING,
@@ -1660,7 +1672,7 @@ class PortMenu(Menu):
                     centerx=slot_rect.centerx,
                     top=slot_rect.top,
                 )
-                self.draw_blueprint_corner_brackets(
+                self._draw_blueprint_corner_brackets(
                     surface,
                     icon_frame,
                     Color.BLUEPRINT_INK_MUTED,
@@ -1675,7 +1687,7 @@ class PortMenu(Menu):
                     plate_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
                     text_color = Color.BLUEPRINT_SLOT_BORDER_GLOW
                 quantity_plate = get_rect(
-                    width=64,
+                    width=Box.WIDTH,
                     height=font.font_height + Box.PADDING,
                     centerx=slot_rect.centerx,
                     bottom=slot_rect.bottom,
@@ -1691,14 +1703,16 @@ class PortMenu(Menu):
                     style="center",
                 )
 
-    def draw_blueprint_tools(self, surface):
+    def _draw_blueprint_tools(self, surface: pygame.Surface):
+        """Render the props around the blueprint."""
+        # Props are not drawn for intel center, since they are not present.
         if self.current_overlay == self.INTEL_CENTER:
             return
         
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
-        pencil_rect.right = self.blueprint_page.right + Box.WIDTH/4 # TODO alignment magic number
-        pencil_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
+        pencil_rect.right = self.blueprint_page.right + Box.WIDTH / 4
+        pencil_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT / 2
 
         ruler_sprite = DataFiles.sprites["props"]["ruler"]
         ruler_rect = ruler_sprite.get_rect()
@@ -1708,54 +1722,58 @@ class PortMenu(Menu):
 
         compass_sprite = DataFiles.sprites["props"]["compass"]
         compass_rect = compass_sprite.get_rect()
-        compass_rect.left = self.blueprint_page.left - Box.WIDTH/4 # TODO alignment magic number
-        compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT/2
+        compass_rect.left = self.blueprint_page.left - Box.WIDTH / 4
+        compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT / 2
         surface.blit(compass_sprite, compass_rect)
 
-    def draw_blueprint_overlay(self, surface, font_registry):
+    def _draw_blueprint_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Render the full blueprint overlay."""
         if self.overlay_selected_entity is None:
             return
 
-        document = self.get_blueprint_document_data()
-        self.draw_blueprint_page(surface)
-        self.draw_blueprint_title_and_profile(surface, font_registry, document)
+        document = self._get_blueprint_document_data()
+        self._draw_blueprint_page(surface)
+        self._draw_blueprint_title_and_profile(surface, font_registry, document)
 
-        specifications_header_top = self.blueprint_page.top + 2*Box.HEIGHT + Box.PADDING
-        specifications_header_rect = self.draw_blueprint_section_header(
+        specifications_header_top = self.blueprint_page.top + 2 * Box.HEIGHT + Box.PADDING
+        specifications_header_rect = self._draw_blueprint_section_header(
             surface,
             font_registry,
             "01",
             document["specifications_header"],
             specifications_header_top,
         )
-        self.draw_blueprint_specifications(
+        self._draw_blueprint_specifications(
             surface,
             font_registry,
             document["specifications"],
-            specifications_header_rect.bottom + Box.PADDING/2,
+            specifications_header_rect.bottom + Box.PADDING / 2,
         )
-        materials_header_top = self.blueprint_page.top + 4.5*Box.HEIGHT + Box.PADDING
-        materials_header_rect = self.draw_blueprint_section_header(
+
+        materials_header_top = self.blueprint_page.top + 4.5 * Box.HEIGHT + Box.PADDING
+        materials_header_rect = self._draw_blueprint_section_header(
             surface,
             font_registry,
             "02",
             document["materials_header"],
             materials_header_top,
         )
-        self.draw_blueprint_materials(
+        self._draw_blueprint_materials(
             surface,
             font_registry,
             document["materials"],
             document["empty_materials"],
             materials_header_rect.bottom + Box.PADDING,
         )
-        self.draw_blueprint_tools(surface)
-        self.draw_sticky_note_overlay(surface, font_registry)
 
-    def draw_warehouse_overlay(self, surface, font_registry):
+        self._draw_blueprint_tools(surface)
+        self._draw_sticky_note_overlay(surface, font_registry)
+
+    def _draw_warehouse_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Render the full warehouse overlay."""
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.warehouse_overlay)
 
-        entities = self.get_visible_overlay_entities()
+        entities = self._get_visible_overlay_entities()
         for entity, rect in zip(entities, self.warehouse_icons):
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
             image = DataFiles.get_entity_sprite(entity)
@@ -1764,6 +1782,7 @@ class PortMenu(Menu):
             surface.blit(image, image_rect)
             pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, image_rect, width=2*Box.OUTLINE_WIDTH)
 
+        # Cargo box props.
         cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
         for cargo_box_pos in [
@@ -1777,6 +1796,7 @@ class PortMenu(Menu):
         ]:
             cargo_box_rect.center = cargo_box_pos
             surface.blit(cargo_box_sprite, cargo_box_rect)
+        # Animated manjuu forklift prop.
         forklift_sprite = pygame.transform.scale_by(
             pygame.transform.flip(
                 DataFiles.sprites["props"]["forklift"],
@@ -1800,7 +1820,7 @@ class PortMenu(Menu):
         ]:
             cargo_box_rect.center = cargo_box_pos
             surface.blit(cargo_box_sprite, cargo_box_rect)
-
+        # Rope props hanging from warehouse ceiling.
         warehouse_decoration_top = self.warehouse_overlay.top - Box.WIDTH/8
         corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
         corner_rope_rect = corner_rope_sprite.get_rect()
@@ -1832,6 +1852,7 @@ class PortMenu(Menu):
         rope_hook_rect.top = warehouse_decoration_top
         surface.blit(rope_hook_sprite, rope_hook_rect)
 
+        # Sign is used to communicate pagination.
         sign_rect = get_rect(
             width=Box.WIDTH,
             height=Box.HEIGHT,
@@ -1849,13 +1870,14 @@ class PortMenu(Menu):
         )
         font.render(
             surface,
-            str(self.get_overlay_page() + 1),
+            str(self._get_overlay_page() + 1),
             (sign_rect.centerx, sign_rect.centery + font.font_height/2),
             Color.BLACK,
             2,
             style="center"
         )
 
+        # Lightbulb prop hanging from warehouse ceiling.
         lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
         lightbulb_rect = lightbulb_sprite.get_rect()
         lightbulb_rect.left = self.warehouse_overlay.left + Box.WIDTH
@@ -1867,30 +1889,16 @@ class PortMenu(Menu):
         lightbulb_light_rect.centerx = lightbulb_rect.centerx
         lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT/4
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
-        self.draw_overlay_page_buttons(surface, font_registry)
+        self._draw_overlay_page_buttons(surface, font_registry)
 
-    @staticmethod
-    def draw_dashed_rect(surface, color, rect, dash_length=8, gap_length=4, width=2):
-        right = rect.right - 1
-        bottom = rect.bottom - 1
-        dash_step = dash_length + gap_length
-
-        for x in range(rect.left, right + 1, dash_step):
-            dash_right = min(x + dash_length, right)
-            pygame.draw.line(surface, color, (x, rect.top), (dash_right, rect.top), width)
-            pygame.draw.line(surface, color, (x, bottom), (dash_right, bottom), width)
-
-        for y in range(rect.top, bottom + 1, dash_step):
-            dash_bottom = min(y + dash_length, bottom)
-            pygame.draw.line(surface, color, (rect.left, y), (rect.left, dash_bottom), width)
-            pygame.draw.line(surface, color, (right, y), (right, dash_bottom), width)
-
-    def draw_depot_stock_record(self, surface, font_registry):
+    def _draw_depot_stock_record(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the depot stock record overlay."""
         font = font_registry["big_pixel"]
         content_left = self.clipboard_page.left + Box.PADDING
-        content_width = self.clipboard_page.width - 2*Box.PADDING
-        content_top = self.clipboard_page.top + Box.HEIGHT/4 + Box.PADDING
+        content_width = self.clipboard_page.width - 2 * Box.PADDING
+        content_top = self.clipboard_page.top + Box.HEIGHT / 4 + Box.PADDING
 
+        # Header.
         font.render(
             surface,
             "warehouse stock record",
@@ -1908,6 +1916,7 @@ class PortMenu(Menu):
             width=Box.OUTLINE_WIDTH
         )
 
+        # Table with icon name, icon, and quantity.
         display_name = self.overlay_selected_entity.replace("_", " ")
         name_top = header_rule_y + Box.PADDING
         name_height = font.get_height(display_name, 2, content_width)
@@ -1984,6 +1993,7 @@ class PortMenu(Menu):
             style="center"
         )
 
+        # Description section.
         description_label_top = identity_rect.bottom + Box.PADDING
         font.render(
             surface,
@@ -2023,12 +2033,14 @@ class PortMenu(Menu):
             box_width=content_width
         )
 
-    def draw_decoration_purchase_form(self, surface, font_registry):
+    def _draw_decoration_purchase_form(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Render the decoration purchase form."""
         font = font_registry["big_pixel"]
         content_left = self.clipboard_page.left + Box.PADDING
         content_width = self.clipboard_page.width - 2*Box.PADDING
         content_top = self.clipboard_page.top + Box.HEIGHT/4 + Box.PADDING
 
+        # Header.
         font.render(
             surface,
             "decoration purchase form",
@@ -2046,6 +2058,7 @@ class PortMenu(Menu):
             width=Box.OUTLINE_WIDTH
         )
 
+        # Table with item name, icon, quantity, and price.
         display_name = self.overlay_selected_entity.replace("_", " ")
         name_top = header_rule_y + Box.PADDING
         name_height = font.get_height(display_name, 2, content_width)
@@ -2096,7 +2109,13 @@ class PortMenu(Menu):
                 width=Box.OUTLINE_WIDTH
             )
 
-        owned_count = self.get_owned_decoration_count(self.overlay_selected_entity)
+        selected_decoration = self.overlay_selected_entity
+        owned_count = DataFiles.save_file["decoration_depot"].get(selected_decoration, 0)
+        for decoration_data in DataFiles.save_file["decorations"]:
+            placed_decoration, _, _ = Decorations.unpack_decoration_data(decoration_data)
+            if placed_decoration == selected_decoration:
+                owned_count += 1
+
         for field_rect, label, value, footer in [
             (quantity_rect, "qty", owned_count, "owned"),
             (price_rect, "price", self.DECORATION_PRICE, "coin"),
@@ -2134,6 +2153,7 @@ class PortMenu(Menu):
                 style="center"
             )
 
+        # Description section.
         description_label_top = product_rect.bottom + Box.PADDING
         font.render(
             surface,
@@ -2163,6 +2183,7 @@ class PortMenu(Menu):
             box_width=content_width
         )
 
+        # Signature action button section.
         signature_rect = self.decoration_signature_button.rect
         approval_label_pos = (
             signature_rect.left,
@@ -2185,11 +2206,13 @@ class PortMenu(Menu):
             (Color.RED if self.decoration_signature_button.hovered else Color.BLACK)
             if has_funds else Color.CLIPBOARD_CLIP
         )
-        self.draw_dashed_rect(
+        draw_dashed_rect(
             surface,
             stamp_box_color,
             signature_rect,
-            width=Box.OUTLINE_WIDTH
+            8,
+            4,
+            Box.OUTLINE_WIDTH
         )
         font.render(
             surface,
@@ -2200,6 +2223,7 @@ class PortMenu(Menu):
             style="center"
         )
 
+        # Coin counter prop.
         coin_count = DataFiles.save_file["inventory"].get("decoration_coin", 0)
 
         coin_sprite = DataFiles.sprites["props"]["decoration_coin"]
@@ -2208,9 +2232,11 @@ class PortMenu(Menu):
         coin_rect.top = self.clipboard_page.top
 
         for _ in range(coin_count):
-            coin_rect.y -= 6 # TODO decoration coin height magic number
+            # TODO magic number
+            coin_rect.y -= 6
             surface.blit(coin_sprite, coin_rect)
 
+        # Stamp and stamp pattern props.
         stamp_pattern_sprite = DataFiles.sprites["props"]["stamp_pattern"]
         stamp_pattern_rect = stamp_pattern_sprite.get_rect()
         stamp_pattern_rect.center = self.decoration_stamp_animation_pos
@@ -2257,10 +2283,11 @@ class PortMenu(Menu):
                 stamp_rect.bottom = stamp_pos.y + Box.HEIGHT/2
                 surface.blit(stamp_sprite, stamp_rect)
 
-    def draw_clipboard_overlay(self, surface, font_registry):
+    def _draw_clipboard_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Render the clipboard overlay."""
         if self.overlay_selected_entity is None:
             return
-    
+        # Clipboard-themed background.
         clipboard_clip_rect = get_rect(
             width=Box.WIDTH, height=Box.HEIGHT/2,
             centerx=self.clipboard_bg.centerx,
@@ -2269,6 +2296,7 @@ class PortMenu(Menu):
 
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.clipboard_bg)
         pygame.draw.rect(surface, Color.CLIPBOARD_CLIP, clipboard_clip_rect)
+        # Misalgined pages add depth.
         misaligned_pages = [
             (-5, pygame.Vector2(-6, 5), (220, 220, 210)),
             (4, pygame.Vector2(7, -3), (233, 233, 224)),
@@ -2281,6 +2309,7 @@ class PortMenu(Menu):
                 Box.get_rotated_rect_polygon(self.clipboard_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.WHITE, self.clipboard_page)
+        # Clipboard clip prop.
         pygame.draw.lines(
             surface,
             Color.CLIPBOARD_CLIP_FRONT,
@@ -2293,31 +2322,24 @@ class PortMenu(Menu):
             ],
             width=4 # TODO magic number
         )
+        # Clipboard page content.
         if self.current_overlay == self.DEPOT:
-            self.draw_depot_stock_record(surface, font_registry)
+            self._draw_depot_stock_record(surface, font_registry)
         elif self.current_overlay == self.DECORATION_STORE:
-            self.draw_decoration_purchase_form(surface, font_registry)
-
+            self._draw_decoration_purchase_form(surface, font_registry)
+        # Pencil prop.
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
         pencil_rect.right = self.clipboard_page.right + Box.WIDTH/4 # TODO alignment magic number
         pencil_rect.bottom = self.clipboard_page.bottom + Box.HEIGHT/2
         surface.blit(pencil_sprite, pencil_rect)
 
-    def flip_decoration(self):
-        self.decoration_flipped = not self.decoration_flipped
-
-    def interacting_shipgirl_of_decoration(self, tilepos_anchor):
-        tilepos_anchor = tuple(tilepos_anchor)
-        return next(
-            (
-                shipgirl for shipgirl in self.menu_manager.available_shipgirls
-                if shipgirl.interacting_decoration == tilepos_anchor
-            ),
-            None
-        )
-
-    def position_shipgirl_at_decoration(self, shipgirl, decoration_data):
+    def _position_shipgirl_at_decoration(self, shipgirl: Shipgirl, decoration_data: tuple):
+        """Position the shipgirl relative to the decoration and set the interaction animation.
+        
+        This positioning is pre-calculated to make it appear as though the shipgirl is
+        interacting with the decoration, once the animation is applied.
+        """
         decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
         decoration_store_info = DataFiles.decoration_store[decoration]
         sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
@@ -2332,6 +2354,7 @@ class PortMenu(Menu):
         shipgirl.facing_left = flipped
 
     def restore_shipgirl_decoration_interactions(self):
+        """Restores the shipgirl decoration interaction after returning to the port menu."""
         decorations_by_anchor = {
             tuple(Decorations.unpack_decoration_data(decoration_data)[1]): decoration_data
             for decoration_data in DataFiles.save_file["decorations"]
@@ -2352,9 +2375,10 @@ class PortMenu(Menu):
                 shipgirl.pick_new_wander_target()
                 continue
 
-            self.position_shipgirl_at_decoration(shipgirl, decoration_data)
+            self._position_shipgirl_at_decoration(shipgirl, decoration_data)
 
-    def snap_shipgirl_to_interactable_decoration(self, shipgirl):
+    def _snap_shipgirl_to_interactable_decoration(self, shipgirl: Shipgirl) -> bool:
+        """Snap the shipgirl to the interactable decoration when she is dropped."""
         for decoration_data in DataFiles.save_file["decorations"]:
             decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
             decoration_store_info = DataFiles.decoration_store[decoration]
@@ -2366,10 +2390,18 @@ class PortMenu(Menu):
             if shipgirl_tilepos not in decoration_tiles:
                 continue
 
-            if self.interacting_shipgirl_of_decoration(tilepos_anchor) is not None:
+            tilepos_anchor = tuple(tilepos_anchor)
+            interacting_shipgirl = next(
+                (
+                    shipgirl for shipgirl in self.menu_manager.available_shipgirls
+                    if shipgirl.interacting_decoration == tilepos_anchor
+                ),
+                None
+            )
+            if interacting_shipgirl is not None:
                 continue
 
-            self.position_shipgirl_at_decoration(shipgirl, decoration_data)
+            self._position_shipgirl_at_decoration(shipgirl, decoration_data)
             if decoration == "bed":
                 self.shipgirl_interacted_with_bed = True
             return True
@@ -2377,20 +2409,19 @@ class PortMenu(Menu):
         shipgirl.interacting_decoration = None
         return False
 
-    def release_shipgirls_from_deleted_decoration(self, decoration_data):
-        deleted_decoration = tuple(decoration_data[1])
-        for shipgirl in self.menu_manager.available_shipgirls:
-            if shipgirl.interacting_decoration == deleted_decoration:
-                shipgirl.interacting_decoration = None
-                shipgirl.pick_new_wander_target()
-
-    def update_decorate_port_menu_overlay(self, events):
+    def _update_decorate_port_menu_overlay(self, events: list[pygame.Event]):
+        """Helper to update the port menu in decoration mode."""
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
+                # Check if the player is clicking any interactable UI components
+                # and prevent dragging actions if so.
                 if event.button != 1:
                     continue
 
-                self.refresh_overlay_page_buttons()
+                if self.toggle_decoration_mode_button.rect.collidepoint(event.pos):
+                    continue
+
+                self._refresh_overlay_page_buttons()
                 if (
                     self.overlay_page_prev_button.active
                     and self.overlay_page_prev_button.rect.collidepoint(event.pos)
@@ -2401,37 +2432,35 @@ class PortMenu(Menu):
                     continue
 
                 if self.decoration_depot_overlay.collidepoint(event.pos):
-                    entity = self.get_decoration_depot_entity_at_pos(event.pos)
-                    if entity is not None:
-                        self.select_decoration_depot_entity(event.pos, allow_delete_toggle=False)
-                        if entity == self.DELETE_DECORATION:
-                            continue
+                    selected_entity = self._select_decoration_depot_entity(event.pos, allow_delete_toggle=False)
+                    if selected_entity is not None:
+                        continue
+
+                    # Allow dragging of the decoration depot.
                     self.decoration_depot_drag_offset = pygame.Vector2(self.decoration_depot_overlay.topleft) - pygame.Vector2(event.pos)
                     continue
 
-                if (
-                    self.selected_decoration_in_depot is None
-                    and not self.toggle_decoration_mode_button.rect.collidepoint(event.pos)
-                ):
-                    if not self.deleting_decoration:
-                        for shipgirl in self.menu_manager.available_shipgirls:
-                            if shipgirl.rect.collidepoint(event.pos):
-                                self.dragged_shipgirl = shipgirl
-                                shipgirl.sprite.set_animation(Live2D.DRAG_ANIMATION)
-                                shipgirl.interacting_decoration = None
-                                break
-
-                    if self.dragged_shipgirl is None and self.can_start_decorate_camera_drag(event.pos):
-                        self.camera_dragging = True
-                        continue
-            if event.type == pygame.MOUSEMOTION:
-                if self.update_camera_drag(event):
+                if self.selected_decoration_in_depot is not None or self.deleting_decoration:
                     continue
 
-                self.toggle_decoration_mode_button.hover(event.pos)
-                self.refresh_overlay_page_buttons()
-                self.overlay_page_prev_button.hover(event.pos)
-                self.overlay_page_next_button.hover(event.pos)
+                # Allow dragging of shipirls.
+                for shipgirl in self.menu_manager.available_shipgirls:
+                    if shipgirl.rect.collidepoint(event.pos):
+                        self.dragged_shipgirl = shipgirl
+                        shipgirl.sprite.set_animation(Live2D.DRAG_ANIMATION)
+                        shipgirl.interacting_decoration = None
+                        break
+
+                if self.dragged_shipgirl is not None:
+                    continue
+
+                # Allow dragging of the background.
+                self.camera_dragging = True
+
+            if event.type == pygame.MOUSEMOTION:
+                # Resolve dragging actions if applicalbe, then update hover states.
+                if self._update_camera_drag(event):
+                    continue
 
                 if self.dragged_shipgirl is not None:
                     self.dragged_shipgirl.pos = pygame.Vector2(event.pos)
@@ -2447,30 +2476,31 @@ class PortMenu(Menu):
                         top=screen_y(0)
                     )
                     self.decoration_depot_overlay.clamp_ip(screen_rect)
+                    continue
+
+                self.toggle_decoration_mode_button.hover(event.pos)
+                self._refresh_overlay_page_buttons()
+                self.overlay_page_prev_button.hover(event.pos)
+                self.overlay_page_next_button.hover(event.pos)
+
             if event.type == pygame.MOUSEBUTTONUP:
+                # Flip decoration with right mouse button.
                 if event.button == 3 and self.selected_decoration_in_depot is not None:
                     DataFiles.sfx["click"].play()
-                    self.flip_decoration()
+                    self.decoration_flipped = not self.decoration_flipped
                     self.flipped_decoration = True
                     continue
 
                 if event.button != 1:
                     continue
 
-                self.refresh_overlay_page_buttons()
-                if (
-                    self.overlay_page_prev_button.click(event.pos)
-                    or self.overlay_page_next_button.click(event.pos)
-                ):
-                    DataFiles.sfx["click"].play()
-                    continue
-
+                # Resolve dragging actions.
                 if self.camera_dragging:
                     self.camera_dragging = False
                     continue
 
                 if self.dragged_shipgirl is not None:
-                    if not self.snap_shipgirl_to_interactable_decoration(self.dragged_shipgirl):
+                    if not self._snap_shipgirl_to_interactable_decoration(self.dragged_shipgirl):
                         self.dragged_shipgirl.interacting_decoration = None
                         self.dragged_shipgirl.pick_new_wander_target()
 
@@ -2482,6 +2512,15 @@ class PortMenu(Menu):
                     self.decoration_depot_drag_offset = None
                     continue
 
+                # Resolve click actions.
+                self._refresh_overlay_page_buttons()
+                if (
+                    self.overlay_page_prev_button.click(event.pos)
+                    or self.overlay_page_next_button.click(event.pos)
+                ):
+                    DataFiles.sfx["click"].play()
+                    continue
+
                 if self.toggle_decoration_mode_button.click(event.pos):
                     DataFiles.sfx["click"].play()
                     self.selected_decoration_in_depot = None
@@ -2489,14 +2528,22 @@ class PortMenu(Menu):
                     continue
             
                 if self.decoration_depot_overlay.collidepoint(event.pos):
-                    self.select_decoration_depot_entity(event.pos, allow_delete_toggle=True)
+                    self._select_decoration_depot_entity(event.pos, allow_delete_toggle=True)
                 elif self.deleting_decoration:
+                    # Check if the player is clicking on the footprint of any decoration.
                     clicked_tilepos = Decorations.get_isometric_tilepos(event.pos)
                     for decoration_index, decoration_data in enumerate(DataFiles.save_file["decorations"]):
                         decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
                         if clicked_tilepos in Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor):
                             DataFiles.sfx["click"].play()
-                            self.release_shipgirls_from_deleted_decoration(decoration_data)
+
+                            # Release any shipgirls interacting with this decoration.
+                            deleted_decoration = tuple(decoration_data[1])
+                            for shipgirl in self.menu_manager.available_shipgirls:
+                                if shipgirl.interacting_decoration == deleted_decoration:
+                                    shipgirl.interacting_decoration = None
+                                    shipgirl.pick_new_wander_target()
+
                             DataFiles.save_file["decorations"].pop(decoration_index)
                             DataFiles.save_file["decoration_depot"][decoration] = (
                                 DataFiles.save_file["decoration_depot"].get(decoration, 0) + 1
@@ -2505,18 +2552,23 @@ class PortMenu(Menu):
                                 self.removed_bed_decoration = True
                             break
                 elif self.selected_decoration_in_depot is not None:
-                    occupied_tiles = set() # TODO code optimization
-                    for decoration_data in DataFiles.save_file["decorations"]:
-                        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
-                        occupied_tiles.update(Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor))
-
+                    # Check if the location that the player wishes to place the decoration
+                    # is within the tileable area.
                     decoration = self.selected_decoration_in_depot
                     clicked_tilepos = Decorations.get_isometric_tilepos_anchor(event.pos)
                     place_tiles = Decorations.get_decoration_tiles(decoration, self.decoration_flipped, clicked_tilepos)
-                    if place_tiles.intersection(occupied_tiles):
-                        continue
                     if not Decorations.in_tileable_area(place_tiles):
                         continue
+                    # Check if the location that the player wishes to place the decoration
+                    # will not cause the decoration to overlap other decorations that already
+                    # exist in the space.
+                    occupied_tiles = set() # TODO code optimization, cache this instead of re-computing it every time
+                    for decoration_data in DataFiles.save_file["decorations"]:
+                        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+                        occupied_tiles.update(Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor))
+                    if place_tiles.intersection(occupied_tiles):
+                        continue
+                    # Place the decoration.
                     DataFiles.sfx["click"].play()
                     DataFiles.save_file["decorations"].append((decoration, clicked_tilepos, self.decoration_flipped))
                     DataFiles.save_file["decoration_depot"][decoration] -= 1
@@ -2526,50 +2578,55 @@ class PortMenu(Menu):
                         self.selected_decoration_in_depot = None
 
     def update(self, dt: float, events: list[pygame.Event]):
+        """Update the port menu."""
         self.menu_manager.quest_manager.update(dt)
-        encounter_menu = self.menu_manager.encounter_menu
-        if encounter_menu.transition_active:
-            encounter_menu.update(dt, ())
 
-        if encounter_menu._transition_state == encounter_menu.TRANSITION_WAVE_COVER:
+        # Update encounter menu transition.
+        encounter_menu = self.menu_manager.encounter_menu
+        # TODO should the transition logic be pulled out instead of encounter menu-owned?
+        if encounter_menu.transition_active:
+            encounter_menu.update(dt, [])
+        if encounter_menu.transition_state == encounter_menu.TRANSITION_WAVE_COVER:
             return
 
+        # Decoration stamp animation.
         if self.decoration_stamp_animation_timer > 0:
             self.decoration_stamp_animation_timer -= dt
             if self.decoration_stamp_animation_timer <= 0:
                 self.decoration_stamp_animation_timer = 0
-                self.refresh_overlay_action_buttons()
+                self._refresh_overlay_action_buttons()
 
         if self.is_decorating:
-            self.update_decorate_port_menu_overlay(events)
+            self._update_decorate_port_menu_overlay(events)
         elif self.current_overlay == self.NO_OVERLAY:
-            self.update_no_overlay(events)
+            self._update_no_overlay(events)
         else:
             for event in events:
                 if event.type == pygame.MOUSEMOTION:
-                    self.refresh_overlay_page_buttons()
+                    self._refresh_overlay_page_buttons()
                     self.overlay_page_prev_button.hover(event.pos)
                     self.overlay_page_next_button.hover(event.pos)
-                    action_button = self.get_current_overlay_action_button()
+                    action_button = self._get_current_overlay_action_button()
                     if action_button is not None:
                         action_button.hover(event.pos)
                 if event.type == pygame.MOUSEBUTTONUP:
-                    self.refresh_overlay_page_buttons()
+                    self._refresh_overlay_page_buttons()
                     if (
                         self.overlay_page_prev_button.click(event.pos)
                         or self.overlay_page_next_button.click(event.pos)
                     ):
                         DataFiles.sfx["click"].play()
                         continue
-                    if self.exit_overlay(event):
+                    if self._exit_overlay(event):
                         continue
-                    self.select_filter(event)
-                    self.select_entity(event)
-                    action_button = self.get_current_overlay_action_button()
+                    self._select_filter(event)
+                    self._select_entity(event)
+                    action_button = self._get_current_overlay_action_button()
                     if action_button is not None:
                         action_button.click(event.pos)
 
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
+            # Forklift animation.
             if self.forklift_pause > 0:
                 prev_forklift_pause = self.forklift_pause
                 self.forklift_pause -= dt
@@ -2591,61 +2648,10 @@ class PortMenu(Menu):
                 shipgirl.update(dt)
             shipgirl.animate(dt)
 
-    def draw_decoration_stock_sticker(self, surface, font_registry, icon_rect, amount):
-        font = font_registry["big_pixel"]
-        label_text = f"x{amount}"
-        label_rect = get_rect(
-            width=font.get_width(label_text, 1, 0) + Box.PADDING,
-            height=font.font_height + Box.PADDING,
-            left=icon_rect.left + Box.OUTLINE_WIDTH,
-            top=icon_rect.top + Box.OUTLINE_WIDTH
-        )
-        label_shadow_rect = label_rect.move(Box.OUTLINE_WIDTH, Box.OUTLINE_WIDTH)
-
-        pygame.draw.rect(surface, Color.GREY, label_shadow_rect)
-        pygame.draw.rect(surface, Color.WHITE, label_rect)
-        pygame.draw.rect(
-            surface,
-            Color.GREY,
-            label_rect,
-            width=Box.OUTLINE_WIDTH
-        )
-        font.render(
-            surface,
-            label_text,
-            label_rect.center,
-            Color.BLACK,
-            1,
-            style="center"
-        )
-
-    def draw_decoration_depot_selection_marker(self, surface, icon_rect, color):
-        marker_rect = icon_rect.inflate(
-            2*Box.OUTLINE_WIDTH,
-            2*Box.OUTLINE_WIDTH
-        )
-        left = marker_rect.left
-        top = marker_rect.top
-        right = marker_rect.right - 1
-        bottom = marker_rect.bottom - 1
-        corner_length = Box.PADDING + 2*Box.OUTLINE_WIDTH
-        corners = [
-            [(left, top + corner_length), (left, top), (left + corner_length, top)],
-            [(right - corner_length, top), (right, top), (right, top + corner_length)],
-            [(right, bottom - corner_length), (right, bottom), (right - corner_length, bottom)],
-            [(left + corner_length, bottom), (left, bottom), (left, bottom - corner_length)],
-        ]
-
-        for corner in corners:
-            pygame.draw.lines(
-                surface,
-                color,
-                False,
-                corner,
-                width=2*Box.OUTLINE_WIDTH
-            )
-
-    def draw_decoration_mode_overlay(self, surface, font_registry):
+    def _draw_decoration_mode_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Helper to draw the decoration mode overlay."""
+        # If the player is in decoration mode and hovering over the footprint of a decoration,
+        # draw a red outline around that decoration to indicate the player can click to delete.
         if self.deleting_decoration:
             mpos = pygame.mouse.get_pos()
             hovered_tilepos = Decorations.get_isometric_tilepos(mpos)
@@ -2661,8 +2667,13 @@ class PortMenu(Menu):
                     )
                     break
 
+        # If the player has a decoration selected, then draw the decoration at the mouse pos,
+        # snapped to the isometric grid.
+        # If the player is unable to place the decoration because it is out of bounds, or because
+        # it overlaps an existing decoration, then render a red outline on the footprint to indicate
+        # this.
         if self.selected_decoration_in_depot:
-            occupied_tiles = set() # TODO code optimization
+            occupied_tiles = set() # TODO code optimization, cache this instead of computing it every frame
             for decoration_data in DataFiles.save_file["decorations"]:
                 decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
                 occupied_tiles.update(Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor))
@@ -2689,7 +2700,7 @@ class PortMenu(Menu):
 
         pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.decoration_depot_overlay)
 
-        for entity, rect in zip(self.get_visible_overlay_entities(), self.get_overlay_icon_rects()):
+        for entity, rect in zip(self._get_visible_overlay_entities(), self._get_overlay_icon_rects()):
             if entity == self.DELETE_DECORATION:
                 sprite = DataFiles.sprites["user_interface"]["remove_decoration"]
             else:
@@ -2698,27 +2709,71 @@ class PortMenu(Menu):
             pygame.draw.rect(surface, Color.CARGO_BOX, rect)
             surface.blit(sprite, rect)
             if entity != self.DELETE_DECORATION:
+                # Render the amount of this decoration available in the depot.
                 amt = DataFiles.save_file["decoration_depot"][entity]
-                self.draw_decoration_stock_sticker(
+                font = font_registry["big_pixel"]
+                label_text = f"x{amt}"
+                label_rect = get_rect(
+                    width=font.get_width(label_text, 1, 0) + Box.PADDING,
+                    height=font.font_height + Box.PADDING,
+                    left=rect.left + Box.OUTLINE_WIDTH,
+                    top=rect.top + Box.OUTLINE_WIDTH
+                )
+                label_shadow_rect = label_rect.move(Box.OUTLINE_WIDTH, Box.OUTLINE_WIDTH)
+
+                pygame.draw.rect(surface, Color.GREY, label_shadow_rect)
+                pygame.draw.rect(surface, Color.WHITE, label_rect)
+                pygame.draw.rect(
                     surface,
-                    font_registry,
-                    rect,
-                    amt
+                    Color.GREY,
+                    label_rect,
+                    width=Box.OUTLINE_WIDTH
+                )
+                font.render(
+                    surface,
+                    label_text,
+                    label_rect.center,
+                    Color.BLACK,
+                    1,
+                    style="center"
                 )
             selected = self.selected_decoration_in_depot == entity
             delete_tool_active = entity == self.DELETE_DECORATION and self.deleting_decoration
             if selected or delete_tool_active:
+                # Render corner brackets around the selected decoration or deletion toggle
+                # so the player is aware of what decoration they have selected, or if
+                # they are in deletion mode.
                 marker_color = Color.RED if delete_tool_active else (240, 190, 60)
-                self.draw_decoration_depot_selection_marker(
-                    surface,
-                    rect,
-                    marker_color
+                marker_rect = rect.inflate(
+                    2 * Box.OUTLINE_WIDTH,
+                    2 * Box.OUTLINE_WIDTH
                 )
+                left = marker_rect.left
+                top = marker_rect.top
+                right = marker_rect.right - 1
+                bottom = marker_rect.bottom - 1
+                corner_length = Box.PADDING + 2 * Box.OUTLINE_WIDTH
+                corners = [
+                    [(left, top + corner_length), (left, top), (left + corner_length, top)],
+                    [(right - corner_length, top), (right, top), (right, top + corner_length)],
+                    [(right, bottom - corner_length), (right, bottom), (right - corner_length, bottom)],
+                    [(left + corner_length, bottom), (left, bottom), (left, bottom - corner_length)],
+                ]
 
-        depot_decoration_top = self.decoration_depot_overlay.top - Box.WIDTH/8
+                for corner in corners:
+                    pygame.draw.lines(
+                        surface,
+                        marker_color,
+                        False,
+                        corner,
+                        width=2*Box.OUTLINE_WIDTH
+                    )
+
+        # Depot props.
+        depot_decoration_top = self.decoration_depot_overlay.top - Box.WIDTH / 8
         top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
         top_rope_rect = top_rope_sprite.get_rect()
-        top_rope_rect.centerx = self.decoration_depot_overlay.centerx + Box.WIDTH/4
+        top_rope_rect.centerx = self.decoration_depot_overlay.centerx + Box.WIDTH / 4
         top_rope_rect.top = depot_decoration_top
         surface.blit(top_rope_sprite, top_rope_rect)
 
@@ -2731,6 +2786,7 @@ class PortMenu(Menu):
         rope_hook_rect.top = depot_decoration_top
         surface.blit(rope_hook_sprite, rope_hook_rect)
 
+        # Sign shows page index.
         sign_rect = get_rect(
             width=Box.WIDTH,
             height=Box.HEIGHT,
@@ -2741,15 +2797,15 @@ class PortMenu(Menu):
         font.render(
             surface,
             "depot",
-            (sign_rect.centerx, sign_rect.centery - 1.25*font.font_height),
+            (sign_rect.centerx, sign_rect.centery - 1.25 * font.font_height),
             Color.BLACK,
             1,
             style="center"
         )
         font.render(
             surface,
-            str(self.get_overlay_page() + 1),
-            (sign_rect.centerx, sign_rect.centery + font.font_height/2),
+            str(self._get_overlay_page() + 1),
+            (sign_rect.centerx, sign_rect.centery + font.font_height / 2),
             Color.BLACK,
             2,
             style="center"
@@ -2760,7 +2816,7 @@ class PortMenu(Menu):
             True, False
         )
         corner_rope_rect = corner_rope_sprite.get_rect()
-        corner_rope_rect.left = self.decoration_depot_overlay.left - Box.WIDTH/8
+        corner_rope_rect.left = self.decoration_depot_overlay.left - Box.WIDTH / 8
         corner_rope_rect.top = depot_decoration_top
         surface.blit(corner_rope_sprite, corner_rope_rect)
 
@@ -2769,7 +2825,7 @@ class PortMenu(Menu):
             True, False
         )
         big_corner_rope_rect = big_corner_rope_sprite.get_rect()
-        big_corner_rope_rect.left = self.decoration_depot_overlay.left - Box.WIDTH/8 # TODO magic number
+        big_corner_rope_rect.left = self.decoration_depot_overlay.left - Box.WIDTH / 8
         big_corner_rope_rect.top = depot_decoration_top
         surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
 
@@ -2790,30 +2846,38 @@ class PortMenu(Menu):
         for cargo_box_pos in [
             pygame.Vector2(self.decoration_depot_overlay.bottomleft),
             pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width, 0),
-            pygame.Vector2(self.decoration_depot_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width/2, -cargo_box_rect.height),
+            pygame.Vector2(self.decoration_depot_overlay.bottomleft)
+            + pygame.Vector2(-cargo_box_rect.width / 2, -cargo_box_rect.height),
             
             pygame.Vector2(self.decoration_depot_overlay.bottomright),
             pygame.Vector2(self.decoration_depot_overlay.bottomright) + pygame.Vector2(cargo_box_rect.width, 0),
         ]:
             cargo_box_rect.center = cargo_box_pos
             surface.blit(cargo_box_sprite, cargo_box_rect)
-        self.draw_overlay_page_buttons(surface, font_registry)
+        self._draw_overlay_page_buttons(surface, font_registry)
 
     def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the port menu."""
         surface.blit(Decorations.wallpaper_surf, Decorations.get_wallpaper_rect())
         surface.blit(Decorations.floor_surf, Decorations.floor_rect)
 
+        # Get the mapping of interactable decoration to the shipgirl that is interacting
+        # with it.
         interacting_shipgirls_by_decoration = {
             tuple(shipgirl.interacting_decoration): shipgirl
             for shipgirl in self.menu_manager.available_shipgirls
             if shipgirl.interacting_decoration is not None
         }
+        # Renderables are the shipgirls and decorations.
+        # They will be rendered in order based on isometric view depth.
         renderables = list(DataFiles.save_file["decorations"])
+        # Shipgirls that are interacting with a decoration are always rendered
+        # immediately after their decoration, so they do not need to be
+        # ordered separately.
         renderables.extend(
             shipgirl for shipgirl in self.menu_manager.available_shipgirls
             if shipgirl.interacting_decoration is None
         )
-
         renderables = sorted(
             renderables,
             key=functools.cmp_to_key(Decorations.compare_decoration_render_order)
@@ -2837,9 +2901,7 @@ class PortMenu(Menu):
             choose_faction_button.draw(surface, font_registry)
 
         if self.is_decorating:
-            self.draw_decoration_mode_overlay(surface, font_registry)
-            if self.menu_manager.encounter_menu.transition_active:
-                self.menu_manager.encounter_menu._draw_transition_wave_wipe(surface)
+            self._draw_decoration_mode_overlay(surface, font_registry)
             return
         self.toggle_decoration_mode_button.draw(surface, font_registry)
 
@@ -2848,7 +2910,7 @@ class PortMenu(Menu):
         for option in self.shipgirl_dialogue_options:
             option.draw(surface, font_registry)
 
-        buttons = [
+        buttons: list[RectangularButton] = [
             self.open_depot_overlay_button,
             self.open_intel_center_overlay_button,
             self.open_shipyard_overlay_button,
@@ -2860,11 +2922,11 @@ class PortMenu(Menu):
             button.draw(surface, font_registry)
 
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
-            self.draw_warehouse_overlay(surface, font_registry)
-            self.draw_clipboard_overlay(surface, font_registry)
+            self._draw_warehouse_overlay(surface, font_registry)
+            self._draw_clipboard_overlay(surface, font_registry)
         if self.current_overlay in [self.INTEL_CENTER, self.SHIPYARD, self.GEAR_LAB]:
-            self.draw_dossier_overlay(surface, font_registry)
-            self.draw_blueprint_overlay(surface, font_registry)
+            self._draw_dossier_overlay(surface, font_registry)
+            self._draw_blueprint_overlay(surface, font_registry)
 
         if self.menu_manager.encounter_menu.transition_active:
             self.menu_manager.encounter_menu._draw_transition_wave_wipe(surface)
