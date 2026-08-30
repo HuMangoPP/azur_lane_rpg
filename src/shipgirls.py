@@ -119,6 +119,11 @@ class ShipgirlBattleComponent:
             )
         )
 
+    def gain_exp(self, amount):
+        previous_max_hp = self.stat("max_hp")
+        self.exp += amount
+        self.hp += self.stat("max_hp") - previous_max_hp
+
     def attack_speed(self):
         if self.hull_type == "CV":
             return self.AIRCRAFT_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("aircraft_speed", 0)

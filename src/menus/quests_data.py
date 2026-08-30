@@ -40,11 +40,13 @@ def draw_tb(surface, font_registry, text, point_pos, point_down, point_right):
 
     if text is not None:
         text_scale = 1
+        text_left_padding = 14
+        text_right_padding = Box.PADDING
         max_text_width = font_registry["big_pixel"].font_width*25
         text_height = font_registry["big_pixel"].get_height(text, text_scale, max_text_width)
         text_box_width = font_registry["big_pixel"].get_width(text, text_scale, max_text_width)
         text_rect = get_rect(
-            width=text_box_width + 2*Box.PADDING,
+            width=text_box_width + text_left_padding + text_right_padding,
             height=text_height + 2*Box.PADDING,
             centerx=pointer_rect.centerx,
             bottom=pointer_rect.top
@@ -52,24 +54,65 @@ def draw_tb(surface, font_registry, text, point_pos, point_down, point_right):
         if point_right:
             text_rect.right = pointer_rect.left
             polygon = [
-                (text_rect.right, text_rect.bottom-Box.PADDING),
-                (text_rect.right+Box.PADDING, text_rect.bottom+Box.PADDING),
-                (text_rect.right-Box.PADDING, text_rect.bottom)
+                (text_rect.width, text_rect.height-Box.PADDING),
+                (text_rect.width+Box.PADDING, text_rect.height+Box.PADDING),
+                (text_rect.width-Box.PADDING, text_rect.height)
             ]
         else:
             text_rect.left = pointer_rect.right
             polygon = [
-                (text_rect.left, text_rect.bottom-Box.PADDING),
-                (text_rect.left-Box.PADDING, text_rect.bottom+Box.PADDING),
-                (text_rect.left+Box.PADDING, text_rect.bottom)
+                (0, text_rect.height-Box.PADDING),
+                (-Box.PADDING, text_rect.height+Box.PADDING),
+                (Box.PADDING, text_rect.height)
             ]
-        pygame.draw.rect(surface, Color.DIALOGUE_BOX, text_rect)
-        pygame.draw.polygon(surface, Color.DIALOGUE_BOX, polygon)
+        accent = Color.QUEST_NOTIFICATION_NEW
+        panel = pygame.Surface((text_rect.width+Box.PADDING, text_rect.height+Box.PADDING), pygame.SRCALPHA)
+        panel_polygon = [
+            (Quest.PANEL_CUT, text_rect.height),
+            (0, text_rect.height-Quest.PANEL_CUT),
+            (0, 0),
+            (text_rect.width-Quest.PANEL_CUT, 0),
+            (text_rect.width, Quest.PANEL_CUT),
+            (text_rect.width, text_rect.height),
+        ]
+        pygame.draw.polygon(
+            panel,
+            (*Color.QUEST_NOTIFICATION_PANEL, 225),
+            panel_polygon,
+        )
+        pygame.draw.lines(
+            panel,
+            (*accent, 230),
+            False,
+            panel_polygon[:-1],
+            width=1,
+        )
+        pygame.draw.polygon(
+            panel,
+            (*Color.QUEST_NOTIFICATION_PANEL, 225),
+            polygon,
+        )
+        surface.blit(panel, text_rect)
+
+        rail_rect = get_rect(
+            width=3,
+            height=max(1, text_rect.height-12),
+            left=text_rect.left+6,
+            centery=text_rect.centery,
+        )
+        rail_glow = pygame.Surface(rail_rect.size, pygame.SRCALPHA)
+        rail_glow.fill((*accent, 60))
+        surface.blit(
+            rail_glow,
+            rail_rect,
+            special_flags=pygame.BLEND_RGBA_ADD,
+        )
         font_registry["big_pixel"].render(
             surface,
             text,
-            pygame.Vector2(text_rect.topleft) + pygame.Vector2(Box.PADDING, Box.PADDING),
-            Color.WHITE,
+            pygame.Vector2(text_rect.topleft)
+            + pygame.Vector2(text_left_padding, Box.PADDING),
+            Color.QUEST_NOTIFICATION_TEXT,
             text_scale,
             box_width=max_text_width
         )
@@ -221,7 +264,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
 
             if tutorial_done:
                 point = menu_manager.port_menu.dossier_bg.bottomright + pygame.Vector2(-32, 32)
-                draw_tb(surface, font_registry, "exit the shipyard", point, False, True)
+                draw_tb(surface, font_registry, "exit the shipyard", point, True, True)
 
     return shipyard_tutorial_draw
 
@@ -282,9 +325,9 @@ def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
             )
             rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
             draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
-        rect = menu_manager.sortie_selection_menu.exit_sortie_selection_menu.rect
+        rect = menu_manager.sortie_selection_menu.exit_sortie_selection_menu_button.rect
         rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
-        draw_tb(surface, font_registry, None, "go back to port", False, True)
+        draw_tb(surface, font_registry, "click this to go back", rect.bottomleft, False, True)
     elif menu_manager.current_menu == menu_manager.fleet_selection_menu:
         if menu_manager.encounter_menu.transition_active:
             return
@@ -327,9 +370,9 @@ def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
                 rect.bottomright,
                 False, False
             )
-        rect = menu_manager.fleet_selection_menu.exit_fleet_selection_menu.rect
+        rect = menu_manager.fleet_selection_menu.exit_fleet_selection_menu_button.rect
         rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
-        draw_tb(surface, font_registry, None, "go back to select a sortie", False, True)
+        draw_tb(surface, font_registry, "click this to go back", rect.bottomleft, False, True)
     elif menu_manager.current_menu == menu_manager.encounter_menu:
         if menu_manager.encounter_menu.transition_active:
             return
@@ -478,7 +521,7 @@ def intel_center_tutorial_draw(menu_manager, surface, font_registry):
             )
 
             point = menu_manager.port_menu.dossier_bg.bottomright + pygame.Vector2(-32, 32)
-            draw_tb(surface, font_registry, "exit the intel center", point, False, True)
+            draw_tb(surface, font_registry, "exit the intel center", point, True, True)
 
 def intel_center_on_start(menu_manager):
     menu_manager.port_menu.open_intel_center_overlay_button.active = True
@@ -591,7 +634,10 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font_registry):
         inventory.get(ingredient, 0) >= amount
         for ingredient, amount in craft_reqs.items()
     )
-    if not has_craft_reqs:
+    if (
+        "twin_120" not in DataFiles.save_file["equipment"]
+        and not has_craft_reqs
+    ):
         return
 
     if menu_manager.current_menu != menu_manager.port_menu:
@@ -609,7 +655,7 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font_registry):
                 draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
             else:
                 point = menu_manager.port_menu.dossier_bg.bottomright + pygame.Vector2(-32, 32)
-                draw_tb(surface, font_registry, "exit the gear lab", point, True, False)
+                draw_tb(surface, font_registry, "exit the gear lab", point, True, True)
         else:
             rect = menu_manager.port_menu.dossier_icons[0]
             rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)

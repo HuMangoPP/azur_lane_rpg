@@ -111,12 +111,12 @@ class QuestManager:
         width, height = size
         cut = cls.NOTIFICATION_CUT
         return [
+            (cut, height),
+            (0, height-cut),
             (0, 0),
             (width-cut, 0),
             (width, cut),
             (width, height),
-            (cut, height),
-            (0, height-cut),
         ]
 
     def _draw_panel(
@@ -131,10 +131,11 @@ class QuestManager:
         panel = pygame.Surface(rect.size, pygame.SRCALPHA)
         polygon = self._panel_polygon(rect.size)
         pygame.draw.polygon(panel, (*fill_color, opacity), polygon)
-        pygame.draw.polygon(
+        pygame.draw.lines(
             panel,
             (*edge_color, round(135 + 85*pulse)),
-            polygon,
+            False,
+            polygon[:-1],
             width=1,
         )
 
@@ -504,12 +505,12 @@ class Quest:
     def _panel_polygon(cls, size):
         width, height = size
         return [
+            (cls.PANEL_CUT, height),
+            (0, height-cls.PANEL_CUT),
             (0, 0),
             (width-cls.PANEL_CUT, 0),
             (width, cls.PANEL_CUT),
             (width, height),
-            (cls.PANEL_CUT, height),
-            (0, height-cls.PANEL_CUT),
         ]
 
     @staticmethod
@@ -529,10 +530,11 @@ class Quest:
             (*Color.QUEST_NOTIFICATION_PANEL, 225),
             polygon,
         )
-        pygame.draw.polygon(
+        pygame.draw.lines(
             panel,
             (*accent, round(145 + 85*pulse)),
-            polygon,
+            False,
+            polygon[:-1],
             width=1,
         )
         surface.blit(panel, rect)
@@ -730,7 +732,7 @@ class Quest:
             (*Color.QUEST_NOTIFICATION_PANEL, 240 if hovered else 215),
             polygon,
         )
-        pygame.draw.polygon(button, (*accent, 235), polygon, width=1)
+        pygame.draw.lines(button, (*accent, 235), False, polygon[:-1], width=1)
         surface.blit(button, rect)
 
         if label == "next":

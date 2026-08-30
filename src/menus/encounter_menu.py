@@ -1317,7 +1317,7 @@ class EncounterMenu:
                     )
                     for shipgirl in self.menu_manager.player_fleet.fleet:
                         if shipgirl is not None:
-                            shipgirl.battle_component.exp += siren_reward_exp
+                            shipgirl.battle_component.gain_exp(siren_reward_exp)
                     if DataFiles.save_file["research_target"] is not None:
                         self.research_exp += siren_reward_exp
 
@@ -1894,10 +1894,16 @@ class EncounterMenu:
         
         if self.exp_timer > 0:
             bar_width = 256
-            bar_height = 16
+            bar_height = 10
+            panel_rect = get_rect(
+                width=320,
+                height=64,
+                centerx=screen_x(0.5),
+                centery=screen_y(0.5),
+            )
             bar_background = get_rect(
                 width=bar_width, height=bar_height,
-                centerx=screen_x(0.5), bottom=Box.BOTTOM_OF_SCREEN
+                centerx=panel_rect.centerx, top=panel_rect.top + 38,
             )
             avg_shipgirl_level = int(
                 sum(
@@ -1916,26 +1922,58 @@ class EncounterMenu:
                 width=bar_width * min(1, research_progress/exp_req),
                 height=bar_height, left=bar_background.left, top=bar_background.top 
             )
+            accent = Color.QUEST_NOTIFICATION_COMPLETE
+            pulse = (math.sin(pygame.time.get_ticks()/1000*math.tau/2.4)+1)/2
+            panel = pygame.Surface(panel_rect.size, pygame.SRCALPHA)
+            panel_cut_size = 7
+            panel_polygon = [
+                (panel_cut_size, panel_rect.height),
+                (0, panel_rect.height-panel_cut_size),
+                (0, 0),
+                (panel_rect.width-panel_cut_size, 0),
+                (panel_rect.width, panel_cut_size),
+                (panel_rect.width, panel_rect.height),
+            ]
+            pygame.draw.polygon(
+                panel,
+                (*Color.QUEST_NOTIFICATION_PANEL, 225),
+                panel_polygon,
+            )
+            pygame.draw.lines(
+                panel,
+                (*accent, round(145 + 85*pulse)),
+                False,
+                panel_polygon[:-1],
+                width=1,
+            )
+            surface.blit(panel, panel_rect)
+
+            rail_rect = get_rect(
+                width=3,
+                height=panel_rect.height-16,
+                left=panel_rect.left+8,
+                centery=panel_rect.centery,
+            )
+            rail_glow = pygame.Surface(rail_rect.size, pygame.SRCALPHA)
+            rail_glow.fill((*accent, round(35 + 35*pulse)))
+            surface.blit(
+                rail_glow,
+                rail_rect,
+                special_flags=pygame.BLEND_RGBA_ADD,
+            )
+
+            bar_backplate = bar_background.inflate(4, 4)
+            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, bar_backplate)
+            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_MUTED, bar_backplate, width=1)
             pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
-            pygame.draw.rect(surface, Color.EXP_BAR_FILL, bar_fill)
+            pygame.draw.rect(surface, accent, bar_fill)
             banner_text = "shipgirl research progress"
-            banner_surf = pygame.Surface((
-                len(banner_text)*font_registry["big_pixel"].font_width + 2*Box.PADDING,
-                font_registry["big_pixel"].font_height + 2*Box.PADDING
-            ))
-            banner_surf.fill(Color.BLACK)
-            banner_surf.set_alpha(160)
-            banner_rect = banner_surf.get_rect()
-            banner_rect.centerx = bar_background.centerx
-            banner_rect.bottom = bar_background.top - Box.PADDING
-            surface.blit(banner_surf, banner_rect)
             font_registry["big_pixel"].render(
                 surface,
                 banner_text,
-                banner_rect.center,
-                Color.WHITE,
+                (bar_background.left, panel_rect.top+12),
+                accent,
                 1,
-                style="center"
             )
 
         if self.return_to_port_button.active:
