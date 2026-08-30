@@ -961,9 +961,9 @@ class PortMenu:
                     close_dialogue = selected_quest.go_next(self.menu_manager, event.pos)
                     if close_dialogue:
                         if selected_quest.completed:
-                            DataFiles.save_file["quests"][selected_quest.quest_id] = self.menu_manager.STATUS_COMPLETE
+                            DataFiles.save_file["quests"][selected_quest.quest_id] = self.menu_manager.quest_manager.STATUS_COMPLETE
                         elif selected_quest.started:
-                            DataFiles.save_file["quests"][selected_quest.quest_id] = self.menu_manager.STATUS_ACTIVE
+                            DataFiles.save_file["quests"][selected_quest.quest_id] = self.menu_manager.quest_manager.STATUS_ACTIVE
                         self.menu_manager.quest_manager.selected_quest = None
                     continue
                 
@@ -2829,14 +2829,14 @@ class PortMenu:
         for choose_faction_button in self.choose_faction_buttons:
             choose_faction_button.draw(surface, font_registry)
 
-        self.menu_manager.quest_manager.draw(surface, font_registry)
-
         if self.is_decorating:
             self.draw_decoration_mode_overlay(surface, font_registry)
             if self.menu_manager.encounter_menu.transition_active:
                 self.menu_manager.encounter_menu._draw_transition_wave_wipe(surface)
             return
         self.toggle_decoration_mode_button.draw(surface, font_registry)
+
+        self.menu_manager.quest_manager.draw(surface, font_registry)
         
         for option in self.shipgirl_dialogue_options:
             option.draw(surface, font_registry)

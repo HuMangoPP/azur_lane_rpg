@@ -353,18 +353,17 @@ class QuestManager:
 
     def draw(self, surface, font_registry):
         entries = self.get_notification_entries()
-        if entries:
-            self._draw_header(surface, font_registry, len(entries))
-            mouse_pos = pygame.mouse.get_pos()
-            for index, (quest, rect) in enumerate(entries):
-                self._draw_notification_row(
-                    surface,
-                    font_registry,
-                    quest,
-                    rect,
-                    index,
-                    rect.collidepoint(mouse_pos),
-                )
+        self._draw_header(surface, font_registry, len(entries))
+        mouse_pos = pygame.mouse.get_pos()
+        for index, (quest, rect) in enumerate(entries):
+            self._draw_notification_row(
+                surface,
+                font_registry,
+                quest,
+                rect,
+                index,
+                rect.collidepoint(mouse_pos),
+            )
 
         if self.selected_quest is not None:
             self.selected_quest.draw(
@@ -473,7 +472,7 @@ class Quest:
                 self.post_quest_dialogue_index += 1
             if self.post_quest_dialogue_index == len(self.post_quest_dialogue):
                 self.on_complete(menu_manager)
-                DataFiles.save_file["quests"][self.quest_id] = self.menu_manager.STATUS_COMPLETED
+                DataFiles.save_file["quests"][self.quest_id] = menu_manager.quest_manager.STATUS_COMPLETE
                 menu_manager.quest_manager.quests.pop(self.quest_id)
                 return True
             return False
@@ -490,7 +489,7 @@ class Quest:
                 if not self.started:
                     self.started = True
                     self.on_start(menu_manager)
-                    DataFiles.save_file["quests"][self.quest_id] = menu_manager.STATUS_ACTIVE
+                    DataFiles.save_file["quests"][self.quest_id] = menu_manager.quest_manager.STATUS_ACTIVE
                 return True
             return False
         else:

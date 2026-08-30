@@ -12,9 +12,6 @@ from src.menus.fleet_selection_menu import FleetNameRibbon
 from src.menus.quests_data import (
     assign_quest,
     first_sortie_quest,
-    construct_shipgirl_quest,
-    craft_weapon_quest,
-    buy_decoration_quest,
     construct_auxiliary_equipment_quest,
     complete_final_sortie_quest,
 )
@@ -543,6 +540,7 @@ class EncounterMenu:
                     pygame.Vector2(self.open_reward_cache_button.rect.center),
                     amount,
                 )
+            self.claim_drops()
 
             self.return_to_port_button.active = True
 
@@ -602,10 +600,6 @@ class EncounterMenu:
                 new_sortie_progress = self.current_sortie + 1
                 if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
                     DataFiles.save_file["sortie_progress"] = new_sortie_progress
-                    if new_sortie_progress == 3:
-                        assign_quest(self.menu_manager, craft_weapon_quest)
-                    if new_sortie_progress == 4:
-                        assign_quest(self.menu_manager, buy_decoration_quest)
                     if new_sortie_progress == 11:
                         assign_quest(self.menu_manager, construct_auxiliary_equipment_quest)
                     if new_sortie_progress == len(DataFiles.sortie_data) - 2:
@@ -619,8 +613,6 @@ class EncounterMenu:
                 self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
                 self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True
                 self.menu_manager.port_menu.update_encountered_sirens()
-                
-                self.claim_drops()
 
             self.menu_manager.current_menu = self.menu_manager.port_menu
             DataFiles.sfx["waves"].fadeout(3000)
@@ -933,6 +925,13 @@ class EncounterMenu:
 
         self.vfx_manager.update(dt)
         self.background.update(dt)
+        self.open_reward_cache_button.rect.center = (
+            pygame.Vector2(screen_x(0.75), screen_y(0.575))
+            + pygame.Vector2(
+                72 * math.sin(self.background.wave_timers[3]),
+                12 * self.background.wave_vertical_offset(self.background.wave_timers[3]),
+            )
+        )
 
     @staticmethod
     def _smoothstep(progress):
@@ -1282,9 +1281,6 @@ class EncounterMenu:
                 )
                 exp_req = Stats.exp_to_level(avg_shipgirl_level)
                 if specialized_wisdom_cubes[research_target] >= exp_req:
-                    if research_target == DataFiles.get_faction_shipgirls()["CA"]:
-                        assign_quest(self.menu_manager, construct_shipgirl_quest)
-
                     unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) == 0:
                         self.add_sortie_drop(
@@ -1873,6 +1869,8 @@ class EncounterMenu:
         )
         self.vfx_manager.draw(surface, font_registry)
 
+        self.open_reward_cache_button.draw(surface, font_registry)
+
         if self.transition_active and not self._transition_to_port:
             self._draw_transition_wave_wipe(surface)
             return
@@ -1888,7 +1886,6 @@ class EncounterMenu:
         self.menu_manager.siren_fleet.draw_battle_effects(surface, self.vfx_manager)
 
         self.next_encounter_button.draw(surface, font_registry)
-        self.open_reward_cache_button.draw(surface, font_registry)
         self.retreat_button.draw(surface, font_registry)
         self.draw_encounter_progress(surface)
 
