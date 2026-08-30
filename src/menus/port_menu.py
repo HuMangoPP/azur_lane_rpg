@@ -1029,6 +1029,320 @@ class PortMenu(Menu):
 
                 self._refresh_overlay_action_buttons()
 
+    def _position_shipgirl_at_decoration(self, shipgirl: Shipgirl, decoration_data: tuple):
+        """Position the shipgirl relative to the decoration and set the interaction animation.
+        
+        This positioning is pre-calculated to make it appear as though the shipgirl is
+        interacting with the decoration, once the animation is applied.
+        """
+        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+        decoration_store_info = DataFiles.decoration_store[decoration]
+        sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
+        snap_x, snap_y = decoration_store_info.get("snap", (0.5, 1))
+        shipgirl.pos = pygame.Vector2(
+            sprite_rect.left + sprite_rect.width * snap_x,
+            sprite_rect.top + sprite_rect.height * snap_y
+        )
+        shipgirl.rect.center = shipgirl.pos
+        shipgirl.interacting_decoration = tuple(tilepos_anchor)
+        shipgirl.sprite.set_animation(decoration_store_info.get("shipgirl_animation", Live2D.IDLE_ANIMATION))
+        shipgirl.facing_left = flipped
+
+    def restore_shipgirl_decoration_interactions(self):
+        """Restores the shipgirl decoration interaction after returning to the port menu."""
+        decorations_by_anchor = {
+            tuple(Decorations.unpack_decoration_data(decoration_data)[1]): decoration_data
+            for decoration_data in DataFiles.save_file["decorations"]
+        }
+        for shipgirl in self.menu_manager.available_shipgirls:
+            if shipgirl.interacting_decoration is None:
+                continue
+
+            decoration_data = decorations_by_anchor.get(tuple(shipgirl.interacting_decoration))
+            if decoration_data is None:
+                shipgirl.interacting_decoration = None
+                shipgirl.pick_new_wander_target()
+                continue
+
+            decoration = Decorations.unpack_decoration_data(decoration_data)[0]
+            if not DataFiles.decoration_store[decoration]["interactable"]:
+                shipgirl.interacting_decoration = None
+                shipgirl.pick_new_wander_target()
+                continue
+
+            self._position_shipgirl_at_decoration(shipgirl, decoration_data)
+
+    def _snap_shipgirl_to_interactable_decoration(self, shipgirl: Shipgirl) -> bool:
+        """Snap the shipgirl to the interactable decoration when she is dropped."""
+        for decoration_data in DataFiles.save_file["decorations"]:
+            decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+            decoration_store_info = DataFiles.decoration_store[decoration]
+            if not decoration_store_info["interactable"]:
+                continue
+
+            shipgirl_tilepos = Decorations.get_isometric_tilepos(shipgirl.rect.center)
+            decoration_tiles = Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor)
+            if shipgirl_tilepos not in decoration_tiles:
+                continue
+
+            tilepos_anchor = tuple(tilepos_anchor)
+            interacting_shipgirl = next(
+                (
+                    shipgirl for shipgirl in self.menu_manager.available_shipgirls
+                    if shipgirl.interacting_decoration == tilepos_anchor
+                ),
+                None
+            )
+            if interacting_shipgirl is not None:
+                continue
+
+            self._position_shipgirl_at_decoration(shipgirl, decoration_data)
+            if decoration == "bed":
+                self.shipgirl_interacted_with_bed = True
+            return True
+
+        shipgirl.interacting_decoration = None
+        return False
+
+    def _update_decorate_port_menu_overlay(self, events: list[pygame.Event]):
+        """Helper to update the port menu in decoration mode."""
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                # Check if the player is clicking any interactable UI components
+                # and prevent dragging actions if so.
+                if event.button != 1:
+                    continue
+
+                if self.toggle_decoration_mode_button.rect.collidepoint(event.pos):
+                    continue
+
+                self._refresh_overlay_page_buttons()
+                if (
+                    self.overlay_page_prev_button.active
+                    and self.overlay_page_prev_button.rect.collidepoint(event.pos)
+                ) or (
+                    self.overlay_page_next_button.active
+                    and self.overlay_page_next_button.rect.collidepoint(event.pos)
+                ):
+                    continue
+
+                if self.decoration_depot_overlay.collidepoint(event.pos):
+                    selected_entity = self._select_decoration_depot_entity(event.pos, allow_delete_toggle=False)
+                    if selected_entity is not None:
+                        continue
+
+                    # Allow dragging of the decoration depot.
+                    self.decoration_depot_drag_offset = pygame.Vector2(self.decoration_depot_overlay.topleft) - pygame.Vector2(event.pos)
+                    continue
+
+                if self.selected_decoration_in_depot is not None or self.deleting_decoration:
+                    continue
+
+                # Allow dragging of shipirls.
+                for shipgirl in self.menu_manager.available_shipgirls:
+                    if shipgirl.rect.collidepoint(event.pos):
+                        self.dragged_shipgirl = shipgirl
+                        shipgirl.sprite.set_animation(Live2D.DRAG_ANIMATION)
+                        shipgirl.interacting_decoration = None
+                        break
+
+                if self.dragged_shipgirl is not None:
+                    continue
+
+                # Allow dragging of the background.
+                self.camera_dragging = True
+
+            if event.type == pygame.MOUSEMOTION:
+                # Resolve dragging actions if applicalbe, then update hover states.
+                if self._update_camera_drag(event):
+                    continue
+
+                if self.dragged_shipgirl is not None:
+                    self.dragged_shipgirl.pos = pygame.Vector2(event.pos)
+                    self.dragged_shipgirl.rect.center = self.dragged_shipgirl.pos
+                    continue
+
+                if self.decoration_depot_drag_offset is not None:
+                    self.decoration_depot_overlay.topleft = pygame.Vector2(event.pos) + self.decoration_depot_drag_offset
+                    screen_rect = get_rect(
+                        width=screen_x(1),
+                        height=screen_y(1),
+                        left=screen_x(0),
+                        top=screen_y(0)
+                    )
+                    self.decoration_depot_overlay.clamp_ip(screen_rect)
+                    continue
+
+                self.toggle_decoration_mode_button.hover(event.pos)
+                self._refresh_overlay_page_buttons()
+                self.overlay_page_prev_button.hover(event.pos)
+                self.overlay_page_next_button.hover(event.pos)
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                # Flip decoration with right mouse button.
+                if event.button == 3 and self.selected_decoration_in_depot is not None:
+                    DataFiles.sfx["click"].play()
+                    self.decoration_flipped = not self.decoration_flipped
+                    self.flipped_decoration = True
+                    continue
+
+                if event.button != 1:
+                    continue
+
+                # Resolve dragging actions.
+                if self.camera_dragging:
+                    self.camera_dragging = False
+                    continue
+
+                if self.dragged_shipgirl is not None:
+                    if not self._snap_shipgirl_to_interactable_decoration(self.dragged_shipgirl):
+                        self.dragged_shipgirl.interacting_decoration = None
+                        self.dragged_shipgirl.pick_new_wander_target()
+
+                    self.dragged_shipgirl = None
+                    continue
+
+                if self.decoration_depot_drag_offset is not None:
+                    self.moved_decoration_depot_overlay = True
+                    self.decoration_depot_drag_offset = None
+                    continue
+
+                # Resolve click actions.
+                self._refresh_overlay_page_buttons()
+                if (
+                    self.overlay_page_prev_button.click(event.pos)
+                    or self.overlay_page_next_button.click(event.pos)
+                ):
+                    DataFiles.sfx["click"].play()
+                    continue
+
+                if self.toggle_decoration_mode_button.click(event.pos):
+                    DataFiles.sfx["click"].play()
+                    self.selected_decoration_in_depot = None
+                    self.deleting_decoration = False
+                    continue
+            
+                if self.decoration_depot_overlay.collidepoint(event.pos):
+                    self._select_decoration_depot_entity(event.pos, allow_delete_toggle=True)
+                elif self.deleting_decoration:
+                    # Check if the player is clicking on the footprint of any decoration.
+                    clicked_tilepos = Decorations.get_isometric_tilepos(event.pos)
+                    for decoration_index, decoration_data in enumerate(DataFiles.save_file["decorations"]):
+                        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+                        if clicked_tilepos in Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor):
+                            DataFiles.sfx["click"].play()
+
+                            # Release any shipgirls interacting with this decoration.
+                            deleted_decoration = tuple(decoration_data[1])
+                            for shipgirl in self.menu_manager.available_shipgirls:
+                                if shipgirl.interacting_decoration == deleted_decoration:
+                                    shipgirl.interacting_decoration = None
+                                    shipgirl.pick_new_wander_target()
+
+                            DataFiles.save_file["decorations"].pop(decoration_index)
+                            DataFiles.save_file["decoration_depot"][decoration] = (
+                                DataFiles.save_file["decoration_depot"].get(decoration, 0) + 1
+                            )
+                            if decoration == "bed":
+                                self.removed_bed_decoration = True
+                            break
+                elif self.selected_decoration_in_depot is not None:
+                    # Check if the location that the player wishes to place the decoration
+                    # is within the tileable area.
+                    decoration = self.selected_decoration_in_depot
+                    clicked_tilepos = Decorations.get_isometric_tilepos_anchor(event.pos)
+                    place_tiles = Decorations.get_decoration_tiles(decoration, self.decoration_flipped, clicked_tilepos)
+                    if not Decorations.in_tileable_area(place_tiles):
+                        continue
+                    # Check if the location that the player wishes to place the decoration
+                    # will not cause the decoration to overlap other decorations that already
+                    # exist in the space.
+                    occupied_tiles = set() # TODO code optimization, cache this instead of re-computing it every time
+                    for decoration_data in DataFiles.save_file["decorations"]:
+                        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+                        occupied_tiles.update(Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor))
+                    if place_tiles.intersection(occupied_tiles):
+                        continue
+                    # Place the decoration.
+                    DataFiles.sfx["click"].play()
+                    DataFiles.save_file["decorations"].append((decoration, clicked_tilepos, self.decoration_flipped))
+                    DataFiles.save_file["decoration_depot"][decoration] -= 1
+                    if decoration == "bed":
+                        self.placed_bed_decoration = True
+                    if DataFiles.save_file["decoration_depot"][decoration] <= 0:
+                        self.selected_decoration_in_depot = None
+
+    def update(self, dt: float, events: list[pygame.Event]):
+        """Update the port menu."""
+        self.menu_manager.quest_manager.update(dt)
+
+        # Update encounter menu transition.
+        encounter_menu = self.menu_manager.encounter_menu
+        # TODO should the transition logic be pulled out instead of encounter menu-owned?
+        if encounter_menu.transition_active:
+            encounter_menu.update(dt, [])
+        if encounter_menu.transition_state == encounter_menu.TRANSITION_WAVE_COVER:
+            return
+
+        # Decoration stamp animation.
+        if self.decoration_stamp_animation_timer > 0:
+            self.decoration_stamp_animation_timer -= dt
+            if self.decoration_stamp_animation_timer <= 0:
+                self.decoration_stamp_animation_timer = 0
+                self._refresh_overlay_action_buttons()
+
+        if self.is_decorating:
+            self._update_decorate_port_menu_overlay(events)
+        elif self.current_overlay == self.NO_OVERLAY:
+            self._update_no_overlay(events)
+        else:
+            for event in events:
+                if event.type == pygame.MOUSEMOTION:
+                    self._refresh_overlay_page_buttons()
+                    self.overlay_page_prev_button.hover(event.pos)
+                    self.overlay_page_next_button.hover(event.pos)
+                    action_button = self._get_current_overlay_action_button()
+                    if action_button is not None:
+                        action_button.hover(event.pos)
+                if event.type == pygame.MOUSEBUTTONUP:
+                    self._refresh_overlay_page_buttons()
+                    if (
+                        self.overlay_page_prev_button.click(event.pos)
+                        or self.overlay_page_next_button.click(event.pos)
+                    ):
+                        DataFiles.sfx["click"].play()
+                        continue
+                    if self._exit_overlay(event):
+                        continue
+                    self._select_filter(event)
+                    self._select_entity(event)
+                    action_button = self._get_current_overlay_action_button()
+                    if action_button is not None:
+                        action_button.click(event.pos)
+
+        if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
+            # Forklift animation.
+            if self.forklift_pause > 0:
+                prev_forklift_pause = self.forklift_pause
+                self.forklift_pause -= dt
+                if prev_forklift_pause > 0.5 and self.forklift_pause <= 0.5:
+                    self.forklift_dx *= -1
+            elif self.forklift_dx > 0:
+                self.forklift_x += dt / 5
+                if self.forklift_x >= 1:
+                    self.forklift_x = 1
+                    self.forklift_pause = 1
+            elif self.forklift_dx < 0:
+                self.forklift_x -= dt / 5
+                if self.forklift_x <= 0:
+                    self.forklift_x = 0
+                    self.forklift_pause = 1
+
+        for shipgirl in self.menu_manager.available_shipgirls:
+            if shipgirl not in [self.hovered_shipgirl, self.dragged_shipgirl]:
+                shipgirl.update(dt)
+            shipgirl.animate(dt)
+
     def _draw_overlay_page_buttons(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the pagination controls for the current overlay."""
         self._refresh_overlay_page_buttons()
@@ -2334,319 +2648,6 @@ class PortMenu(Menu):
         pencil_rect.bottom = self.clipboard_page.bottom + Box.HEIGHT/2
         surface.blit(pencil_sprite, pencil_rect)
 
-    def _position_shipgirl_at_decoration(self, shipgirl: Shipgirl, decoration_data: tuple):
-        """Position the shipgirl relative to the decoration and set the interaction animation.
-        
-        This positioning is pre-calculated to make it appear as though the shipgirl is
-        interacting with the decoration, once the animation is applied.
-        """
-        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
-        decoration_store_info = DataFiles.decoration_store[decoration]
-        sprite_rect = Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
-        snap_x, snap_y = decoration_store_info.get("snap", (0.5, 1))
-        shipgirl.pos = pygame.Vector2(
-            sprite_rect.left + sprite_rect.width * snap_x,
-            sprite_rect.top + sprite_rect.height * snap_y
-        )
-        shipgirl.rect.center = shipgirl.pos
-        shipgirl.interacting_decoration = tuple(tilepos_anchor)
-        shipgirl.sprite.set_animation(decoration_store_info.get("shipgirl_animation", Live2D.IDLE_ANIMATION))
-        shipgirl.facing_left = flipped
-
-    def restore_shipgirl_decoration_interactions(self):
-        """Restores the shipgirl decoration interaction after returning to the port menu."""
-        decorations_by_anchor = {
-            tuple(Decorations.unpack_decoration_data(decoration_data)[1]): decoration_data
-            for decoration_data in DataFiles.save_file["decorations"]
-        }
-        for shipgirl in self.menu_manager.available_shipgirls:
-            if shipgirl.interacting_decoration is None:
-                continue
-
-            decoration_data = decorations_by_anchor.get(tuple(shipgirl.interacting_decoration))
-            if decoration_data is None:
-                shipgirl.interacting_decoration = None
-                shipgirl.pick_new_wander_target()
-                continue
-
-            decoration = Decorations.unpack_decoration_data(decoration_data)[0]
-            if not DataFiles.decoration_store[decoration]["interactable"]:
-                shipgirl.interacting_decoration = None
-                shipgirl.pick_new_wander_target()
-                continue
-
-            self._position_shipgirl_at_decoration(shipgirl, decoration_data)
-
-    def _snap_shipgirl_to_interactable_decoration(self, shipgirl: Shipgirl) -> bool:
-        """Snap the shipgirl to the interactable decoration when she is dropped."""
-        for decoration_data in DataFiles.save_file["decorations"]:
-            decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
-            decoration_store_info = DataFiles.decoration_store[decoration]
-            if not decoration_store_info["interactable"]:
-                continue
-
-            shipgirl_tilepos = Decorations.get_isometric_tilepos(shipgirl.rect.center)
-            decoration_tiles = Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor)
-            if shipgirl_tilepos not in decoration_tiles:
-                continue
-
-            tilepos_anchor = tuple(tilepos_anchor)
-            interacting_shipgirl = next(
-                (
-                    shipgirl for shipgirl in self.menu_manager.available_shipgirls
-                    if shipgirl.interacting_decoration == tilepos_anchor
-                ),
-                None
-            )
-            if interacting_shipgirl is not None:
-                continue
-
-            self._position_shipgirl_at_decoration(shipgirl, decoration_data)
-            if decoration == "bed":
-                self.shipgirl_interacted_with_bed = True
-            return True
-
-        shipgirl.interacting_decoration = None
-        return False
-
-    def _update_decorate_port_menu_overlay(self, events: list[pygame.Event]):
-        """Helper to update the port menu in decoration mode."""
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                # Check if the player is clicking any interactable UI components
-                # and prevent dragging actions if so.
-                if event.button != 1:
-                    continue
-
-                if self.toggle_decoration_mode_button.rect.collidepoint(event.pos):
-                    continue
-
-                self._refresh_overlay_page_buttons()
-                if (
-                    self.overlay_page_prev_button.active
-                    and self.overlay_page_prev_button.rect.collidepoint(event.pos)
-                ) or (
-                    self.overlay_page_next_button.active
-                    and self.overlay_page_next_button.rect.collidepoint(event.pos)
-                ):
-                    continue
-
-                if self.decoration_depot_overlay.collidepoint(event.pos):
-                    selected_entity = self._select_decoration_depot_entity(event.pos, allow_delete_toggle=False)
-                    if selected_entity is not None:
-                        continue
-
-                    # Allow dragging of the decoration depot.
-                    self.decoration_depot_drag_offset = pygame.Vector2(self.decoration_depot_overlay.topleft) - pygame.Vector2(event.pos)
-                    continue
-
-                if self.selected_decoration_in_depot is not None or self.deleting_decoration:
-                    continue
-
-                # Allow dragging of shipirls.
-                for shipgirl in self.menu_manager.available_shipgirls:
-                    if shipgirl.rect.collidepoint(event.pos):
-                        self.dragged_shipgirl = shipgirl
-                        shipgirl.sprite.set_animation(Live2D.DRAG_ANIMATION)
-                        shipgirl.interacting_decoration = None
-                        break
-
-                if self.dragged_shipgirl is not None:
-                    continue
-
-                # Allow dragging of the background.
-                self.camera_dragging = True
-
-            if event.type == pygame.MOUSEMOTION:
-                # Resolve dragging actions if applicalbe, then update hover states.
-                if self._update_camera_drag(event):
-                    continue
-
-                if self.dragged_shipgirl is not None:
-                    self.dragged_shipgirl.pos = pygame.Vector2(event.pos)
-                    self.dragged_shipgirl.rect.center = self.dragged_shipgirl.pos
-                    continue
-
-                if self.decoration_depot_drag_offset is not None:
-                    self.decoration_depot_overlay.topleft = pygame.Vector2(event.pos) + self.decoration_depot_drag_offset
-                    screen_rect = get_rect(
-                        width=screen_x(1),
-                        height=screen_y(1),
-                        left=screen_x(0),
-                        top=screen_y(0)
-                    )
-                    self.decoration_depot_overlay.clamp_ip(screen_rect)
-                    continue
-
-                self.toggle_decoration_mode_button.hover(event.pos)
-                self._refresh_overlay_page_buttons()
-                self.overlay_page_prev_button.hover(event.pos)
-                self.overlay_page_next_button.hover(event.pos)
-
-            if event.type == pygame.MOUSEBUTTONUP:
-                # Flip decoration with right mouse button.
-                if event.button == 3 and self.selected_decoration_in_depot is not None:
-                    DataFiles.sfx["click"].play()
-                    self.decoration_flipped = not self.decoration_flipped
-                    self.flipped_decoration = True
-                    continue
-
-                if event.button != 1:
-                    continue
-
-                # Resolve dragging actions.
-                if self.camera_dragging:
-                    self.camera_dragging = False
-                    continue
-
-                if self.dragged_shipgirl is not None:
-                    if not self._snap_shipgirl_to_interactable_decoration(self.dragged_shipgirl):
-                        self.dragged_shipgirl.interacting_decoration = None
-                        self.dragged_shipgirl.pick_new_wander_target()
-
-                    self.dragged_shipgirl = None
-                    continue
-
-                if self.decoration_depot_drag_offset is not None:
-                    self.moved_decoration_depot_overlay = True
-                    self.decoration_depot_drag_offset = None
-                    continue
-
-                # Resolve click actions.
-                self._refresh_overlay_page_buttons()
-                if (
-                    self.overlay_page_prev_button.click(event.pos)
-                    or self.overlay_page_next_button.click(event.pos)
-                ):
-                    DataFiles.sfx["click"].play()
-                    continue
-
-                if self.toggle_decoration_mode_button.click(event.pos):
-                    DataFiles.sfx["click"].play()
-                    self.selected_decoration_in_depot = None
-                    self.deleting_decoration = False
-                    continue
-            
-                if self.decoration_depot_overlay.collidepoint(event.pos):
-                    self._select_decoration_depot_entity(event.pos, allow_delete_toggle=True)
-                elif self.deleting_decoration:
-                    # Check if the player is clicking on the footprint of any decoration.
-                    clicked_tilepos = Decorations.get_isometric_tilepos(event.pos)
-                    for decoration_index, decoration_data in enumerate(DataFiles.save_file["decorations"]):
-                        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
-                        if clicked_tilepos in Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor):
-                            DataFiles.sfx["click"].play()
-
-                            # Release any shipgirls interacting with this decoration.
-                            deleted_decoration = tuple(decoration_data[1])
-                            for shipgirl in self.menu_manager.available_shipgirls:
-                                if shipgirl.interacting_decoration == deleted_decoration:
-                                    shipgirl.interacting_decoration = None
-                                    shipgirl.pick_new_wander_target()
-
-                            DataFiles.save_file["decorations"].pop(decoration_index)
-                            DataFiles.save_file["decoration_depot"][decoration] = (
-                                DataFiles.save_file["decoration_depot"].get(decoration, 0) + 1
-                            )
-                            if decoration == "bed":
-                                self.removed_bed_decoration = True
-                            break
-                elif self.selected_decoration_in_depot is not None:
-                    # Check if the location that the player wishes to place the decoration
-                    # is within the tileable area.
-                    decoration = self.selected_decoration_in_depot
-                    clicked_tilepos = Decorations.get_isometric_tilepos_anchor(event.pos)
-                    place_tiles = Decorations.get_decoration_tiles(decoration, self.decoration_flipped, clicked_tilepos)
-                    if not Decorations.in_tileable_area(place_tiles):
-                        continue
-                    # Check if the location that the player wishes to place the decoration
-                    # will not cause the decoration to overlap other decorations that already
-                    # exist in the space.
-                    occupied_tiles = set() # TODO code optimization, cache this instead of re-computing it every time
-                    for decoration_data in DataFiles.save_file["decorations"]:
-                        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
-                        occupied_tiles.update(Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor))
-                    if place_tiles.intersection(occupied_tiles):
-                        continue
-                    # Place the decoration.
-                    DataFiles.sfx["click"].play()
-                    DataFiles.save_file["decorations"].append((decoration, clicked_tilepos, self.decoration_flipped))
-                    DataFiles.save_file["decoration_depot"][decoration] -= 1
-                    if decoration == "bed":
-                        self.placed_bed_decoration = True
-                    if DataFiles.save_file["decoration_depot"][decoration] <= 0:
-                        self.selected_decoration_in_depot = None
-
-    def update(self, dt: float, events: list[pygame.Event]):
-        """Update the port menu."""
-        self.menu_manager.quest_manager.update(dt)
-
-        # Update encounter menu transition.
-        encounter_menu = self.menu_manager.encounter_menu
-        # TODO should the transition logic be pulled out instead of encounter menu-owned?
-        if encounter_menu.transition_active:
-            encounter_menu.update(dt, [])
-        if encounter_menu.transition_state == encounter_menu.TRANSITION_WAVE_COVER:
-            return
-
-        # Decoration stamp animation.
-        if self.decoration_stamp_animation_timer > 0:
-            self.decoration_stamp_animation_timer -= dt
-            if self.decoration_stamp_animation_timer <= 0:
-                self.decoration_stamp_animation_timer = 0
-                self._refresh_overlay_action_buttons()
-
-        if self.is_decorating:
-            self._update_decorate_port_menu_overlay(events)
-        elif self.current_overlay == self.NO_OVERLAY:
-            self._update_no_overlay(events)
-        else:
-            for event in events:
-                if event.type == pygame.MOUSEMOTION:
-                    self._refresh_overlay_page_buttons()
-                    self.overlay_page_prev_button.hover(event.pos)
-                    self.overlay_page_next_button.hover(event.pos)
-                    action_button = self._get_current_overlay_action_button()
-                    if action_button is not None:
-                        action_button.hover(event.pos)
-                if event.type == pygame.MOUSEBUTTONUP:
-                    self._refresh_overlay_page_buttons()
-                    if (
-                        self.overlay_page_prev_button.click(event.pos)
-                        or self.overlay_page_next_button.click(event.pos)
-                    ):
-                        DataFiles.sfx["click"].play()
-                        continue
-                    if self._exit_overlay(event):
-                        continue
-                    self._select_filter(event)
-                    self._select_entity(event)
-                    action_button = self._get_current_overlay_action_button()
-                    if action_button is not None:
-                        action_button.click(event.pos)
-
-        if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
-            # Forklift animation.
-            if self.forklift_pause > 0:
-                prev_forklift_pause = self.forklift_pause
-                self.forklift_pause -= dt
-                if prev_forklift_pause > 0.5 and self.forklift_pause <= 0.5:
-                    self.forklift_dx *= -1
-            elif self.forklift_dx > 0:
-                self.forklift_x += dt / 5
-                if self.forklift_x >= 1:
-                    self.forklift_x = 1
-                    self.forklift_pause = 1
-            elif self.forklift_dx < 0:
-                self.forklift_x -= dt / 5
-                if self.forklift_x <= 0:
-                    self.forklift_x = 0
-                    self.forklift_pause = 1
-
-        for shipgirl in self.menu_manager.available_shipgirls:
-            if shipgirl not in [self.hovered_shipgirl, self.dragged_shipgirl]:
-                shipgirl.update(dt)
-            shipgirl.animate(dt)
 
     def _draw_decoration_mode_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Helper to draw the decoration mode overlay."""
