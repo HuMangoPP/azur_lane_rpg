@@ -1,127 +1,112 @@
-import sys
 import pygame
 import json
 
-pygame.init()
-# SCREEN_SIZE = pygame.Vector2(1920, 1080)
-SCREEN_SIZE = pygame.Vector2(960, 540)
-screen = pygame.display.set_mode(SCREEN_SIZE)
+if __name__ == "__main__":
+    pygame.init()
+    # SCREEN_SIZE = pygame.Vector2(1920, 1080)
+    SCREEN_SIZE = pygame.Vector2(960, 540)
+    screen = pygame.display.set_mode(SCREEN_SIZE)
 
-pygame.mixer.init()
+    pygame.mixer.init()
 
-from engine.font import Font
+    from engine.font import Font
 
-from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles, Color
-from src.menus.menu_manager import MenuManager
+    from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles, Color
+    from src.menus.menu_manager import MenuManager
 
-display = pygame.Surface(TEMP_SCREEN_SIZE)
-mouse_scale = (
-    TEMP_SCREEN_SIZE.x / SCREEN_SIZE.x,
-    TEMP_SCREEN_SIZE.y / SCREEN_SIZE.y,
-)
+    # Rendering will be done on this display, then scaled up to the window display.
+    display = pygame.Surface(TEMP_SCREEN_SIZE)
 
-get_physical_mouse_pos = pygame.mouse.get_pos
-
-def get_scaled_mouse_pos():
-    mouse_pos = get_physical_mouse_pos()
-    return (
-        mouse_pos[0] * mouse_scale[0],
-        mouse_pos[1] * mouse_scale[1],
+    # Monkeypatch pygame.mouse.get_pos() to map from true screen space to temp surface space.
+    mouse_scale = (
+        TEMP_SCREEN_SIZE.x / SCREEN_SIZE.x,
+        TEMP_SCREEN_SIZE.y / SCREEN_SIZE.y,
     )
 
-pygame.mouse.get_pos = get_scaled_mouse_pos
+    get_physical_mouse_pos = pygame.mouse.get_pos
 
-clock = pygame.Clock()
-with open("engine/fonts.json") as f:
-    fonts = json.load(f)
-    font_registry = {
-        font: Font(font, charset)
-        for font, charset in fonts.items()
-    }
+    def _get_scaled_mouse_pos() -> tuple[float, float]:
+        """Get the mouse cursor position in the actual game screen space.
 
-menu_manager = MenuManager()
+        Monkeypatch of pygame.mouse.get_pos(), which scales the true mouse position
+        on screen so that it lives in the actual game screen space.
+        """
+        mouse_pos = get_physical_mouse_pos()
+        return (
+            mouse_pos[0] * mouse_scale[0],
+            mouse_pos[1] * mouse_scale[1],
+        )
 
-if len(sys.argv) > 2 and sys.argv[1] == "sortie":
-    # setup encounter immediately for testing
-    menu_manager.encounter_menu.current_sortie = int(sys.argv[2])
-    menu_manager.encounter_menu.current_encounter = 0
-    menu_manager.player_fleet.clear_fleet()
-    menu_manager.siren_fleet.clear_fleet()
+    pygame.mouse.get_pos = _get_scaled_mouse_pos
 
-    menu_manager.current_menu = menu_manager.encounter_menu
-    try:
-        menu_manager.player_fleet.shipgirls[0] = menu_manager.available_shipgirls[0]
-        menu_manager.player_fleet.shipgirls[2] = menu_manager.available_shipgirls[1]
-        menu_manager.player_fleet.shipgirls[1] = menu_manager.available_shipgirls[2]
-    except:
-        pass
-    
-    for i, shipgirl in enumerate(menu_manager.player_fleet.shipgirls):
-        if shipgirl is None:
-            continue
-        shipgirl.rect.center = menu_manager.fleet_selection_menu.fleet_slots[i].center
-    menu_manager.player_fleet.begin_sortie()
-    menu_manager.encounter_menu.begin_sortie()
-    for i, shipgirl in enumerate(menu_manager.player_fleet.shipgirls):
-        if shipgirl is None:
-            continue
-        shipgirl.battle_component.target = menu_manager.siren_fleet.front[0]
+    clock = pygame.Clock()
 
-DataFiles.bgm["lofi_loop"].play(loops=-1, fade_ms=10000)
-running = True
-while running:
-    clock.tick(FPS)
-    dt = clock.get_time() / 1000
-    fps = int(clock.get_fps())
+    with open("engine/fonts.json") as f:
+        fonts = json.load(f)
+        font_registry = {
+            font: Font(font, charset)
+            for font, charset in fonts.items()
+        }
 
-    events = []
-    for event in pygame.event.get():
-        if hasattr(event, "pos"):
-            event.pos = (
-                event.pos[0] * mouse_scale[0],
-                event.pos[1] * mouse_scale[1],
-            )
-        if hasattr(event, "rel"):
-            event.rel = (
-                event.rel[0] * mouse_scale[0],
-                event.rel[1] * mouse_scale[1],
-            )
+    menu_manager = MenuManager()
 
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            running = False
+    DataFiles.bgm["lofi_loop"].play(loops=-1, fade_ms=10000)
+    running = True
+    while running:
+        clock.tick(FPS)
+        dt = clock.get_time() / 1000
+        fps = int(clock.get_fps())
 
-        events.append(event)
+        events = []
+        for event in pygame.event.get():
+            if hasattr(event, "pos"):
+                event.pos = (
+                    event.pos[0] * mouse_scale[0],
+                    event.pos[1] * mouse_scale[1],
+                )
+            if hasattr(event, "rel"):
+                event.rel = (
+                    event.rel[0] * mouse_scale[0],
+                    event.rel[1] * mouse_scale[1],
+                )
 
-    menu_manager.current_menu.update(dt, events)
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
 
-    # TODO clean up magic numbers
-    display.fill((50,20,20))
-    menu_manager.current_menu.draw(display, font_registry)
-    if not menu_manager.encounter_menu.transition_active:
-        for quest in menu_manager.quest_manager.started_quests.values():
-            if quest.started and not quest.completed:
-                quest.tutorial_draw(menu_manager, display, font_registry)
-    font_registry["big_pixel"].render(
-        display,
-        str(fps),
-        (32, TEMP_SCREEN_SIZE[1]-32),
-        Color.WHITE,
-        2,
-        style="center",
-        outline_color=Color.BLACK
-    )
-    screen.blit(pygame.transform.scale(display, screen.get_size()))
-    pygame.display.flip()
+            events.append(event)
 
-DataFiles.bgm["lofi_loop"].stop()
-pygame.quit()
+        menu_manager.current_menu.update(dt, events)
 
-for shipgirl in menu_manager.available_shipgirls:
-    DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
+        # TODO update background so it is not a flat value
+        display.fill(Color.BLACK)
+        menu_manager.current_menu.draw(display, font_registry)
+        if not menu_manager.encounter_menu.transition_active:
+            for quest in menu_manager.quest_manager.started_quests.values():
+                if quest.started and not quest.completed:
+                    quest.tutorial_draw(menu_manager, display, font_registry)
+        font_registry["big_pixel"].render(
+            display,
+            str(fps),
+            (32, TEMP_SCREEN_SIZE[1]-32),
+            Color.WHITE,
+            2,
+            style="center",
+            outline_color=Color.BLACK
+        )
+        screen.blit(pygame.transform.scale(display, screen.get_size()))
+        pygame.display.flip()
 
-save_file = input("Save file? ")
-if save_file == "y":
-    with open("data/save_file.json", "w") as f:
-        json.dump(DataFiles.save_file, f, indent=4)
+    DataFiles.bgm["lofi_loop"].stop()
+    pygame.quit()
+
+    # TODO can the exp be saved directly to the save file without the need to keeping track
+    # of it separately in BattleComponent?
+    for shipgirl in menu_manager.available_shipgirls:
+        DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
+
+    save_file = input("Save file? ")
+    if save_file == "y":
+        with open("data/save_file.json", "w") as f:
+            json.dump(DataFiles.save_file, f, indent=4)

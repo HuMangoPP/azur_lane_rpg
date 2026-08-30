@@ -1,3 +1,9 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.font import Font
+    from src.menus.menu_manager import MenuManager
+
 import math
 import random
 import functools
@@ -8,6 +14,7 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y, Decorations
 from src.shipgirls import Shipgirl
+from src.menus.base_menu import Menu
 from live2d.live2d import Live2D
 
 
@@ -96,7 +103,7 @@ class AnnularSectorButton:
             surface.blit(self.background_img, img_rect)
 
 
-class PortMenu:
+class PortMenu(Menu):
     NO_OVERLAY = "no_overlay"
     DEPOT = "depot"
     INTEL_CENTER = "intel_center"
@@ -129,7 +136,7 @@ class PortMenu:
     DECORATION_STAMP_DISAPPEAR_TIME = 0.5
     DECORATION_PRICE = 1
 
-    def __init__(self, menu_manager):
+    def __init__(self, menu_manager: MenuManager):
         # MenuManager object
         self.menu_manager = menu_manager
 
@@ -2518,7 +2525,7 @@ class PortMenu:
                     if DataFiles.save_file["decoration_depot"][decoration] <= 0:
                         self.selected_decoration_in_depot = None
 
-    def update(self, dt, events):
+    def update(self, dt: float, events: list[pygame.Event]):
         self.menu_manager.quest_manager.update(dt)
         encounter_menu = self.menu_manager.encounter_menu
         if encounter_menu.transition_active:
@@ -2792,7 +2799,7 @@ class PortMenu:
             surface.blit(cargo_box_sprite, cargo_box_rect)
         self.draw_overlay_page_buttons(surface, font_registry)
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         surface.blit(Decorations.wallpaper_surf, Decorations.get_wallpaper_rect())
         surface.blit(Decorations.floor_surf, Decorations.floor_rect)
 

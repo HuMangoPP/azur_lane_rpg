@@ -1,3 +1,9 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.font import Font
+    from src.menus.menu_manager import MenuManager
+
 import math
 import random
 import pygame
@@ -6,8 +12,7 @@ from engine.util import get_rect, get_vec
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
-from src.shipgirls import Shipgirl
-from src.vfx import VFXManager
+from src.menus.base_menu import Menu
 from src.menus.fleet_selection_menu import FleetNameRibbon
 from src.menus.quests_data import (
     assign_quest,
@@ -15,6 +20,8 @@ from src.menus.quests_data import (
     construct_auxiliary_equipment_quest,
     complete_final_sortie_quest,
 )
+from src.shipgirls import Shipgirl
+from src.vfx import VFXManager
 
 
 class Cloud:
@@ -426,7 +433,7 @@ class Drop:
         rect.center = self.pos
         surface.blit(image, rect)
 
-class EncounterMenu:
+class EncounterMenu(Menu):
     TRANSITION_IDLE = "idle"
     TRANSITION_EXITING = "exiting"
     TRANSITION_WAVE_COVER = "wave_cover"
@@ -491,7 +498,7 @@ class EncounterMenu:
         },
     }
 
-    def __init__(self, menu_manager):
+    def __init__(self, menu_manager: MenuManager):
         self.menu_manager = menu_manager
 
         self.mouse_start_drag = None
@@ -1138,7 +1145,7 @@ class EncounterMenu:
                 **self.SHIPGIRL_WAKE_CONFIG,
             )
 
-    def update(self, dt, events):
+    def update(self, dt: float, events: list[pygame.Event]):
         if self.transition_active:
             self._update_encounter_transition(dt)
             return
@@ -1855,7 +1862,7 @@ class EncounterMenu:
                 width=1,
             )
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         self.background.draw(
             surface,
             font_registry,

@@ -1,3 +1,10 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from engine.font import Font
+    from src.menus.menu_manager import MenuManager
+
 import math
 import pygame
 import random
@@ -7,12 +14,12 @@ from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.quests_data import first_sortie_quest
+from src.menus.base_menu import Menu
 from src.menus.sortie_selection_menu import (
     Background,
     ChapterProgressAnnotation,
     NameRibbon,
 )
-
 from live2d.live2d import Live2D
 
 
@@ -165,7 +172,7 @@ class FleetPathAnnotation:
         self.draw_text(surface, font_registry)
 
 
-class FleetSelectionMenu:
+class FleetSelectionMenu(Menu):
     Y_ALIGN = screen_y(0.4)
     PATH_DASH_LENGTH = 16
     PATH_DASH_WIDTH = 4
@@ -204,7 +211,7 @@ class FleetSelectionMenu:
     SET_SAIL_TEXT_OFFSET = 56
     SET_SAIL_TEXT_ANGLE = 8
 
-    def __init__(self, menu_manager):
+    def __init__(self, menu_manager: MenuManager):
         self.menu_manager = menu_manager
 
         # TODO update tray styling
@@ -1234,7 +1241,7 @@ class FleetSelectionMenu:
             return True
         return False
 
-    def update(self, dt, events):
+    def update(self, dt: float, events: list[pygame.Event]):
         self.selection_effect_time += dt
         if self.menu_manager.encounter_menu.transition_active:
             self.menu_manager.encounter_menu.update(dt, ())
@@ -1319,7 +1326,7 @@ class FleetSelectionMenu:
             if shipgirl is not None:
                 shipgirl.animate(dt)
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         self.background.draw(surface)
         self.draw_sortie_props(surface)
         mpos = pygame.mouse.get_pos()

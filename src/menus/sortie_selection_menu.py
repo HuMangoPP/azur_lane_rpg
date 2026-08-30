@@ -1,3 +1,9 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.font import Font
+    from src.menus.menu_manager import MenuManager
+
 import math
 import random
 import pygame
@@ -6,6 +12,7 @@ from engine.util import get_rect, get_vec, pixel_to_hex, hex_to_pixel, hex_corne
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
+from src.menus.base_menu import Menu
 
 
 def anchor():
@@ -1119,14 +1126,14 @@ class SortieOrderCard:
         self.draw_authorization_stamp(surface)
 
 
-class SortieSelectionMenu:
+class SortieSelectionMenu(Menu):
     PATH_DASH_LENGTH = 8
     PATH_DASH_WIDTH = 3
     CAMERA_PAN_DURATION = 0.25
     CAMERA_MIN = pygame.Vector2(screen_x(0.5), -305)
     CAMERA_MAX = pygame.Vector2(1822, screen_y(0.5))
 
-    def __init__(self, menu_manager):
+    def __init__(self, menu_manager: MenuManager):
         self.menu_manager = menu_manager
 
         self.mousedown = False
@@ -1377,7 +1384,7 @@ class SortieSelectionMenu:
             self.sortie_order_card.layout()
             self.sortie_order_card.button.active = self.selected_sortie_node is not None
 
-    def update(self, dt, events):
+    def update(self, dt: float, events: list[pygame.Event]):
         self.selection_effect_time += dt
         for event in events:
             if self.sortie_order_card.authorizing:
@@ -1440,7 +1447,7 @@ class SortieSelectionMenu:
         for fog in self.fogs:
             fog.update(dt)
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         self.background.draw(surface)
 
         for chapter_region in self.chapter_regions:

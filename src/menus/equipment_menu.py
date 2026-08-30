@@ -1,3 +1,9 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.font import Font
+    from src.menus.menu_manager import MenuManager
+
 import math
 import random
 import pygame
@@ -6,10 +12,11 @@ from engine.util import get_rect, get_vec
 from engine.button import Button
 
 from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x, screen_y
-
+from src.menus.base_menu import Menu
 from live2d.live2d import Live2D
 
-class EquipmentMenu:
+
+class EquipmentMenu(Menu):
     UNEQUIP_ITEM = "__unequip_item__"
     TABLETOP_COLOR = (171, 85, 33)
     TABLETOP_GRAIN_SEED = 0
@@ -34,7 +41,7 @@ class EquipmentMenu:
         "reload": "reload cycle",
     }
 
-    def __init__(self, menu_manager):
+    def __init__(self, menu_manager: MenuManager):
         self.menu_manager = menu_manager
 
         self.selected_shipgirl = None
@@ -301,7 +308,7 @@ class EquipmentMenu:
             pygame.draw.rect(surface, color, band_rect)
             y += band_height
 
-    def update(self, dt, events):
+    def update(self, dt: float, events: list[pygame.Event]):
         self.blueprint_effect_time += dt
         self._selection_activation_time = min(
             self._SELECTION_ACTIVATION_DURATION,
@@ -943,7 +950,7 @@ class EquipmentMenu:
         self.draw_dossier_watermark(surface)
         self.draw_dossier_props(surface)
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         # TODO clean up magic numbers
         floor_color = (71, 71, 71)
         wall_color = (105, 105, 105)
