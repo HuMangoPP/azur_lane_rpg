@@ -1,3 +1,12 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.font import Font
+    from src.menus.menu_manager import MenuManager
+    from src.menus.port_menu import PortMenu
+    from src.menus.quests import Quest
+    from src.shipgirls import Shipgirl
+
 import math
 import pygame
 
@@ -8,17 +17,22 @@ from src.menus.quests import Quest
 from src.menus.sortie_selection_menu import SortieNode
 
 
-def assign_quest(menu_manager, quest):
+def assign_quest(menu_manager: MenuManager, quest: Quest):
+    """Assign this quest, if it has not already been assigned."""
     if quest.quest_id in DataFiles.save_file["quests"]:
         return
 
     menu_manager.quest_manager.quests[quest.quest_id] = quest
     DataFiles.save_file["quests"][quest.quest_id] = menu_manager.quest_manager.STATUS_NEW
 
-def empty_tutorial_draw(menu_manager, surface, font_registry):
+def empty_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
+    """Empty draw for tutorials that don't need tutorial rendering."""
     pass
 
-def draw_tb(surface, font_registry, text, point_pos, point_down, point_right):
+def draw_tb(surface: pygame.Surface, font_registry: dict[str, Font], text: str | None, point_pos: tuple[float, float], point_down: bool, point_right: bool):
+    """Render the TB pointer sprite, pointing to the point pos, with a text bubble if provided."""
+    # Make the TB pointer sprite point towards the point pos.
+    # The TB pointer points diagonally.
     point_pos = pygame.Vector2(point_pos)
 
     if point_down:
@@ -38,40 +52,41 @@ def draw_tb(surface, font_registry, text, point_pos, point_down, point_right):
         pointer_rect.left = point_pos.x
     surface.blit(pointer, pointer_rect)
 
-    if text is not None:
+    if text:
+        # Render a text bubble, aligned so that it respects in which direction TB is pointing.
         text_scale = 1
         text_left_padding = 14
         text_right_padding = Box.PADDING
-        max_text_width = font_registry["big_pixel"].font_width*25
+        max_text_width = font_registry["big_pixel"].font_width * 25
         text_height = font_registry["big_pixel"].get_height(text, text_scale, max_text_width)
         text_box_width = font_registry["big_pixel"].get_width(text, text_scale, max_text_width)
         text_rect = get_rect(
             width=text_box_width + text_left_padding + text_right_padding,
-            height=text_height + 2*Box.PADDING,
+            height=text_height + 2 * Box.PADDING,
             centerx=pointer_rect.centerx,
             bottom=pointer_rect.top
         )
         if point_right:
             text_rect.right = pointer_rect.left
             polygon = [
-                (text_rect.width, text_rect.height-Box.PADDING),
-                (text_rect.width+Box.PADDING, text_rect.height+Box.PADDING),
-                (text_rect.width-Box.PADDING, text_rect.height)
+                (text_rect.width, text_rect.height - Box.PADDING),
+                (text_rect.width + Box.PADDING, text_rect.height + Box.PADDING),
+                (text_rect.width - Box.PADDING, text_rect.height)
             ]
         else:
             text_rect.left = pointer_rect.right
             polygon = [
-                (0, text_rect.height-Box.PADDING),
-                (-Box.PADDING, text_rect.height+Box.PADDING),
+                (0, text_rect.height - Box.PADDING),
+                (-Box.PADDING, text_rect.height + Box.PADDING),
                 (Box.PADDING, text_rect.height)
             ]
         accent = Color.QUEST_NOTIFICATION_NEW
-        panel = pygame.Surface((text_rect.width+Box.PADDING, text_rect.height+Box.PADDING), pygame.SRCALPHA)
+        panel = pygame.Surface((text_rect.width + Box.PADDING, text_rect.height + Box.PADDING), pygame.SRCALPHA)
         panel_polygon = [
             (Quest.PANEL_CUT, text_rect.height),
-            (0, text_rect.height-Quest.PANEL_CUT),
+            (0, text_rect.height - Quest.PANEL_CUT),
             (0, 0),
-            (text_rect.width-Quest.PANEL_CUT, 0),
+            (text_rect.width - Quest.PANEL_CUT, 0),
             (text_rect.width, Quest.PANEL_CUT),
             (text_rect.width, text_rect.height),
         ]
@@ -96,8 +111,8 @@ def draw_tb(surface, font_registry, text, point_pos, point_down, point_right):
 
         rail_rect = get_rect(
             width=3,
-            height=max(1, text_rect.height-12),
-            left=text_rect.left+6,
+            height=max(1, text_rect.height - 12),
+            left=text_rect.left + 6,
             centery=text_rect.centery,
         )
         rail_glow = pygame.Surface(rail_rect.size, pygame.SRCALPHA)
@@ -130,10 +145,13 @@ choose_faction_post_quest_dialogue = [
     "Your port authorization is now active, Commander.",
 ]
 
-def choose_faction_completion_criteria(menu_manager):
+def choose_faction_completion_criteria(menu_manager: MenuManager) -> bool:
     completed = len(DataFiles.save_file["unlocked_factions"]) > 0
     if completed:
         chosen_faction = DataFiles.save_file["unlocked_factions"][0]
+
+        # Update the rewards dynamically to provide the correct unique items to craft
+        # the correct starter shipgirls based on chosen faction.
         for shipgirl_info in DataFiles.shipgirl_data.values():
             if shipgirl_info["faction"] != chosen_faction:
                 continue
@@ -146,23 +164,28 @@ def choose_faction_completion_criteria(menu_manager):
 
     return completed
 
-def choose_faction_tutorial_draw(menu_manager, surface, font_registry):
+def choose_faction_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
     pass
 
-def choose_faction_on_start(menu_manager):
+def choose_faction_on_start(menu_manager: MenuManager):
     faction_selection_pending = not DataFiles.save_file["unlocked_factions"]
     for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
         choose_faction_button.active = faction_selection_pending
 
-def choose_faction_on_complete(menu_manager, save_file_load=False):
-    if not save_file_load:
-        faction_shipgirls = DataFiles.get_faction_shipgirls()
-        specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
-        for hull_type in ["DD", "BB"]:
-            shipgirl = faction_shipgirls[hull_type]
-            if DataFiles.save_file["inventory"].get("wisdom_cube", 0) > 0:
-                DataFiles.save_file["inventory"]["wisdom_cube"] -= 1
-                specialized_wisdom_cubes[shipgirl] = 0
+def choose_faction_on_complete(menu_manager: MenuManager):
+    # On complete, the quest needs to convert the wisdom cubes awarded in the quest
+    # into specialized wisdom cubes for the starter shipgirls.
+    faction_shipgirls = DataFiles.get_faction_shipgirls()
+    specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
+    for hull_type in ["DD", "BB"]:
+        shipgirl = faction_shipgirls[hull_type]
+        if shipgirl in DataFiles.save_file["shipgirls"]:
+            continue
+        if shipgirl in specialized_wisdom_cubes:
+            continue
+        if DataFiles.save_file["inventory"].get("wisdom_cube", 0) > 0:
+            DataFiles.save_file["inventory"]["wisdom_cube"] -= 1
+            specialized_wisdom_cubes[shipgirl] = 0
 
     assign_quest(menu_manager, construct_shipgirls_quest)
     
@@ -204,52 +227,50 @@ construct_shipgirls_post_quest_dialogue = [
     "The fleet has the minimum personnel required for deployment.",
 ]
 
-def construct_shipgirls_completion_criteria(menu_manager):
+def construct_shipgirls_completion_criteria(menu_manager: MenuManager) -> bool:
     shipgirls = DataFiles.get_faction_shipgirls()
     return all(
         shipgirl in DataFiles.save_file["shipgirls"]
         for shipgirl in [shipgirls["DD"], shipgirls["BB"]]
     )
 
-def shipyard_tutorial_draw_factory(highlighted_hull_types):
-    def shipyard_tutorial_draw(menu_manager, surface, font_registry):
+def shipyard_tutorial_draw_factory(highlighted_hull_types: list[str]):
+    """Factory to generate draw functions for the shipyard tutorials."""
+    def shipyard_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
         if menu_manager.current_menu != menu_manager.port_menu:
             return
         
         if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+            # Point towards overlay button.
             rect = menu_manager.port_menu.open_shipyard_overlay_button.rect
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.topright, True, False)
         elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
-            if menu_manager.port_menu.overlay_selected_filter is None:
-                shipgirl_data = {
-                    shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                    if shipgirl not in DataFiles.save_file["shipgirls"]
-                    and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                }
-            else:
-                shipgirl_data = {
-                    shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
-                    if shipgirl not in DataFiles.save_file["shipgirls"]
-                    and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                    and shipgirl_info["faction"] == menu_manager.port_menu.shipyard_filters[menu_manager.port_menu.overlay_selected_filter]
-                }
+            shipgirl_data = {
+                shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+                if shipgirl not in DataFiles.save_file["shipgirls"]
+                and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
+                and shipgirl_info["faction"] == menu_manager.port_menu.shipyard_filters[
+                    menu_manager.port_menu.overlay_selected_filter
+                ]
+            }
             tutorial_done = True
-            shipgirls = []
+            faction_shipgirls = DataFiles.get_faction_shipgirls()
+            shipgirls = [faction_shipgirls[hull_type] for hull_type in highlighted_hull_types]
             for i, (shipgirl, shipgirl_info) in enumerate(shipgirl_data.items()):
+                # Point towards the entities the player should select on the dossier page.
+                # Do not point towards it if it is selected.
                 if menu_manager.port_menu.overlay_selected_entity == shipgirl:
                     continue
                 if shipgirl in DataFiles.save_file["shipgirls"]:
                     continue
                 if shipgirl_info["faction"] not in DataFiles.save_file["unlocked_factions"]:
                     continue
-                faction_shipgirls = DataFiles.get_faction_shipgirls()
-                shipgirls = [faction_shipgirls[hull_type] for hull_type in highlighted_hull_types]
                 if shipgirl not in shipgirls:
                     continue
 
                 rect = menu_manager.port_menu.dossier_icons[i]
-                rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+                rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
                 draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
                 tutorial_done = False
             
@@ -257,21 +278,24 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types):
                 menu_manager.port_menu.overlay_selected_entity in shipgirls
                 and menu_manager.port_menu.shipyard_sticky_note_button.text in ["construct?", "research?"]
             ):
+                # Point towards the sticky note button if the correct shipgirl is selected.
                 rect = menu_manager.port_menu.shipyard_sticky_note_button.rect
-                rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+                rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
                 draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
                 tutorial_done = False
 
+            # The tutorial has been completed i.e. TB is not pointing to anything,
+            # so draw TB pointing outside of the overlay to tell the player to exit.
             if tutorial_done:
                 point = menu_manager.port_menu.dossier_bg.bottomright + pygame.Vector2(-32, 32)
                 draw_tb(surface, font_registry, "exit the shipyard", point, True, True)
 
     return shipyard_tutorial_draw
 
-def construct_shipgirls_on_start(menu_manager):
+def construct_shipgirls_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_shipyard_overlay_button.active = True
 
-def construct_shipgirls_on_complete(menu_manager, save_file_load=False):
+def construct_shipgirls_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, first_sortie_quest)
 
 decoration_voucher_reward = {
@@ -303,44 +327,50 @@ first_sortie_post_quest_dialogue = [
     "Additional port assignments are now available.",
 ]
 
-def first_sortie_completion_criteria(menu_manager):
+def first_sortie_completion_criteria(menu_manager: MenuManager) -> bool:
     return DataFiles.save_file["sortie_progress"] == 1
 
-def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
+def first_sortie_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
     if menu_manager.current_menu == menu_manager.port_menu:
+        # Point towards the sortie button.
         rect = menu_manager.port_menu.open_select_sortie_menu_button.rect
-        rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
         draw_tb(surface, font_registry, None, rect.topleft, True, True)
     elif menu_manager.current_menu == menu_manager.sortie_selection_menu:
         if menu_manager.sortie_selection_menu.selected_sortie_node is not None:
+            # Point towards the sortie button.
             rect = menu_manager.sortie_selection_menu.sortie_order_card.button.rect
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         else:
+            # Point towards the sortie node.
             q, r = menu_manager.sortie_selection_menu.sortie_nodes[0].hexes[0]
             xy = hex_to_pixel(q, r, SortieNode.SIZE)
             rect = get_rect(
                 width=SortieNode.SIZE, height=SortieNode.SIZE,
                 center=pygame.Vector2(xy) + SortieNode.center
             )
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
+        # Point towards the exit button.
         rect = menu_manager.sortie_selection_menu.exit_sortie_selection_menu_button.rect
-        rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
         draw_tb(surface, font_registry, "click this to go back", rect.bottomleft, False, True)
     elif menu_manager.current_menu == menu_manager.fleet_selection_menu:
         if menu_manager.encounter_menu.transition_active:
             return
         if menu_manager.fleet_selection_menu.start_sortie_button.active:
+            # Point towards the sortie button.
             rect = menu_manager.fleet_selection_menu.start_sortie_button.rect
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.topright, True, False)
 
+            # Tell the player they can shuffle around markers in the fleet.
             rect = (
                 menu_manager.fleet_selection_menu.fleet_slots[0]
                 .unionall(menu_manager.fleet_selection_menu.fleet_slots[1:])
             )
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(
                 surface, font_registry,
                 "you can shuffle around the markers to reorganize your fleet",
@@ -348,6 +378,7 @@ def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
                 False, False
             )
 
+            # Tell the player they can return markers to the tray.
             point =  menu_manager.fleet_selection_menu.tray_overlay.center
             draw_tb(
                 surface, font_registry,
@@ -356,11 +387,12 @@ def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
                 True, True
             )
         else:
+            # Point towards the fleet box and tell players to drag and drop markers here.
             rect = (
                 menu_manager.fleet_selection_menu.fleet_slots[0]
                 .unionall(menu_manager.fleet_selection_menu.fleet_slots[1:])
             )
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             shipgirls = DataFiles.get_faction_shipgirls()
             dd_shipgirl = shipgirls["DD"].replace("_", " ")
             bb_shipgirl = shipgirls["BB"].replace("_", " ")
@@ -370,23 +402,26 @@ def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
                 rect.bottomright,
                 False, False
             )
+        # Point towards the exit button.
         rect = menu_manager.fleet_selection_menu.exit_fleet_selection_menu_button.rect
-        rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
         draw_tb(surface, font_registry, "click this to go back", rect.bottomleft, False, True)
     elif menu_manager.current_menu == menu_manager.encounter_menu:
         if menu_manager.encounter_menu.transition_active:
             return
         if not menu_manager.encounter_menu.encounter_started:
+            # Tell the player to drag all shipgirls to the entity siren.
             rect = menu_manager.siren_fleet.front[0].rect
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(
                 surface, font_registry,
                 "drag all of your shipgirls to target the enemy siren",
                 rect.bottomright,
                 False, False
             )
+            # Point towards the retreat button.
             rect = menu_manager.encounter_menu.retreat_button.rect
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(
                 surface, font_registry,
                 "if you need to retreat, click this button",
@@ -394,21 +429,24 @@ def first_sortie_tutorial_draw(menu_manager, surface, font_registry):
                 False, True
             )
         elif menu_manager.encounter_menu.next_encounter_button.active:
+            # Point towards the next encounter button.
             rect = menu_manager.encounter_menu.next_encounter_button.rect
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         elif menu_manager.encounter_menu.return_to_port_button.active:
+            # Point towards the return to port button.
             rect = menu_manager.encounter_menu.return_to_port_button.rect
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         elif menu_manager.encounter_menu.open_reward_cache_button.active:
+            # Point towards the siren cache.
             point = menu_manager.encounter_menu.open_reward_cache_button.rect.center
             draw_tb(surface, font_registry, "extract rewards from the siren cache", point, False, True)
 
-def first_sortie_on_start(menu_manager):
+def first_sortie_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
 
-def first_sortie_on_complete(menu_manager, save_file_load=False):
+def first_sortie_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, inventory_quest)
 
 first_sortie_quest = Quest(
@@ -435,18 +473,20 @@ inventory_post_quest_dialogue = [
     "Newly acquired materials will be recorded here automatically.",
 ]
 
-def inventory_completion_criteria(menu_manager):
+def inventory_completion_criteria(menu_manager: MenuManager) -> bool:
     return menu_manager.port_menu.visited_depot
 
-def inventory_tutorial_draw(menu_manager, surface, font_registry):
+def inventory_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
     if menu_manager.current_menu != menu_manager.port_menu:
         return
 
     if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        # Point towards the overlay button.
         rect = menu_manager.port_menu.open_depot_overlay_button.rect
-        rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
         draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DEPOT:
+        # Point towards the overlay.
         rect = menu_manager.port_menu.warehouse_overlay
         draw_tb(
             surface, font_registry,
@@ -455,17 +495,19 @@ def inventory_tutorial_draw(menu_manager, surface, font_registry):
             False, True
         )
         if menu_manager.port_menu.overlay_selected_entity is None:
+            # Point towards an item in the inventory.
             rect = menu_manager.port_menu.warehouse_icons[0]
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.bottomright, False, False)
         else:
+            # Point towards the clipboard overlay.
             point = menu_manager.port_menu.warehouse_overlay.bottomright + pygame.Vector2(-32, 64)
             draw_tb(surface, font_registry, "exit the depot", point, True, True)
 
-def inventory_on_start(menu_manager):
+def inventory_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_depot_overlay_button.active = True
 
-def inventory_on_complete(menu_manager, save_file_load=False):
+def inventory_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, intel_center_quest)
 
 inventory_quest = Quest(
@@ -494,39 +536,42 @@ intel_center_post_quest_dialogue = [
     "Consult this information before entering unfamiliar sectors.",
 ]
 
-def intel_center_completion_criteria(menu_manager):
+def intel_center_completion_criteria(menu_manager: MenuManager) -> bool:
     return menu_manager.port_menu.visited_intel_center
 
-def intel_center_tutorial_draw(menu_manager, surface, font_registry):
+def intel_center_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
     if menu_manager.current_menu != menu_manager.port_menu:
         return
 
     if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        # Point towards the overlay button.
         rect = menu_manager.port_menu.open_intel_center_overlay_button.rect
-        rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
         draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.INTEL_CENTER:
         if menu_manager.port_menu.overlay_selected_entity is None:
+            # Point towards a siren entry.
             rect = menu_manager.port_menu.dossier_icons[0]
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.bottomright, False, False)
         else:
+            # Point towards the blueprint overlay.
             rect = menu_manager.port_menu.blueprint_page
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(
                 surface, font_registry,
                 "the intel center has information on siren stats as well as the potential drops from defeating the siren",
                 (rect.left, rect.centery),
                 False, True
             )
-
+            # Point outside of the overlay.
             point = menu_manager.port_menu.dossier_bg.bottomright + pygame.Vector2(-32, 32)
             draw_tb(surface, font_registry, "exit the intel center", point, True, True)
 
-def intel_center_on_start(menu_manager):
+def intel_center_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_intel_center_overlay_button.active = True
 
-def intel_center_on_complete(menu_manager, save_file_load=False):
+def intel_center_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, research_shipgirl_quest)
 
 intel_center_quest = Quest(
@@ -556,14 +601,14 @@ research_shipgirl_post_quest_dialogue = [
     "Continue into the newly unlocked sector to gather the required data.",
 ]
 
-def research_shipgirl_completion_criteria(menu_manager):
+def research_shipgirl_completion_criteria(menu_manager: MenuManager) -> bool:
     shipgirl = DataFiles.get_faction_shipgirls()["CA"]
     return DataFiles.save_file["research_target"] == shipgirl
 
-def research_shipgirl_on_start(menu_manager):
+def research_shipgirl_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_shipyard_overlay_button.active = True
 
-def research_shipgirl_on_complete(menu_manager, save_file_load=False):
+def research_shipgirl_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, construct_shipgirl_quest)
 
 research_shipgirl_quest = Quest(
@@ -590,13 +635,13 @@ construct_shipgirl_post_quest_dialogue = [
     "Additional fleet compositions are now available for future operations.",
 ]
 
-def construct_shipgirl_completion_criteria(menu_manager):
+def construct_shipgirl_completion_criteria(menu_manager: MenuManager) -> bool:
     return DataFiles.get_faction_shipgirls()["CA"] in DataFiles.save_file["shipgirls"]
 
-def construct_shipgirl_on_start(menu_manager):
+def construct_shipgirl_on_start(menu_manager: MenuManager):
     pass
 
-def construct_shipgirl_on_complete(menu_manager, save_file_load=False):
+def construct_shipgirl_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, craft_weapon_quest)
 
 construct_shipgirl_quest = Quest(
@@ -624,10 +669,10 @@ craft_weapon_post_quest_dialogue = [
     "Crafted equipment must be assigned to a shipgirl before it can be used in combat.",
 ]
 
-def craft_weapon_completion_criteria(menu_manager):
+def craft_weapon_completion_criteria(menu_manager: MenuManager) -> bool:
     return DataFiles.save_file["equipment"].get("twin_120", 0) == 1
 
-def craft_weapon_tutorial_draw(menu_manager, surface, font_registry):
+def craft_weapon_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
     inventory = DataFiles.save_file["inventory"]
     craft_reqs = DataFiles.equipment_data["twin_120"]["craft_reqs"]
     has_craft_reqs = all(
@@ -644,27 +689,31 @@ def craft_weapon_tutorial_draw(menu_manager, surface, font_registry):
         return
 
     if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        # Point towards the overlay button.
         rect = menu_manager.port_menu.open_gear_lab_overlay_button.rect
-        rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
         draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.GEAR_LAB:
         if menu_manager.port_menu.overlay_selected_entity == "twin_120":
             if menu_manager.port_menu.gear_lab_sticky_note_button.active:
+                # Point towards the sticky note button.
                 rect = menu_manager.port_menu.gear_lab_sticky_note_button.rect
-                rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+                rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
                 draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
             else:
+                # Point outside of the overlay.
                 point = menu_manager.port_menu.dossier_bg.bottomright + pygame.Vector2(-32, 32)
                 draw_tb(surface, font_registry, "exit the gear lab", point, True, True)
-        else:
+        elif menu_manager.port_menu.gear_lab_filters[menu_manager.port_menu.overlay_selected_filter] == "DD":
+            # Point towards the twin 120mm gun.
             rect = menu_manager.port_menu.dossier_icons[0]
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.bottomright, False, False)
 
-def craft_weapon_on_start(menu_manager):
+def craft_weapon_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
 
-def craft_weapon_on_complete(menu_manager, save_file_load=False):
+def craft_weapon_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, equip_weapon_quest)
 
 craft_weapon_quest = Quest(
@@ -690,16 +739,18 @@ equip_weapon_post_quest_dialogue = [
     "Review each shipgirl's equipment as stronger options become available.",
 ]
 
-def equip_weapon_completion_criteria(menu_manager):
+def equip_weapon_completion_criteria(menu_manager: MenuManager) -> bool:
     return DataFiles.save_file["shipgirls"][DataFiles.get_faction_shipgirls()["DD"]]["equipment"][Equipment.WEAPON] == "twin_120"
 
-def equip_weapon_tutorial_draw(menu_manager, surface, font_registry):
+def equip_weapon_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
     if menu_manager.current_menu == menu_manager.port_menu:
         if menu_manager.port_menu.shipgirl_dialogue_options[0].active:
+            # Point towards the equipment menu dialogue option.
             button = menu_manager.port_menu.shipgirl_dialogue_options[0]
             point = button.get_wedge_centroid()
             draw_tb(surface, font_registry, None, point, False, False)
         else:
+            # Point towards the DD shipgirl.
             shipgirls = DataFiles.get_faction_shipgirls()
             dd_shipgirl_name = shipgirls["DD"].replace("_", " ")
             dd_shipgirl = next(shipgirl for shipgirl in menu_manager.available_shipgirls if shipgirl.name == dd_shipgirl_name)
@@ -716,22 +767,25 @@ def equip_weapon_tutorial_draw(menu_manager, surface, font_registry):
                 tutorial_text = "hover over the weapon to preview its stats, then click to equip"
             else:
                 tutorial_text = "click this to unequip the weapon"
-
+                # Point towards the exit button.
                 rect = menu_manager.equipment_menu.exit_equipment_menu_button.rect
-                rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+                rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
                 draw_tb(surface, font_registry, "exit the equipment workshop", rect.bottomleft, False, True)
+            # Point towards the equipment icon in the depot, which can either be the actual
+            # equipment or the unequip button.
             rect = menu_manager.equipment_menu.equippable_rects[0]
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, tutorial_text, rect.bottomleft, False, True)
         else:
+            # Point towards the weapon slot.
             rect = menu_manager.equipment_menu.equipped_rects[0]
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
 
-def equip_weapon_on_start(menu_manager):
+def equip_weapon_on_start(menu_manager: MenuManager):
     pass
 
-def equip_weapon_on_complete(menu_manager, save_file_load=False):
+def equip_weapon_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, clear_first_maritime_region_quest)
 
 equip_weapon_quest = Quest(
@@ -760,13 +814,13 @@ clear_first_maritime_region_post_quest_dialogue = [
     "High Command has authorized continued operations in the next maritime region.",
 ]
 
-def clear_first_maritime_region_completion_criteria(menu_manager):
+def clear_first_maritime_region_completion_criteria(menu_manager: MenuManager) -> bool:
     return DataFiles.save_file["chapter_progress"] >= 1
 
-def clear_first_maritime_region_on_start(menu_manager):
+def clear_first_maritime_region_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
 
-def clear_first_maritime_region_on_complete(menu_manager, save_file_load=False):
+def clear_first_maritime_region_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, buy_decoration_quest)
 
 clear_first_maritime_region_quest = Quest(
@@ -794,35 +848,39 @@ buy_decoration_post_quest_dialogue = [
     "It can now be placed by entering the port's edit mode.",
 ]
 
-def buy_decoration_completion_criteria(menu_manager):
+def buy_decoration_completion_criteria(menu_manager: MenuManager) -> bool:
     return DataFiles.save_file["decoration_depot"].get("bed", 0) > 0
 
-def buy_decoration_tutorial_draw(menu_manager, surface, font_registry):
+def buy_decoration_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
     if menu_manager.current_menu != menu_manager.port_menu:
         return
 
     if menu_manager.port_menu.current_overlay == menu_manager.port_menu.NO_OVERLAY:
+        # Point towards the overlay button.
         rect = menu_manager.port_menu.open_decoration_store_overlay_button.rect
-        rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
         draw_tb(surface, font_registry, None, rect.topright, True, False)
     elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.DECORATION_STORE:
         if DataFiles.save_file["decoration_depot"].get("bed", 0) == 0:
             if menu_manager.port_menu.overlay_selected_entity != "bed":
+                # Point towards the bed entry in the decoration sctore.
                 rect = menu_manager.port_menu.warehouse_icons[0]
-                rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+                rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
                 draw_tb(surface, font_registry, "buy a bed", rect.bottomright, False, False)
             elif menu_manager.port_menu.decoration_signature_button.active:
+                # Point towards the signature action button.
                 rect = menu_manager.port_menu.decoration_signature_button.rect
-                rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+                rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
                 draw_tb(surface, font_registry, None, rect.bottomright, False, False)
         else:
+            # Point outside of the overlay.
             point = menu_manager.port_menu.warehouse_overlay.bottomright + pygame.Vector2(-32, 64)
             draw_tb(surface, font_registry, "exit the decoration store", point, True, True)
 
-def buy_decoration_on_start(menu_manager):
+def buy_decoration_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_decoration_store_overlay_button.active = True
 
-def buy_decoration_on_complete(menu_manager, save_file_load=False):
+def buy_decoration_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, decorate_port_quest)
 
 buy_decoration_quest = Quest(
@@ -851,7 +909,7 @@ decorate_port_post_quest_dialogue = [
     "Additional furnishings are available from the decoration store.",
 ]
 
-def decorate_port_completion_criteria(menu_manager):
+def decorate_port_completion_criteria(menu_manager: MenuManager) -> bool:
     port_menu = menu_manager.port_menu
     return (
         port_menu.moved_decoration_depot_overlay
@@ -864,40 +922,44 @@ def decorate_port_completion_criteria(menu_manager):
         and not port_menu.is_decorating
     )
 
-def _decorate_port_get_depot_decoration_rect(port_menu, target_decoration):
+def _decorate_port_get_depot_decoration_rect(port_menu: PortMenu, target_decoration: str) -> pygame.Rect | None:
+    """Get the decoration depot slot of the target decoration."""
     decoration_index = 0
     for decoration, amt in DataFiles.save_file["decoration_depot"].items():
         if amt <= 0:
             continue
         rect = get_rect(
             width=Box.WIDTH, height=Box.HEIGHT,
-            left=port_menu.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-            top=port_menu.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+            left=port_menu.decoration_depot_overlay.left + (decoration_index % 3) * (Box.WIDTH + Box.PADDING) + Box.PADDING,
+            top=port_menu.decoration_depot_overlay.top + (decoration_index // 3) * (Box.HEIGHT + Box.PADDING) + Box.PADDING
         )
         if decoration == target_decoration:
             return rect
         decoration_index += 1
     return None
 
-def _decorate_port_get_delete_rect(port_menu):
+def _decorate_port_get_delete_rect(port_menu: PortMenu) -> pygame.Rect:
+    """Get the deletion action button."""
     decoration_index = sum(
         1 for amt in DataFiles.save_file["decoration_depot"].values()
         if amt > 0
     )
     return get_rect(
         width=Box.WIDTH, height=Box.HEIGHT,
-        left=port_menu.decoration_depot_overlay.left + (decoration_index%3)*(Box.WIDTH+Box.PADDING) + Box.PADDING,
-        top=port_menu.decoration_depot_overlay.top + (decoration_index//3)*(Box.HEIGHT+Box.PADDING) + Box.PADDING
+        left=port_menu.decoration_depot_overlay.left + (decoration_index % 3) * (Box.WIDTH + Box.PADDING) + Box.PADDING,
+        top=port_menu.decoration_depot_overlay.top + (decoration_index // 3) * (Box.HEIGHT + Box.PADDING) + Box.PADDING
     )
 
-def _decorate_port_get_placed_bed_data():
+def _decorate_port_get_placed_bed_data() -> tuple[str, tuple[int, int], bool] | None:
+    """Get the decoration data of the first placed bed."""
     for decoration_data in DataFiles.save_file["decorations"]:
         decoration, _, _ = Decorations.unpack_decoration_data(decoration_data)
         if decoration == "bed":
             return decoration_data
     return None
 
-def _decorate_port_get_placed_bed_rect():
+def _decorate_port_get_placed_bed_rect() -> pygame.Rect:
+    """Get the bounding box of the first placed bed."""
     decoration_data = _decorate_port_get_placed_bed_data()
     if decoration_data is None:
         return None
@@ -905,7 +967,8 @@ def _decorate_port_get_placed_bed_rect():
     decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
     return Decorations.get_decoration_sprite_rect(decoration, flipped, tilepos_anchor)
 
-def _decorate_port_get_interacting_shipgirl_on_bed(menu_manager):
+def _decorate_port_get_interacting_shipgirl_on_bed(menu_manager: MenuManager) -> Shipgirl | None:
+    """Get the shipgirl that is interacting with the first placed bed."""
     decoration_data = _decorate_port_get_placed_bed_data()
     if decoration_data is None:
         return None
@@ -920,8 +983,11 @@ def _decorate_port_get_interacting_shipgirl_on_bed(menu_manager):
         None
     )
 
-def _decorate_port_draw_bed_depot_item(menu_manager, surface, font_registry, text):
-    rect = _decorate_port_get_depot_decoration_rect(menu_manager.port_menu, "bed").inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+def _decorate_port_draw_bed_depot_item(
+    menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font], text: str
+):
+    """Draw a pointer towards the first placed bed bounding rect."""
+    rect = _decorate_port_get_depot_decoration_rect(menu_manager.port_menu, "bed").inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
     if rect is None:
         draw_tb(surface, font_registry, text, pygame.mouse.get_pos(), False, False)
         return
@@ -932,7 +998,7 @@ def _decorate_port_draw_bed_depot_item(menu_manager, surface, font_registry, tex
         False, False
     )
 
-def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
+def decorate_port_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
     if menu_manager.current_menu != menu_manager.port_menu:
         return
 
@@ -940,14 +1006,16 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
     if not port_menu.is_decorating:
         if port_menu.current_overlay != port_menu.NO_OVERLAY:
             return
+        # Point towards the overlay button.
         rect = port_menu.toggle_decoration_mode_button.rect
-        rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
         draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
         return
 
     if not port_menu.moved_decoration_depot_overlay:
+        # Drag decoration depot tutorial.
         rect = port_menu.decoration_depot_overlay
-        rect = rect.inflate(-Box.WIDTH/2, 0)
+        rect = rect.inflate(-Box.WIDTH / 2, 0)
         draw_tb(
             surface, font_registry,
             "drag the decoration inventory if it is in the way",
@@ -958,11 +1026,13 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
 
     if not port_menu.placed_bed_decoration:
         if port_menu.selected_decoration_in_depot != "bed":
+            # Tell player to select the bed from their depot.
             _decorate_port_draw_bed_depot_item(
                 menu_manager, surface, font_registry,
                 "pick the bed from your depot"
             )
         elif not port_menu.flipped_decoration:
+            # Tell the player to flip the bed.
             draw_tb(
                 surface, font_registry,
                 "right click to flip the bed",
@@ -970,6 +1040,7 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
                 False, False
             )
         else:
+            # Tell the player to place down the bed.
             draw_tb(
                 surface, font_registry,
                 "left click an open tile to place the bed",
@@ -980,8 +1051,9 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
 
     if not port_menu.removed_bed_decoration:
         if not port_menu.deleting_decoration:
+            # Tell player to select the removal tool.
             rect = _decorate_port_get_delete_rect(port_menu)
-            rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(
                 surface, font_registry,
                 "use this to remove the placed bed",
@@ -989,6 +1061,7 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
                 False, False
             )
         else:
+            # Tell player to remove the bed they placed down.
             rect = _decorate_port_get_placed_bed_rect()
             rect = rect.inflate(-Box.WIDTH, -Box.HEIGHT)
             if rect is not None:
@@ -1001,6 +1074,7 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
         return
 
     if _decorate_port_get_placed_bed_data() is None:
+        # Tell the player to pick the bed and place it down again.
         if port_menu.selected_decoration_in_depot != "bed":
             _decorate_port_draw_bed_depot_item(
                 menu_manager, surface, font_registry,
@@ -1016,11 +1090,12 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
         return
 
     if port_menu.selected_decoration_in_depot is not None:
+        # Tell the player to deselect the decoration they are currently selecting. 
         rect = _decorate_port_get_depot_decoration_rect(
             port_menu,
             port_menu.selected_decoration_in_depot
         )
-        rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
         if rect is not None:
             draw_tb(
                 surface, font_registry,
@@ -1037,7 +1112,19 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
             )
         return
 
+    if port_menu.deleting_decoration:
+        # Tell the player to deselect the removal tool.
+        rect = _decorate_port_get_delete_rect(port_menu)
+        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
+        draw_tb(
+            surface, font_registry,
+            "deselect the removal tool",
+            rect.bottomright,
+            False, False
+        )
+
     if _decorate_port_get_interacting_shipgirl_on_bed(menu_manager) is None:
+        # Tell the player to pickup a shipgirl and drop her on the bed.
         shipgirl = menu_manager.available_shipgirls[0]
         rect = shipgirl.rect
         rect = rect.inflate(-Box.WIDTH, -Box.HEIGHT)
@@ -1057,12 +1144,14 @@ def decorate_port_tutorial_draw(menu_manager, surface, font_registry):
             )
         return
 
+    # Tell the player to exit decoration mode.
     rect = port_menu.toggle_decoration_mode_button.rect
-    rect = rect.inflate(-Box.WIDTH/2, -Box.HEIGHT/2)
+    rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
     draw_tb(surface, font_registry, "exit edit mode", rect.bottomleft, False, True)
 
-def decorate_port_on_start(menu_manager):
+def decorate_port_on_start(menu_manager: MenuManager):
     port_menu = menu_manager.port_menu
+    # Reset tutorial state.
     port_menu.toggle_decoration_mode_button.active = True
     port_menu.moved_decoration_depot_overlay = False
     port_menu.flipped_decoration = False
@@ -1070,7 +1159,7 @@ def decorate_port_on_start(menu_manager):
     port_menu.removed_bed_decoration = False
     port_menu.shipgirl_interacted_with_bed = False
 
-def decorate_port_on_complete(menu_manager, save_file_load=False):
+def decorate_port_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, construct_additional_shipgirls_quest)
     assign_quest(menu_manager, construct_additional_weapons_quest)
 
@@ -1086,13 +1175,14 @@ decorate_port_quest = Quest(
     decoration_voucher_reward
 )
 
-def _owns_equipment(equipment):
-    if DataFiles.save_file["equipment"].get(equipment, 0) > 0:
-        return True
-
-    return any(
-        equipment in shipgirl_data["equipment"]
-        for shipgirl_data in DataFiles.save_file["shipgirls"].values()
+def _owned_equipment(equipment: str) -> int:
+    """Check the number of this equipment the player owns."""
+    return (
+        DataFiles.save_file["equipment"].get(equipment, 0)
+        + sum(
+            shipgirl_data["equipment"].count(equipment)
+            for shipgirl_data in DataFiles.save_file["shipgirls"].values()
+        )
     )
 
 construct_additional_shipgirls_pre_quest_dialogue = [
@@ -1110,17 +1200,17 @@ construct_additional_shipgirls_post_quest_dialogue = [
     "Your available hull types now support a broader range of fleet compositions.",
 ]
 
-def construct_additional_shipgirls_completion_criteria(menu_manager):
+def construct_additional_shipgirls_completion_criteria(menu_manager: MenuManager) -> bool:
     faction_shipgirls = DataFiles.get_faction_shipgirls()
     return all(
         faction_shipgirls[hull_type] in DataFiles.save_file["shipgirls"]
         for hull_type in ["CL", "SS", "CV"]
     )
 
-def construct_additional_shipgirls_on_start(menu_manager):
+def construct_additional_shipgirls_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_shipyard_overlay_button.active = True
 
-def construct_additional_shipgirls_on_complete(menu_manager, save_file_load=False):
+def construct_additional_shipgirls_on_complete(menu_manager: MenuManager):
     pass
 
 construct_additional_shipgirls_quest = Quest(
@@ -1149,19 +1239,19 @@ construct_additional_weapons_post_quest_dialogue = [
     "Assign each weapon according to the hull type listed in its equipment record.",
 ]
 
-def construct_additional_weapons_completion_criteria(menu_manager):
-    required_hull_types = {"BB", "CA", "CL", "SS", "CV"}
+def construct_additional_weapons_completion_criteria(menu_manager: MenuManager) -> bool:
+    required_hull_types = {"DD", "BB", "CA", "CL", "SS", "CV"}
     required_weapons = [
         equipment for equipment, equipment_data in DataFiles.equipment_data.items()
         if equipment_data["type"] == "weapon"
         and equipment_data["equippable_by"] in required_hull_types
     ]
-    return all(_owns_equipment(equipment) for equipment in required_weapons)
+    return all(_owned_equipment(equipment) >= 1 for equipment in required_weapons)
 
-def construct_additional_weapons_on_start(menu_manager):
+def construct_additional_weapons_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
 
-def construct_additional_weapons_on_complete(menu_manager, save_file_load=False):
+def construct_additional_weapons_on_complete(menu_manager: MenuManager):
     pass
 
 construct_additional_weapons_quest = Quest(
@@ -1191,17 +1281,17 @@ construct_auxiliary_equipment_post_quest_dialogue = [
     "Distribute them according to the attributes required by each shipgirl.",
 ]
 
-def construct_auxiliary_equipment_completion_criteria(menu_manager):
+def construct_auxiliary_equipment_completion_criteria(menu_manager: MenuManager) -> bool:
     auxiliary_equipment = [
         equipment for equipment, equipment_data in DataFiles.equipment_data.items()
         if equipment_data["type"] == "aux"
     ]
-    return all(_owns_equipment(equipment) for equipment in auxiliary_equipment)
+    return all(_owned_equipment(equipment) >= 2 for equipment in auxiliary_equipment)
 
-def construct_auxiliary_equipment_on_start(menu_manager):
+def construct_auxiliary_equipment_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
 
-def construct_auxiliary_equipment_on_complete(menu_manager, save_file_load=False):
+def construct_auxiliary_equipment_on_complete(menu_manager: MenuManager):
     pass
 
 construct_auxiliary_equipment_quest = Quest(
@@ -1229,15 +1319,15 @@ complete_final_sortie_post_quest_dialogue = [
     "Continue developing the fleet in preparation for future operations.",
 ]
 
-def complete_final_sortie_completion_criteria(menu_manager):
+def complete_final_sortie_completion_criteria(menu_manager: MenuManager) -> bool:
     # The last sortie data entry is an inaccessible development dummy. The
     # accessible final sortie is complete when progress reaches its index.
     return DataFiles.save_file["sortie_progress"] >= len(DataFiles.sortie_data) - 1
 
-def complete_final_sortie_on_start(menu_manager):
+def complete_final_sortie_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
 
-def complete_final_sortie_on_complete(menu_manager, save_file_load=False):
+def complete_final_sortie_on_complete(menu_manager: MenuManager):
     pass
 
 complete_final_sortie_quest = Quest(

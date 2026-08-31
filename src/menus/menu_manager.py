@@ -62,7 +62,7 @@ class MenuManager:
                 quest.started = True
                 quest.on_start(self)
                 quest.completed = True
-                quest.on_complete(self, save_file_load=True)
+                quest.on_complete(self)
                 self.quest_manager.quests.pop(quest_id, None)
 
     @property

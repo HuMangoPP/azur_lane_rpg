@@ -1,3 +1,10 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from engine.font import Font
+    from src.menus.menu_manager import MenuManager
+
 import math
 import pygame
 
@@ -42,26 +49,30 @@ class QuestManager:
     }
 
     def __init__(self):
-        self.quests = {}
-        self.selected_quest = None
+        self.quests: dict[str, Quest] = {}
+        self.selected_quest: Quest | None = None
         self.notification_effect_time = 0
 
     @property
-    def started_quests(self):
+    def started_quests(self) -> dict[str, Quest]:
+        """Get the quests that have already been started (including completed quests)."""
         return {quest_id: quest for quest_id, quest in self.quests.items()}
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the notification center pulse animation."""
         self.notification_effect_time += dt
 
     @classmethod
-    def _quest_status(cls, quest):
+    def _quest_status(cls, quest: Quest) -> str:
+        """Get the status key of the quest."""
         if quest.completed:
             return cls.STATUS_COMPLETE
         if not quest.started:
             return cls.STATUS_NEW
         return cls.STATUS_ACTIVE
 
-    def _ordered_quests(self):
+    def _ordered_quests(self) -> list[Quest]:
+        """Sort quests based on status priority."""
         priorities = {
             self.STATUS_COMPLETE: 0,
             self.STATUS_NEW: 1,
@@ -72,7 +83,8 @@ class QuestManager:
             key=lambda quest: priorities[self._quest_status(quest)],
         )
 
-    def get_notification_entries(self):
+    def _get_notification_entries(self) -> tuple[Quest, pygame.Rect]:
+        """Get notification center entries."""
         rows_top = (
             self.NOTIFICATION_TOP
             + self.NOTIFICATION_HEADER_HEIGHT
@@ -85,21 +97,22 @@ class QuestManager:
                     width=self.NOTIFICATION_WIDTH,
                     height=self.NOTIFICATION_ROW_HEIGHT,
                     left=self.NOTIFICATION_LEFT,
-                    top=rows_top
-                    + i*(self.NOTIFICATION_ROW_HEIGHT + self.NOTIFICATION_GAP),
+                    top=rows_top + i * (self.NOTIFICATION_ROW_HEIGHT + self.NOTIFICATION_GAP),
                 ),
             )
             for i, quest in enumerate(self._ordered_quests())
         ]
 
-    def notifications_collidepoint(self, point):
+    def notifications_collidepoint(self, point: tuple[float, float]) -> bool:
+        """Check if this point collides with any notification entries."""
         return any(
             rect.collidepoint(point)
-            for _, rect in self.get_notification_entries()
+            for _, rect in self._get_notification_entries()
         )
 
-    def select_quest(self, mpos):
-        for quest, rect in self.get_notification_entries():
+    def select_quest(self, mpos: tuple[int, int]) -> bool:
+        """Select the quest by this mouse pos."""
+        for quest, rect in self._get_notification_entries():
             if rect.collidepoint(mpos):
                 self.selected_quest = quest
                 return True
@@ -107,33 +120,35 @@ class QuestManager:
         return False
 
     @classmethod
-    def _panel_polygon(cls, size):
+    def _panel_polygon(cls, size: tuple[float, float]) -> list[tuple[float, float]]:
+        """Get the cut panel polygon."""
         width, height = size
         cut = cls.NOTIFICATION_CUT
         return [
             (cut, height),
-            (0, height-cut),
+            (0, height - cut),
             (0, 0),
-            (width-cut, 0),
+            (width - cut, 0),
             (width, cut),
             (width, height),
         ]
 
     def _draw_panel(
         self,
-        surface,
-        rect,
-        fill_color,
-        edge_color,
-        pulse,
-        opacity=NOTIFICATION_PANEL_ALPHA,
+        surface: pygame.Surface,
+        rect: pygame.Rect,
+        fill_color: tuple[int, int, int],
+        edge_color: tuple[int, int, int],
+        pulse: float,
+        opacity: float = NOTIFICATION_PANEL_ALPHA,
     ):
+        """Draw the panel polygon with a pulsing glow."""
         panel = pygame.Surface(rect.size, pygame.SRCALPHA)
         polygon = self._panel_polygon(rect.size)
         pygame.draw.polygon(panel, (*fill_color, opacity), polygon)
         pygame.draw.lines(
             panel,
-            (*edge_color, round(135 + 85*pulse)),
+            (*edge_color, round(135 + 85 * pulse)),
             False,
             polygon[:-1],
             width=1,
@@ -141,7 +156,16 @@ class QuestManager:
 
         surface.blit(panel, rect)
 
-    def _draw_glints(self, surface, rect, color, count, intensity, seed):
+    def _draw_glints(
+        self,
+        surface: pygame.Surface,
+        rect: pygame.Rect,
+        color: tuple[int, int, int],
+        count: int,
+        intensity: float,
+        seed: float,
+    ):
+        """Draw the glint particle effects."""
         glint_cycle = 1.15
         glint_lifetime = 0.72
         glint_max_length = 4
@@ -152,35 +176,35 @@ class QuestManager:
         for glint_index in range(count):
             glint_time = (
                 self.notification_effect_time
-                + glint_index*glint_cycle/count
-                + seed*0.071
+                + glint_index * glint_cycle / count
+                + seed * 0.071
             )
             glint_age = glint_time % glint_cycle
             if glint_age >= glint_lifetime:
                 continue
 
-            cycle_index = math.floor(glint_time/glint_cycle)
-            progress = glint_age/glint_lifetime
-            strength = (1-progress)**1.5*intensity
+            cycle_index = math.floor(glint_time / glint_cycle)
+            progress = glint_age / glint_lifetime
+            strength = (1 - progress) ** 1.5 * intensity
             spawn_center = pygame.Vector2(
                 rect.left + 10
-                + (cycle_index*29 + glint_index*17 + seed*7)
-                % (rect.width-20),
+                + (cycle_index * 29 + glint_index * 17 + seed * 7)
+                % (rect.width - 20),
                 rect.top + 7
-                + (cycle_index*19 + glint_index*31 + seed*11)
-                % (rect.height-14),
+                + (cycle_index * 19 + glint_index * 31 + seed * 11)
+                % (rect.height - 14),
             )
-            center = spawn_center - pygame.Vector2(0, glint_drift*progress)
+            center = spawn_center - pygame.Vector2(0, glint_drift * progress)
             if center.y < rect.top + 2:
                 continue
 
-            length = 1 + round((glint_max_length-1)*min(1, strength))
+            length = 1 + round((glint_max_length - 1) * min(1, strength))
             glint_color = tuple(
-                min(255, round(channel*strength))
+                min(255, round(channel * strength))
                 for channel in color
             )
             glint = pygame.Surface(
-                (2*glint_max_length+1, 2*glint_max_length+1),
+                (2 * glint_max_length + 1, 2 * glint_max_length + 1),
                 pygame.SRCALPHA,
             )
             glint_center = pygame.Vector2(glint_max_length, glint_max_length)
@@ -204,7 +228,8 @@ class QuestManager:
         surface.set_clip(previous_clip)
 
     @staticmethod
-    def _format_objective(quest):
+    def _format_objective(quest: Quest) -> str:
+        """Format the quest quest line with the shipgirl names."""
         shipgirls = DataFiles.get_faction_shipgirls()
         return quest.quest_line.format(**{
             f"{hull_type}_shipgirl": " ".join(shipgirl.split("_"))
@@ -212,14 +237,16 @@ class QuestManager:
         })
 
     @staticmethod
-    def _ellipsize(text, font, max_width):
+    def _ellipsize(text: str, font: Font, max_width: int) -> str:
+        """Ellipsize the text if it exceeds the max width."""
         if font.get_width(text, 1, 0) <= max_width:
             return text
         suffix = "..."
         max_chars = max(0, int(max_width//font.font_width)-len(suffix))
         return text[:max_chars].rstrip() + suffix
 
-    def _draw_header(self, surface, font_registry, quest_count):
+    def _draw_header(self, surface: pygame.Surface, font_registry: dict[str, Font], quest_count: int):
+        """Draw the notification center header."""
         rect = get_rect(
             width=self.NOTIFICATION_WIDTH,
             height=self.NOTIFICATION_HEADER_HEIGHT,
@@ -227,8 +254,9 @@ class QuestManager:
             top=self.NOTIFICATION_TOP,
         )
         pulse = (
-            math.sin(self.notification_effect_time*math.tau/2.4)+1
-        )/2
+            math.sin(self.notification_effect_time * math.tau / 2.4) + 1
+        ) / 2
+
         self._draw_panel(
             surface,
             rect,
@@ -238,31 +266,35 @@ class QuestManager:
         )
 
         tb = DataFiles.sprites["user_interface"]["TB"]
-        surface.blit(tb, tb.get_rect(midleft=(rect.left+3, rect.centery)))
+        surface.blit(tb, tb.get_rect(midleft=(rect.left + 3, rect.centery)))
+
         pygame.draw.line(
             surface,
             Color.QUEST_NOTIFICATION_NEW,
-            (rect.left+72, rect.top+6),
-            (rect.left+72, rect.bottom-6),
+            (rect.left + 72, rect.top+6),
+            (rect.left + 72, rect.bottom-6),
             width=3
         )
+
         font_registry["big_pixel"].render(
             surface,
             "mission relay",
-            (rect.left+80, rect.top+8),
+            (rect.left + 80, rect.top+8),
             Color.QUEST_NOTIFICATION_TEXT,
             1,
         )
+
         signal_label = f"{quest_count} active signal"
         if quest_count != 1:
             signal_label += "s"
         font_registry["pixel"].render(
             surface,
             signal_label,
-            (rect.left+80, rect.top+24),
+            (rect.left + 80, rect.top + 24),
             Color.QUEST_NOTIFICATION_MUTED,
             1,
         )
+
         self._draw_glints(
             surface,
             rect,
@@ -274,20 +306,22 @@ class QuestManager:
 
     def _draw_notification_row(
         self,
-        surface,
-        font_registry,
-        quest,
-        rect,
-        index,
-        hovered,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        quest: Quest,
+        rect: pygame.Rect,
+        index: int,
+        hovered: bool,
     ):
+        """Draw a notification entry."""
         status = self._quest_status(quest)
         status_text, accent, glint_count, intensity = self.STATUS_STYLES[status]
         pulse = (
             math.sin(
-                self.notification_effect_time*math.tau/2.4 + index*0.65
-            )+1
-        )/2
+                self.notification_effect_time * math.tau / 2.4 + index * 0.65
+            ) + 1
+        ) / 2
+
         self._draw_panel(
             surface,
             rect,
@@ -303,46 +337,48 @@ class QuestManager:
 
         rail_glow = get_rect(
             width=3,
-            height=rect.height-12,
-            left=rect.left+6,
+            height=rect.height - 12,
+            left=rect.left + 6,
             centery=rect.centery,
         )
         glow = pygame.Surface(rail_glow.size, pygame.SRCALPHA)
-        glow.fill((*accent, round(28 + 35*pulse)))
+        glow.fill((*accent, round(28 + 35 * pulse)))
         surface.blit(glow, rail_glow, special_flags=pygame.BLEND_RGBA_ADD)
 
         font_registry["big_pixel"].render(
             surface,
             status_text,
-            (rect.left+14, rect.top+8),
+            (rect.left + 14, rect.top + 8),
             accent,
             1,
         )
+
         objective = self._ellipsize(
             self._format_objective(quest),
             font_registry["pixel"],
-            rect.width-42,
+            rect.width - 42,
         )
         font_registry["pixel"].render(
             surface,
             objective,
-            (rect.left+14, rect.top+23),
+            (rect.left + 14, rect.top + 23),
             Color.QUEST_NOTIFICATION_TEXT,
             1,
         )
 
-        chevron_x = rect.right-13
+        chevron_x = rect.right - 13
         pygame.draw.lines(
             surface,
             accent,
             False,
             [
-                (chevron_x-3, rect.centery-4),
-                (chevron_x+1, rect.centery),
-                (chevron_x-3, rect.centery+4),
+                (chevron_x - 3, rect.centery - 4),
+                (chevron_x + 1, rect.centery),
+                (chevron_x - 3, rect.centery + 4),
             ],
             width=1,
         )
+
         self._draw_glints(
             surface,
             rect,
@@ -352,8 +388,9 @@ class QuestManager:
             index+1,
         )
 
-    def draw(self, surface, font_registry):
-        entries = self.get_notification_entries()
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the notification center, including the header and entries."""
+        entries = self._get_notification_entries()
         self._draw_header(surface, font_registry, len(entries))
         mouse_pos = pygame.mouse.get_pos()
         for index, (quest, rect) in enumerate(entries):
@@ -421,15 +458,15 @@ class Quest:
 
     def __init__(
         self,
-        quest_id,
-        pre_quest_dialogue,
-        quest_line,
-        post_quest_dialogue,
-        completion_criteria,
-        tutorial_draw,
-        on_start,
-        on_complete,
-        rewards
+        quest_id: str,
+        pre_quest_dialogue: list[str],
+        quest_line: str,
+        post_quest_dialogue: list[str],
+        completion_criteria: Callable[[MenuManager], bool],
+        tutorial_draw: Callable[[MenuManager, pygame.Surface, dict[str, Font]], None],
+        on_start: Callable[[MenuManager], None],
+        on_complete: Callable[[MenuManager], None],
+        rewards: dict[str, int],
     ):
         self.quest_id = quest_id
 
@@ -453,20 +490,24 @@ class Quest:
         reward_count = len(self.rewards)
         rewards_width = (
             reward_count*Box.WIDTH
-            + max(0, reward_count-1)*self.REWARD_GAP
+            + max(0, reward_count - 1) * self.REWARD_GAP
         )
-        rewards_left = self.REWARD_PANEL.centerx - rewards_width/2
+        rewards_left = self.REWARD_PANEL.centerx - rewards_width / 2
         self.reward_rects = [
             get_rect(
                 width=Box.WIDTH,
                 height=Box.HEIGHT,
-                left=rewards_left + i*(Box.WIDTH + self.REWARD_GAP),
+                left=rewards_left + i * (Box.WIDTH + self.REWARD_GAP),
                 top=self.REWARD_PANEL.top + 24,
             )
             for i in range(reward_count)
         ]
 
-    def go_next(self, menu_manager, mpos):
+    def go_next(self, menu_manager: MenuManager, mpos: tuple[int, int]) -> bool:
+        """Go to the next dialogue.
+        
+        Return true if the dialogue should exit and return false if not.
+        """
         if self.rewards_collected:
             if self.NEXT_BUTTON.collidepoint(mpos):
                 DataFiles.sfx["click"].play()
@@ -502,27 +543,32 @@ class Quest:
         return False
 
     @classmethod
-    def _panel_polygon(cls, size):
+    def _panel_polygon(cls, size: tuple[float, float]):
+        """Get the panel polygon."""
         width, height = size
         return [
             (cls.PANEL_CUT, height),
-            (0, height-cls.PANEL_CUT),
+            (0, height - cls.PANEL_CUT),
             (0, 0),
-            (width-cls.PANEL_CUT, 0),
+            (width - cls.PANEL_CUT, 0),
             (width, cls.PANEL_CUT),
             (width, height),
         ]
 
     @staticmethod
-    def _format_text(text):
+    def _format_text(text: str) -> str:
+        """Format the input text with shipgirl names."""
         shipgirls = DataFiles.get_faction_shipgirls()
         return text.format(**{
             f"{hull_type}_shipgirl": " ".join(shipgirl.split("_"))
             for hull_type, shipgirl in shipgirls.items()
         })
 
-    def _draw_panel(self, surface, rect, accent, effect_time, intensity=1):
-        pulse = (math.sin(effect_time*math.tau/2.4)+1)/2
+    def _draw_panel(
+        self, surface: pygame.Surface, rect: pygame.Rect, accent: tuple[int, int, int], effect_time: float, intensity: float = 1
+    ):
+        """Draw the panel."""
+        pulse = (math.sin(effect_time * math.tau / 2.4) + 1) / 2
         panel = pygame.Surface(rect.size, pygame.SRCALPHA)
         polygon = self._panel_polygon(rect.size)
         pygame.draw.polygon(
@@ -532,7 +578,7 @@ class Quest:
         )
         pygame.draw.lines(
             panel,
-            (*accent, round(145 + 85*pulse)),
+            (*accent, round(145 + 85 * pulse)),
             False,
             polygon[:-1],
             width=1,
@@ -543,19 +589,20 @@ class Quest:
             rect,
             accent,
             effect_time,
-            max(2, round(3*intensity)),
+            max(2, round(3 * intensity)),
             intensity,
         )
 
     @staticmethod
     def _draw_panel_glints(
-        surface,
-        rect,
-        color,
-        effect_time,
-        count,
-        intensity,
+        surface: pygame.Surface,
+        rect: pygame.Rect,
+        color: tuple[int, int, int],
+        effect_time: float,
+        count: int,
+        intensity: float,
     ):
+        """Draw glint particle effects."""
         cycle = 1.35
         lifetime = 0.7
         max_length = 4
@@ -563,31 +610,31 @@ class Quest:
         surface.set_clip(rect)
 
         for glint_index in range(count):
-            glint_time = effect_time + glint_index*cycle/count
+            glint_time = effect_time + glint_index * cycle / count
             age = glint_time % cycle
             if age >= lifetime:
                 continue
 
-            cycle_index = math.floor(glint_time/cycle)
-            progress = age/lifetime
-            strength = min(1, (1-progress)**1.5*intensity)
+            cycle_index = math.floor(glint_time / cycle)
+            progress = age / lifetime
+            strength = min(1, (1 - progress) ** 1.5 * intensity)
             if glint_index % 2 == 0:
                 center = pygame.Vector2(
                     rect.left + 12
-                    + (cycle_index*31 + glint_index*43) % (rect.width-24),
-                    rect.top + 3 + 3*progress,
+                    + (cycle_index * 31 + glint_index * 43) % (rect.width - 24),
+                    rect.top + 3 + 3 * progress,
                 )
             else:
                 center = pygame.Vector2(
-                    rect.left + 3 + 3*progress,
+                    rect.left + 3 + 3 * progress,
                     rect.top + 12
-                    + (cycle_index*23 + glint_index*37) % (rect.height-24),
+                    + (cycle_index * 23 + glint_index * 37) % (rect.height - 24),
                 )
 
-            length = 1 + round((max_length-1)*strength)
-            glint_color = tuple(round(channel*strength) for channel in color)
+            length = 1 + round((max_length - 1) * strength)
+            glint_color = tuple(round(channel * strength) for channel in color)
             glint = pygame.Surface(
-                (2*max_length+1, 2*max_length+1),
+                (2 * max_length + 1, 2 * max_length + 1),
                 pygame.SRCALPHA,
             )
             glint_center = pygame.Vector2(max_length, max_length)
@@ -612,16 +659,17 @@ class Quest:
 
     def _draw_content_panel(
         self,
-        surface,
-        font_registry,
-        overlay,
-        text_box,
-        context_label,
-        text,
-        accent,
-        effect_time,
-        intensity=1,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        overlay: pygame.Rect,
+        text_box: pygame.Rect,
+        context_label: str,
+        text: str,
+        accent: tuple[int, int, int],
+        effect_time: float,
+        intensity: float = 1,
     ):
+        """Draw the main text panel."""
         self._draw_panel(surface, overlay, accent, effect_time, intensity)
 
         tb_sprite = DataFiles.sprites["user_interface"]["TB"]
@@ -631,6 +679,7 @@ class Quest:
         )
         surface.blit(tb_sprite, tb_rect)
 
+        # Vertical separator.
         separator_x = overlay.left + self.CONTENT_SEPARATOR_X
         pygame.draw.line(
             surface,
@@ -639,6 +688,7 @@ class Quest:
             (separator_x, overlay.bottom-8),
             width=3,
         )
+        # Header + body text.
         font_registry["big_pixel"].render(
             surface,
             context_label,
@@ -657,12 +707,13 @@ class Quest:
 
     def _draw_reward_panel(
         self,
-        surface,
-        font_registry,
-        accent,
-        effect_time,
-        intensity,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        accent: tuple[int, int, int],
+        effect_time: float,
+        intensity: float,
     ):
+        """Draw the reward panel."""
         self._draw_panel(
             surface,
             self.REWARD_PANEL,
@@ -673,7 +724,7 @@ class Quest:
         font_registry["big_pixel"].render(
             surface,
             "reward allocation",
-            (self.REWARD_PANEL.left+14, self.REWARD_PANEL.top+8),
+            (self.REWARD_PANEL.left + 14, self.REWARD_PANEL.top + 8),
             accent,
             1,
         )
@@ -682,6 +733,7 @@ class Quest:
             self.reward_rects,
             self.rewards.items(),
         ):
+            # If the sprite starts with placeholder, use the placeholder sprite by default.
             sprite_key = (
                 "placeholder"
                 if reward.startswith("placeholder")
@@ -696,12 +748,12 @@ class Quest:
                 reward_sprite.get_rect(center=rect.center),
             )
             pygame.draw.rect(surface, accent, rect, width=1)
-
+            # Draw the quantity of the item.
             quantity_rect = get_rect(
                 width=24,
                 height=14,
-                right=rect.right-2,
-                bottom=rect.bottom-2,
+                right=rect.right - 2,
+                bottom=rect.bottom - 2,
             )
             quantity_panel = pygame.Surface(quantity_rect.size, pygame.SRCALPHA)
             quantity_panel.fill((*Color.QUEST_NOTIFICATION_PANEL, 235))
@@ -718,12 +770,13 @@ class Quest:
 
     def _draw_action_button(
         self,
-        surface,
-        font_registry,
-        rect,
-        label,
-        accent,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        rect: pygame.Rect,
+        label: str,
+        accent: tuple[int, int, int],
     ):
+        """Draw the action button."""
         hovered = rect.collidepoint(pygame.mouse.get_pos())
         button = pygame.Surface(rect.size, pygame.SRCALPHA)
         polygon = self._panel_polygon(rect.size)
@@ -736,6 +789,7 @@ class Quest:
         surface.blit(button, rect)
 
         if label == "next":
+            # Use the chevron sprite for the button instead of the next text.
             next_sprite = DataFiles.sprites["user_interface"]["next"]
             surface.blit(next_sprite, next_sprite.get_rect(center=rect.center))
         else:
@@ -748,8 +802,11 @@ class Quest:
                 style="center",
             )
 
-    def draw(self, surface, font_registry, effect_time=0):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font], effect_time: float = 0):
+        """Draw the quest popup."""
         if self.rewards_collected:
+            # Rewards have been collected.
+            # Render the post quest dialogue.
             final_page = (
                 self.post_quest_dialogue_index
                 == len(self.post_quest_dialogue)-1
@@ -774,6 +831,7 @@ class Quest:
             return
 
         if not self.pre_quest_finished:
+            # Render the pre quest dialogue.
             final_page = (
                 self.pre_quest_dialogue_index
                 == len(self.pre_quest_dialogue)-1
@@ -797,6 +855,7 @@ class Quest:
             )
             return
 
+        # Render panels with different headers and button labels based on quest status.
         if self.completed:
             context_label = "task complete // final report"
             accent = Color.QUEST_NOTIFICATION_COMPLETE
