@@ -958,6 +958,13 @@ class PlayerFleet:
             if shipgirl is not None:
                 shipgirl.battle_component.draw_effects(surface, shipgirl.rect, vfx_manager)
 
+    def draw_battlestations(self, surface: pygame.Surface, font_registry: dict):
+        """Draw the battlestations for each shipgirl in the fleet."""
+        for shipgirl in self.fleet:
+            if shipgirl is None:
+                continue
+            shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
+
     def get_draw_indices(self):
         fixed_draw_indices = [1, 3, 5]
         return [
@@ -1078,3 +1085,8 @@ class SirenFleet:
     def draw_battle_effects(self, surface, vfx_manager):
         for siren in self.fleet:
             siren.battle_component.draw_effects(surface, siren.rect, vfx_manager)
+
+    def draw_battlestations(self, surface: pygame.Surface, font_registry: dict):
+        """Draw the battlestations for each siren in the fleet."""
+        for siren in self.menu_manager.siren_fleet.fleet:
+            siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)

@@ -1,8 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
+    from src.shipgirls import PlayerFleet, SirenFleet
 
 import math
 import random
@@ -27,7 +29,7 @@ from src.vfx import VFXManager
 class Cloud:
     SHADOW_OFFSET = pygame.Vector2(4, 8)
 
-    def __init__(self, index, x, y, speed, cloud_sprites):
+    def __init__(self, index: int, x: float, y: float, speed: float, cloud_sprites: list[pygame.Surface]):
         self.index = index
         self.sprite = cloud_sprites[index]
         self.shadow = DataFiles.sprites["background"][f"cloud_shadow{index}"]
@@ -35,13 +37,16 @@ class Cloud:
         self.y = y
         self.speed = speed
 
-    def set_cloud_sprites(self, cloud_sprites):
+    def set_cloud_sprites(self, cloud_sprites: list[pygame.Surface]):
+        """Set a new set of cloud sprites."""
         self.sprite = cloud_sprites[self.index]
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """Progress the x position of the cloud."""
         self.x = self.x + self.speed * dt
 
-    def draw(self, surface):
+    def draw(self, surface: pygame.Surface):
+        """Draw this cloud, along with its shadow subtractively beneath it."""
         shadow_rect = self.shadow.get_rect()
         shadow_rect.centerx = self.x + self.SHADOW_OFFSET.x
         shadow_rect.top = self.y + self.SHADOW_OFFSET.y
@@ -59,7 +64,7 @@ class SeaFoam:
     HOLD_DURATION = 0.3
     CREST_X_RATIO = 1 / 4
 
-    def __init__(self, sprite, wave_index, wave_rep_index, moving_left):
+    def __init__(self, sprite: pygame.Surface, wave_index: int, wave_rep_index: int, moving_left: bool):
         self.sprite = pygame.transform.flip(sprite, True, False) if moving_left else sprite.copy()
         self.moving_left = moving_left
         self.wave_index = wave_index
@@ -69,10 +74,12 @@ class SeaFoam:
 
     @property
     def expired(self):
+        """Check if this sea foam's animation has expired."""
         return self.lifetime >= self.duration
 
     @property
     def alpha(self):
+        """Get the opacity of the sea foam sprite."""
         if self.lifetime < self.FADE_IN_DURATION:
             return int(255 * self.lifetime / self.FADE_IN_DURATION)
 
@@ -84,9 +91,11 @@ class SeaFoam:
         return 255
 
     def update(self, dt):
+        """Update the sea foam animation."""
         self.lifetime += dt
 
-    def align_rect(self, wave_rect):
+    def _align_rect(self, wave_rect: pygame.Rect):
+        """Align the sea foam with the corresponding wave rect."""
         rect = self.sprite.get_rect()
         rect.top = wave_rect.top
         rect.left = wave_rect.left
@@ -94,14 +103,15 @@ class SeaFoam:
             rect.left += int(2 * self.sprite.get_width() * self.CREST_X_RATIO - self.sprite.get_width())
         return rect
 
-    def draw(self, surface, wave_rect):
-        rect = self.align_rect(wave_rect)
+    def draw(self, surface: pygame.Surface, wave_rect: pygame.Rect):
+        """Draw the sea foam."""
+        rect = self._align_rect(wave_rect)
         self.sprite.set_alpha(self.alpha)
         surface.blit(self.sprite, rect)
 
 
 class RainDrop:
-    def __init__(self, pos, color, bottom):
+    def __init__(self, pos: tuple[float, float], color: tuple[int, int, int], bottom: float):
         self.pos = pygame.Vector2(pos)
         self.color = color
         self.bottom = bottom
@@ -111,12 +121,15 @@ class RainDrop:
 
     @property
     def offscreen(self):
+        """Check if this rain drop has fallen off-screen."""
         return self.pos.x < -self.length or self.pos.y > self.bottom + self.length
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the animation of this rain drop."""
         self.pos += get_vec(self.speed * dt, self.angle)
 
     def draw(self, surface):
+        """Draw this rain drop."""
         end_pos = self.pos + get_vec(self.length, self.angle)
         pygame.draw.line(surface, self.color, self.pos, end_pos, width=1)
 
@@ -136,84 +149,106 @@ class Background:
     MOON_COLOR = (232, 229, 210)
     MOON_SHADOW_COLOR = (18, 16, 45)
 
-    def __init__(self, sky_colors, wave_sprites, cloud_sprites, rain_colors):
+    def __init__(
+        self,
+        sky_colors: list[tuple[int, int, int]],
+        wave_sprites: list[pygame.Surface],
+        cloud_sprites: list[pygame.Surface],
+        rain_colors: list[tuple[int, int, int]]
+    ):
         self.set_sky_colors(sky_colors)
-        self.wave_sprites = wave_sprites
-        self.cloud_sprites = cloud_sprites
+
         self.rain_colors = rain_colors
         self.raining = False
-        self.rain_drops = []
+        self.rain_drops: list[RainDrop] = []
         self.rain_spawn_progress = 0
+
         self.night_sky_visible = False
-        self.stars = []
+        self.stars: list[tuple[pygame.Vector2, int, tuple[int, int, int]]] = []
         self.moon_pos = pygame.Vector2(screen_x(0.36), screen_y(0.12))
+
+        self.wave_sprites = wave_sprites
         self.sea_foam_sprite = DataFiles.sprites["background"]["sea_foam"]
-        self.sea_foams = []
+        self.sea_foams: list[SeaFoam] = []
         num_waves = DataFiles.sprites["background"]["num_waves"]
-        self.wave_speeds = [
+        self.wave_speeds: list[float] = [
             (wave_index + 1) / num_waves
             for wave_index in range(num_waves)
         ]
-        self.sea_foam_spawned_this_rise = [False] * num_waves
-        self.wave_ys = [
+        self.sea_foam_spawned_this_rise: list[bool] = [False] * num_waves
+        self.wave_ys: list[float] = [
             screen_y(0.5) + self.Y_GAP*(i-num_waves/2) + 8
             for i in range(num_waves)
         ]
-        self.wave_timers = [
+        self.wave_timers: list[float] = [
             math.radians(random.randint(0, 359))
             for _ in range(num_waves)
         ]
 
+        self.cloud_sprites = cloud_sprites
         self.cloud_timer = 0
         self.cloud_spawn_time = 0
-        self.clouds = []
+        self.clouds: list[Cloud] = []
 
-    def set_sky_colors(self, sky_colors):
+    def set_sky_colors(self, sky_colors: list[tuple[int, int, int]]):
+        """Set the sky color based on the weather conditions."""
         sky_surf = pygame.Surface((1, len(sky_colors)))
         for y, color in enumerate(sky_colors):
             sky_surf.set_at((0, y), color)
         self.sky_surf = pygame.transform.smoothscale(sky_surf, (128, 256))
 
-    def set_wave_sprites(self, weather):
+    def set_wave_sprites(self, weather: str):
+        """Set the wave sprites based on the weather conditions."""
         self.wave_sprites = DataFiles.sprites["background"]["wave_sets"][weather]
 
     @staticmethod
-    def wave_vertical_offset(wave_timer):
+    def wave_vertical_offset(wave_timer: float):
+        """Get the vertical offset of the wave."""
         return -math.cos(2 * wave_timer)
 
     @staticmethod
-    def wave_is_rising(wave_timer):
+    def _wave_is_rising(wave_timer: float):
+        """Determine if the wave is rising."""
         return math.sin(2 * wave_timer) < 0
 
     @classmethod
-    def sea_foam_is_ready(cls, wave_timer, wave_speed):
-        if not cls.wave_is_rising(wave_timer):
+    def _sea_foam_is_ready(cls, wave_timer: float, wave_speed: float):
+        """Determine if the sea foam is ready to be spawned.
+        
+        The sea foam should be spawned as the wave is rising, and with such a timing
+        so that it reaches maximum opacity when the wave is at its peak.
+        """
+        if not cls._wave_is_rising(wave_timer):
             return False
 
         upcoming_crest = math.pi if wave_timer < math.pi else math.tau
         time_until_crest = (upcoming_crest - wave_timer) / wave_speed
         return time_until_crest <= SeaFoam.FADE_IN_DURATION
 
-    def set_cloud_sprites(self, weather):
+    def set_cloud_sprites(self, weather: str):
+        """Set the cloud sprites based on weather conditions."""
         self.cloud_sprites = DataFiles.sprites["background"]["cloud_sets"][weather]
         for cloud in self.clouds:
             cloud.set_cloud_sprites(self.cloud_sprites)
 
-    def set_rain(self, raining, rain_colors):
+    def set_rain(self, raining: bool, rain_colors: list[tuple[int, int, int]]):
+        """Set the raining animation state based on weather conditions."""
         self.raining = raining
         self.rain_colors = rain_colors
         if not self.raining:
             self.rain_drops = []
             self.rain_spawn_progress = 0
 
-    def set_night_sky(self, visible):
+    def set_night_sky(self, visible: bool):
+        """Set the night sky background based on weather conditions."""
         self.night_sky_visible = visible
         if self.night_sky_visible:
-            self.generate_stars()
+            self._generate_stars()
         else:
             self.stars = []
 
-    def generate_stars(self):
+    def _generate_stars(self):
+        """Generate stars randomly in the night sky."""
         self.stars = []
         star_bottom = self.wave_ys[0] + 32
         for _ in range(self.NUM_STARS):
@@ -226,27 +261,15 @@ class Background:
                 random.choice(self.STAR_COLORS),
             ))
 
-    def draw_night_sky(self, surface):
-        if not self.night_sky_visible:
-            return
-
-        moon_radius = 20
-        pygame.draw.circle(surface, self.MOON_COLOR, self.moon_pos, moon_radius)
-        pygame.draw.circle(
-            surface,
-            self.MOON_SHADOW_COLOR,
-            self.moon_pos + pygame.Vector2(moon_radius * 0.36, -moon_radius * 0.36),
-            moon_radius,
-        )
-        for star_pos, star_radius, star_color in self.stars:
-            pygame.draw.circle(surface, star_color, star_pos, star_radius)
-
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the background animations."""
+        # Waves move in a sinusoidal shape.
         self.wave_timers = [
             (wave_timer + wave_speed * dt) % math.tau
             for wave_timer, wave_speed in zip(self.wave_timers, self.wave_speeds)
         ]
 
+        # Spawn, update, and despawn rain drops.
         if self.raining:
             self.rain_spawn_progress += self.RAIN_SPAWN_RATE * dt
             num_rain_drops = int(self.rain_spawn_progress)
@@ -267,41 +290,8 @@ class Background:
             if not rain_drop.offscreen
         ]
 
-        for cloud in self.clouds:
-            cloud.update(dt)
-        self.clouds = [
-            cloud for cloud in self.clouds
-            if cloud.x >= -128
-            and cloud.x <= screen_x(1) + 128
-        ]
-
-        for sea_foam in self.sea_foams:
-            sea_foam.update(dt)
-        self.sea_foams = [
-            sea_foam for sea_foam in self.sea_foams
-            if not sea_foam.expired
-        ]
-
-        for wave_index, (wave_timer, wave_speed) in enumerate(zip(
-            self.wave_timers,
-            self.wave_speeds,
-        )):
-            if not self.wave_is_rising(wave_timer):
-                self.sea_foam_spawned_this_rise[wave_index] = False
-                continue
-
-            if (
-                not self.sea_foam_spawned_this_rise[wave_index]
-                and self.sea_foam_is_ready(wave_timer, wave_speed)
-            ):
-                self.sea_foams.append(SeaFoam(
-                    self.sea_foam_sprite,
-                    wave_index,
-                    random.randrange(self.NUM_WAVE_REPS),
-                    math.cos(wave_timer) < 0,
-                ))
-                self.sea_foam_spawned_this_rise[wave_index] = True
-
+        # Spawn, update, and despawn clouds.
+        # Clouds scroll horizontally through the sky.
         self.cloud_timer += dt
         if self.cloud_timer > self.cloud_spawn_time:
             move_right = bool(random.randint(0, 1))
@@ -314,45 +304,86 @@ class Background:
             ))
             self.cloud_timer = 0
             self.cloud_spawn_time = random.uniform(5, 10)
+        for cloud in self.clouds:
+            cloud.update(dt)
+        self.clouds = [
+            cloud for cloud in self.clouds
+            if cloud.x >= -128
+            and cloud.x <= screen_x(1) + 128
+        ]
+
+        # Update, despawn, and spawn sea foams.
+        for sea_foam in self.sea_foams:
+            sea_foam.update(dt)
+        self.sea_foams = [
+            sea_foam for sea_foam in self.sea_foams
+            if not sea_foam.expired
+        ]
+        for wave_index, (wave_timer, wave_speed) in enumerate(zip(
+            self.wave_timers,
+            self.wave_speeds,
+        )):
+            # Sea foam spawns from a rising wave.
+            if not self._wave_is_rising(wave_timer):
+                self.sea_foam_spawned_this_rise[wave_index] = False
+                continue
+            # Sea foam spawns exactly when the wave is at a distance away
+            # where the sea foam will reach full opacity at the wave peak.
+            # A sea foam should be spawned once per wave strip..
+            if (
+                not self.sea_foam_spawned_this_rise[wave_index]
+                and self._sea_foam_is_ready(wave_timer, wave_speed)
+            ):
+                self.sea_foams.append(SeaFoam(
+                    self.sea_foam_sprite,
+                    wave_index,
+                    random.randrange(self.NUM_WAVE_REPS),
+                    math.cos(wave_timer) < 0,
+                ))
+                self.sea_foam_spawned_this_rise[wave_index] = True
 
     def draw(
         self,
-        surface,
-        font_registry,
-        player_fleet=None,
-        siren_fleet=None,
-        player_shipgirl_filter=None,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        player_fleet: PlayerFleet | None = None,
+        siren_fleet: SirenFleet | None = None,
+        player_shipgirl_filter: Callable[[Shipgirl], bool] | None = None,
     ):
+        """Draw the background.
+        
+        If the PlayerFleet or SirenFleet are provided, then render the shipgirls or sirens among
+        the wave strips, so that they feel embedded into the theme.
+        If player_shipgirl_filter is provided, render only the shipgirls passing this filter.
+        """
+        # The sky surf is not wider enough to fill the whole screen, so it is repeated
+        # horizontally to completely fill the background.
         sky_surf = self.sky_surf
         sky_surf_rect = sky_surf.get_rect()
         sky_surf_rect.top = 0
         num_sky_reps = 9
-        sky_rep_offset = (num_sky_reps-1)/2
+        sky_rep_offset = (num_sky_reps - 1) / 2
         for i in range(num_sky_reps):
-            sky_surf_rect.centerx = screen_x(0.5) + sky_surf_rect.width * (i-sky_rep_offset)
+            sky_surf_rect.centerx = screen_x(0.5) + sky_surf_rect.width * (i - sky_rep_offset)
             surface.blit(sky_surf, sky_surf_rect)
 
-        self.draw_night_sky(surface)
+        # Draw stars and moon.
+        if self.night_sky_visible:
+            moon_radius = 20
+            pygame.draw.circle(surface, self.MOON_COLOR, self.moon_pos, moon_radius)
+            pygame.draw.circle(
+                surface,
+                self.MOON_SHADOW_COLOR,
+                self.moon_pos + pygame.Vector2(moon_radius * 0.36, -moon_radius * 0.36),
+                moon_radius,
+            )
+            for star_pos, star_radius, star_color in self.stars:
+                pygame.draw.circle(surface, star_color, star_pos, star_radius)
 
         for cloud in self.clouds:
             cloud.draw(surface)
 
-        if siren_fleet is not None:
-            siren_draw_indices = siren_fleet.get_draw_indices()
-        else:
-            siren_draw_indices = None
-
-        if player_fleet is not None:
-            shipgirl_draw_indices = player_fleet.get_draw_indices()
-            if player_shipgirl_filter is not None:
-                shipgirl_draw_indices = [
-                    (draw_index, shipgirl)
-                    for draw_index, shipgirl in shipgirl_draw_indices
-                    if player_shipgirl_filter(shipgirl)
-                ]
-        else:
-            shipgirl_draw_indices = None
-
+        # Draw the background landmarks.
         landmark_y = self.wave_ys[0] + 4
 
         left_landmarks = DataFiles.sprites["background"]["left_landmarks"]
@@ -373,22 +404,42 @@ class Background:
         right_landmarks_rect.centery = landmark_y
         surface.blit(right_landmarks, right_landmarks_rect)
 
+        # Compute the draw indices of the siren and player fleets.
+        # The draw indices tell the renderer at which wave index the
+        # shipgirl or siren should be drawn before.
+        if siren_fleet is not None:
+            siren_draw_indices = siren_fleet.get_draw_indices()
+        else:
+            siren_draw_indices = None
+
+        if player_fleet is not None:
+            shipgirl_draw_indices = player_fleet.get_draw_indices()
+            if player_shipgirl_filter is not None:
+                shipgirl_draw_indices = [
+                    (draw_index, shipgirl)
+                    for draw_index, shipgirl in shipgirl_draw_indices
+                    if player_shipgirl_filter(shipgirl)
+                ]
+        else:
+            shipgirl_draw_indices = None
+
         num_waves = DataFiles.sprites["background"]["num_waves"]
         num_wave_reps = self.NUM_WAVE_REPS
-        wave_rep_offset = (num_wave_reps-1)/2
+        wave_rep_offset = (num_wave_reps - 1) / 2
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
+            # Draw the shipgirl and sirens at this wave index before the wave itself.
             if shipgirl_draw_indices is not None:
                 for draw_index, shipgirl in shipgirl_draw_indices:
                     if i == draw_index:
                         shipgirl.draw(surface, font_registry)
-                        # shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
 
             if siren_draw_indices is not None:
                 for draw_index, siren in siren_draw_indices:
                     if i == draw_index:
                         siren.draw(surface, font_registry)
-                        # siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
-
+            # The horizontal motion of the wave is a sine wave.
+            # The wave motion is in such a way that it reaches its crest in
+            # the middle of its horizontal motion in both directions.
             move_amt = i / num_waves
             wave = self.wave_sprites[i]
             wave_rect = wave.get_rect()
@@ -404,8 +455,11 @@ class Background:
                 * math.sin(wave_timer)
                 + screen_x(0.5)
             )
+            # The wave strips are not wide enough for the whole screen, so we repeat
+            # their rendering to fill the whole horizontal space.
+            # The sea foam is also rendered onto the correct wave rep index.
             for j in range(num_wave_reps):
-                wave_rect.centerx = centerx + wave_rect.width * (j-wave_rep_offset)
+                wave_rect.centerx = centerx + wave_rect.width * (j - wave_rep_offset)
                 surface.blit(wave, wave_rect)
                 for sea_foam in self.sea_foams:
                     if sea_foam.wave_index == i and sea_foam.wave_rep_index == j:
@@ -414,24 +468,32 @@ class Background:
         for rain_drop in self.rain_drops:
             rain_drop.draw(surface)
 
+
 class Drop:
-    def __init__(self, item, pos):
+    def __init__(self, item: str, pos: pygame.Vector2):
         self.item = item
         self.pos = pos
         self.bottom = pos.y + 50
-        self.vel = get_vec(100, math.radians(random.uniform(-15,15)-90))
+        self.vel = get_vec(100, math.radians(random.uniform(-15, 15) - 90))
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the drop item.
+        
+        The item moves in a parabolic arc, initially going upwards then eventually
+        falling down to a maximum bottom position and coming to rest.
+        """
         if self.pos.y < self.bottom:
             self.pos = self.pos + self.vel * dt
             self.pos.y = min(self.pos.y, self.bottom)
             self.vel = self.vel + pygame.Vector2(0, 200) * dt
     
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the drop item."""
         image = DataFiles.get_entity_sprite(self.item)
         rect = image.get_rect()
         rect.center = self.pos
         surface.blit(image, rect)
+
 
 class EncounterMenu(Menu):
     TRANSITION_IDLE = "idle"
@@ -501,32 +563,46 @@ class EncounterMenu(Menu):
     def __init__(self, menu_manager: MenuManager):
         self.menu_manager = menu_manager
 
-        self.mouse_start_drag = None
+        self.weather_condition = "daytime"
 
-        self.time_weather = "daytime"
+        # Player controls.
+        self.mouse_start_drag: tuple[int, int] | None = None
+        self.selected_shipgirl: Shipgirl | None = None
+        self.selected_shipgirl_index: int | None = None
+
+        # Sortie and encounter metadata.
         self.current_sortie = 0
         self.current_encounter = 0
+
+        # Sortie and encounter end state.
+        self.encounter_started = False
         self.sortie_completed = False
         self.sortie_suspended = False
-        self.selected_shipgirl = None
-        self.selected_shipgirl_index = None
-        self.encounter_started = False
+        self.end_encounter_banner = FleetNameRibbon(pygame.Vector2(screen_x(0.5), screen_y(0.1)), "")
+        self.encounter_has_not_ended = True
+        self.defeat_pending = False
+
         self.vfx_manager = VFXManager()
 
+        # Transition state.
         self.transition_state = self.TRANSITION_IDLE
-        self._transition_timer = 0
-        self._transition_shipgirls = []
-        self._transition_slot_positions = {}
-        self._transition_starts_sortie = False
-        self._transition_to_port = False
-        self._transition_port_callback = None
-        self._opened_reward_report_timer = None
+        self.transition_timer = 0
+        self.transition_shipgirls: list[Shipgirl] = []
+        self.transition_slot_positions: dict[Shipgirl, pygame.Rect] = {}
+        self.transition_starts_sortie = False
+        self.transition_to_port = False
+        self.transition_port_callback: Callable = None
+        self.opened_reward_report_timer: float = None
 
         def next_encounter():
-            self.start_encounter_transition()
+            self._start_encounter_transition()
 
+        button_size = 48
         button_sprite = DataFiles.sprites["user_interface"]["next"]
-        button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,centery=screen_y(0.5))
+        button_rect = get_rect(
+            width=button_size, height=button_size,
+            right=Box.RIGHT_OF_SCREEN, centery=screen_y(0.5)
+        )
         self.next_encounter_button = RectangularButton(
             button_rect,
             next_encounter,
@@ -542,12 +618,12 @@ class EncounterMenu(Menu):
         def open_reward_cache():
             rewards = DataFiles.sortie_data[self.current_sortie]["rewards"]
             for reward, amount in rewards.items():
-                self.add_sortie_drop(
+                self._add_sortie_drop(
                     reward,
                     pygame.Vector2(self.open_reward_cache_button.rect.center),
                     amount,
                 )
-            self.claim_drops()
+            self._claim_drops()
 
             self.return_to_port_button.active = True
 
@@ -562,8 +638,10 @@ class EncounterMenu(Menu):
             background_styling={"background_img": button_sprite}
         )
 
-        # Size the end-of-sortie report for the largest Siren record set in the
-        # sortie data, arranged in three columns.
+        # End of sortie report card.
+        # The size of the report is based on the maximum number of sirens
+        # in any encounter, so that the sizing of the card is the same for all sorties
+        # and is capable of housing the results of any sortie.
         max_siren_records = max(
             len({
                 siren
@@ -575,6 +653,7 @@ class EncounterMenu(Menu):
         max_siren_rows = math.ceil(
             max_siren_records / self.SIREN_CARDS_PER_ROW
         )
+        # Dossier-themed page.
         report_page_width = (
             2*Box.PADDING
             + self.SIREN_CARDS_PER_ROW*self.SIREN_CARD_WIDTH
@@ -607,11 +686,14 @@ class EncounterMenu(Menu):
                 new_sortie_progress = self.current_sortie + 1
                 if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
                     DataFiles.save_file["sortie_progress"] = new_sortie_progress
+                    # Assign quests whose triggers are based on completing certain sorties.
                     if new_sortie_progress == 11:
                         assign_quest(self.menu_manager, construct_auxiliary_equipment_quest)
                     if new_sortie_progress == len(DataFiles.sortie_data) - 2:
                         assign_quest(self.menu_manager, complete_final_sortie_quest)
 
+                # Update chapter progress and disperse the fog on the new chapter if
+                # the player has unlocked that new chapter.
                 new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
                 if DataFiles.save_file["chapter_progress"] < new_chapter_progress:
                     DataFiles.save_file["chapter_progress"] = new_chapter_progress
@@ -629,40 +711,38 @@ class EncounterMenu(Menu):
 
             self.menu_manager.encounter_menu.return_to_port_button.active = False
 
-        def return_to_port():
-            self.start_port_transition(finish_return_to_port)
-
         button_rect = get_rect(
-            width=2*Box.WIDTH + 2*Box.PADDING,
-            height=2*Box.HEIGHT + 2*Box.PADDING,
+            width=2 * Box.WIDTH + 2 * Box.PADDING,
+            height=2 * Box.HEIGHT + 2 * Box.PADDING,
             right=self.dossier_page.right + Box.WIDTH + Box.PADDING,
             centery=self.dossier_page.top,
         )
         self.return_to_port_button = RectangularButton(
             button_rect,
-            return_to_port,
+            lambda : self._start_port_transition(finish_return_to_port),
             active=False,
         )
 
+        # Report pagination controls.
         self.report_page = 0
         self.report_page_prev_button = RectangularButton(
             get_rect(
-                width=48,
-                height=48,
+                width=button_size,
+                height=button_size,
                 left=self.dossier_page.left,
                 top=self.dossier_page.top,
             ),
-            lambda: self.change_report_page(-1),
+            lambda: self._change_report_page(-1),
             active=False,
         )
         self.report_page_next_button = RectangularButton(
             get_rect(
-                width=48,
-                height=48,
+                width=button_size,
+                height=button_size,
                 right=self.dossier_page.right,
                 bottom=self.dossier_page.bottom,
             ),
-            lambda: self.change_report_page(1),
+            lambda: self._change_report_page(1),
             active=False,
         )
 
@@ -673,7 +753,7 @@ class EncounterMenu(Menu):
             self.fast_forward = False
             self.slow_down = False
 
-            self.encounter_end_flag = False
+            self.encounter_has_not_ended = False
             self.defeat_pending = False
             self.encounter_started = False
             self.end_encounter_banner.text = ""
@@ -683,11 +763,13 @@ class EncounterMenu(Menu):
             self.sortie_suspended = True
             self.report_page = 0
             self.return_to_port_button.active = True
-            self.refresh_report_page_buttons()
+            self._refresh_report_page_buttons()
 
-        
         button_sprite = DataFiles.sprites["user_interface"]["port"]
-        button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
+        button_rect = get_rect(
+            width=button_size, height=button_size,
+            right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN
+        )
         self.retreat_button = RectangularButton(
             button_rect,
             retreat,
@@ -699,55 +781,56 @@ class EncounterMenu(Menu):
             hover_styling={"opacity": 200}
         )
 
-        self.end_encounter_banner = FleetNameRibbon(pygame.Vector2(screen_x(0.5), screen_y(0.1)), "")
-        self.encounter_end_flag = True
-        self.defeat_pending = False
-
-        self.drops = []
-        self.sortie_rewards = {}
-        self.defeated_sirens = {}
+        # Data for the report.
+        self.drops: list[Drop] = []
+        self.sortie_rewards: dict[str, int] = {}
+        self.defeated_sirens: dict[tuple[str, int], int] = {}
         self.research_exp = 0
         self.exp_timer = 0
 
+        # Dev controls.
         self.fast_forward = False
         self.slow_down = False
 
+        # Primary and backup fleet slots for shipgirl sprites.
         slot_size = 96
         num_fleet_slots = 3
         fleet_slot_offset = (num_fleet_slots-1)/2
         self.fleet_slots = [
             get_rect(
                 width=slot_size, height=slot_size,
-                centerx=screen_x(0.275) + slot_size - (slot_index-fleet_slot_offset)*slot_size/2,
-                centery=screen_y(0.5) + (slot_index-fleet_slot_offset)*slot_size
+                centerx=screen_x(0.275) + slot_size - (slot_index - fleet_slot_offset) * slot_size / 2,
+                centery=screen_y(0.5) + (slot_index - fleet_slot_offset) * slot_size
             ) for slot_index in range(num_fleet_slots)
         ]
-
         self.backup_fleet_slots = [
             get_rect(
                 width=slot_size, height=slot_size,
-                centerx=slot.centerx - 2*slot_size,
+                centerx=slot.centerx - 2 * slot_size,
                 centery=slot.centery,
             ) for slot in self.fleet_slots
         ]
 
         self.background = Background(
-            self.TIME_WEATHER_STYLES[self.time_weather]["sky_colors"],
-            DataFiles.sprites["background"]["wave_sets"][self.time_weather],
-            DataFiles.sprites["background"]["cloud_sets"][self.time_weather],
+            self.TIME_WEATHER_STYLES[self.weather_condition]["sky_colors"],
+            DataFiles.sprites["background"]["wave_sets"][self.weather_condition],
+            DataFiles.sprites["background"]["cloud_sets"][self.weather_condition],
             self.SHIPGIRL_WAKE_COLORS["stormy"],
         )
-        self.apply_time_weather_style()
+        self._apply_time_weather_style()
 
     @property
     def transition_active(self):
+        """Check if the transition is active."""
         return self.transition_state != self.TRANSITION_IDLE
 
-    def _set_transition_state(self, state):
+    def _set_transition_state(self, state: str):
+        """Set the transition state."""
         self.transition_state = state
-        self._transition_timer = 0
+        self.transition_timer = 0
 
-    def _get_fleet_slot_positions(self):
+    def _prepare_transition_shipgirls(self):
+        # Get the slot positions corresponding to each shipgirl.
         slot_positions = {}
         for shipgirl, slot in zip(
             self.menu_manager.player_fleet.shipgirls,
@@ -761,71 +844,83 @@ class EncounterMenu(Menu):
         ):
             if shipgirl is not None:
                 slot_positions[shipgirl] = pygame.Vector2(slot.center)
-        return slot_positions
+        self.transition_slot_positions = slot_positions
 
-    def _prepare_transition_shipgirls(self):
-        self._transition_slot_positions = self._get_fleet_slot_positions()
-        self._transition_shipgirls = [
+        # Get the shipgirls that are still afloat.
+        self.transition_shipgirls = [
             shipgirl
-            for shipgirl in self._transition_slot_positions
+            for shipgirl in self.transition_slot_positions
             if shipgirl.battle_component.hp > 0
         ]
-        for shipgirl in self._transition_shipgirls:
+        for shipgirl in self.transition_shipgirls:
             shipgirl.facing_left = False
             shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
 
     def _position_transition_shipgirls_for_entry(self):
-        for shipgirl, target in self._transition_slot_positions.items():
+        """Position the shipgirl on the left side of the screen.
+        
+        This is for the entrance phase of the transition.
+        """
+        # Set the shipgirls to their target as a fallback.
+        # This will be overriden if the transition is active.
+        for shipgirl, target in self.transition_slot_positions.items():
             shipgirl.rect.center = target
 
-        if not self._transition_shipgirls:
+        if not self.transition_shipgirls:
             return
 
         rightmost_edge = max(
-            self._transition_slot_positions[shipgirl].x
+            self.transition_slot_positions[shipgirl].x
             + shipgirl.rect.width / 2
-            for shipgirl in self._transition_shipgirls
+            for shipgirl in self.transition_shipgirls
         )
         entry_offset = -rightmost_edge
-        for shipgirl in self._transition_shipgirls:
-            target = self._transition_slot_positions[shipgirl]
+        for shipgirl in self.transition_shipgirls:
+            target = self.transition_slot_positions[shipgirl]
             shipgirl.rect.center = target + pygame.Vector2(entry_offset, 0)
             shipgirl.facing_left = False
             shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
 
     def start_sortie_transition(self):
+        """Begin the transition from the fleet selection menu to the encounter menu."""
         if self.transition_active:
             return
 
         # Choose the encounter weather before the wipe starts so the same
         # palette is used on both sides of the menu handoff.
-        self.roll_time_weather()
-        self._transition_starts_sortie = True
-        self._transition_to_port = False
-        self._transition_port_callback = None
-        self._transition_shipgirls = []
-        self._transition_slot_positions = {}
+        self._roll_time_weather()
+        self.transition_starts_sortie = True
+        self.transition_to_port = False
+        self.transition_port_callback = None
+        self.transition_shipgirls = []
+        self.transition_slot_positions = {}
         self._set_transition_state(self.TRANSITION_WAVE_COVER)
 
-    def start_port_transition(self, destination_callback):
+    def _start_port_transition(self, destination_callback: Callable):
+        """Begin the transition from the encounter menu to the port menu."""
         if self.transition_active:
             return
 
         self.mouse_start_drag = None
         self.selected_shipgirl = None
         self.selected_shipgirl_index = None
-        self._transition_starts_sortie = False
-        self._transition_to_port = True
-        self._transition_port_callback = destination_callback
-        self._transition_shipgirls = []
-        self._transition_slot_positions = {}
+        self.transition_starts_sortie = False
+        self.transition_to_port = True
+        self.transition_port_callback = destination_callback
+        self.transition_shipgirls = []
+        self.transition_slot_positions = {}
         self._set_transition_state(self.TRANSITION_WAVE_COVER)
 
-    def start_encounter_transition(self):
+    def _start_encounter_transition(self):
+        """Begin the transition between encounters."""
         if self.transition_active:
             return
 
-        self.claim_drops()
+        self._claim_drops()
+
+        # Hide buttons during the transition.
+        # The player is not able to interact with the game during the
+        # transition and must wait for it to finish.
         self.next_encounter_button.active = False
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
@@ -837,100 +932,130 @@ class EncounterMenu(Menu):
         self.selected_shipgirl = None
         self.selected_shipgirl_index = None
 
-        self._transition_starts_sortie = False
-        self._transition_to_port = False
-        self._transition_port_callback = None
+        self.transition_starts_sortie = False
+        self.transition_to_port = False
+        self.transition_port_callback = None
         self._prepare_transition_shipgirls()
         self._set_transition_state(self.TRANSITION_EXITING)
 
     def _load_transition_destination(self):
-        if self._transition_to_port:
-            destination_callback = self._transition_port_callback
-            self._transition_port_callback = None
+        """Load the transition destination.
+        
+        There are three possible destinations: the port menu, the first encounter,
+        or the next encounter, each with different handling logic.
+        """
+        if self.transition_to_port:
+            destination_callback = self.transition_port_callback
+            self.transition_port_callback = None
             destination_callback()
             return
 
-        if self._transition_starts_sortie:
+        if self.transition_starts_sortie:
             self.menu_manager.player_fleet.begin_sortie()
-            self.begin_sortie(roll_time_weather=False)
+            self._begin_sortie()
             self._prepare_transition_shipgirls()
             self._position_transition_shipgirls_for_entry()
             self.menu_manager.current_menu = self
             return
 
         self.current_encounter += 1
-        self.begin_encounter()
+        self._begin_encounter()
         self._position_transition_shipgirls_for_entry()
 
     def _finish_encounter_transition(self):
-        for shipgirl in self._transition_shipgirls:
-            shipgirl.rect.center = self._transition_slot_positions[shipgirl]
+        """Complete the encounter transition."""
+        for shipgirl in self.transition_shipgirls:
+            shipgirl.rect.center = self.transition_slot_positions[shipgirl]
             shipgirl.facing_left = False
             shipgirl.sprite.set_animation(shipgirl.sprite.IDLE_ANIMATION)
 
-        self._transition_shipgirls = []
-        self._transition_slot_positions = {}
-        self._transition_starts_sortie = False
-        self._transition_to_port = False
-        self._transition_port_callback = None
+        self.transition_shipgirls = []
+        self.transition_slot_positions = {}
+        self.transition_starts_sortie = False
+        self.transition_to_port = False
+        self.transition_port_callback = None
         self._set_transition_state(self.TRANSITION_IDLE)
 
-    def _update_transition_shipgirl_animation(self, dt):
-        for shipgirl in self._transition_shipgirls:
+    def _update_transition_shipgirl_animation(self, dt: float):
+        """Animate shipgirls during transitions."""
+        for shipgirl in self.transition_shipgirls:
             shipgirl.sprite.set_animation(shipgirl.sprite.SAIL_ANIMATION)
             shipgirl.animate(dt)
 
-    def _update_encounter_transition(self, dt):
+    def _update_encounter_transition(self, dt: float):
+        """Update the encounter transition, based on the current transition state."""
         state = self.transition_state
 
+        # In this state, the shipgirls will move right until they are off-screen.
+        # This transition state is only met between encounters, meaning no sirens
+        # are alive and hence do not need to be animated.
         if state == self.TRANSITION_EXITING:
             distance = self.TRANSITION_MOVE_SPEED * dt
-            for shipgirl in self._transition_shipgirls:
+            for shipgirl in self.transition_shipgirls:
                 shipgirl.rect.centerx += distance
             self._update_transition_shipgirl_animation(dt)
-            if not self._transition_shipgirls or all(
+            if not self.transition_shipgirls or all(
                 shipgirl.rect.left >= screen_x(1)
-                for shipgirl in self._transition_shipgirls
+                for shipgirl in self.transition_shipgirls
             ):
                 self._set_transition_state(self.TRANSITION_WAVE_COVER)
 
+        # In this state, a wave animation rises to cover the screen.
+        # The state is the entrypoint for the fleet selection -> encounter menu
+        # transition, and also occurs after shipgirls have exited from the right side.
+        # No animations are needed.
+        # Once the wave fully covers the screen, the destination can be loaded.
         elif state == self.TRANSITION_WAVE_COVER:
-            self._transition_timer += dt
-            if self._transition_timer >= self.TRANSITION_WAVE_DURATION:
+            self.transition_timer += dt
+            if self.transition_timer >= self.TRANSITION_WAVE_DURATION:
                 self._load_transition_destination()
                 self._set_transition_state(self.TRANSITION_WAVE_REVEAL)
 
+        # In this state, the same wave animation crashes down to reveal the screen.
+        # If the player is returning to the port menu, this is the terminal transition state.
+        # Otherwise, the new destination is revealed and the next phase of the transition
+        # is started.
         elif state == self.TRANSITION_WAVE_REVEAL:
-            self._transition_timer += dt
-            if self._transition_timer >= self.TRANSITION_WAVE_DURATION:
-                if self._transition_to_port:
+            self.transition_timer += dt
+            if self.transition_timer >= self.TRANSITION_WAVE_DURATION:
+                if self.transition_to_port:
                     self._finish_encounter_transition()
                 else:
                     self._set_transition_state(self.TRANSITION_ENTERING)
 
+        # In this state, the shipgirls enter from the left side of the screen
+        # and move until they are in position.
+        # The shipgirls need to be animated, as do the sirens of the new encounter
+        # that have been spawned in already.
         elif state == self.TRANSITION_ENTERING:
             distance = self.TRANSITION_MOVE_SPEED * dt
-            for shipgirl in self._transition_shipgirls:
-                target_x = self._transition_slot_positions[shipgirl].x
+            for shipgirl in self.transition_shipgirls:
+                target_x = self.transition_slot_positions[shipgirl].x
                 shipgirl.rect.centerx = min(
                     target_x,
                     shipgirl.rect.centerx + distance,
                 )
             self._update_transition_shipgirl_animation(dt)
             self.menu_manager.siren_fleet.animate(dt)
-            if not self._transition_shipgirls or all(
-                shipgirl.rect.centerx >= self._transition_slot_positions[shipgirl].x
-                for shipgirl in self._transition_shipgirls
+            if not self.transition_shipgirls or all(
+                shipgirl.rect.centerx >= self.transition_slot_positions[shipgirl].x
+                for shipgirl in self.transition_shipgirls
             ):
                 self._finish_encounter_transition()
 
+        # The shipgirls are on-screen and have a rightward sailing animation, so wakes
+        # need to be spawned.
         if self.transition_state in (
             self.TRANSITION_EXITING,
             self.TRANSITION_ENTERING,
         ):
-            self.spawn_shipgirl_wakes(self.menu_manager.player_fleet, True)
+            self._spawn_shipgirl_wakes(self.menu_manager.player_fleet, True)
 
         self.vfx_manager.update(dt)
+
+        # Update the background.
+        # The reward cache moves with the wave, which makes it look as if it is drifting
+        # in the ocean.
         self.background.update(dt)
         self.open_reward_cache_button.rect.center = (
             pygame.Vector2(screen_x(0.75), screen_y(0.575))
@@ -940,105 +1065,39 @@ class EncounterMenu(Menu):
             )
         )
 
-    @staticmethod
-    def _smoothstep(progress):
-        return progress * progress * (3 - 2 * progress)
-
-    @classmethod
-    def _staggered_wave_progress(cls, progress, stagger):
-        progress = max(
-            0.0,
-            min(1.0, (progress - stagger) / (1 - stagger)),
-        )
-        return cls._smoothstep(progress)
-
-    def _draw_transition_wave_wipe(self, surface):
-        if self.transition_state not in (
-            self.TRANSITION_WAVE_COVER,
-            self.TRANSITION_WAVE_REVEAL,
-        ):
-            return
-
-        progress = min(
-            1.0,
-            self._transition_timer / self.TRANSITION_WAVE_DURATION,
-        )
-        covering = self.transition_state == self.TRANSITION_WAVE_COVER
-        staggers = (
-            self.TRANSITION_WAVE_STAGGERS
-            if covering
-            else reversed(self.TRANSITION_WAVE_STAGGERS)
-        )
-
-        wave_sets = DataFiles.sprites["background"]["wave_sets"]
-        wave_set = wave_sets[self.time_weather]
-        wave_sprites = [
-            wave_set[index]
-            for index in self.TRANSITION_WAVE_INDICES
-        ]
-
-        for idx, (wave, stagger) in enumerate(zip(wave_sprites, staggers)):
-            layer_progress = self._staggered_wave_progress(progress, stagger)
-            if not covering:
-                layer_progress = 1 - layer_progress
-
-            wave_width, wave_height = wave.get_size()
-            wave_top = round(
-                surface.get_height()
-                + (-wave_height - surface.get_height()) * layer_progress
-            )
-            first_wave_left = -wave_width + idx / len(wave_sprites) * wave_width
-            wave_left = first_wave_left
-            while wave_left < surface.get_width():
-                surface.blit(wave, (wave_left, wave_top))
-                wave_left += wave_width
-
-            solid_top = wave_top + wave_height
-            if solid_top < surface.get_height():
-                wave_color = wave.get_at((0, wave_height - 1))[:3]
-                solid_top = max(0, solid_top)
-                pygame.draw.rect(
-                    surface,
-                    wave_color,
-                    (
-                        0,
-                        solid_top,
-                        surface.get_width(),
-                        surface.get_height() - solid_top,
-                    ),
-                )
-
-    def roll_time_weather(self):
+    def _roll_time_weather(self):
+        """Generate a random weather condition and apply the weather style."""
         weather_names = list(self.TIME_WEATHER_STYLES.keys())
         weather_weights = [
             self.TIME_WEATHER_STYLES[weather_name]["weight"]
             for weather_name in weather_names
         ]
-        self.time_weather = random.choices(weather_names, weights=weather_weights, k=1)[0]
-        self.apply_time_weather_style()
+        self.weather_condition = random.choices(weather_names, weights=weather_weights, k=1)[0]
+        self._apply_time_weather_style()
 
-    def apply_time_weather_style(self):
-        weather_style = self.TIME_WEATHER_STYLES[self.time_weather]
+    def _apply_time_weather_style(self):
+        """Apply the style of the weather condition to the background."""
+        weather_style = self.TIME_WEATHER_STYLES[self.weather_condition]
         self.background.set_sky_colors(weather_style["sky_colors"])
-        self.background.set_wave_sprites(self.time_weather)
-        self.background.set_cloud_sprites(self.time_weather)
+        self.background.set_wave_sprites(self.weather_condition)
+        self.background.set_cloud_sprites(self.weather_condition)
         self.background.set_rain(
-            self.time_weather == "stormy",
+            self.weather_condition == "stormy",
             self.SHIPGIRL_WAKE_COLORS["stormy"],
         )
-        self.background.set_night_sky(self.time_weather == "nighttime")
+        self.background.set_night_sky(self.weather_condition == "nighttime")
 
-    def begin_sortie(self, roll_time_weather=True):
+    def _begin_sortie(self):
+        """Begin a new sortie."""
         self.transition_state = self.TRANSITION_IDLE
-        self._transition_timer = 0
-        self._transition_shipgirls = []
-        self._transition_slot_positions = {}
-        self._transition_starts_sortie = False
-        self._transition_to_port = False
-        self._transition_port_callback = None
-        self._opened_reward_report_timer = None
-        if roll_time_weather:
-            self.roll_time_weather()
+        self.transition_timer = 0
+        self.transition_shipgirls = []
+        self.transition_slot_positions = {}
+        self.transition_starts_sortie = False
+        self.transition_to_port = False
+        self.transition_port_callback = None
+        self.opened_reward_report_timer = None
+
         self.open_reward_cache_button.active = False
         self.return_to_port_button.active = False
         self.sortie_completed = False
@@ -1046,18 +1105,20 @@ class EncounterMenu(Menu):
         self.sortie_rewards = {}
         self.defeated_sirens = {}
         self.report_page = 0
-        self.refresh_report_page_buttons()
+        self._refresh_report_page_buttons()
 
-        self.begin_encounter()
+        self._begin_encounter()
 
-    def add_sortie_drop(self, item, pos, amount=1):
+    def _add_sortie_drop(self, item: str, pos: tuple[float, float], amount: int = 1):
+        """Create amount number of drops of this item."""
         for _ in range(amount):
             self.drops.append(Drop(
                 item,
                 pygame.Vector2(pos),
             ))
 
-    def claim_drops(self):
+    def _claim_drops(self):
+        """Add the drop items to the player inventory."""
         for drop in self.drops:
             DataFiles.save_file["inventory"][drop.item] = (
                 DataFiles.save_file["inventory"].get(drop.item, 0) + 1
@@ -1066,65 +1127,57 @@ class EncounterMenu(Menu):
                 self.sortie_rewards.get(drop.item, 0) + 1
             )
 
-    def begin_encounter(self):
+    def _begin_encounter(self):
+        """Begin a new encounter."""
         self.drops = []
         self.next_encounter_button.active = False
         self.vfx_manager.clear()
         self.defeat_pending = False
-        self._opened_reward_report_timer = None
+        self.opened_reward_report_timer = None
 
         sortie_data = DataFiles.sortie_data[self.current_sortie]
         num_encounters = len(sortie_data["encounters"])
         self.end_encounter_banner.text = ""
+        # The current encounter is the number of encounters, meaning that
+        # this is not actually an encounter but is instead the reward room.
         if self.current_encounter == num_encounters:
             self.sortie_completed = True
             self.open_reward_cache_button.active = True
             if self.current_sortie < DataFiles.save_file["sortie_progress"]:
+                # If this sortie has already been cleared, then the rewards have already
+                # been cleared.
+                # After a brief delay, open the end of sortie report.
+                # Do not allow the player to claim rewards again.
                 self.return_to_port_button.active = False
-                self._opened_reward_report_timer = (
+                self.opened_reward_report_timer = (
                     self.OPENED_REWARD_REPORT_DELAY
                 )
                 self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["open_reward_cache"]
             else:
                 self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["closed_reward_cache"]
 
-            self.menu_manager.siren_fleet._front = []
-            self.menu_manager.siren_fleet._back = []
+            self.menu_manager.siren_fleet.front = []
+            self.menu_manager.siren_fleet.back = []
             return
         
-        self.encounter_end_flag = True
+        self.encounter_has_not_ended = True
         self.retreat_button.active = True
 
         encounter_data = sortie_data["encounters"][self.current_encounter]
-        # TODO update the naming convention
-        self.menu_manager.siren_fleet._front = [Shipgirl(siren_name, False) for siren_name in encounter_data["front"]]
-        self.menu_manager.siren_fleet._back = [Shipgirl(siren_name, False) for siren_name in encounter_data["back"]]
+        self.menu_manager.siren_fleet.front = [Shipgirl(siren_name, False) for siren_name in encounter_data["front"]]
+        self.menu_manager.siren_fleet.back = [Shipgirl(siren_name, False) for siren_name in encounter_data["back"]]
         for siren in self.menu_manager.siren_fleet.fleet:
             siren.facing_left = True
         self.menu_manager.player_fleet.begin_encounter()
         self.menu_manager.siren_fleet.begin_encounter()
 
-        if (
-            self.current_encounter == 0
-            and first_sortie_quest.quest_id in self.menu_manager.quest_manager.started_quests
-        ):
-            self.encounter_started = False
-        else:
-            self.encounter_started = True
+        self.encounter_started = False
 
-    def _update_opened_reward_report(self, dt):
-        if self._opened_reward_report_timer is None:
-            return
-
-        self._opened_reward_report_timer = max(
-            0,
-            self._opened_reward_report_timer - dt,
-        )
-        if self._opened_reward_report_timer == 0:
-            self._opened_reward_report_timer = None
-            self.return_to_port_button.active = True
-
-    def spawn_shipgirl_wakes(self, fleet, is_player):
+    def _spawn_shipgirl_wakes(self, fleet: PlayerFleet | SirenFleet, is_player: bool):
+        """Spawn wake vfx for the shipgirls/sirens in the fleet.
+        
+        The is_player flag controls which direction the wakes spawn in.
+        """
         for shipgirl in fleet.fleet:
             if shipgirl is None or shipgirl.battle_component.hp <= 0:
                 continue
@@ -1137,32 +1190,50 @@ class EncounterMenu(Menu):
                 ),
                 shipgirl.rect.bottom - random.uniform(11, 16),
             )
-            torpedo_angle = 0 if is_player else math.radians(180)
+            wake_angle = 0 if is_player else math.radians(180)
             self.vfx_manager.spawn_wake(
                 wake_pos,
-                torpedo_angle,
-                wake_colors=self.SHIPGIRL_WAKE_COLORS[self.time_weather],
+                wake_angle,
+                wake_colors=self.SHIPGIRL_WAKE_COLORS[self.weather_condition],
                 **self.SHIPGIRL_WAKE_CONFIG,
             )
 
     def update(self, dt: float, events: list[pygame.Event]):
+        """Update the encounter menu."""
         if self.transition_active:
             self._update_encounter_transition(dt)
             return
 
-        self._update_opened_reward_report(dt)
-        self.refresh_report_page_buttons()
+        # If the reward has already been opened, after a delay, show the report.
+        if self.opened_reward_report_timer is not None:
+            self.opened_reward_report_timer = max(
+                0,
+                self.opened_reward_report_timer - dt,
+            )
+            if self.opened_reward_report_timer == 0:
+                self.opened_reward_report_timer = None
+                self.return_to_port_button.active = True
+
+        self._refresh_report_page_buttons()
         for event in events:
             if self.transition_active:
                 break
             if event.type == pygame.MOUSEMOTION:
-                self.next_encounter_button.hover(event.pos)
-                self.retreat_button.hover(event.pos)
-                self.return_to_port_button.hover(event.pos)
-                self.report_page_prev_button.hover(event.pos)
-                self.report_page_next_button.hover(event.pos)
+                buttons: list[RectangularButton] = [
+                    self.next_encounter_button,
+                    self.retreat_button,
+                    self.return_to_port_button,
+                    self.report_page_prev_button,
+                    self.report_page_next_button
+                ]
+                for button in buttons:
+                    button.hover(event.pos)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for i, shipgirl in enumerate(self.menu_manager.player_fleet.shipgirls):
+                    # The player controls which target the shipgirl is attacking by clicking and
+                    # dragging from that shipgirl onto the desired target.
+                    # Prevent the player from changing the shipgirl target if the shipgirl
+                    # is locked in the attack animation / is attacking.
                     if shipgirl is None:
                         continue
                     if shipgirl.battle_component.attack_animation:
@@ -1178,12 +1249,15 @@ class EncounterMenu(Menu):
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse_end_drag = event.pos
                 click = False
-                # drag shipgirl onto siren target
+                # If the player drags the shipgirl onto a siren target, then the shipgirl
+                # will target that siren.
                 if self.selected_shipgirl is not None:
                     for siren in self.menu_manager.siren_fleet.fleet:
                         if not siren.rect.collidepoint(mouse_end_drag):
                             continue
                         click = True
+                        # Melee ships (DD, CL, SS) cannot attack sirens in the back row
+                        # unless the front row is completely sunk.
                         if self.selected_shipgirl.battle_component.hull_type in self.MELEE_SHIPS:
                             if siren in self.menu_manager.siren_fleet.front:
                                 self.selected_shipgirl.battle_component.target = siren
@@ -1191,9 +1265,12 @@ class EncounterMenu(Menu):
                             self.selected_shipgirl.battle_component.target = siren
                         self.selected_shipgirl = None
                         self.selected_shipgirl_index = None
-                # drag shipgirl onto backup shipgirl
+                # If the player drags the shipgirl onto a shipgirl in the backup fleet,
+                # then the shipgirls swap positions.
                 if self.selected_shipgirl is not None:
                     for i, backup_shipgirl in enumerate(self.menu_manager.player_fleet.backups):
+                        # Do not allow the swap if the backup shipgirl is already sunk.
+                        # Note that the player is able to swap OUT a sunk shipgirl.
                         if backup_shipgirl is None:
                             continue
                         if backup_shipgirl.battle_component.hp <= 0:
@@ -1213,6 +1290,7 @@ class EncounterMenu(Menu):
                         backup_shipgirl.battle_component.active = True
                         self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index] = backup_shipgirl
 
+                    # The sirens should not be able to target the shipgirl that was just swapped out.
                     for siren in self.menu_manager.siren_fleet.fleet:
                         if siren.battle_component.target == self.selected_shipgirl:
                             siren.battle_component.target = None
@@ -1232,25 +1310,27 @@ class EncounterMenu(Menu):
 
                 if click:
                     DataFiles.sfx["click"].play()
-                elif (
-                    self.current_sortie == DataFiles.save_file["sortie_progress"]
-                    and self.open_reward_cache_button.click(event.pos)
-                ):
+                elif self.open_reward_cache_button.click(event.pos):
                     self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["open_reward_cache"]
 
+            # Dev controls.
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_f:
                     self.fast_forward = not self.fast_forward
                 if event.key == pygame.K_d:
                     self.slow_down = not self.slow_down
-        
         if self.fast_forward:
             dt = dt * 2
         if self.slow_down:
             dt = dt / 2
+
         self.menu_manager.player_fleet.animate(dt)
         self.menu_manager.siren_fleet.animate(dt)
+
         if self.encounter_started:
+            # Check which sirens were defeated this frame.
+            # If this is not the first clear of this sortie, then sirens are capable of dropping
+            # loot randomly.
             afloat_sirens_before = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
             self.menu_manager.player_fleet.update(dt, self.vfx_manager)
             afloat_sirens_after = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
@@ -1260,22 +1340,42 @@ class EncounterMenu(Menu):
                     siren_data = DataFiles.siren_data[siren.name]
                     for drop, drop_rate in siren_data["drops"].items():
                         if random.randint(0, 99) < drop_rate:
-                            self.add_sortie_drop(drop, siren.rect.center)
+                            self._add_sortie_drop(drop, siren.rect.center)
             self.menu_manager.siren_fleet.update(dt, self.menu_manager, self.vfx_manager)
 
             for drop in self.drops:
                 drop.update(dt)
         else:
-            self.encounter_started = all(
-                shipgirl.battle_component.target is not None
-                for shipgirl in self.menu_manager.player_fleet.shipgirls
-                if shipgirl is not None
-            )
-        
+            # Gating for the first sortie quest.
+            # The player is shown a tutorial of the game mechanics, so the encounter
+            # does not start until the player learns the game mechanics first.
+            if (
+                self.current_encounter == 0
+                and first_sortie_quest.quest_id in self.menu_manager.quest_manager.started_quests
+            ):
+                # All of the players shipgirls must be targetting a siren for the encounter to start.
+                self.encounter_started = all(
+                    shipgirl.battle_component.target is not None
+                    for shipgirl in self.menu_manager.player_fleet.shipgirls
+                    if shipgirl is not None
+                )
+            else:
+                # Only one shipgirl needs to have a target for the encounter to start.
+                # This will allow the player some leeway, so the game remains paused if they have
+                # not chosen at least one target, which might mean the player is AFK.
+                self.encounter_started = any(
+                    shipgirl.battle_component.target is not None
+                    for shipgirl in self.menu_manager.player_fleet.shipgirls
+                    if shipgirl is not None
+                )
+
+        # Logic for animating the research exp widget.
         if self.research_exp > 0:
             self.exp_timer += dt
             if self.exp_timer > 1:
                 self.exp_timer = 1
+                # Check the research exp obtained and drop the unique item if the required exp
+                # threshold was reached.
                 research_target = DataFiles.save_file["research_target"]
                 specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
                 specialized_wisdom_cubes[research_target] += self.research_exp
@@ -1290,7 +1390,7 @@ class EncounterMenu(Menu):
                 if specialized_wisdom_cubes[research_target] >= exp_req:
                     unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) == 0:
-                        self.add_sortie_drop(
+                        self._add_sortie_drop(
                             unique_item,
                             (screen_x(0.5), screen_y(0.5)),
                         )
@@ -1300,24 +1400,28 @@ class EncounterMenu(Menu):
             if self.exp_timer < 0:
                 self.exp_timer = 0
 
-        if self.encounter_end_flag:
+        # The encounter can only end once, to prevent duplication.
+        if self.encounter_has_not_ended:
+            # Defeat condition.
             if not self.menu_manager.player_fleet.afloat:
-                self.encounter_end_flag = False
+                self.encounter_has_not_ended = False
                 self.end_encounter_banner.text = ""
                 self.menu_manager.player_fleet.end_encounter()
                 self.menu_manager.siren_fleet.end_encounter()
                 self.retreat_button.active = False
                 self.defeat_pending = True
-
+            # Victory condition.
             if not self.menu_manager.siren_fleet.afloat:
-                self.encounter_end_flag = False
+                self.encounter_has_not_ended = False
                 self.end_encounter_banner.text = "victory"
                 for siren in self.menu_manager.siren_fleet.fleet:
+                    # Track defeated sirens.
                     siren_level = Stats.level(siren.battle_component.exp)
                     siren_key = (siren.name, siren_level)
                     self.defeated_sirens[siren_key] = (
                         self.defeated_sirens.get(siren_key, 0) + 1
                     )
+                    # Award exp to research and shipgirls in fleet.
                     siren_reward_exp = Stats.stat(
                         *DataFiles.siren_data[siren.name]["reward_exp"],
                         exp=siren.battle_component.exp,
@@ -1334,6 +1438,8 @@ class EncounterMenu(Menu):
                 self.retreat_button.active = False
 
         if self.defeat_pending:
+            # Allow the sinking animation of the shipgirl to finish on defeat before showing
+            # the end of sortie report.
             sunk_shipgirls = [
                 shipgirl
                 for shipgirl in self.menu_manager.player_fleet.fleet
@@ -1346,9 +1452,10 @@ class EncounterMenu(Menu):
                 self.defeat_pending = False
                 self.return_to_port_button.active = True
 
-        self.spawn_shipgirl_wakes(self.menu_manager.player_fleet, True)
-        self.spawn_shipgirl_wakes(self.menu_manager.siren_fleet, False)
+        self._spawn_shipgirl_wakes(self.menu_manager.player_fleet, True)
+        self._spawn_shipgirl_wakes(self.menu_manager.siren_fleet, False)
         self.vfx_manager.update(dt)
+
         self.background.update(dt)
 
         self.open_reward_cache_button.rect.center = (
@@ -1359,7 +1466,75 @@ class EncounterMenu(Menu):
             )
         )
 
-    def draw_encounter_progress(self, surface):
+    def _draw_transition_wave_wipe(self, surface: pygame.Surface):
+        """Draw the wave cover and reveal wipe.
+        
+        This wipe consists of three waves with different colors based on the current wave palette
+        due to the weather conditions, with some staggering in terms of their vertical movement and
+        horizontal offset.
+        """
+        if self.transition_state not in (
+            self.TRANSITION_WAVE_COVER,
+            self.TRANSITION_WAVE_REVEAL,
+        ):
+            return
+
+        progress = min(
+            1.0,
+            self.transition_timer / self.TRANSITION_WAVE_DURATION,
+        )
+        covering = self.transition_state == self.TRANSITION_WAVE_COVER
+        staggers = (
+            self.TRANSITION_WAVE_STAGGERS
+            if covering
+            else reversed(self.TRANSITION_WAVE_STAGGERS)
+        )
+
+        wave_sets = DataFiles.sprites["background"]["wave_sets"]
+        wave_set = wave_sets[self.weather_condition]
+        wave_sprites = [
+            wave_set[index]
+            for index in self.TRANSITION_WAVE_INDICES
+        ]
+
+        for idx, (wave, stagger) in enumerate(zip(wave_sprites, staggers)):
+            progress = max(
+                0.0,
+                min(1.0, (progress - stagger) / (1 - stagger)),
+            )
+            layer_progress = progress * progress * (3 - 2 * progress)
+            if not covering:
+                layer_progress = 1 - layer_progress
+
+            wave_width, wave_height = wave.get_size()
+            wave_top = round(
+                surface.get_height()
+                + (-wave_height - surface.get_height()) * layer_progress
+            )
+            first_wave_left = -wave_width + idx / len(wave_sprites) * wave_width
+            wave_left = first_wave_left
+            # Draw the wave strip.
+            while wave_left < surface.get_width():
+                surface.blit(wave, (wave_left, wave_top))
+                wave_left += wave_width
+            # Fill in the space below the wave strip with the solid wave color.
+            solid_top = wave_top + wave_height
+            if solid_top < surface.get_height():
+                wave_color = wave.get_at((0, wave_height - 1))[:3]
+                solid_top = max(0, solid_top)
+                pygame.draw.rect(
+                    surface,
+                    wave_color,
+                    (
+                        0,
+                        solid_top,
+                        surface.get_width(),
+                        surface.get_height() - solid_top,
+                    ),
+                )
+
+    def _draw_encounter_progress(self, surface: pygame.Surface):
+        """Draw the encounter progress widget."""
         encounters = DataFiles.sortie_data[self.current_sortie]["encounters"]
         icon_spacing = 128
         first_icon_x = screen_x(0.5) - icon_spacing * (len(encounters) - 1) / 2
@@ -1369,9 +1544,11 @@ class EncounterMenu(Menu):
         dash_length = 8
         dash_gap = 8
         for encounter_index, encounter in enumerate(encounters):
+            # Draw icons for each encounter using the existing encounter
+            # icon language: flag=cleared, monster=uncleared, skull=boss.
             current_encounter_cleared = (
                 encounter_index == self.current_encounter
-                and not self.encounter_end_flag
+                and not self.encounter_has_not_ended
                 and self.end_encounter_banner.text == "victory"
             )
             if encounter_index < self.current_encounter or current_encounter_cleared:
@@ -1390,7 +1567,7 @@ class EncounterMenu(Menu):
                 bottom=Box.BOTTOM_OF_SCREEN,
             )
             surface.blit(icon, icon_rect)
-
+            # Draw a dashed line between two encounter icons.
             if prev_icon_rect is None:
                 prev_icon_rect = icon_rect
                 continue
@@ -1406,7 +1583,7 @@ class EncounterMenu(Menu):
                 )
                 dash_x += dash_length + dash_gap
             prev_icon_rect = icon_rect
-
+        # Draw a pointer at the current encounter icon.
         if self.current_encounter < len(encounters):
             current_icon_x = first_icon_x + self.current_encounter * icon_spacing
             current_icon = DataFiles.sprites["user_interface"]["uncleared"]
@@ -1419,7 +1596,8 @@ class EncounterMenu(Menu):
             ]
             pygame.draw.polygon(surface, Color.WHITE, pointer)
 
-    def refresh_report_page_buttons(self):
+    def _refresh_report_page_buttons(self):
+        """Refresh the report pagination controls."""
         report_visible = self.return_to_port_button.active
         self.report_page_prev_button.active = (
             report_visible and self.report_page > 0
@@ -1432,14 +1610,18 @@ class EncounterMenu(Menu):
         if not self.report_page_next_button.active:
             self.report_page_next_button.hovered = False
 
-    def change_report_page(self, delta):
+    def _change_report_page(self, delta: int):
+        """Increment or decrement the report page index."""
         self.report_page = min(
             self.REPORT_PAGE_COUNT - 1,
             max(0, self.report_page + delta),
         )
-        self.refresh_report_page_buttons()
+        self._refresh_report_page_buttons()
 
-    def draw_dossier_page(self, surface):
+    def _draw_dossier_page(self, surface: pygame.Surface):
+        """Helper to draw the dossier-themed end of sortie report page."""
+        # Page shape is based on available pagination controls, as the pagination
+        # control is styled as a flipped page corner.
         page_turn_size = self.report_page_next_button.rect.width
         prev_fold_hovered = self.report_page_prev_button.hovered
         prev_fold_size = (
@@ -1487,6 +1669,7 @@ class EncounterMenu(Menu):
             ))
         pygame.draw.polygon(surface, Color.DOSSIER_PAGE, page_polygon)
 
+        # Draw the styled pagination controls.
         if self.report_page_next_button.active:
             fold_shadow = (
                 Color.DOSSIER_FOLD_SHADOW_HOVER
@@ -1512,7 +1695,8 @@ class EncounterMenu(Menu):
                 fold_tip,
             )
 
-    def draw_dossier_prev_page_fold(self, surface):
+    def _draw_dossier_prev_page_fold(self, surface: pygame.Surface):
+        """Helper to draw the dossier prev page pagination control."""
         if not self.report_page_prev_button.active:
             return
 
@@ -1531,7 +1715,7 @@ class EncounterMenu(Menu):
             self.dossier_page.top + fold_size,
         )
         page_topleft = pygame.Vector2(self.dossier_page.topleft)
-        fold_height = 2*Box.PADDING
+        fold_height = 2 * Box.PADDING
         fold_polygon = [
             fold_top - pygame.Vector2(0, fold_height),
             fold_top,
@@ -1552,21 +1736,23 @@ class EncounterMenu(Menu):
             width=Box.OUTLINE_WIDTH + int(fold_hovered),
         )
 
-    def draw_dossier_overlay(self, surface, font_registry):
-        """Draw the empty dossier and report page used after a sortie."""
+    def _draw_dossier_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the dossier and report page used after a sortie."""
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
 
+        # Dossier tab.
         tab = [
             pygame.Vector2(self.dossier_overlay.topleft),
             pygame.Vector2(self.dossier_overlay.topleft)
-            + pygame.Vector2(2*Box.WIDTH - Box.PADDING, 0),
+            + pygame.Vector2(2 * Box.WIDTH - Box.PADDING, 0),
             pygame.Vector2(self.dossier_overlay.topleft)
-            + pygame.Vector2(2*Box.WIDTH + Box.PADDING, Box.HEIGHT/2),
+            + pygame.Vector2(2 * Box.WIDTH + Box.PADDING, Box.HEIGHT / 2),
             pygame.Vector2(self.dossier_overlay.topleft)
-            + pygame.Vector2(0, Box.HEIGHT/2),
+            + pygame.Vector2(0, Box.HEIGHT / 2),
         ]
         pygame.draw.polygon(surface, Color.DOSSIER, tab)
 
+        # Misaligned pages add depth.
         undersheets = [
             (-2, pygame.Vector2(-3, 4), Color.DOSSIER_PAPER_UNDERSIDE),
             (2, pygame.Vector2(4, 2), Color.DOSSIER_CARD),
@@ -1581,9 +1767,11 @@ class EncounterMenu(Menu):
                     offset,
                 ),
             )
-        self.refresh_report_page_buttons()
-        self.draw_dossier_page(surface)
 
+        self._refresh_report_page_buttons()
+        self._draw_dossier_page(surface)
+
+        # Render different header text based on completion status.
         if self.sortie_completed:
             header_text = "operation completed"
         elif self.sortie_suspended:
@@ -1609,15 +1797,17 @@ class EncounterMenu(Menu):
             (self.dossier_page.right - Box.PADDING, header_y + 32),
         )
 
+        # Based on the current page, render either the rewards collected report
+        # or the defeated sirens report
         if self.report_page == 0:
-            self.draw_sortie_rewards(surface, font_registry)
+            self._draw_sortie_rewards(surface, font_registry)
         else:
-            self.draw_defeated_sirens(
+            self._draw_defeated_sirens(
                 surface,
                 font_registry,
-                self.dossier_page.top + self.REWARDS_SECTION_TOP,
             )
 
+        # Draw page counter.
         font_registry["big_pixel"].render(
             surface,
             f"sheet {self.report_page + 1:02d} of {self.REPORT_PAGE_COUNT:02d}",
@@ -1626,14 +1816,18 @@ class EncounterMenu(Menu):
             1,
             style="center",
         )
+
+        # Drop props.
         paperclip_sprite = DataFiles.sprites["props"]["diagonal_paperclip"]
         paperclip_rect = paperclip_sprite.get_rect()
         paperclip_rect.left = self.dossier_page.left - 20
         paperclip_rect.top = self.dossier_page.top - 20
         surface.blit(paperclip_sprite, paperclip_rect)
-        self.draw_dossier_prev_page_fold(surface)
+        self._draw_dossier_prev_page_fold(surface)
 
-    def draw_return_to_port_sticky_note(self, surface, font_registry):
+    def _draw_return_to_port_sticky_note(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Helper to draw the sticky note button styling for the return to port button."""
+        # Misaligned pages add depth.
         note_rect = self.return_to_port_button.rect
         misaligned_pages = [
             (4, pygame.Vector2(-5, 4), Color.STICKY_NOTE_BACK),
@@ -1656,11 +1850,12 @@ class EncounterMenu(Menu):
             note_rect,
         )
 
+        # Draw the home icon and return to port text to signify what this sticky note does.
         home_icon = DataFiles.recolor_sprite("user_interface", "port", Color.STICKY_NOTE_HANDWRITING)
         home_icon_rect = home_icon.get_rect(
             center=(
                 note_rect.centerx,
-                note_rect.top + 0.75*note_rect.height,
+                note_rect.top + 0.75 * note_rect.height,
             ),
         )
         surface.blit(home_icon, home_icon_rect)
@@ -1669,7 +1864,7 @@ class EncounterMenu(Menu):
             "return to port?",
             (
                 note_rect.centerx,
-                note_rect.top + 0.35*note_rect.height,
+                note_rect.top + 0.35 * note_rect.height,
             ),
             Color.STICKY_NOTE_HANDWRITING,
             1,
@@ -1677,7 +1872,9 @@ class EncounterMenu(Menu):
             box_width=note_rect.width,
         )
 
-    def draw_sortie_rewards(self, surface, font_registry):
+    def _draw_sortie_rewards(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Helper to draw the sortie rewards page of the report."""
+        # Page header.
         font = font_registry["big_pixel"]
         section_left = self.dossier_page.left + Box.PADDING
         section_top = self.dossier_page.top + self.REWARDS_SECTION_TOP
@@ -1691,16 +1888,18 @@ class EncounterMenu(Menu):
 
         cards_top = section_top + font.font_height + Box.PADDING
         if not self.sortie_rewards:
+            # Render a default no materials recovered text when empty.
             font.render(
                 surface,
                 "no materials recovered",
-                (self.dossier_page.centerx, cards_top + Box.HEIGHT/2),
+                (self.dossier_page.centerx, cards_top + Box.HEIGHT / 2),
                 Color.DOSSIER_RULE,
                 2,
                 style="center",
             )
             return cards_top + Box.HEIGHT
 
+        # Draw the reward cards.
         cards_per_row = max(
             1,
             (self.dossier_page.width - Box.PADDING)
@@ -1712,11 +1911,11 @@ class EncounterMenu(Menu):
                 height=Box.HEIGHT,
                 left=(
                     section_left
-                    + (index % cards_per_row)*(Box.WIDTH + Box.PADDING)
+                    + (index % cards_per_row) * (Box.WIDTH + Box.PADDING)
                 ),
                 top=(
                     cards_top
-                    + (index // cards_per_row)*(Box.HEIGHT + Box.PADDING)
+                    + (index // cards_per_row) * (Box.HEIGHT + Box.PADDING)
                 ),
             )
             pygame.draw.rect(
@@ -1759,16 +1958,12 @@ class EncounterMenu(Menu):
                 width=1,
             )
 
-        reward_rows = (
-            len(self.sortie_rewards) + cards_per_row - 1
-        ) // cards_per_row
-        return (
-            cards_top
-            + reward_rows*Box.HEIGHT
-            + (reward_rows - 1)*Box.PADDING
-        )
-
-    def draw_defeated_sirens(self, surface, font_registry, section_top):
+    def _draw_defeated_sirens(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Helper to draw the defeated sirens page in the report."""
+        # TODO look into combining this with the above into a generic to render both with one method just
+        # input the things to draw.
+        # Page header.
+        section_top = self.dossier_page.top + self.REWARDS_SECTION_TOP
         font = font_registry["big_pixel"]
         section_left = self.dossier_page.left + Box.PADDING
         font.render(
@@ -1781,16 +1976,18 @@ class EncounterMenu(Menu):
 
         cards_top = section_top + font.font_height + Box.PADDING
         if not self.defeated_sirens:
+            # No sirens were defeated, so render a default empty message.
             font.render(
                 surface,
                 "no confirmed siren vessels sunk",
-                (self.dossier_page.centerx, cards_top + Box.HEIGHT/2),
+                (self.dossier_page.centerx, cards_top + Box.HEIGHT / 2),
                 Color.DOSSIER_RULE,
                 2,
                 style="center",
             )
             return
 
+        # Draw the siren cards.
         card_width = self.SIREN_CARD_WIDTH
         cards_per_row = self.SIREN_CARDS_PER_ROW
         for index, ((siren_name, siren_level), amount) in enumerate(
@@ -1801,11 +1998,11 @@ class EncounterMenu(Menu):
                 height=Box.HEIGHT,
                 left=(
                     section_left
-                    + (index % cards_per_row)*(card_width + Box.PADDING)
+                    + (index % cards_per_row) * (card_width + Box.PADDING)
                 ),
                 top=(
                     cards_top
-                    + (index // cards_per_row)*(Box.HEIGHT + Box.PADDING)
+                    + (index // cards_per_row) * (Box.HEIGHT + Box.PADDING)
                 ),
             )
             pygame.draw.rect(
@@ -1863,6 +2060,7 @@ class EncounterMenu(Menu):
             )
 
     def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the encounter menu."""
         self.background.draw(
             surface,
             font_registry,
@@ -1870,7 +2068,7 @@ class EncounterMenu(Menu):
             siren_fleet=self.menu_manager.siren_fleet,
             player_shipgirl_filter=(
                 (lambda shipgirl: shipgirl.battle_component.hp > 0)
-                if self.transition_active and not self._transition_to_port
+                if self.transition_active and not self.transition_to_port
                 else None
             ),
         )
@@ -1878,27 +2076,23 @@ class EncounterMenu(Menu):
 
         self.open_reward_cache_button.draw(surface, font_registry)
 
-        if self.transition_active and not self._transition_to_port:
+        if self.transition_active and not self.transition_to_port:
             self._draw_transition_wave_wipe(surface)
             return
 
-        for shipgirl in self.menu_manager.player_fleet.fleet:
-            if shipgirl is None:
-                continue
-            shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
-        for siren in self.menu_manager.siren_fleet.fleet:
-            siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
-
+        self.menu_manager.player_fleet.draw_battlestations(surface, font_registry)
+        self.menu_manager.siren_fleet.draw_battlestations(surface, font_registry)
         self.menu_manager.player_fleet.draw_battle_effects(surface, self.vfx_manager)
         self.menu_manager.siren_fleet.draw_battle_effects(surface, self.vfx_manager)
 
         self.next_encounter_button.draw(surface, font_registry)
         self.retreat_button.draw(surface, font_registry)
-        self.draw_encounter_progress(surface)
+        self._draw_encounter_progress(surface)
 
         for drop in self.drops:
             drop.draw(surface, font_registry)
-        
+
+        # Draw the research exp widget.
         if self.exp_timer > 0:
             bar_width = 256
             bar_height = 10
@@ -1926,11 +2120,11 @@ class EncounterMenu(Menu):
                 + self.research_exp * self.exp_timer
             )
             bar_fill = get_rect(
-                width=bar_width * min(1, research_progress/exp_req),
+                width=bar_width * min(1, research_progress / exp_req),
                 height=bar_height, left=bar_background.left, top=bar_background.top 
             )
             accent = Color.QUEST_NOTIFICATION_COMPLETE
-            pulse = (math.sin(pygame.time.get_ticks()/1000*math.tau/2.4)+1)/2
+            pulse = (math.sin(pygame.time.get_ticks() / 1000 * math.tau / 2.4) + 1) / 2
             panel = pygame.Surface(panel_rect.size, pygame.SRCALPHA)
             panel_cut_size = 7
             panel_polygon = [
@@ -1948,7 +2142,7 @@ class EncounterMenu(Menu):
             )
             pygame.draw.lines(
                 panel,
-                (*accent, round(145 + 85*pulse)),
+                (*accent, round(145 + 85 * pulse)),
                 False,
                 panel_polygon[:-1],
                 width=1,
@@ -1978,18 +2172,21 @@ class EncounterMenu(Menu):
             font_registry["big_pixel"].render(
                 surface,
                 banner_text,
-                (bar_background.left, panel_rect.top+12),
+                (bar_background.left, panel_rect.top + 12),
                 accent,
                 1,
             )
 
         if self.return_to_port_button.active:
-            self.draw_dossier_overlay(surface, font_registry)
-            self.draw_return_to_port_sticky_note(surface, font_registry)
+            self._draw_dossier_overlay(surface, font_registry)
+            self._draw_return_to_port_sticky_note(surface, font_registry)
         
         if self.end_encounter_banner.text:
             self.end_encounter_banner.draw(surface, font_registry)
 
+        # Draw a line based on mouse drag.
+        # If the player has dragged from a shipgirl to an enemy siren, show an indicator
+        # of whether the player can or cannot drop to target this siren.
         mpos = pygame.mouse.get_pos()
         if self.mouse_start_drag is not None:
             pygame.draw.line(surface, Color.WHITE, self.mouse_start_drag, mpos, width=Box.OUTLINE_WIDTH)
@@ -1997,8 +2194,9 @@ class EncounterMenu(Menu):
                 if siren.battle_component.hp <= 0:
                     continue
                 if siren.rect.collidepoint(mpos):
+                    # Based on whether this siren is a valid target, pick the color
+                    # for the indicator.
                     if self.selected_shipgirl.battle_component.hull_type in self.MELEE_SHIPS:
-                        # TODO clean up magic numbers
                         if siren in self.menu_manager.siren_fleet.front:
                             color = (50,200,50)
                         else:
@@ -2008,17 +2206,18 @@ class EncounterMenu(Menu):
                     
                     inner_radius = 12
                     outer_radius = 24
-                    annulus = pygame.Surface((2*outer_radius, 2*outer_radius))
-                    annulus.fill((0,0,0))
+                    annulus = pygame.Surface((2 * outer_radius, 2 * outer_radius))
+                    annulus.fill((0, 0, 0))
                     pygame.draw.circle(annulus, color, (outer_radius, outer_radius), outer_radius)
-                    pygame.draw.circle(annulus, (0,0,0), (outer_radius, outer_radius), inner_radius)
-                    annulus.set_colorkey((0,0,0))
+                    pygame.draw.circle(annulus, (0, 0, 0), (outer_radius, outer_radius), inner_radius)
+                    annulus.set_colorkey((0, 0, 0))
                     annulus_rect = annulus.get_rect()
 
                     drawpos = pygame.Vector2(mpos) + pygame.Vector2(48)
                     annulus_rect.center = drawpos
                     surface.blit(annulus, annulus_rect)
 
+                    # Different hull tpyes have different attack icons.
                     if self.selected_shipgirl.battle_component.hull_type == "CV":
                         attack_icon = DataFiles.sprites["user_interface"]["air_attack"]
                     elif self.selected_shipgirl.battle_component.hull_type == "SS":
@@ -2029,5 +2228,5 @@ class EncounterMenu(Menu):
                     attack_icon_rect.center = drawpos
                     surface.blit(attack_icon, attack_icon_rect)
 
-        if self._transition_to_port:
+        if self.transition_to_port:
             self._draw_transition_wave_wipe(surface)
