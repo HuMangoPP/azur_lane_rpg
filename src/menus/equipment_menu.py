@@ -641,7 +641,7 @@ class EquipmentMenu(Menu):
                     width=Box.OUTLINE_WIDTH,
                 )
 
-    def draw_blueprint(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+    def _draw_blueprint(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the full blueprint component."""
         self._draw_blueprint_page(surface)
 
@@ -886,7 +886,7 @@ class EquipmentMenu(Menu):
             (row_rect.right, row_rect.bottom - 1),
         )
 
-    def draw_dossier(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+    def _draw_dossier(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the full dossier page component."""
         # Draw the dossier page.
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
@@ -974,8 +974,8 @@ class EquipmentMenu(Menu):
             pygame.draw.rect(surface, color, band_rect)
             y += band_height
 
-        self.draw_dossier(surface, font_registry)
-        self.draw_blueprint(surface, font_registry)
+        self._draw_dossier(surface, font_registry)
+        self._draw_blueprint(surface, font_registry)
 
         # Draw the bottom half of the screen, which is a workshop.
         pygame.draw.rect(surface, floor_color, workshop_floor)

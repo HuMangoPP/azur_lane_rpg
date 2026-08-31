@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
+    from src.shipgirls import Shipgirl
 
 import math
 import pygame
 import random
 
-from engine.util import get_rect, get_vec
+from engine.util import get_rect, get_vec, draw_dashed_rect
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -24,14 +25,15 @@ from live2d.live2d import Live2D
 
 
 def draw_rotated_handwritten_text(
-    surface,
-    font_registry,
-    text,
-    position,
-    angle,
-    scale=1.0,
-    padding=2,
+    surface: pygame.Surface,
+    font_registry: dict[str, Font],
+    text: str,
+    position: tuple[float, float],
+    angle: float,
+    scale: float = 1.0,
+    padding: int = 2,
 ):
+    """Render text using the handwritten font, centered and rotated."""
     font = font_registry["handwritten"]
     text_size = (
         math.ceil(font.get_width(text, scale, 0)),
@@ -39,8 +41,8 @@ def draw_rotated_handwritten_text(
     )
     text_surface = pygame.Surface(
         (
-            text_size[0] + 2*padding,
-            text_size[1] + 2*padding,
+            text_size[0] + 2 * padding,
+            text_size[1] + 2 * padding,
         ),
         pygame.SRCALPHA,
     )
@@ -57,8 +59,9 @@ def draw_rotated_handwritten_text(
 
 
 class FleetNameRibbon(NameRibbon):
-    def get_rect(self, font_registry):
-        width = self.get_width(font_registry)
+    def _get_rect(self, font_registry: dict[str, Font]):
+        """Override the NameRibbon._get_rect so that it does not adjust based on sortie selection anchor."""
+        width = self._get_width(font_registry)
         height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height() * self.scale
         return get_rect(width=width, height=height, center=self.position)
 
@@ -73,7 +76,14 @@ class FleetPathAnnotation:
     ARROWHEAD_LENGTH = 12
     ARROWHEAD_ANGLE = math.radians(32)
 
-    def __init__(self, start_point, end_point, bend, text, text_above=False):
+    def __init__(
+        self,
+        start_point: pygame.Vector2,
+        end_point: pygame.Vector2,
+        bend: float,
+        text: str,
+        text_above: bool = False
+    ):
         self.text = text
         mid_point = start_point.lerp(end_point, 0.5) + pygame.Vector2(0, bend)
         self.curve_points = ChapterProgressAnnotation.create_circular_curve(
@@ -82,6 +92,8 @@ class FleetPathAnnotation:
             end_point,
         )
 
+        # Align text to the midpoint of the curve, either above or below (controlled by flag)
+        # and tilted in the correct direction based on whether it is above or below.
         mid_index = min(
             range(len(self.curve_points)),
             key=lambda index: self.curve_points[index].distance_squared_to(mid_point),
@@ -96,7 +108,7 @@ class FleetPathAnnotation:
             text_normal *= -1
         self.text_position = (
             self.curve_points[mid_index]
-            + text_normal*self.TEXT_OFFSET
+            + text_normal * self.TEXT_OFFSET
         )
         self.text_angle = math.degrees(math.atan2(
             -text_direction.y,
@@ -104,7 +116,8 @@ class FleetPathAnnotation:
         ))
 
     @classmethod
-    def draw_dashed_curve(cls, surface, points):
+    def _draw_dashed_curve(cls, surface: pygame.Surface, points: list[pygame.Vector2]):
+        """Draw a dashed curve."""
         drawing_dash = True
         distance_until_toggle = cls.DASH_LENGTH
 
@@ -119,7 +132,7 @@ class FleetPathAnnotation:
 
             while distance_remaining > 0:
                 step = min(distance_remaining, distance_until_toggle)
-                next_position = position + direction*step
+                next_position = position + direction * step
                 if drawing_dash:
                     pygame.draw.line(
                         surface,
@@ -138,19 +151,9 @@ class FleetPathAnnotation:
                         cls.DASH_LENGTH if drawing_dash else cls.DASH_GAP
                     )
 
-    def draw_text(self, surface, font_registry):
-        draw_rotated_handwritten_text(
-            surface,
-            font_registry,
-            self.text,
-            self.text_position,
-            self.text_angle,
-            scale=self.TEXT_SCALE,
-            padding=self.TEXT_SURFACE_PADDING,
-        )
-
-    def draw(self, surface, font_registry):
-        self.draw_dashed_curve(surface, self.curve_points)
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the fleet path annotation."""
+        self._draw_dashed_curve(surface, self.curve_points)
 
         arrow_direction = (
             self.curve_points[-1] - self.curve_points[-2]
@@ -169,7 +172,15 @@ class FleetPathAnnotation:
                 width=self.LINE_WIDTH,
             )
 
-        self.draw_text(surface, font_registry)
+        draw_rotated_handwritten_text(
+            surface,
+            font_registry,
+            self.text,
+            self.text_position,
+            self.text_angle,
+            scale=self.TEXT_SCALE,
+            padding=self.TEXT_SURFACE_PADDING,
+        )
 
 
 class FleetSelectionMenu(Menu):
@@ -214,28 +225,33 @@ class FleetSelectionMenu(Menu):
     def __init__(self, menu_manager: MenuManager):
         self.menu_manager = menu_manager
 
-        # TODO update tray styling
+        # This is the tray which holds all of the shipgirl markers.
         num_rows = 1
         num_rects_in_row = 6
         self.tray_overlay = get_rect(
-            width=num_rects_in_row*(Box.WIDTH + Box.PADDING) + 5*Box.PADDING,
-            height=num_rows*(Box.HEIGHT + Box.PADDING) + 5*Box.PADDING,
+            width=num_rects_in_row * (Box.WIDTH + Box.PADDING) + 5 * Box.PADDING,
+            height=num_rows * (Box.HEIGHT + Box.PADDING) + 5 * Box.PADDING,
             right=Box.RIGHT_OF_SCREEN,
             bottom=Box.BOTTOM_OF_SCREEN
         )
+        self.tray_surface_cache: pygame.Surface | None = None
+        self.tray_shadow_cache: pygame.Surface | None = None
+        self.tray_cache_size: tuple[int, int] | None = None
+        self.tray_marker_shadow_cache: dict[str, pygame.Vector2] = {}
         self.available_shipgirl_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.tray_overlay.left+3*Box.PADDING+(i%num_rects_in_row)*(Box.WIDTH+Box.PADDING),
-                top=self.tray_overlay.top+3*Box.PADDING+(i//num_rects_in_row)*(Box.HEIGHT+Box.PADDING)
+                left=self.tray_overlay.left + 3 * Box.PADDING + (i % num_rects_in_row) * (Box.WIDTH + Box.PADDING),
+                top=self.tray_overlay.top + 3 * Box.PADDING + (i // num_rects_in_row) * (Box.HEIGHT + Box.PADDING)
             ) for i in range(num_rows * num_rects_in_row)
         ]
 
-        self.mouse_start_drag = None
-        self.selected_shipgirl_index_from_fleet = None
-        self.selected_shipgirl_index_from_backup = None
+        # Mouse interaction state.
+        self.mouse_start_drag: tuple[int, int] | None = None
+        self.selected_shipgirl_index_from_fleet: int | None = None
+        self.selected_shipgirl_index_from_backup: int | None = None
+        self.selected_shipgirl: Shipgirl | None = None
 
-        self.selected_shipgirl = None
         def start_sortie():
             if all(shipgirl is None for shipgirl in self.menu_manager.player_fleet.shipgirls):
                 return
@@ -261,9 +277,13 @@ class FleetSelectionMenu(Menu):
         def exit_fleet_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
             self.start_sortie_button.active = False
-        
+
+        button_size = 48
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
-        button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
+        button_rect = get_rect(
+            width=button_size, height=button_size,
+            right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN
+        )
         self.exit_fleet_selection_menu_button = RectangularButton(
             button_rect,
             exit_fleet_selection_menu,
@@ -275,13 +295,15 @@ class FleetSelectionMenu(Menu):
             hover_styling={"opacity": 200}
         )
 
+        # Fleet slots to assign markers to.
+        num_slots = 3
         slot_size = 64
         self.fleet_slots = [
             get_rect(
                 width=slot_size, height=slot_size,
-                centerx=screen_x(0.25) + 1.5 * slot_size - (slot_index-1)*slot_size/4,
-                centery=self.Y_ALIGN + (slot_index-1)*(slot_size + Box.PADDING)
-            ) for slot_index in range(3)
+                centerx=screen_x(0.25) + 1.5 * slot_size - (slot_index - 1) * slot_size / 4,
+                centery=self.Y_ALIGN + (slot_index-1) * (slot_size + Box.PADDING)
+            ) for slot_index in range(num_slots)
         ]
         self.backup_fleet_slots = [
             get_rect(
@@ -290,10 +312,16 @@ class FleetSelectionMenu(Menu):
                 centery=slot.centery,
             ) for slot in self.fleet_slots
         ]
-
-        self.primary_fleet_box = self.fleet_slots[0].unionall(self.fleet_slots[1:]).inflate(2*Box.PADDING, 2*Box.PADDING)
-        self.backup_fleet_box = self.backup_fleet_slots[0].unionall(self.backup_fleet_slots[1:]).inflate(2*Box.PADDING, 2*Box.PADDING)
-
+        self.primary_fleet_box = (
+            self.fleet_slots[0]
+            .unionall(self.fleet_slots[1:])
+            .inflate(2 * Box.PADDING, 2 * Box.PADDING)
+        )
+        self.backup_fleet_box = (
+            self.backup_fleet_slots[0]
+            .unionall(self.backup_fleet_slots[1:])
+            .inflate(2 * Box.PADDING, 2 * Box.PADDING)
+        )
         banner_height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height()
         self.primary_fleet_ribbon = FleetNameRibbon(
             (self.primary_fleet_box.centerx, self.primary_fleet_box.bottom + Box.PADDING + banner_height / 2),
@@ -309,45 +337,264 @@ class FleetSelectionMenu(Menu):
         self.sortie_index = -1
         self.header_ribbon = FleetNameRibbon((screen_x(0.5), Box.TOP_OF_SCREEN), "", scale=1.0)
 
-        self.path = []
-        self.path_hexes = []
-        self.path_annotations = []
-        self.empty_loop_position = None
-        self.sortie_props = []
-        self.start_sortie_prop_position = None
+        # State for the right-side encounter sailign path
+        self.path: list[tuple[pygame.Vector2, float]] = []
+        self.path_hexes: list[pygame.Vector2] = []
+        self.path_annotations: list[FleetPathAnnotation] = []
+        self.empty_loop_position: pygame.Vector2 | None = None
+        self.sortie_props: list[tuple[str, pygame.Vector2]] = []
+        self.start_sortie_prop_position: pygame.Vector2 | None = None
         self.selection_effect_time = 0
+        self.marker_glow_layer: pygame.Vector2 | None = None
+        self.marker_projection_layer: pygame.Vector2 | None = None
 
         self.background = Background()
-        self.marker_glow_layer = None
-        self.marker_projection_layer = None
-        self._tray_surface_cache = None
-        self._tray_shadow_cache = None
-        self._tray_cache_size = None
-        self._tray_marker_shadow_cache = {}
 
-    def _draw_dashed_rect(self, surface, rect, color = Color.WHITE, dash_length = PATH_DASH_LENGTH, dash_width = PATH_DASH_WIDTH):
-        for start, end in [
-            (rect.topleft, rect.topright),
-            (rect.topright, rect.bottomright),
-            (rect.bottomright, rect.bottomleft),
-            (rect.bottomleft, rect.topleft),
-        ]:
-            start = pygame.Vector2(start)
-            end = pygame.Vector2(end)
-            edge = end - start
-            edge_length = edge.length()
-            if edge_length == 0:
+    def generate_path(self):
+        """Generate a random looping path.
+        
+        This algorithm works by randomly generating circles on alternating sides of
+        the horizontal, and then generating a path that loops from circle to circle,
+        so the final result is a winding path.
+        """
+        # First generate checkpoints.
+        # Start from the horizontal and either turn up or down along a circle.
+        # Then generate a circle in that direction, and connect those two circles
+        # via a line, so the path appears to leave the orbit of the first circle,
+        # travels straight, then joins the orbit of the other circle.
+        # Make a u-turn, then generate another circle on that path, and repeat
+        # this orbit-hopping idea.
+        # The number of checkpoints generated is equal to the number of encounters
+        # in the sortie, plus one.
+        num_encounters = len(DataFiles.sortie_data[self.sortie_index]["encounters"])
+        extra_loops = 1
+        encounter_counter = num_encounters + extra_loops
+        radius = 48
+        sign = random.choice([1, -1])
+        straight_distance = random.uniform(5, 10)
+        launch_angle = sign * math.radians(90)
+        land_pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
+        checkpoints = [land_pos]
+        while encounter_counter > 0:
+            circle_center = land_pos + get_vec(radius, launch_angle)
+            launch_angle = sign * math.radians(random.uniform(5, 15))
+            launch_pos = circle_center + get_vec(radius, launch_angle)
+            land_pos = launch_pos + get_vec(straight_distance, launch_angle + sign * math.radians(90))
+            checkpoints.extend([launch_pos, land_pos])
+            sign *= -1
+            encounter_counter -= 1
+
+            if encounter_counter > 1:
+                straight_distance = random.uniform(80, 120)
+            else:
+                straight_distance = random.uniform(10, 20)
+        circle_center = land_pos + get_vec(radius, launch_angle)
+        end_pos = circle_center + get_vec(radius, -sign * math.radians(90))
+        checkpoints.append(end_pos)
+
+        # Now generate a high-resolution path that travels from checkpoint to checkpoint.
+        step = 1
+        record_every = 30
+        record_every_counter = record_every
+        turn_amount = step / radius
+        angle = 0.0
+        pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
+        draw_hex = False
+        candidate_hexes = []
+        self.path = [(pos, angle)]
+        for checkpoint in checkpoints:
+            to_target = checkpoint - pos
+            checkpoint_turn_amount = turn_amount
+            distance_squared = to_target.length_squared()
+            if distance_squared > 0:
+                heading = get_vec(1, angle)
+                # Curvature of the circle tangent to the current heading that
+                # passes through this checkpoint.
+                # This is a guard against a possible infinite loop where the turning amount
+                # is inadequate, which causes the point to orbit the checkpoint, rather than
+                # approaching it.
+                required_curvature = abs(
+                    2 * heading.cross(to_target) / distance_squared
+                )
+                checkpoint_turn_amount = max(
+                    checkpoint_turn_amount,
+                    required_curvature * step,
+                )
+            while to_target.length() > 5:
+                pos = pos + get_vec(step, angle)
+                if record_every_counter == 0:
+                    if draw_hex:
+                        candidate_hexes.append(pos)
+                        draw_hex = False
+                    self.path.append((pos, angle))
+                    record_every_counter = record_every
+                else:
+                    record_every_counter -= 1
+                left_side = get_vec(1, angle - math.radians(90))
+                to_target = checkpoint - pos
+                dot_product = left_side * to_target
+                if dot_product > 0:
+                    new_angle = angle - checkpoint_turn_amount
+                else:
+                    new_angle = angle + checkpoint_turn_amount
+                if (
+                    (angle < 0 and new_angle >= 0)
+                    or (angle > 0 and new_angle < 0)
+                ):
+                    draw_hex = True
+                angle = new_angle
+                new_left_side = get_vec(1, angle - math.radians(90))
+                new_dot_product = new_left_side * to_target
+                if (
+                    (dot_product > 0 and new_dot_product <= 0)
+                    or (dot_product <= 0 and new_dot_product > 0)
+                ):
+                    angle = math.atan2(to_target.y, to_target.x)
+        if record_every_counter < record_every:
+            pos = pos + get_vec(record_every_counter, angle)
+            self.path.append((pos, angle))
+        if len(candidate_hexes) < num_encounters + extra_loops:
+            candidate_hexes.append(pos)
+        # Pick a subset of loops and place hexes, representing
+        # the encounters along the path.
+        # The final point of the path always has a hex.
+        encounter_loop_hexes = random.sample(
+            candidate_hexes[:-1],
+            k=num_encounters - 1,
+        )
+        # Keep track of the loop which does not have a hex.
+        # A prop will be placed here.
+        self.empty_loop_position = next(
+            candidate
+            for candidate in candidate_hexes[:-1]
+            if candidate not in encounter_loop_hexes
+        )
+        self.path_hexes = encounter_loop_hexes + [candidate_hexes[-1]]
+
+        # The sortie button is placed at the start of the path.
+        self.start_sortie_button.rect.center = self.path[0][0]
+
+        self._generate_path_annotations()
+        self._generate_sortie_props()
+
+    def _generate_path_annotations(self):
+        """Generate path annotations.
+        
+        There are two annotations: a downward curving arrow with the text
+        "initial strike group" from the primary fleet box, and an upward
+        curving arrow with the text "delayed strike group" from the backup
+        fleet box.
+        """
+        final_path_hex = self.path_hexes[-1]
+        upper_hex_edge = final_path_hex + pygame.Vector2(-24, -16)
+        lower_hex_edge = final_path_hex + pygame.Vector2(-24, 16)
+        self.path_annotations = [
+            FleetPathAnnotation(
+                pygame.Vector2(self.primary_fleet_box.topright)
+                + pygame.Vector2(Box.PADDING, -Box.PADDING),
+                upper_hex_edge,
+                -40,
+                "initial strike group",
+                text_above=True,
+            ),
+            FleetPathAnnotation(
+                pygame.Vector2(self.backup_fleet_box.bottomright)
+                + pygame.Vector2(Box.PADDING, Box.PADDING),
+                lower_hex_edge,
+                64,
+                "delayed strike group",
+            ),
+        ]
+
+    def _generate_sortie_props(self):
+        """Generate sortie props around key points.
+        
+        The key points are the start of the path, the end of the path,
+        and around the empty loop in the path.
+        """
+        self.sortie_props = []
+        self.start_sortie_prop_position = None
+        prop_sets = DataFiles.sortie_selection_details.get(
+            "fleet_selection_props",
+            [],
+        )
+        if not 0 <= self.sortie_index < len(prop_sets):
+            return
+
+        prop_anchors = {
+            "start": pygame.Vector2(self.start_sortie_button.rect.center),
+            "end": self.path_hexes[-1],
+            "empty_loop": self.empty_loop_position,
+        }
+        for prop_info in prop_sets[self.sortie_index]:
+            prop_key = prop_info["prop"]
+            position = self._get_random_prop_position(
+                prop_anchors[prop_info["anchor"]],
+                DataFiles.sprites["sortie_selection"][prop_key],
+            )
+            self.sortie_props.append((prop_key, position))
+            if prop_info["anchor"] == "start":
+                self.start_sortie_prop_position = pygame.Vector2(position)
+
+    def _get_random_prop_position(self, anchor: pygame.Vector2, prop: pygame.Surface) -> pygame.Vector2:
+        """Randomly generate a random prop position until the position is valid."""
+        screen_rect = pygame.Rect((0, 0), (screen_x(1), screen_y(1)))
+        # Prevent the prop from generating too close to these UI components.
+        header_rect = pygame.Rect(0, 0, screen_x(1), 80)
+        protected_rects = [
+            header_rect,
+            self.exit_fleet_selection_menu_button.rect,
+            self.backup_fleet_box.inflate(2 * Box.PADDING, 2 * Box.PADDING),
+            self.primary_fleet_box.inflate(2 * Box.PADDING, 2 * Box.PADDING),
+            self.tray_overlay.inflate(2 * Box.PADDING, 2 * Box.PADDING),
+        ]
+        marker_centers = [
+            pygame.Vector2(self.start_sortie_button.rect.center),
+            *self.path_hexes,
+        ]
+        placed_prop_rects = [
+            DataFiles.sprites["sortie_selection"][prop_key].get_rect(
+                center=position,
+            )
+            for prop_key, position in self.sortie_props
+        ]
+
+        for _ in range(self.PROP_PLACEMENT_ATTEMPTS):
+            # Randomly generate prop positions and check to make sure it is
+            # on-sreen and does not generate too close to any UI components.
+            position = anchor + get_vec(
+                random.uniform(self.PROP_MIN_OFFSET, self.PROP_MAX_OFFSET),
+                random.uniform(0, math.tau),
+            )
+            prop_rect = prop.get_rect(center=position)
+            if not screen_rect.contains(prop_rect):
                 continue
-            direction = edge / edge_length
-            distance = 0
-            while distance < edge_length:
-                dash_start = start + direction * distance
-                dash_end = start + direction * min(distance + dash_length, edge_length)
-                pygame.draw.line(surface, color, dash_start, dash_end, width=dash_width)
-                distance += 2 * dash_length
+            if any(prop_rect.colliderect(rect) for rect in protected_rects):
+                continue
+            # Make sure the prop does not generate too close.
+            if any(
+                position.distance_to(marker_center) < self.PROP_MIN_OFFSET
+                for marker_center in marker_centers
+            ):
+                continue
+            # Make sure the prop is not too close to another prop.
+            if any(
+                prop_rect.inflate(
+                    self.PROP_SPACING,
+                    self.PROP_SPACING,
+                ).colliderect(rect)
+                for rect in placed_prop_rects
+            ):
+                continue
+            return position
+
+        # The anchor regions have ample room in normal layouts. Retain the final
+        # randomized candidate if an unusually constrained route exhausts retries.
+        return position
 
     @classmethod
-    def _get_tray_polygon(cls, size, offset=(0, 0)):
+    def _get_tray_polygon(cls, size: tuple[float, float], offset: tuple[float, float] = (0, 0)):
+        """Get the polygon of the marker tray."""
         width, height = size
         offset_x, offset_y = offset
         corner_cut = cls.TRAY_CORNER_CUT
@@ -362,41 +609,17 @@ class FleetSelectionMenu(Menu):
             (offset_x, offset_y + corner_cut),
         ]
 
-    def _get_local_tray_bays(self):
-        return [
-            rect.move(-self.tray_overlay.left, -self.tray_overlay.top)
-            for rect in self.available_shipgirl_rects
-        ]
-
-    def _draw_tray_screw(self, surface, center):
-        center_x, center_y = center
-        pygame.draw.circle(
-            surface,
-            self.TRAY_FRAME_SHADOW,
-            center,
-            radius=Box.PADDING,
-        )
-        pygame.draw.circle(
-            surface,
-            self.TRAY_SCREW_COLOR,
-            center,
-            radius=Box.PADDING-2,
-        )
-        pygame.draw.line(
-            surface,
-            self.TRAY_FRAME_SHADOW,
-            (center_x - (Box.PADDING-2), center_y),
-            (center_x + (Box.PADDING-2), center_y),
-            width=3,
-        )
-
     def _build_tray_surface(self):
+        """Pre-render the tray surface."""
         tray_size = self.tray_overlay.size
         tray_surface = pygame.Surface(tray_size, flags=pygame.SRCALPHA)
         tray_polygon = self._get_tray_polygon(tray_size)
         pygame.draw.polygon(tray_surface, self.TRAY_FRAME_COLOR, tray_polygon)
 
-        local_bays = self._get_local_tray_bays()
+        local_bays = [
+            rect.move(-self.tray_overlay.left, -self.tray_overlay.top)
+            for rect in self.available_shipgirl_rects
+        ]
         for bay_rect in local_bays:
             recess_rect = bay_rect.inflate(4, 4)
             pygame.draw.rect(tray_surface, self.TRAY_RECESS_RIM, recess_rect)
@@ -458,18 +681,39 @@ class FleetSelectionMenu(Menu):
             width=4,
         )
 
-        screw_margin = 1.75*Box.PADDING
+        # Draw screws on the tray corners.
+        screw_margin = 1.75 * Box.PADDING
         for screw_center in [
             (screw_margin, screw_margin),
             (width - screw_margin, screw_margin),
             (screw_margin, height - screw_margin),
             (width - screw_margin, height - screw_margin),
         ]:
-            self._draw_tray_screw(tray_surface, screw_center)
+            center_x, center_y = screw_center
+            pygame.draw.circle(
+                tray_surface,
+                self.TRAY_FRAME_SHADOW,
+                screw_center,
+                radius=Box.PADDING,
+            )
+            pygame.draw.circle(
+                tray_surface,
+                self.TRAY_SCREW_COLOR,
+                screw_center,
+                radius=Box.PADDING - 2,
+            )
+            pygame.draw.line(
+                tray_surface,
+                self.TRAY_FRAME_SHADOW,
+                (center_x - (Box.PADDING - 2), center_y),
+                (center_x + (Box.PADDING - 2), center_y),
+                width=3,
+            )
 
         return tray_surface
 
     def _build_tray_shadow(self):
+        """Pre-render tray shadow surface."""
         width, height = self.tray_overlay.size
         shadow_surface = pygame.Surface(
             (width + 10, height + 12),
@@ -488,238 +732,148 @@ class FleetSelectionMenu(Menu):
         return shadow_surface
 
     def _get_tray_surfaces(self):
-        if self._tray_cache_size != self.tray_overlay.size:
-            self._tray_cache_size = self.tray_overlay.size
-            self._tray_surface_cache = self._build_tray_surface()
-            self._tray_shadow_cache = self._build_tray_shadow()
-        return self._tray_surface_cache, self._tray_shadow_cache
+        """Pre-render tray surfaces."""
+        if self.tray_cache_size != self.tray_overlay.size:
+            self.tray_cache_size = self.tray_overlay.size
+            self.tray_surface_cache = self._build_tray_surface()
+            self.tray_shadow_cache = self._build_tray_shadow()
+        return self.tray_surface_cache, self.tray_shadow_cache
 
-    def generate_path(self):
-        num_encounters = len(DataFiles.sortie_data[self.sortie_index]["encounters"])
-        extra_loops = 1
-        encounter_counter = num_encounters + extra_loops
-        radius = 48
-        sign = random.choice([1, -1])
-        straight_distance = random.uniform(5, 10)
-        launch_angle = sign * math.radians(90)
-        land_pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
-        checkpoints = [land_pos]
-        while encounter_counter > 0:
-            circle_center = land_pos + get_vec(radius, launch_angle)
-            launch_angle = sign * math.radians(random.uniform(5, 15))
-            launch_pos = circle_center + get_vec(radius, launch_angle)
-            land_pos = launch_pos + get_vec(straight_distance, launch_angle + sign * math.radians(90))
-            checkpoints.extend([launch_pos, land_pos])
-            sign *= -1
-            encounter_counter -= 1
 
-            if encounter_counter > 1:
-                straight_distance = random.uniform(80, 120)
-            else:
-                straight_distance = random.uniform(10, 20)
-        circle_center = land_pos + get_vec(radius, launch_angle)
-        end_pos = circle_center + get_vec(radius, -sign * math.radians(90))
-        checkpoints.append(end_pos)
+    def _align_shipgirl_with_fleet_selection_slot(self, shipgirl: Shipgirl, slot: pygame.Rect):
+        """Align a shipgirl with the fleet slot.
+        
+        The shipgirl is placed above the fleet slot, so that hovering over the
+        marker will produce something like a hologram projection of the shipgirl
+        coming from the marker.
+        """
+        if shipgirl is not None:
+            shipgirl.rect.centerx = slot.centerx
+            shipgirl.rect.bottom = slot.centery
+            shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
+            shipgirl.facing_left = False
 
-        step = 1
-        record_every = 30
-        record_every_counter = record_every
-        turn_amount = step / radius
-        angle = 0.0
-        pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
-        draw_hex = False
-        candidate_hexes = []
-        self.path = [(pos, angle)]
-        for checkpoint in checkpoints:
-            to_target = checkpoint - pos
-            checkpoint_turn_amount = turn_amount
-            distance_squared = to_target.length_squared()
-            if distance_squared > 0:
-                heading = get_vec(1, angle)
-                # Curvature of the circle tangent to the current heading that
-                # passes through this checkpoint.
-                required_curvature = abs(
-                    2 * heading.cross(to_target) / distance_squared
+    def _drop_shipgirl(
+        self, slot_shipgirls: list[Shipgirl], marker_slots: list[pygame.Rect], event: pygame.Event
+    ) -> bool:
+        """Logic for dropping a shipgirl marker into a new slot."""
+        for i, slot in enumerate(marker_slots):
+            if not slot.collidepoint(event.pos):
+                continue
+            if self.selected_shipgirl_index_from_fleet is not None:
+                # The drag origin is from the primary fleet.
+                # Make sure to swap the shipgirl already assigned to the drag target to the relevant origin slot.
+                self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = slot_shipgirls[i]
+                self._align_shipgirl_with_fleet_selection_slot(
+                    slot_shipgirls[i],
+                    self.fleet_slots[self.selected_shipgirl_index_from_fleet],
                 )
-                checkpoint_turn_amount = max(
-                    checkpoint_turn_amount,
-                    required_curvature * step,
+            if self.selected_shipgirl_index_from_backup is not None:
+                # The drag origin is from the backup fleet.
+                # Make sure to swap the shipgirl already assigned to the drag target to the relevant origin slot.
+                self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = slot_shipgirls[i]
+                self._align_shipgirl_with_fleet_selection_slot(
+                    slot_shipgirls[i],
+                    self.backup_fleet_slots[self.selected_shipgirl_index_from_backup],
                 )
-            while to_target.length() > 5:
-                pos = pos + get_vec(step, angle)
-                if record_every_counter == 0:
-                    if draw_hex:
-                        candidate_hexes.append(pos)
-                        draw_hex = False
-                    self.path.append((pos, angle))
-                    record_every_counter = record_every
-                else:
-                    record_every_counter -= 1
-                left_side = get_vec(1, angle - math.radians(90))
-                to_target = checkpoint - pos
-                dot_product = left_side * to_target
-                if dot_product > 0:
-                    new_angle = angle - checkpoint_turn_amount
-                else:
-                    new_angle = angle + checkpoint_turn_amount
-                if (
-                    (angle < 0 and new_angle >= 0)
-                    or (angle > 0 and new_angle < 0)
-                ):
-                    draw_hex = True
-                angle = new_angle
-                new_left_side = get_vec(1, angle - math.radians(90))
-                new_dot_product = new_left_side * to_target
-                if (
-                    (dot_product > 0 and new_dot_product <= 0)
-                    or (dot_product <= 0 and new_dot_product > 0)
-                ):
-                    angle = math.atan2(to_target.y, to_target.x)
-        if record_every_counter < record_every:
-            pos = pos + get_vec(record_every_counter, angle)
-            self.path.append((pos, angle))
-        if len(candidate_hexes) < num_encounters + extra_loops:
-            candidate_hexes.append(pos)
-        encounter_loop_hexes = random.sample(
-            candidate_hexes[:-1],
-            k=num_encounters - 1,
-        )
-        self.empty_loop_position = next(
-            candidate
-            for candidate in candidate_hexes[:-1]
-            if candidate not in encounter_loop_hexes
-        )
-        self.path_hexes = encounter_loop_hexes + [candidate_hexes[-1]]
-        self.generate_path_annotations()
+            # Otherwise the shipgirl was dragged from the tray.
+            # In any case, assign the dragged shipgirl to the target slot.
+            slot_shipgirls[i] = self.selected_shipgirl
+            self._align_shipgirl_with_fleet_selection_slot(self.selected_shipgirl, slot)
+            return True
+        return False
 
-        self.start_sortie_button.rect.center = self.path[0][0]
-        self.generate_sortie_props()
+    def update(self, dt: float, events: list[pygame.Event]):
+        self.selection_effect_time += dt
+        self.background.update(dt)
 
-    def generate_path_annotations(self):
-        final_path_hex = self.path_hexes[-1]
-        upper_hex_edge = final_path_hex + pygame.Vector2(-24, -16)
-        lower_hex_edge = final_path_hex + pygame.Vector2(-24, 16)
-        self.path_annotations = [
-            FleetPathAnnotation(
-                pygame.Vector2(self.primary_fleet_box.topright)
-                + pygame.Vector2(Box.PADDING, -Box.PADDING),
-                upper_hex_edge,
-                -40,
-                "initial strike group",
-                text_above=True,
-            ),
-            FleetPathAnnotation(
-                pygame.Vector2(self.backup_fleet_box.bottomright)
-                + pygame.Vector2(Box.PADDING, Box.PADDING),
-                lower_hex_edge,
-                64,
-                "delayed strike group",
-            ),
-        ]
-
-    def generate_sortie_props(self):
-        self.sortie_props = []
-        self.start_sortie_prop_position = None
-        prop_sets = DataFiles.sortie_selection_details.get(
-            "fleet_selection_props",
-            [],
-        )
-        if not 0 <= self.sortie_index < len(prop_sets):
+        # Update encounter menu transition.
+        if self.menu_manager.encounter_menu.transition_active:
+            self.menu_manager.encounter_menu.update(dt, ())
             return
 
-        prop_anchors = {
-            "start": pygame.Vector2(self.start_sortie_button.rect.center),
-            "end": self.path_hexes[-1],
-            "empty_loop": self.empty_loop_position,
-        }
-        for prop_info in prop_sets[self.sortie_index]:
-            prop_key = prop_info["prop"]
-            position = self.get_random_prop_position(
-                prop_anchors[prop_info["anchor"]],
-                DataFiles.sprites["sortie_selection"][prop_key],
-            )
-            self.sortie_props.append((prop_key, position))
-            if prop_info["anchor"] == "start":
-                self.start_sortie_prop_position = pygame.Vector2(position)
+        for event in events:
+            if event.type == pygame.MOUSEMOTION:
+                self.exit_fleet_selection_menu_button.hover(event.pos)
+                if self.mouse_start_drag is None:
+                    self.start_sortie_button.hover(event.pos)
+                else:
+                    self.start_sortie_button.hovered = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.selected_shipgirl = None
+                self.mouse_start_drag = None
+                self.selected_shipgirl_index_from_fleet = None
+                self.selected_shipgirl_index_from_backup = None
+                # Check for drag from the tray, primary fleet, and backup fleet.
+                for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
+                    if rect.collidepoint(event.pos) and not self.menu_manager.player_fleet.in_fleet(shipgirl):
+                        self.mouse_start_drag = event.pos
+                        self.selected_shipgirl = shipgirl
+                for i, (shipgirl, slot) in enumerate(zip(self.menu_manager.player_fleet.shipgirls, self.fleet_slots)):
+                    if shipgirl is not None and slot.collidepoint(event.pos):
+                        self.mouse_start_drag = event.pos
+                        self.selected_shipgirl = shipgirl
+                        self.selected_shipgirl_index_from_fleet = i
+                for i, (shipgirl, slot) in enumerate(zip(self.menu_manager.player_fleet.backups, self.backup_fleet_slots)):
+                    if shipgirl is not None and slot.collidepoint(event.pos):
+                        self.mouse_start_drag = event.pos
+                        self.selected_shipgirl = shipgirl
+                        self.selected_shipgirl_index_from_backup = i
+            if event.type == pygame.MOUSEBUTTONUP:
+                click = False
+                was_dragging_shipgirl = self.selected_shipgirl is not None
+                if self.selected_shipgirl is not None:
+                    # Check for drop on the primary and backup fleets.
+                    click = self._drop_shipgirl(
+                        self.menu_manager.player_fleet.shipgirls,
+                        self.fleet_slots,
+                        event
+                    )
+                    click = click or self._drop_shipgirl(
+                        self.menu_manager.player_fleet.backups,
+                        self.backup_fleet_slots,
+                        event
+                    )
+                    # Check for drop on the tray overlay.
+                    if self.tray_overlay.collidepoint(event.pos):
+                        if self.selected_shipgirl_index_from_fleet is not None:
+                            self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = None
+                        if self.selected_shipgirl_index_from_backup is not None:
+                            self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = None
+                        click = True
+                    self.selected_shipgirl = None
 
-    def get_random_prop_position(self, anchor, prop):
-        screen_rect = pygame.Rect((0, 0), (screen_x(1), screen_y(1)))
-        header_rect = pygame.Rect(0, 0, screen_x(1), 80)
-        protected_rects = [
-            header_rect,
-            self.exit_fleet_selection_menu_button.rect,
-            self.backup_fleet_box.inflate(2*Box.PADDING, 2*Box.PADDING),
-            self.primary_fleet_box.inflate(2*Box.PADDING, 2*Box.PADDING),
-            self.tray_overlay.inflate(2*Box.PADDING, 2*Box.PADDING),
-        ]
-        marker_centers = [
-            pygame.Vector2(self.start_sortie_button.rect.center),
-            *self.path_hexes,
-        ]
-        placed_prop_rects = [
-            DataFiles.sprites["sortie_selection"][prop_key].get_rect(
-                center=position,
-            )
-            for prop_key, position in self.sortie_props
-        ]
+                self.mouse_start_drag = None
 
-        for _ in range(self.PROP_PLACEMENT_ATTEMPTS):
-            position = anchor + get_vec(
-                random.uniform(self.PROP_MIN_OFFSET, self.PROP_MAX_OFFSET),
-                random.uniform(0, math.tau),
-            )
-            prop_rect = prop.get_rect(center=position)
-            if not screen_rect.contains(prop_rect):
-                continue
-            if any(prop_rect.colliderect(rect) for rect in protected_rects):
-                continue
-            if any(
-                position.distance_to(marker_center) < self.PROP_MIN_OFFSET
-                for marker_center in marker_centers
-            ):
-                continue
-            if any(
-                prop_rect.inflate(
-                    self.PROP_SPACING,
-                    self.PROP_SPACING,
-                ).colliderect(rect)
-                for rect in placed_prop_rects
-            ):
-                continue
-            return position
+                # Prevent mouse interactions if the player dropped a shipgirl onto a button.
+                if not was_dragging_shipgirl:
+                    click = (
+                        click
+                        or self.start_sortie_button.click(event.pos)
+                        or self.exit_fleet_selection_menu_button.click(event.pos)
+                    )
 
-        # The anchor regions have ample room in normal layouts. Retain the final
-        # randomized candidate if an unusually constrained route exhausts retries.
-        return position
+                if click:
+                    DataFiles.sfx["click"].play()
 
-    def draw_sortie_props(self, surface):
-        for prop_key, position in self.sortie_props:
-            prop = DataFiles.sprites["sortie_selection"][prop_key]
-            surface.blit(prop, prop.get_rect(center=position))
+        # Normally, prevent the player from starting a sortie without a shipgirl assigned
+        # to the primary fleet.
+        # For the first sortie quest specifically, prevent them from starting until both
+        # are in the primary fleet.
+        if first_sortie_quest.quest_id in self.menu_manager.quest_manager.started_quests:
+            self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 1
+        else:
+            self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 0
 
-    def draw_set_sail_annotation(self, surface, font_registry):
-        if not self.start_sortie_button.active:
-            return
+        for shipgirl in self.menu_manager.player_fleet.shipgirls:
+            if shipgirl is not None:
+                shipgirl.animate(dt)
+        for shipgirl in self.menu_manager.player_fleet.backups:
+            if shipgirl is not None:
+                shipgirl.animate(dt)
 
-        marker_center = pygame.Vector2(self.start_sortie_button.rect.center)
-        prop_is_above = (
-            self.start_sortie_prop_position is not None
-            and self.start_sortie_prop_position.y < marker_center.y
-        )
-        text_side = 1 if prop_is_above else -1
-        text_position = marker_center + pygame.Vector2(
-            -4, text_side*self.SET_SAIL_TEXT_OFFSET,
-        )
-        text_angle = -self.SET_SAIL_TEXT_ANGLE*text_side
-        draw_rotated_handwritten_text(
-            surface,
-            font_registry,
-            self.SET_SAIL_TEXT,
-            text_position,
-            text_angle,
-        )
-
-    def _get_launch_marker_polygon(self, center):
+    def _get_launch_marker_polygon(self, center: tuple[float, float]) -> list[pygame.Vector2]:
+        """Get the hex marker for the start sortie button."""
         return [
             pygame.Vector2(center) + get_vec(
                 self.LAUNCH_MARKER_RADIUS,
@@ -728,7 +882,8 @@ class FleetSelectionMenu(Menu):
             for corner_index in range(6)
         ]
 
-    def draw_launch_marker(self, surface):
+    def _draw_launch_marker(self, surface: pygame.Surface):
+        """Draw the start sortie button hex marker and its effects based on the button state."""
         center = pygame.Vector2(self.start_sortie_button.rect.center)
         hovered = (
             self.start_sortie_button.active
@@ -740,16 +895,18 @@ class FleetSelectionMenu(Menu):
             self.LAUNCH_MARKER_HOVER_LIFT if hovered else 0,
         )
 
+        # Marker shadow.
         shadow_polygon = self._get_launch_marker_polygon(
             center + self.LAUNCH_MARKER_SHADOW_OFFSET
         )
         pygame.draw.polygon(surface, self.TRAY_CAST_SHADOW, shadow_polygon)
 
+        # Marker glow effect when button is active.
         if self.start_sortie_button.active:
             glow_sprite = DataFiles.sprites["sortie_selection"][
                 "uncleared_node_selection_glow"
             ]
-            glow = self.get_pulsing_selection_glow(glow_sprite)
+            glow = self._get_pulsing_selection_glow(glow_sprite)
             marker_polygon = self._get_launch_marker_polygon(token_center)
             glow_left = int(min(corner.x for corner in marker_polygon))
             glow_right = int(max(corner.x for corner in marker_polygon))
@@ -767,6 +924,9 @@ class FleetSelectionMenu(Menu):
                 special_flags=pygame.BLEND_RGB_ADD,
             )
 
+        # Marker with different fill and anchor sprite colors.
+        # Render after the glow effect to ensure marker is not wrongly colored
+        # by additive rendering.
         outline_color = Color.UNCLEARED_ZONE_OUTLINE
         if self.start_sortie_button.active:
             fill_color = Color.UNCLEARED_ZONE_OUTLINE
@@ -774,7 +934,6 @@ class FleetSelectionMenu(Menu):
         else:
             fill_color = Color.UNCLEARED_ZONE_FILL
             anchor = self.muted_start_sortie_anchor
-
         marker_polygon = self._get_launch_marker_polygon(token_center)
         pygame.draw.polygon(surface, fill_color, marker_polygon)
         pygame.draw.polygon(
@@ -783,16 +942,16 @@ class FleetSelectionMenu(Menu):
             marker_polygon,
             width=Box.OUTLINE_WIDTH,
         )
-
         anchor_rect = anchor.get_rect(center=token_center)
         surface.blit(anchor, anchor_rect)
 
+        # If button is active, render the glint particle effects.
         if self.start_sortie_button.active:
             glint_count = self.PATH_HEX_GLINTS_PER_HEX
             for glint_index in range(glint_count):
                 glint_time = (
                     self.selection_effect_time
-                    + glint_index*self.SELECTION_GLINT_CYCLE/glint_count
+                    + glint_index * self.SELECTION_GLINT_CYCLE / glint_count
                 )
                 glint_age = glint_time % self.SELECTION_GLINT_CYCLE
                 if glint_age >= self.SELECTION_GLINT_LIFETIME:
@@ -800,62 +959,64 @@ class FleetSelectionMenu(Menu):
 
                 cycle_index = math.floor(glint_time / self.SELECTION_GLINT_CYCLE)
                 glint_progress = glint_age / self.SELECTION_GLINT_LIFETIME
-                glint_strength = (1 - glint_progress)**1.5
+                glint_strength = (1 - glint_progress) ** 1.5
                 half_spawn_width = (
-                    math.sqrt(3)/2*self.LAUNCH_MARKER_RADIUS
+                    math.sqrt(3) / 2 * self.LAUNCH_MARKER_RADIUS
                     - self.PATH_HEX_GLINT_MARGIN
                 )
                 spawn_x = (
-                    (cycle_index*29 + glint_index*17)
-                    % (2*half_spawn_width)
+                    (cycle_index * 29 + glint_index * 17)
+                    % (2 * half_spawn_width)
                     - half_spawn_width
                 )
                 half_spawn_height = (
                     self.LAUNCH_MARKER_RADIUS
-                    - abs(spawn_x)/math.sqrt(3)
+                    - abs(spawn_x) / math.sqrt(3)
                     - self.PATH_HEX_GLINT_MARGIN
                 )
                 spawn_y = (
-                    (cycle_index*19 + glint_index*31)
-                    % (2*half_spawn_height)
+                    (cycle_index * 19 + glint_index * 31)
+                    % (2 * half_spawn_height)
                     - half_spawn_height
                 )
                 spawn_center = token_center + pygame.Vector2(spawn_x, spawn_y)
                 glint_center = spawn_center - pygame.Vector2(
                     0,
-                    self.SELECTION_GLINT_DRIFT*glint_progress,
+                    self.SELECTION_GLINT_DRIFT * glint_progress,
                 )
-                self.draw_selection_glint(
+                self._draw_selection_glint(
                     surface,
                     glint_center,
                     Color.UNCLEARED_ZONE_OUTLINE,
                     glint_strength,
                 )
 
-    def get_pulsing_selection_glow(self, glow_sprite):
+    def _get_pulsing_selection_glow(self, glow_sprite: pygame.Surface):
+        """Get pulsing selection glow sprite."""
         pulse = (
             math.sin(
-                self.selection_effect_time
-                * math.tau
-                / self.SELECTION_PULSE_DURATION
+                self.selection_effect_time * math.tau / self.SELECTION_PULSE_DURATION
             )
             + 1
         ) / 2
         glow_base = glow_sprite.copy()
-        glow_base.set_alpha(int(128 + 127*pulse))
+        glow_base.set_alpha(int(128 + 127 * pulse))
         glow = pygame.Surface(glow_base.get_size())
         glow.blit(glow_base)
         return glow
 
-    def draw_selection_glint(self, surface, center, color, strength):
+    def _draw_selection_glint(
+        self, surface: pygame.Surface, center: tuple[float, float], color: tuple[int, int, int], strength: float
+    ):
+        """Helper to render glint particles."""
         glint_length = 1 + round(
-            (self.SELECTION_GLINT_MAX_LENGTH - 1)*strength
+            (self.SELECTION_GLINT_MAX_LENGTH - 1) * strength
         )
         glint_color = tuple(round(channel*strength) for channel in color)
         glint_surface = pygame.Surface(
             (
-                2*self.SELECTION_GLINT_MAX_LENGTH + 1,
-                2*self.SELECTION_GLINT_MAX_LENGTH + 1,
+                2 * self.SELECTION_GLINT_MAX_LENGTH + 1,
+                2 * self.SELECTION_GLINT_MAX_LENGTH + 1,
             )
         )
         glint_surface_center = pygame.Vector2(
@@ -880,14 +1041,16 @@ class FleetSelectionMenu(Menu):
             special_flags=pygame.BLEND_RGB_ADD,
         )
 
-    def draw_path_hexes(self, surface):
-        hex_size = Box.WIDTH/2
+    def _draw_path_hexes(self, surface: pygame.Surface):
+        """Helper to render path hexes."""
+        hex_size = Box.WIDTH / 2
         glow_sprite = DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
-        glow = self.get_pulsing_selection_glow(glow_sprite)
+        glow = self._get_pulsing_selection_glow(glow_sprite)
 
         encounters = DataFiles.sortie_data[self.sortie_index]["encounters"]
         path_hex_centers = []
         for point, encounter in zip(self.path_hexes, encounters):
+            # If the encounter has the tester siren enemy, then it is classified as a boss encounter. 
             has_tester = any(
                 siren_encoding.split(":")[0] == "tester"
                 for siren_encoding in encounter["front"] + encounter["back"]
@@ -901,7 +1064,7 @@ class FleetSelectionMenu(Menu):
             polygon = [
                 hex_center + get_vec(
                     hex_size,
-                    math.radians(30 + corner_index*60),
+                    math.radians(30 + corner_index * 60),
                 )
                 for corner_index in range(6)
             ]
@@ -909,6 +1072,7 @@ class FleetSelectionMenu(Menu):
             shadow_polygon = [point + pygame.Vector2(2, 4) for point in polygon]
             pygame.draw.polygon(surface, self.TRAY_CAST_SHADOW, shadow_polygon)
 
+            # Hex glow.
             glow_left = int(min(corner.x for corner in polygon))
             glow_right = int(max(corner.x for corner in polygon))
             glow_rect = pygame.Rect(
@@ -929,13 +1093,14 @@ class FleetSelectionMenu(Menu):
             surface.blit(icon, icon_rect)
             path_hex_centers.append(hex_center)
 
+        # Glint particles.
         glint_count = len(path_hex_centers) * self.PATH_HEX_GLINTS_PER_HEX
         for hex_index, hex_center in enumerate(path_hex_centers):
             for glint_index in range(self.PATH_HEX_GLINTS_PER_HEX):
-                particle_index = glint_index*len(path_hex_centers) + hex_index
+                particle_index = glint_index * len(path_hex_centers) + hex_index
                 glint_time = (
                     self.selection_effect_time
-                    + particle_index*self.SELECTION_GLINT_CYCLE/glint_count
+                    + particle_index * self.SELECTION_GLINT_CYCLE / glint_count
                 )
                 glint_age = glint_time % self.SELECTION_GLINT_CYCLE
                 if glint_age >= self.SELECTION_GLINT_LIFETIME:
@@ -943,47 +1108,50 @@ class FleetSelectionMenu(Menu):
 
                 cycle_index = math.floor(glint_time / self.SELECTION_GLINT_CYCLE)
                 glint_progress = glint_age / self.SELECTION_GLINT_LIFETIME
-                glint_strength = (1 - glint_progress)**1.5
+                glint_strength = (1 - glint_progress) ** 1.5
                 half_spawn_width = (
-                    math.sqrt(3)/2*hex_size - self.PATH_HEX_GLINT_MARGIN
+                    math.sqrt(3) / 2 * hex_size - self.PATH_HEX_GLINT_MARGIN
                 )
                 spawn_x = (
-                    (cycle_index*29 + particle_index*17) % (2*half_spawn_width)
+                    (cycle_index * 29 + particle_index * 17) % (2 * half_spawn_width)
                     - half_spawn_width
                 )
                 half_spawn_height = (
                     hex_size
-                    - abs(spawn_x)/math.sqrt(3)
+                    - abs(spawn_x) / math.sqrt(3)
                     - self.PATH_HEX_GLINT_MARGIN
                 )
                 spawn_y = (
-                    (cycle_index*19 + particle_index*31) % (2*half_spawn_height)
+                    (cycle_index * 19 + particle_index * 31) % (2 * half_spawn_height)
                     - half_spawn_height
                 )
                 spawn_center = hex_center + pygame.Vector2(spawn_x, spawn_y)
                 center = spawn_center - pygame.Vector2(
                     0,
-                    self.SELECTION_GLINT_DRIFT*glint_progress,
+                    self.SELECTION_GLINT_DRIFT * glint_progress,
                 )
-                self.draw_selection_glint(
+                self._draw_selection_glint(
                     surface,
                     center,
                     Color.LOCKED_ZONE_OUTLINE,
                     glint_strength,
                 )
 
-    def draw_marker_selection_effect(self, surface, marker_rect):
+    def _draw_marker_selection_effect(self, surface: pygame.Surface, marker_rect: pygame.Rect):
+        """Helper to draw the hologram glow for the shipgirl markers."""
+        # Hologram glow, conic shaped.
         glow_sprite = DataFiles.sprites["fleet_selection"]["marker_selection_glow"]
-        glow = self.get_pulsing_selection_glow(glow_sprite)
+        glow = self._get_pulsing_selection_glow(glow_sprite)
         glow_rect = glow.get_rect(midbottom=marker_rect.center)
         surface.blit(glow, glow_rect, special_flags=pygame.BLEND_RGB_ADD)
 
-        vertical_spawn_range = glow_rect.height - 2*self.MARKER_GLINT_MARGIN
-        bottom_width = math.ceil(0.75*Box.WIDTH)
+        # Glint particles.
+        vertical_spawn_range = glow_rect.height - 2 * self.MARKER_GLINT_MARGIN
+        bottom_width = math.ceil(0.75 * Box.WIDTH)
         for glint_index in range(self.MARKER_GLINT_COUNT):
             glint_time = (
                 self.selection_effect_time
-                + glint_index*self.SELECTION_GLINT_CYCLE/self.MARKER_GLINT_COUNT
+                + glint_index * self.SELECTION_GLINT_CYCLE / self.MARKER_GLINT_COUNT
             )
             glint_age = glint_time % self.SELECTION_GLINT_CYCLE
             if glint_age >= self.SELECTION_GLINT_LIFETIME:
@@ -991,18 +1159,18 @@ class FleetSelectionMenu(Menu):
 
             cycle_index = math.floor(glint_time / self.SELECTION_GLINT_CYCLE)
             glint_progress = glint_age / self.SELECTION_GLINT_LIFETIME
-            glint_strength = (1 - glint_progress)**1.5
+            glint_strength = (1 - glint_progress) ** 1.5
             spawn_y = (
                 self.MARKER_GLINT_MARGIN
-                + (cycle_index*19 + glint_index*31) % vertical_spawn_range
+                + (cycle_index * 19 + glint_index * 31) % vertical_spawn_range
             )
             y_ratio = spawn_y / (glow_rect.height - 1)
             cone_width = round(
-                glow_rect.width - (glow_rect.width - bottom_width)*y_ratio
+                glow_rect.width - (glow_rect.width - bottom_width) * y_ratio
             )
-            half_spawn_width = cone_width/2 - self.MARKER_GLINT_MARGIN
+            half_spawn_width = cone_width / 2 - self.MARKER_GLINT_MARGIN
             spawn_x = (
-                (cycle_index*29 + glint_index*17) % (2*half_spawn_width)
+                (cycle_index * 29 + glint_index * 17) % (2 * half_spawn_width)
                 - half_spawn_width
             )
             spawn_center = pygame.Vector2(
@@ -1011,18 +1179,19 @@ class FleetSelectionMenu(Menu):
             )
             center = spawn_center - pygame.Vector2(
                 0,
-                self.SELECTION_GLINT_DRIFT*glint_progress,
+                self.SELECTION_GLINT_DRIFT * glint_progress,
             )
             if center.y < glow_rect.top:
                 continue
-            self.draw_selection_glint(
+            self._draw_selection_glint(
                 surface,
                 center,
                 Color.HOLOGRAM_GLOW,
                 glint_strength,
             )
 
-    def get_marker_projection_layers(self, surface):
+    def _get_marker_projection_layers(self, surface: pygame.Surface) -> tuple[pygame.Surface, pygame.Surface]:
+        """Get the layers for the marker hologram glow."""
         surface_size = surface.get_size()
         if (
             self.marker_glow_layer is None
@@ -1039,16 +1208,17 @@ class FleetSelectionMenu(Menu):
 
         return self.marker_glow_layer, self.marker_projection_layer
 
-    def draw_marker_hologram(
+    def _draw_marker_hologram(
         self,
-        surface,
-        marker,
-        marker_rect,
-        shipgirl,
-        font_registry,
+        surface: pygame.Surface,
+        marker: pygame.Surface,
+        marker_rect: pygame.Rect,
+        shipgirl: Shipgirl,
+        font_registry: dict[str, Font],
     ):
-        glow_layer, projection_layer = self.get_marker_projection_layers(surface)
-        self.draw_marker_selection_effect(glow_layer, marker_rect)
+        """Helper to draw the marker hologram."""
+        glow_layer, projection_layer = self._get_marker_projection_layers(surface)
+        self._draw_marker_selection_effect(glow_layer, marker_rect)
 
         # The opaque marker occludes the glow, keeping both halves the same color.
         surface.blit(glow_layer, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
@@ -1064,7 +1234,6 @@ class FleetSelectionMenu(Menu):
         # Reapply the cone through the projection silhouette so the translucent
         # shipgirl receives the light without brightening exposed marker pixels.
         projection_mask = pygame.mask.from_surface(projection_layer, threshold=1)
-        mask_strength = self.MARKER_PROJECTION_ALPHA
         mask_surface = projection_mask.to_surface(
             setcolor=(255, 255, 255),
             unsetcolor=(0, 0, 0),
@@ -1082,13 +1251,9 @@ class FleetSelectionMenu(Menu):
             special_flags=pygame.BLEND_RGB_ADD,
         )
 
-    def _draw_tray_bay_highlight(self, surface, rect):
-        highlight = pygame.Surface(rect.size, flags=pygame.SRCALPHA)
-        highlight.fill((*self.TRAY_BAY_HIGHLIGHT, 72))
-        surface.blit(highlight, rect)
-
-    def _get_tray_marker_shadow(self, marker_key, marker):
-        cached_shadow = self._tray_marker_shadow_cache.get(marker_key)
+    def _get_tray_marker_shadow(self, marker_key: str, marker: pygame.Surface) -> pygame.Vector2:
+        """Get shadow for markers in the tray."""
+        cached_shadow = self.tray_marker_shadow_cache.get(marker_key)
         if cached_shadow is not None and cached_shadow.get_size() == marker.get_size():
             return cached_shadow
 
@@ -1099,23 +1264,11 @@ class FleetSelectionMenu(Menu):
             setcolor=(*self.TRAY_CAST_SHADOW, 144),
             unsetcolor=(0, 0, 0, 0),
         )
-        self._tray_marker_shadow_cache[marker_key] = marker_shadow
+        self.tray_marker_shadow_cache[marker_key] = marker_shadow
         return marker_shadow
 
-    def _draw_tray_marker(self, surface, shipgirl, rect, lifted=False):
-        marker_key = shipgirl.name
-        marker = DataFiles.sprites["fleet_selection"][marker_key]
-        resting_rect = marker.get_rect(center=rect.center)
-        marker_rect = resting_rect.move(
-            0,
-            -self.TRAY_MARKER_HOVER_LIFT if lifted else 0,
-        )
-        marker_shadow = self._get_tray_marker_shadow(marker_key, marker)
-        shadow_rect = resting_rect.move(self.TRAY_MARKER_SHADOW_OFFSET)
-        surface.blit(marker_shadow, shadow_rect)
-        surface.blit(marker, marker_rect)
-
-    def _draw_dragged_marker(self, surface, mouse_pos):
+    def _draw_dragged_marker(self, surface: pygame.Surface, mouse_pos: tuple[int, int]):
+        """Draw the currently dragged shipgirl marker."""
         if self.mouse_start_drag is None or self.selected_shipgirl is None:
             return
 
@@ -1135,23 +1288,8 @@ class FleetSelectionMenu(Menu):
         surface.blit(marker_shadow, marker_rect.move(self.TRAY_DRAG_SHADOW_OFFSET))
         surface.blit(marker, marker_rect)
 
-    def _draw_tray_bay_rims(self, surface):
-        for rect in self.available_shipgirl_rects:
-            pygame.draw.rect(surface, self.TRAY_RECESS_RIM, rect, width=2)
-            pygame.draw.line(
-                surface,
-                self.TRAY_FRAME_HIGHLIGHT,
-                rect.bottomleft + pygame.Vector2(1, -1),
-                rect.bottomright + pygame.Vector2(-1, -1),
-            )
-            pygame.draw.line(
-                surface,
-                self.TRAY_FRAME_HIGHLIGHT,
-                rect.topright + pygame.Vector2(-1, 1),
-                rect.bottomright + pygame.Vector2(-1, -1),
-            )
-
-    def _draw_tray_drop_target(self, surface, mouse_pos):
+    def _draw_tray_drop_target(self, surface: pygame.Surface, mouse_pos: tuple[int, int]):
+        """Render a border on the tray to indicate it as a valid drop target."""
         dragging_deployed_marker = (
             self.mouse_start_drag is not None
             and (
@@ -1159,7 +1297,7 @@ class FleetSelectionMenu(Menu):
                 or self.selected_shipgirl_index_from_backup is not None
             )
         )
-        if not dragging_deployed_marker or not self.tray_overlay.collidepoint(mouse_pos):
+        if not dragging_deployed_marker:
             return
 
         highlight_inset = 4
@@ -1180,14 +1318,30 @@ class FleetSelectionMenu(Menu):
             width=Box.OUTLINE_WIDTH,
         )
 
-    def draw_tray_overlay(self, surface, font_registry):
+    def _draw_tray_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Helper to draw the tray overlay."""
         tray_surface, tray_shadow = self._get_tray_surfaces()
         surface.blit(tray_shadow, self.tray_overlay.topleft)
         surface.blit(tray_surface, self.tray_overlay)
 
-        # Drawing the rims last seats the markers beneath the case lip.
         mouse_pos = pygame.mouse.get_pos()
-        self._draw_tray_bay_rims(surface)
+
+        # Draw the rims of the tray bays.
+        for rect in self.available_shipgirl_rects:
+            pygame.draw.rect(surface, self.TRAY_RECESS_RIM, rect, width=2)
+            pygame.draw.line(
+                surface,
+                self.TRAY_FRAME_HIGHLIGHT,
+                rect.bottomleft + pygame.Vector2(1, -1),
+                rect.bottomright + pygame.Vector2(-1, -1),
+            )
+            pygame.draw.line(
+                surface,
+                self.TRAY_FRAME_HIGHLIGHT,
+                rect.topright + pygame.Vector2(-1, 1),
+                rect.bottomright + pygame.Vector2(-1, -1),
+            )
+
         self._draw_tray_drop_target(surface, mouse_pos)
         for shipgirl, rect in zip(
             self.menu_manager.available_shipgirls,
@@ -1204,133 +1358,32 @@ class FleetSelectionMenu(Menu):
                 and shipgirl is self.selected_shipgirl
             )
             if marker_hovered:
-                self._draw_tray_bay_highlight(surface, rect)
+                # Draw a highlight into the tray bay.
+                highlight = pygame.Surface(rect.size, flags=pygame.SRCALPHA)
+                highlight.fill((*self.TRAY_BAY_HIGHLIGHT, 72))
+                surface.blit(highlight, rect)
             if marker_available and not marker_dragged:
-                self._draw_tray_marker(
-                    surface,
-                    shipgirl,
-                    rect,
-                    lifted=marker_hovered,
+                # Draw a tray marker, if it is available in its bay and is not
+                # currently being dragged.
+                marker_key = shipgirl.name
+                marker = DataFiles.sprites["fleet_selection"][marker_key]
+                resting_rect = marker.get_rect(center=rect.center)
+                marker_rect = resting_rect.move(
+                    0,
+                    -self.TRAY_MARKER_HOVER_LIFT if marker_hovered else 0,
                 )
-
-    def _align_shipgirl_with_fleet_selection_slot(self, shipgirl, slot):
-        if shipgirl is not None:
-            shipgirl.rect.centerx = slot.centerx
-            shipgirl.rect.bottom = slot.centery
-            shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-            shipgirl.facing_left = False
-
-    def _drop_shipgirl(self, slot_shipgirls, marker_slots, event):
-        for i, slot in enumerate(marker_slots):
-            if not slot.collidepoint(event.pos):
-                continue
-            if self.selected_shipgirl_index_from_fleet is not None:
-                self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = slot_shipgirls[i]
-                self._align_shipgirl_with_fleet_selection_slot(
-                    slot_shipgirls[i],
-                    self.fleet_slots[self.selected_shipgirl_index_from_fleet],
-                )
-            if self.selected_shipgirl_index_from_backup is not None:
-                self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = slot_shipgirls[i]
-                self._align_shipgirl_with_fleet_selection_slot(
-                    slot_shipgirls[i],
-                    self.backup_fleet_slots[self.selected_shipgirl_index_from_backup],
-                )
-            slot_shipgirls[i] = self.selected_shipgirl
-            self._align_shipgirl_with_fleet_selection_slot(self.selected_shipgirl, slot)
-            return True
-        return False
-
-    def update(self, dt: float, events: list[pygame.Event]):
-        self.selection_effect_time += dt
-        if self.menu_manager.encounter_menu.transition_active:
-            self.menu_manager.encounter_menu.update(dt, ())
-            self.background.update(dt)
-            return
-
-        for event in events:
-            if event.type == pygame.MOUSEMOTION:
-                self.exit_fleet_selection_menu_button.hover(event.pos)
-                if self.mouse_start_drag is None:
-                    self.start_sortie_button.hover(event.pos)
-                else:
-                    self.start_sortie_button.hovered = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                self.selected_shipgirl = None
-                self.mouse_start_drag = None
-                self.selected_shipgirl_index_from_fleet = None
-                self.selected_shipgirl_index_from_backup = None
-                for shipgirl, rect in zip(self.menu_manager.available_shipgirls, self.available_shipgirl_rects):
-                    if rect.collidepoint(event.pos) and not self.menu_manager.player_fleet.in_fleet(shipgirl):
-                        self.mouse_start_drag = event.pos
-                        self.selected_shipgirl = shipgirl
-                for i, (shipgirl, slot) in enumerate(zip(self.menu_manager.player_fleet.shipgirls, self.fleet_slots)):
-                    if shipgirl is not None and slot.collidepoint(event.pos):
-                        self.mouse_start_drag = event.pos
-                        self.selected_shipgirl = shipgirl
-                        self.selected_shipgirl_index_from_fleet = i
-                for i, (shipgirl, slot) in enumerate(zip(self.menu_manager.player_fleet.backups, self.backup_fleet_slots)):
-                    if shipgirl is not None and slot.collidepoint(event.pos):
-                        self.mouse_start_drag = event.pos
-                        self.selected_shipgirl = shipgirl
-                        self.selected_shipgirl_index_from_backup = i
-            if event.type == pygame.MOUSEBUTTONUP:
-                click = False
-                was_dragging_shipgirl = self.selected_shipgirl is not None
-                if self.selected_shipgirl is not None:
-                    click = self._drop_shipgirl(
-                        self.menu_manager.player_fleet.shipgirls,
-                        self.fleet_slots,
-                        event
-                    )
-                    click = click or self._drop_shipgirl(
-                        self.menu_manager.player_fleet.backups,
-                        self.backup_fleet_slots,
-                        event
-                    )
-                    if self.tray_overlay.collidepoint(event.pos):
-                        if self.selected_shipgirl_index_from_fleet is not None:
-                            self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index_from_fleet] = None
-                        if self.selected_shipgirl_index_from_backup is not None:
-                            self.menu_manager.player_fleet.backups[self.selected_shipgirl_index_from_backup] = None
-                        click = True
-                    self.selected_shipgirl = None
-
-                self.mouse_start_drag = None
-                if not was_dragging_shipgirl:
-                    click = click or self.start_sortie_button.click(event.pos)
-                click = click or self.exit_fleet_selection_menu_button.click(event.pos)
-
-                if click:
-                    DataFiles.sfx["click"].play()
-
-                if self.menu_manager.encounter_menu.transition_active:
-                    break
-
-        if self.menu_manager.encounter_menu.transition_active:
-            self.menu_manager.encounter_menu.update(dt, ())
-            self.background.update(dt)
-            return
-
-        if first_sortie_quest.quest_id in self.menu_manager.quest_manager.started_quests:
-            self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 1
-        else:
-            self.start_sortie_button.active = self.menu_manager.player_fleet.primary_fleet_size > 0
-
-        self.background.update(dt)
-
-        for shipgirl in self.menu_manager.player_fleet.shipgirls:
-            if shipgirl is not None:
-                shipgirl.animate(dt)
-        for shipgirl in self.menu_manager.player_fleet.backups:
-            if shipgirl is not None:
-                shipgirl.animate(dt)
+                marker_shadow = self._get_tray_marker_shadow(marker_key, marker)
+                shadow_rect = resting_rect.move(self.TRAY_MARKER_SHADOW_OFFSET)
+                surface.blit(marker_shadow, shadow_rect)
+                surface.blit(marker, marker_rect)
 
     def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         self.background.draw(surface)
-        self.draw_sortie_props(surface)
-        mpos = pygame.mouse.get_pos()
+        for prop_key, position in self.sortie_props:
+            prop = DataFiles.sprites["sortie_selection"][prop_key]
+            surface.blit(prop, prop.get_rect(center=position))
 
+        # Draw dashed path.
         for point, angle in self.path:
             dash_offset = get_vec(self.PATH_DASH_LENGTH / 2, angle)
             dash_width_offset = get_vec(
@@ -1349,32 +1402,51 @@ class FleetSelectionMenu(Menu):
                 dash_polygon,
             )
 
-        self.draw_path_hexes(surface)
-        self.draw_launch_marker(surface)
+        self._draw_path_hexes(surface)
+        self._draw_launch_marker(surface)
 
         self.background.draw_markings(surface, font_registry)
         
-        self._draw_dashed_rect(surface, self.backup_fleet_box)
-        self._draw_dashed_rect(surface, self.primary_fleet_box)
+        draw_dashed_rect(
+            surface,
+            Color.WHITE,
+            self.backup_fleet_box,
+            self.PATH_DASH_LENGTH,
+            self.PATH_DASH_LENGTH,
+            self.PATH_DASH_WIDTH
+        )
+        draw_dashed_rect(
+            surface,
+            Color.WHITE,
+            self.primary_fleet_box,
+            self.PATH_DASH_LENGTH,
+            self.PATH_DASH_LENGTH,
+            self.PATH_DASH_WIDTH
+        )
         self.backup_fleet_ribbon.draw(surface, font_registry)
         self.primary_fleet_ribbon.draw(surface, font_registry)
 
+        mpos = pygame.mouse.get_pos()
         for slot, shipgirl in zip(
             self.fleet_slots + self.backup_fleet_slots,
             self.menu_manager.player_fleet.shipgirls + self.menu_manager.player_fleet.backups
         ):
+            # Draw fleet slots when a shipgirl marker is picked up.
+            # Should be drawn regardless of slot occupancy.
             if self.selected_shipgirl is not None:
                 # TODO make custom colors
                 pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_GLOW, slot)
-                # TODO dash value magic numbers
-                self._draw_dashed_rect(surface, slot, dash_length=6, dash_width=2)
+                draw_dashed_rect(surface, Color.WHITE, slot, dash_length=6, gap_length=6, dash_width=2)
 
+            # Draw the shipgirl marker in the fleet if it is not picked up.
             if shipgirl is not None:
                 if (
                     self.mouse_start_drag is not None
                     and shipgirl is self.selected_shipgirl
                 ):
                     continue
+                # If the marker is being hovered over, use the blank marker sprite
+                # and draw the hologram effect.
                 marker_hovered = slot.collidepoint(mpos)
                 marker_key = "blank" if marker_hovered else shipgirl.name
                 marker = DataFiles.sprites["fleet_selection"][marker_key]
@@ -1383,7 +1455,7 @@ class FleetSelectionMenu(Menu):
                 marker_rect = marker.get_rect()
                 marker_rect.center = slot.center
                 if marker_hovered:
-                    self.draw_marker_hologram(
+                    self._draw_marker_hologram(
                         surface,
                         marker,
                         marker_rect,
@@ -1393,17 +1465,39 @@ class FleetSelectionMenu(Menu):
                 else:
                     surface.blit(marker, marker_rect)
             elif self.selected_shipgirl is not None:
+                # If the slot is empty and a marker is picked up, draw an anchor sprite.
                 anchor_sprite = DataFiles.sprites["user_interface"]["start_sortie"]
                 anchor_rect = anchor_sprite.get_rect()
                 anchor_rect.center = slot.center
                 surface.blit(anchor_sprite, anchor_rect)
 
-        self.draw_tray_overlay(surface, font_registry)
+        self._draw_tray_overlay(surface, font_registry)
+
         self.header_ribbon.draw(surface, font_registry)
 
         for path_annotation in self.path_annotations:
             path_annotation.draw(surface, font_registry)
-        self.draw_set_sail_annotation(surface, font_registry)
+
+        # Draw text around the start sortie button, to serve as an annotation
+        # and indicate that this UI element is indeed a button.
+        if self.start_sortie_button.active:
+            marker_center = pygame.Vector2(self.start_sortie_button.rect.center)
+            prop_is_above = (
+                self.start_sortie_prop_position is not None
+                and self.start_sortie_prop_position.y < marker_center.y
+            )
+            text_side = 1 if prop_is_above else -1
+            text_position = marker_center + pygame.Vector2(
+                -4, text_side*self.SET_SAIL_TEXT_OFFSET,
+            )
+            text_angle = -self.SET_SAIL_TEXT_ANGLE*text_side
+            draw_rotated_handwritten_text(
+                surface,
+                font_registry,
+                self.SET_SAIL_TEXT,
+                text_position,
+                text_angle,
+            )
 
         self.exit_fleet_selection_menu_button.draw(surface, font_registry)
         self._draw_dragged_marker(surface, mpos)
