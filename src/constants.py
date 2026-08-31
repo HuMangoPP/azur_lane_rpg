@@ -135,6 +135,11 @@ class Equipment:
         "AUX": "universal",
     }
 
+    AP_SHELL = "AP"
+    HE_SHELL = "HE"
+    NORMAL_SHELL = "normal"
+    TORPEDO = "torpedo"
+
 class Stats:
     EXP_BASE = 12
     EXP_GROWTH = 2

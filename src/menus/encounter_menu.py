@@ -1179,7 +1179,7 @@ class EncounterMenu(Menu):
         The is_player flag controls which direction the wakes spawn in.
         """
         for shipgirl in fleet.fleet:
-            if shipgirl is None or shipgirl.battle_component.hp <= 0:
+            if shipgirl.battle_component.hp <= 0:
                 continue
 
             wake_pos = pygame.Vector2(
@@ -1259,7 +1259,7 @@ class EncounterMenu(Menu):
                         # Melee ships (DD, CL, SS) cannot attack sirens in the back row
                         # unless the front row is completely sunk.
                         if self.selected_shipgirl.battle_component.hull_type in self.MELEE_SHIPS:
-                            if siren in self.menu_manager.siren_fleet.front:
+                            if siren in self.menu_manager.siren_fleet.afloat_front:
                                 self.selected_shipgirl.battle_component.target = siren
                         else:
                             self.selected_shipgirl.battle_component.target = siren
@@ -1427,8 +1427,7 @@ class EncounterMenu(Menu):
                         exp=siren.battle_component.exp,
                     )
                     for shipgirl in self.menu_manager.player_fleet.fleet:
-                        if shipgirl is not None:
-                            shipgirl.battle_component.gain_exp(siren_reward_exp)
+                        shipgirl.battle_component.gain_exp(siren_reward_exp)
                     if DataFiles.save_file["research_target"] is not None:
                         self.research_exp += siren_reward_exp
 
@@ -1443,7 +1442,7 @@ class EncounterMenu(Menu):
             sunk_shipgirls = [
                 shipgirl
                 for shipgirl in self.menu_manager.player_fleet.fleet
-                if shipgirl is not None and shipgirl.battle_component.hp <= 0
+                if shipgirl.battle_component.hp <= 0
             ]
             if sunk_shipgirls and all(
                 shipgirl.sprite.animation_finished(shipgirl.sprite.SINK_ANIMATION)
@@ -2080,10 +2079,14 @@ class EncounterMenu(Menu):
             self._draw_transition_wave_wipe(surface)
             return
 
-        self.menu_manager.player_fleet.draw_battlestations(surface, font_registry)
-        self.menu_manager.siren_fleet.draw_battlestations(surface, font_registry)
-        self.menu_manager.player_fleet.draw_battle_effects(surface, self.vfx_manager)
-        self.menu_manager.siren_fleet.draw_battle_effects(surface, self.vfx_manager)
+        for shipgirl in self.menu_manager.player_fleet.fleet:
+            shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
+        for siren in self.menu_manager.siren_fleet.fleet:
+            siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
+        for shipgirl in self.menu_manager.player_fleet.fleet:
+            shipgirl.battle_component.draw_effects(surface, shipgirl.rect, self.vfx_manager)
+        for siren in self.menu_manager.siren_fleet.fleet:
+            siren.battle_component.draw_effects(surface, siren.rect, self.vfx_manager)
 
         self.next_encounter_button.draw(surface, font_registry)
         self.retreat_button.draw(surface, font_registry)
@@ -2197,7 +2200,7 @@ class EncounterMenu(Menu):
                     # Based on whether this siren is a valid target, pick the color
                     # for the indicator.
                     if self.selected_shipgirl.battle_component.hull_type in self.MELEE_SHIPS:
-                        if siren in self.menu_manager.siren_fleet.front:
+                        if siren in self.menu_manager.siren_fleet.afloat_front:
                             color = (50,200,50)
                         else:
                             color = (200,50,50)

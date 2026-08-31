@@ -1,3 +1,10 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.font import Font
+    from src.menus.menu_manager import MenuManager
+    from src.vfx import VFXManager
+
 import os
 import math
 import random
@@ -9,7 +16,7 @@ from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, scr
 from src.vfx import shell_path, SHELL_SCALE
 from live2d.live2d import Live2D
 
-class Smoke:
+class Smokescreen:
     def __init__(self):
         num_smoke = 4
         self.offsets = [
@@ -21,13 +28,15 @@ class Smoke:
             for _ in range(num_smoke)
         ]
     
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the smokescreen."""
         self.smoke_timers = [
-            (smoke_timer + dt)%math.radians(360)
+            (smoke_timer + dt) % math.radians(360)
             for smoke_timer in self.smoke_timers
         ]
     
-    def draw(self, surface, rect):
+    def draw(self, surface: pygame.Surface, rect: pygame.Rect):
+        """Draw the smokescreen."""
         center = pygame.Vector2(rect.center)
         smoke_sprite = DataFiles.sprites["encounter"]["smoke"]
         smoke_rect = smoke_sprite.get_rect()
@@ -35,13 +44,15 @@ class Smoke:
             smoke_rect.center = (
                 center
                 + offset
-                + pygame.Vector2(16*math.sin(smoke_timer), 8*math.sin(2*smoke_timer))
+                + pygame.Vector2(16 * math.sin(smoke_timer), 8 * math.sin(2 * smoke_timer))
             )
             surface.blit(smoke_sprite, smoke_rect)
 
+
 class DummyTarget:
-    def __init__(self, menu_manager):
+    def __init__(self, menu_manager: MenuManager):
         self.rect = menu_manager.encounter_menu.fleet_slots[1]
+
 
 class ShipgirlBattleComponent:
     SHELL_SPEED = 1000
@@ -56,7 +67,7 @@ class ShipgirlBattleComponent:
     BATTLESTATION_GLINT_COUNT = 4
     BATTLESTATION_GLINT_MARGIN = 6
 
-    def __init__(self, name, is_player):
+    def __init__(self, name: str, is_player: bool):
         self.active = False
         self.is_player = is_player
 
@@ -74,24 +85,24 @@ class ShipgirlBattleComponent:
 
         self.name = name
         stat_keys = ["max_hp", "evasion", "firepower", "reload"]
-        self.base_stats = {
+        self.base_stats: dict[str, tuple[float, float]] = {
             stat_key: info[stat_key]
             for stat_key in stat_keys
         }
-        self.hull_type = info["hull_type"]
-        self.equipment = info["equipment"]
-        self.exp = info["exp"]
+        self.hull_type: str = info["hull_type"]
+        self.equipment: tuple[str | None, str | None, str | None] = info["equipment"]
+        self.exp: float = info["exp"]
         if self.is_player:
             self.target_pref = None
         else:
-            self.target_pref = info["target_pref"]
-            self.reward_exp = info["reward_exp"]
+            self.target_pref: str = info["target_pref"]
+            self.reward_exp: float = info["reward_exp"]
 
         self.hp = self.stat("max_hp")
         self.cooldown_timer = 1
         self.attack_animation = False
         self.attack_timer = 0
-        self.target = None
+        self.target: Shipgirl | DummyTarget = None
         self.evasion_gauge = 0
         self.ignite_timer = 0
         self.ignite_ticks = 0
@@ -101,16 +112,23 @@ class ShipgirlBattleComponent:
         self.exp_timer = 0
         self.last_level = Stats.level(self.last_exp)
         self.level_timer = 0
+
         self.battlestation_effect_time = 0
 
         self.shake_time = 0
 
-        self.evasion_smoke = Smoke()
+        self.smokescreen = Smokescreen()
 
     def shake(self):
+        """Start a shake effect."""
         self.shake_time = 0.5
 
-    def stat(self, stat):
+    def stat(self, stat: str) -> float:
+        """Calculate the value of this stat.
+        
+        Combines the base stat based on the shipgirl's hull type and addtional
+        stat amounts awarded by equipment.
+        """
         return (
             Stats.stat(*self.base_stats[stat], exp=self.exp)
             + sum(
@@ -119,25 +137,33 @@ class ShipgirlBattleComponent:
             )
         )
 
-    def gain_exp(self, amount):
+    def gain_exp(self, amount: float):
+        """Add exp."""
         previous_max_hp = self.stat("max_hp")
         self.exp += amount
-        self.hp += self.stat("max_hp") - previous_max_hp
+        # If the shipgirl levels up, award them with the increase in max hp.
+        if self.hp > 0:
+            self.hp += self.stat("max_hp") - previous_max_hp
 
-    def attack_speed(self):
+    @property
+    def _attack_speed(self) -> float:
+        """The speed of the attack."""
         if self.hull_type == "CV":
             return self.AIRCRAFT_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("aircraft_speed", 0)
         if self.hull_type == "SS":
             return self.TORPEDO_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("torpedo_speed", 0)
         return self.SHELL_SPEED + DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {}).get("shell_speed", 0)
 
-    def shell_type(self):
+    @property
+    def _shell_type(self) -> str:
+        """The shell type of the attack."""
         if self.hull_type in ["SS", "CV"]:
-            return "torpedo"
+            return Equipment.TORPEDO
         weapon_config = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {})
-        return weapon_config.get("shell_type", "normal")
+        return weapon_config.get("shell_type", Equipment.NORMAL_SHELL)
 
     def reset(self):
+        """Reset the battle component for a new sortie."""
         self.hp = self.stat("max_hp")
         self.cooldown_timer = 1
         self.attack_animation = False
@@ -149,15 +175,17 @@ class ShipgirlBattleComponent:
         self.ignite_damage = 0
         self.shake_time = 0
 
-    def ignite(self, damage, ticks):
+    def ignite(self, damage: float, ticks: int):
+        """Apply the ignite status effect."""
         self.ignite_timer = 0
         self.ignite_ticks = ticks
         self.ignite_damage = damage
 
-    def _update_ignite(self, dt, rect, vfx_manager):
+    def _update_ignite(self, dt: float, rect: pygame.Surface, vfx_manager: VFXManager):
         if self.ignite_ticks <= 0:
             return
 
+        # Update ignite timer and ticks, and aggregate ignite damage.
         self.ignite_timer += dt
         agg_ignite_damage = 0
         while self.ignite_timer >= 1:
@@ -167,30 +195,36 @@ class ShipgirlBattleComponent:
 
             if self.ignite_ticks <= 0:
                 self.ignite_timer = 0
+        # Deal aggregated ignite damage and spawn damage counter vfx.
         if agg_ignite_damage > 0:
             self.hp -= agg_ignite_damage
             vfx_manager.spawn_damage_counter(rect.midtop, agg_ignite_damage, "HE")
             self.shake()
 
-    def _deal_damage(self, target, vfx_manager):
+    def _deal_damage(self, target: Shipgirl, vfx_manager: VFXManager) -> bool:
+        """Deal damage to the target."""
         if target.battle_component.evasion_gauge >= 1:
+            # The target evades this attack.
             target.battle_component.evasion_gauge -= 1
             vfx_manager.spawn_miss_counter(target.rect.midtop)
             return False
         else:
+            # Increase the target's evasion gauge.
             target.battle_component.evasion_gauge += target.battle_component.stat("evasion") / 1000
             weapon_config = DataFiles.equipment_data.get(self.equipment[Equipment.WEAPON], {})
-            shell_type = self.shell_type()
+            shell_type = self._shell_type
             damage = self.stat("firepower")
+            # AP shells can crit.
             crit = False
-            if shell_type == "AP":
+            if shell_type == Equipment.AP_SHELL:
                 crit_chance = weapon_config.get("crit_chance", 10)
                 if random.randint(0, 99) < crit_chance:
                     crit = True
                     damage *= weapon_config.get("crit_mult", 2)
             target.battle_component.hp -= damage
             vfx_manager.spawn_damage_counter(target.rect.midtop, damage, shell_type, crit)
-            if shell_type == "HE":
+            # HE shells can cause ignition.
+            if shell_type == Equipment.HE_SHELL:
                 ignite_chance = weapon_config.get("ignite_chance", 20)
                 if random.randint(0, 99) < ignite_chance:
                     target.battle_component.ignite(
@@ -200,7 +234,8 @@ class ShipgirlBattleComponent:
             target.battle_component.shake()
             return True
 
-    def _spawn_attacking_effects(self, rect, vfx_manager):
+    def _spawn_attacking_effects(self, rect: pygame.Rect, vfx_manager: VFXManager):
+        """Spawn vfx on attack."""
         if self.hull_type == "CV":
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)
@@ -216,7 +251,7 @@ class ShipgirlBattleComponent:
 
         start_pos = pygame.Vector2(rect.center)
         target_pos = pygame.Vector2(self.target.rect.center)
-        shell_type = self.shell_type()
+        shell_type = self._shell_type
         relpos = target_pos - start_pos
         distance = relpos.length()
         scale = distance * SHELL_SCALE
@@ -225,14 +260,22 @@ class ShipgirlBattleComponent:
         shell_render_angle = shell_angle + shell_incline
         vfx_manager.spawn_muzzle_flash(start_pos, shell_render_angle, shell_type)
 
-    def _spawn_impact_effects(self, hit, rect, target, vfx_manager):
+    def _spawn_impact_effects(
+        self, hit: bool, rect: pygame.Rect, target: Shipgirl, vfx_manager: VFXManager
+    ) -> tuple[bool, bool]:
+        """Spawn vfx on impact.
+        
+        The return values accumulate flags to either play or not play the hit and splash SFX,
+        so that multiple SFX do not spawn when multiple impacts hit simultaneously.
+        """
         if self.hull_type in ["SS", "CV"]:
+            # SS and CV shipgirls produce a splash on impact and no vfx on miss.
             if hit:
                 vfx_manager.spawn_splash_impact(target.rect.center)
                 return False, True
             return False, False
     
-        shell_type = self.shell_type()
+        shell_type = self._shell_type
         start_pos = pygame.Vector2(rect.center)
         target_pos = pygame.Vector2(self.target.rect.center)
         relpos = target_pos - start_pos
@@ -241,6 +284,7 @@ class ShipgirlBattleComponent:
         shell_angle = math.atan2(relpos.y, relpos.x)
         shell_incline = math.atan(relpos.x / abs(relpos.x) * scale)
         shell_render_angle = shell_angle + shell_incline
+        # Shell-based shipgirls produce an explosion on hit and a splash on miss.
         if hit:
             vfx_manager.spawn_shell_impact(target.rect.center, shell_render_angle, shell_type)
             return True, False
@@ -248,6 +292,7 @@ class ShipgirlBattleComponent:
         return False, True
 
     def _spawn_sfx(self):
+        """Spawn sound effects on attack."""
         if self.hull_type == "CV":
             DataFiles.sfx["aircraft"].play()
             return
@@ -259,7 +304,8 @@ class ShipgirlBattleComponent:
         zip.play(fade_ms=1000)
         zip.fadeout(1000)
 
-    def attack(self, rect, vfx_manager):
+    def attack(self, rect: pygame.Rect, vfx_manager: VFXManager):
+        """On attack hook."""
         if not self.attack_animation:
             return
         self.cooldown_timer = 1
@@ -271,10 +317,13 @@ class ShipgirlBattleComponent:
 
         self._spawn_sfx()
 
-    def update(self, dt, rect, fleet, vfx_manager):
+    def update(self, dt: float, rect: pygame.Rect, fleet: PlayerFleet | SirenFleet, vfx_manager: VFXManager):
+        """Update the shipgirl battle component."""
         self.battlestation_effect_time += dt
+
         self.shake_time = max(0, self.shake_time - dt)
 
+        # Exp bar animation.
         if self.last_exp < self.exp:
             self.exp_timer += dt
             exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
@@ -300,23 +349,28 @@ class ShipgirlBattleComponent:
             vfx_manager.spawn_fire(rect)
         
         if self.evasion_gauge >= 1:
-            self.evasion_smoke.update(dt)
+            self.smokescreen.update(dt)
 
         if self.attack_animation:
             return
 
+        # The attack is in progress.
         if self.attack_timer > 0:
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)
             relpos = target_pos - start_pos
             distance = relpos.length()
             old_distance = self.attack_timer * distance
-            self.attack_timer = max(0, self.attack_timer - self.attack_speed()/distance*dt)
+            self.attack_timer = max(0, self.attack_timer - self._attack_speed / distance * dt)
             new_distance = self.attack_timer * distance
+            # Play the sonar sfx when the torpedo is a certain distance away from the target.
             if self.hull_type in ["SS", "CV"] and old_distance > self.SONAR_DISTANCE >= new_distance:
                 DataFiles.sfx["sonar"].play()
+
+
             if self.attack_timer <= 0:
                 if self.target_pref == "all":
+                    # This siren attacks all shipgirls.
                     for shipgirl in fleet.shipgirls:
                         if shipgirl is None:
                             continue
@@ -324,26 +378,38 @@ class ShipgirlBattleComponent:
                         hit = self._deal_damage(shipgirl, vfx_manager)
                         play_shell_impact, play_splash_impact = self._spawn_impact_effects(hit, rect, shipgirl, vfx_manager)
                 else:
+                    # This shipgirl/siren hits only the target.
                     hit = self._deal_damage(self.target, vfx_manager)
                     play_shell_impact, play_splash_impact = self._spawn_impact_effects(hit, rect, self.target, vfx_manager)
-                
+
+                # Play accumulated sfx, so they are not played multiple times if multiple
+                # impacts occur simultaneously.
                 if play_shell_impact:
                     DataFiles.sfx["boom2"].play()
                 if play_splash_impact:
                     DataFiles.sfx["boom3"].play()
             return
 
-        if self.target_pref != "all" and self.target is not None and self.target.battle_component.hp <= 0:
+        # Allow sirens to change new targets when the shipgirl they were targeting is sunk.
+        if (
+            self.target_pref != "all"
+            and self.target is not None
+            and self.target.battle_component.hp <= 0
+        ):
             self.target = None
-        
-        self.cooldown_timer = max(0, self.cooldown_timer - self.stat("reload")/1000*dt)
+
+        # Automatically attack the target when off-cooldown.
+        self.cooldown_timer = max(0, self.cooldown_timer - self.stat("reload") / 1000 * dt)
         if self.target is not None and self.cooldown_timer <= 0:
             self.attack_animation = True
 
-    def _draw_attack(self, surface, rect, vfx_manager):
+    def _draw_attack(self, surface: pygame.Surface, rect: pygame.Rect, vfx_manager: VFXManager):
+        """Helper to draw the attack based on the hull type."""
         t = 1 - self.attack_timer
 
         if self.hull_type == "CV":
+            # CV shipgirls get a unique aircraft sprite that is launched and eventually
+            # goes off-screen.
             start_pos = pygame.Vector2(rect.center)
             target_pos = pygame.Vector2(self.target.rect.center)
             relpos = target_pos - start_pos
@@ -358,16 +424,20 @@ class ShipgirlBattleComponent:
                 flip_y=False
             )
             aircraft_rect = aircraft_sprite.get_rect()
-            aircraft_height = 128 / (1 + math.exp(-20 * (t-distance_ratio-0.1)))
+            aircraft_height = 128 / (1 + math.exp(-20 * (t - distance_ratio - 0.1)))
             aircraft_rect.center = start_pos + aircraft_relpos * t - pygame.Vector2(0, aircraft_height)
             surface.blit(aircraft_sprite, aircraft_rect)
 
-
+            # The aircraft will release the torpedo when it is in the sonar distance
+            # and pull upwards.
             if t < distance_ratio:
                 return
             t = 0.5 * (t - distance_ratio) / (1 - distance_ratio) + 0.5
         
         if self.hull_type in ["SS", "CV"]:
+            # Both SS and CV shipgirls draw a torpedo, though the CV shipgirl only
+            # draws the torpedo once it has been released by the aircraft.
+            # The torpedo also has a torpedo wake vfx.
             start_pos = pygame.Vector2((rect.centerx, rect.bottom))
             target_pos = pygame.Vector2((self.target.rect.centerx, self.target.rect.bottom))
             relpos = target_pos - start_pos
@@ -381,17 +451,19 @@ class ShipgirlBattleComponent:
             vfx_manager.spawn_wake(wake_pos, torpedo_angle)
             return
 
+        # Shell-based hull types draw an oval-shaped shell, colored based on the shell type.
+        # The shell travels through a parabolic arc.
         start_pos = pygame.Vector2(rect.center)
         target_pos = pygame.Vector2(self.target.rect.center)
         relpos = target_pos - start_pos
         distance = relpos.length()
         scale = distance * SHELL_SCALE
         shell_pos = shell_path(start_pos, target_pos, t)
-        shell_incline = math.degrees(math.atan(relpos.x / abs(relpos.x) * scale * (2*t - 1)))
+        shell_incline = math.degrees(math.atan(relpos.x / abs(relpos.x) * scale * (2 * t - 1)))
         shell_angle = math.degrees(math.atan2(relpos.y, relpos.x))
         render_angle = shell_angle + shell_incline
 
-        shell_type = self.shell_type()
+        shell_type = self._shell_type
         shell_sprite = pygame.transform.flip(
             pygame.transform.rotate(DataFiles.sprites["encounter"][f"{shell_type}_shell"], render_angle),
             False, True
@@ -400,26 +472,29 @@ class ShipgirlBattleComponent:
         shell_rect.center = shell_pos
         surface.blit(shell_sprite, shell_rect)
 
-    def draw_battlestation(self, surface, font_registry, rect):
+    def draw_battlestation(self, surface: pygame.Surface, font_registry: dict[str, Font], rect: pygame.Surface):
+        """Draw the shipgirl's battlestation."""
         if self.hp <= 0:
             return
 
+        # Draw the rigging and the battlestation glow, which is a cone opening upwards
+        # with a light falloff like a hologram projection.
         if self.is_player:
             rigging_sprite = DataFiles.sprites["encounter"]["shipgirl_rigging"]
             rigging_rect = rigging_sprite.get_rect()
             rigging_rect.left = rect.left
-            rigging_rect.centery = rect.centery + rigging_rect.height/3
+            rigging_rect.centery = rect.centery + rigging_rect.height / 3
             battlestation_glow = DataFiles.sprites["encounter"]["shipgirl_battlestation_glow"]
             battlestation_glow_rect = battlestation_glow.get_rect()
-            battlestation_glow_rect.centerx = rigging_rect.centerx - Box.WIDTH/4
+            battlestation_glow_rect.centerx = rigging_rect.centerx - Box.WIDTH / 4
         else:
             rigging_sprite = DataFiles.sprites["encounter"]["siren_rigging"]
             rigging_rect = rigging_sprite.get_rect()
             rigging_rect.right = rect.right
-            rigging_rect.centery = rect.centery + rigging_rect.height/3
+            rigging_rect.centery = rect.centery + rigging_rect.height / 3
             battlestation_glow = DataFiles.sprites["encounter"]["siren_battlestation_glow"]
             battlestation_glow_rect = battlestation_glow.get_rect()
-            battlestation_glow_rect.centerx = rigging_rect.centerx + Box.WIDTH/4
+            battlestation_glow_rect.centerx = rigging_rect.centerx + Box.WIDTH / 4
         battlestation_glow_rect.bottom = rigging_rect.centery
         surface.blit(rigging_sprite, rigging_rect)
         pulse = (
@@ -430,7 +505,7 @@ class ShipgirlBattleComponent:
             )
             + 1
         ) / 2
-        battlestation_alpha = int(192 + 63*pulse)
+        battlestation_alpha = int(192 + 63 * pulse)
         battlestation_glow = battlestation_glow.copy()
         battlestation_glow.set_alpha(battlestation_alpha)
         pulsing_glow = pygame.Surface(battlestation_glow.get_size())
@@ -440,8 +515,10 @@ class ShipgirlBattleComponent:
             battlestation_glow_rect,
             special_flags=pygame.BLEND_RGB_ADD,
         )
+
+        # Glint particle effects.
         vertical_spawn_range = (
-            battlestation_glow_rect.height - 2*self.BATTLESTATION_GLINT_MARGIN
+            battlestation_glow_rect.height - 2 * self.BATTLESTATION_GLINT_MARGIN
         )
         for glint_index in range(self.BATTLESTATION_GLINT_COUNT):
             glint_time = (
@@ -456,19 +533,19 @@ class ShipgirlBattleComponent:
 
             cycle_index = math.floor(glint_time / self.BATTLESTATION_GLINT_CYCLE)
             glint_progress = glint_age / self.BATTLESTATION_GLINT_LIFETIME
-            glint_strength = (1 - glint_progress)**1.5
+            glint_strength = (1 - glint_progress) ** 1.5
             spawn_y = (
                 self.BATTLESTATION_GLINT_MARGIN
-                + (cycle_index*19 + glint_index*31) % vertical_spawn_range
+                + (cycle_index * 19 + glint_index * 31) % vertical_spawn_range
             )
             y_ratio = spawn_y / (battlestation_glow_rect.height - 1)
             cone_width = round(
                 battlestation_glow_rect.width
-                - (battlestation_glow_rect.width - 2)*y_ratio
+                - (battlestation_glow_rect.width - 2) * y_ratio
             )
-            half_spawn_width = cone_width/2 - self.BATTLESTATION_GLINT_MARGIN
+            half_spawn_width = cone_width / 2 - self.BATTLESTATION_GLINT_MARGIN
             spawn_x = (
-                (cycle_index*29 + glint_index*17) % (2*half_spawn_width)
+                (cycle_index * 29 + glint_index * 17) % (2 * half_spawn_width)
                 - half_spawn_width
             )
             spawn_center = pygame.Vector2(
@@ -477,7 +554,7 @@ class ShipgirlBattleComponent:
             )
             glint_center = spawn_center - pygame.Vector2(
                 0,
-                self.BATTLESTATION_GLINT_DRIFT*glint_progress,
+                self.BATTLESTATION_GLINT_DRIFT * glint_progress,
             )
             if glint_center.y < battlestation_glow_rect.top:
                 continue
@@ -489,18 +566,20 @@ class ShipgirlBattleComponent:
             )
         # TODO cleanup magic numbers
         if self.is_player:
-            battlestation_back = pygame.Surface((battlestation_glow_rect.width, 48 + 2*Box.PADDING))
-            battlestation_surf = pygame.Surface((battlestation_glow_rect.width, 48 + 2*Box.PADDING), flags=pygame.SRCALPHA)
+            # The player battlestation includes the reload gauge, hp, and exp bar.
+            battlestation_back = pygame.Surface((battlestation_glow_rect.width, 48 + 2 * Box.PADDING))
+            battlestation_surf = pygame.Surface((battlestation_glow_rect.width, 48 + 2 * Box.PADDING), flags=pygame.SRCALPHA)
+            battlestation_panel_color = Color.HOLOGRAM_GLOW
         else:
-            battlestation_back = pygame.Surface((battlestation_glow_rect.width, 40 + 3*Box.PADDING))
-            battlestation_surf = pygame.Surface((battlestation_glow_rect.width, 40 + 3*Box.PADDING), flags=pygame.SRCALPHA)
+            # The siren battlestation includes the level, siren name, and hp bar.
+            battlestation_back = pygame.Surface((battlestation_glow_rect.width, 40 + 3 * Box.PADDING))
+            battlestation_surf = pygame.Surface((battlestation_glow_rect.width, 40 + 3 * Box.PADDING), flags=pygame.SRCALPHA)
+            battlestation_panel_color = Color.SIREN_HOLOGRAM_GLOW
         battlestation_rect = battlestation_back.get_rect()
         battlestation_rect.midbottom = battlestation_glow_rect.midtop
-        battlestation_panel_color = (
-            Color.HOLOGRAM_GLOW if self.is_player else Color.SIREN_HOLOGRAM_GLOW
-        )
-        battlestation_back.fill([c//3 for c in battlestation_panel_color])
+        battlestation_back.fill([c // 3 for c in battlestation_panel_color])
 
+        # This is the panel for the hp bar.
         hull_sprite = pygame.transform.flip(
             DataFiles.sprites["encounter"]["hull"],
             flip_x=not self.is_player, flip_y=False
@@ -517,6 +596,7 @@ class ShipgirlBattleComponent:
         pygame.draw.rect(battlestation_back, battlestation_panel_color, hull_panel_rect, width=Box.OUTLINE_WIDTH)
 
         if self.is_player:
+            # Panel for the exp bar.
             star_icon = DataFiles.sprites["encounter"]["star"]
             star_rect = star_icon.get_rect()
             bar_width = 56
@@ -531,32 +611,35 @@ class ShipgirlBattleComponent:
                 Box.PADDING,
                 Box.PADDING,
             )
-            pygame.draw.rect(battlestation_back, [c//2 for c in battlestation_panel_color], exp_panel_rect)
+            pygame.draw.rect(battlestation_back, [c // 2 for c in battlestation_panel_color], exp_panel_rect)
             pygame.draw.rect(battlestation_back, battlestation_panel_color, exp_panel_rect, width=Box.OUTLINE_WIDTH)
 
+            # Panel for the reload gauge.
             outer_radius = 24
             center = (
                 pygame.Vector2(outer_radius, outer_radius)
                 + pygame.Vector2(Box.PADDING, Box.PADDING)
             )
             reload_panel_rect = get_rect(
-                width=2*outer_radius + Box.PADDING,
-                height=2*outer_radius + Box.PADDING,
+                width=2 * outer_radius + Box.PADDING,
+                height=2 * outer_radius + Box.PADDING,
                 centerx=center.x,
                 centery=center.y,
             )
-            pygame.draw.rect(battlestation_back, [c//2 for c in battlestation_panel_color], reload_panel_rect)
+            pygame.draw.rect(battlestation_back, [c // 2 for c in battlestation_panel_color], reload_panel_rect)
             pygame.draw.rect(battlestation_back, battlestation_panel_color, reload_panel_rect, width=Box.OUTLINE_WIDTH)
         else:
+            # Panel for the siren info i.e. level and name.
             siren_info_panel = get_rect(
                 width=battlestation_rect.width - Box.PADDING,
                 height=24,
-                centerx=battlestation_rect.width/2,
-                top=Box.PADDING/2,
+                centerx=battlestation_rect.width / 2,
+                top=Box.PADDING / 2,
             )
-            pygame.draw.rect(battlestation_back, [c//2 for c in battlestation_panel_color], siren_info_panel)
+            pygame.draw.rect(battlestation_back, [c // 2 for c in battlestation_panel_color], siren_info_panel)
             pygame.draw.rect(battlestation_back, battlestation_panel_color, siren_info_panel, width=Box.OUTLINE_WIDTH)
 
+        # Draw the hp bar, which is stylized as the side silhouette of a hull.
         hp_pct = self.hp / self.stat("max_hp")
         hull_back = pygame.Surface(hull_sprite.get_size())
         hull_back.fill(Color.EXP_BAR_BG)
@@ -575,6 +658,7 @@ class ShipgirlBattleComponent:
         battlestation_surf.blit(hull_fill, hull_rect)
 
         if not self.is_player:
+            # Draw the level and name for the siren.
             star_icon = DataFiles.sprites["encounter"]["star"]
             star_rect = star_icon.get_rect(
                 topleft=(Box.PADDING, Box.PADDING)
@@ -599,6 +683,7 @@ class ShipgirlBattleComponent:
                 outline_color=Color.BLACK,
             )
 
+            # Use additive rendering for the battlestation panel.
             battlestation_back.set_alpha(battlestation_alpha)
             pulsing_battlestation_back = pygame.Surface(battlestation_back.get_size())
             pulsing_battlestation_back.blit(battlestation_back, (0, 0))
@@ -607,6 +692,7 @@ class ShipgirlBattleComponent:
                 battlestation_rect,
                 special_flags=pygame.BLEND_RGB_ADD,
             )
+            # The battlestation content has an opacity which matches the pulsing.
             battlestation_surf.set_alpha(battlestation_alpha)
             pulsing_battlestation_surf = pygame.Surface(battlestation_surf.get_size(), flags=pygame.SRCALPHA)
             pulsing_battlestation_surf.blit(battlestation_surf, (0, 0))
@@ -616,6 +702,7 @@ class ShipgirlBattleComponent:
             )
             return
 
+        # Draw the exp bar with a sliding animation.
         exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
         bar_fill = get_rect(
             width=bar_width*Stats.level_progress(exp_animation), height=bar_background.height,
@@ -638,13 +725,13 @@ class ShipgirlBattleComponent:
             t = 1 - self.level_timer
             y = rect.top - rect.height * t
             font_registry["big_pixel"].render(surface, "level up!", (rect.centerx, y), Color.WHITE, 1, style="center")
-        
-        # TODO clean up magic numbers
+
+        # Draw the reload gauge.
         inner_radius = 12
         outer_radius = 24
         start_angle = -90
         stop_angle = start_angle + (1 - self.cooldown_timer) * 360
-        color = (50,200,50) if self.target is not None else (200,50,50)
+        color = (50, 200, 50) if self.target is not None else (200, 50, 50)
         draw_annulus(battlestation_surf, Color.EXP_BAR_BG, center, inner_radius, outer_radius, 0, 360)
         draw_annulus(battlestation_surf, color, center, inner_radius, outer_radius, start_angle, stop_angle)
         if self.hull_type == "CV":
@@ -657,6 +744,7 @@ class ShipgirlBattleComponent:
         attack_icon_rect.center = center
         battlestation_surf.blit(attack_icon, attack_icon_rect)
 
+        # Use additive rendering for the battlestation panel.
         battlestation_back.set_alpha(battlestation_alpha)
         pulsing_battlestation_back = pygame.Surface(battlestation_back.get_size())
         pulsing_battlestation_back.blit(battlestation_back, (0, 0))
@@ -665,6 +753,7 @@ class ShipgirlBattleComponent:
             battlestation_rect,
             special_flags=pygame.BLEND_RGB_ADD,
         )
+        # The battlestation content has an opacity which matches the pulsing.
         battlestation_surf.set_alpha(battlestation_alpha)
         pulsing_battlestation_surf = pygame.Surface(battlestation_surf.get_size(), flags=pygame.SRCALPHA)
         pulsing_battlestation_surf.blit(battlestation_surf, (0, 0))
@@ -673,15 +762,18 @@ class ShipgirlBattleComponent:
             battlestation_rect,
         )
 
-    def _draw_battlestation_glint(self, surface, center, color, strength):
+    def _draw_battlestation_glint(
+        self, surface: pygame.Surface, center: tuple[float, float], color: tuple[int, int, int], strength: float
+    ):
+        """Draw the glint particle effects for the battlestation."""
         glint_length = 1 + round(
-            (self.BATTLESTATION_GLINT_MAX_LENGTH - 1)*strength
+            (self.BATTLESTATION_GLINT_MAX_LENGTH - 1) * strength
         )
-        glint_color = tuple(round(channel*strength) for channel in color)
+        glint_color = tuple(round(channel * strength) for channel in color)
         glint_surface = pygame.Surface(
             (
-                2*self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
-                2*self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
+                2 * self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
+                2 * self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
             )
         )
         glint_surface_center = pygame.Vector2(
@@ -706,15 +798,21 @@ class ShipgirlBattleComponent:
             special_flags=pygame.BLEND_RGB_ADD,
         )
 
-    def draw_effects(self, surface, rect, vfx_manager):
+    def draw_effects(self, surface: pygame.Surface, rect: pygame.Rect, vfx_manager: VFXManager):
+        """Draw battle component effects.
+        
+        Effects like attack and attack effects, smokescreen effects, target indicators.
+        """
         if not self.active:
             return
         if self.attack_timer > 0:
             self._draw_attack(surface, rect, vfx_manager)
         if self.evasion_gauge >= 1:
-            self.evasion_smoke.draw(surface, rect)
+            self.smokescreen.draw(surface, rect)
         if not self.is_player:
             return
+
+        # Draw target indicator.
         if self.target is not None:
             target_color = (
                 Color.TARGET_INDICATOR if self.attack_animation or self.attack_timer > 0
@@ -723,31 +821,36 @@ class ShipgirlBattleComponent:
             dash_length = 8
             dash_width = 2
             if self.hull_type in ["DD", "CL", "CA", "BB"]:
+                # Target line is from center to center.
                 start_pos = pygame.Vector2(rect.center)
                 curr_pos = start_pos
                 end_pos = pygame.Vector2(self.target.rect.center)
             else:
-                start_pos = pygame.Vector2(rect.centerx, rect.bottom - rect.height/5)
+                # Target line is from midbottom to midbottom.
+                start_pos = pygame.Vector2(rect.centerx, rect.bottom - rect.height / 5)
                 curr_pos = start_pos
                 target_rect = self.target.rect
-                end_pos = pygame.Vector2(target_rect.centerx, target_rect.bottom - target_rect.height/5)
+                end_pos = pygame.Vector2(target_rect.centerx, target_rect.bottom - target_rect.height / 5)
             distance = (end_pos - start_pos).length()
+            # Draw the dashed target line.
             for dash_start in range(0, round(distance), 2 * dash_length):
                 start_t = dash_start / distance
                 end_t = min((dash_start + dash_length) / distance, 1)
                 if self.hull_type in ["DD", "CL", "CA", "BB"]:
+                    # Target line is parabolic for these hull types.
                     curr_pos = shell_path(start_pos, end_pos, start_t)
                     dash_end_pos = shell_path(start_pos, end_pos, end_t)
                 else:
+                    # Target line is straight for these hull types.
                     curr_pos = start_pos.lerp(end_pos, start_t)
                     dash_end_pos = start_pos.lerp(end_pos, end_t)
                 parallel = (dash_end_pos - curr_pos).normalize()
                 perpendicular = pygame.Vector2(parallel.y, -parallel.x)
                 polygon = [
-                    curr_pos + dash_width/2 * perpendicular,
-                    dash_end_pos + dash_width/2 * perpendicular,
-                    dash_end_pos - dash_width/2 * perpendicular,
-                    curr_pos - dash_width/2 * perpendicular,
+                    curr_pos + dash_width / 2 * perpendicular,
+                    dash_end_pos + dash_width / 2 * perpendicular,
+                    dash_end_pos - dash_width / 2 * perpendicular,
+                    curr_pos - dash_width / 2 * perpendicular,
                 ]
                 pygame.draw.polygon(
                     surface,
@@ -755,6 +858,7 @@ class ShipgirlBattleComponent:
                     polygon,
                 )
 
+            # Draw the reticle.
             reticle_size = 24
             duplex_size = 16
             pygame.draw.circle(surface, target_color, end_pos, reticle_size, 2)
@@ -774,15 +878,20 @@ class ShipgirlBattleComponent:
 class Shipgirl:
     SPRITE_SIZE = 96 # TODO get this from the actual sprite?
 
-    def __init__(self, name, is_player):
+    def __init__(self, name: str, is_player: bool):
         if is_player:
             self.name = name
         else:
+            # Siren keys are formatted as name:level
             self.name = name.split(":")[0]
-    
-        self.pos = self.get_random_floor_pos()
+
+        # Wander and interaction state.
+        self.pos = self._get_random_floor_pos()
         self.wander_target = self.pos.copy()
         self.pause_time = 0
+        self.interacting_decoration : tuple[int, int] = None
+
+        # Get the sprite if it exists and otherwise fall back to TB.
         if os.path.exists(f"live2d/{self.name}.json"):
             self.sprite = Live2D(f"live2d/{self.name}.json")
         elif os.path.exists("live2d/TB.json"):
@@ -790,16 +899,17 @@ class Shipgirl:
         else:
             self.sprite = None
         self.facing_left = False
-            
+
         self.rect = get_rect(width=self.SPRITE_SIZE, height=self.SPRITE_SIZE, centerx=self.pos.x, centery=self.pos.y)
-        self.interacting_decoration = None
+
         self.battle_component = ShipgirlBattleComponent(name, is_player)
 
     def __repr__(self):
         return self.name
 
     @staticmethod
-    def get_random_floor_pos():
+    def _get_random_floor_pos() -> pygame.Vector2:
+        """Get a random position on the port floor."""
         iso_x = random.uniform(0, Decorations.FLOOR_TILES_WIDE)
         iso_y = random.uniform(0, Decorations.FLOOR_TILES_TALL)
         target_x = (
@@ -817,10 +927,12 @@ class Shipgirl:
         )
 
     def pick_new_wander_target(self):
-        self.wander_target = self.get_random_floor_pos()
-        self.pause_time = random.uniform(1, 3) # TODO clean up magic numbers
+        """Pick a new wander target and pause time."""
+        self.wander_target = self._get_random_floor_pos()
+        self.pause_time = random.uniform(1, 3)
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the shipgirl for the port."""
         if self.sprite.animation == Live2D.BOUNCE_ANIMATION:
             return
         
@@ -831,12 +943,13 @@ class Shipgirl:
             self.pause_time -= dt
             self.sprite.set_animation(Live2D.IDLE_ANIMATION)
         else:
+            # Wandering logic.
             to_target = self.wander_target - self.pos
-            if to_target.length() < 10: # TODO clean up
+            if to_target.length() < 10: # TODO magic number
                 self.pick_new_wander_target()
             else:
                 direction = to_target.normalize()
-                self.pos += direction * 50 * dt # TODO clean up magic numbers
+                self.pos += direction * 50 * dt # TODO magic number
                 if direction.x >= 0:
                     self.facing_left = False
                 else:
@@ -845,47 +958,55 @@ class Shipgirl:
             self.sprite.set_animation(Live2D.WALK_ANIMATION)
         self.rect.center = self.pos
 
-    def animate(self, dt):
+    def animate(self, dt: float):
+        """Animate the sprite."""
         self.sprite.update(dt)
 
-    def draw(self, surface, font_registry, alpha=255):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font], alpha: int = 255):
+        """Draw the sprite with shake."""
         shake_amt = 4
-        shake_offset = shake_amt * math.sin(4*math.radians(360)*self.battle_component.shake_time)
+        shake_offset = shake_amt * math.sin(4 * math.radians(360) * self.battle_component.shake_time)
         self.sprite.draw(surface, self.rect.centerx + shake_offset, self.rect.centery, not self.facing_left, alpha=alpha)
+
 
 class PlayerFleet:
     def __init__(self):
-        self.shipgirls = [None, None, None]
-        self.backups = [None, None, None]
+        self.shipgirls: tuple[Shipgirl | None, Shipgirl | None, Shipgirl | None] = [None, None, None]
+        self.backups: tuple[Shipgirl | None, Shipgirl | None, Shipgirl | None] = [None, None, None]
     
     @property
-    def afloat(self):
+    def afloat(self) -> bool:
+        """Check if any shipgirl in the fleet is still afloat."""
         return any(
             shipgirl is not None and shipgirl.battle_component.hp > 0
             for shipgirl in self.shipgirls + self.backups
         )
 
     @property
-    def primary_fleet_size(self):
+    def primary_fleet_size(self) -> int:
+        """Get the size of the primary fleet, ignoring None shipgirls."""
         return len([shipgirl for shipgirl in self.shipgirls if shipgirl is not None])
 
     @property
-    def backup_fleet_size(self):
+    def backup_fleet_size(self) -> int:
+        """Get the size of the backup fleet, ignoring None shipgirls."""
         return len([shipgirl for shipgirl in self.backups if shipgirl is not None])
 
     @property
-    def fleet(self):
-        return self.shipgirls + self.backups
+    def fleet(self) -> list[Shipgirl]:
+        return [shipgirl for shipgirl in self.shipgirls + self.backups if shipgirl is not None]
 
     @property
-    def front(self):
+    def front(self) -> Shipgirl | None:
+        """Get the front-most shipgirl in the primary fleet."""
         for shipgirl in self.shipgirls:
             if shipgirl is not None and shipgirl.battle_component.hp > 0:
                 return shipgirl
         return None
 
     @property
-    def highest_hp(self):
+    def highest_hp(self) -> Shipgirl | None:
+        """Get the shipgirl in th eprimary fleet with the highest max hp."""
         shipgirl_with_highest_hp = None
         for shipgirl in self.shipgirls:
             if shipgirl is None:
@@ -898,24 +1019,28 @@ class PlayerFleet:
                 shipgirl_with_highest_hp = shipgirl
         return shipgirl_with_highest_hp
 
-    def in_fleet(self, shipgirl):
-        return shipgirl in self.shipgirls or shipgirl in self.backups
+    def in_fleet(self, shipgirl: Shipgirl) -> bool:
+        """Get whether or not the shipgirl is in the primary or backup fleet."""
+        return shipgirl in self.fleet
 
     def clear_fleet(self):
+        """Clear the primary and backup fleets."""
         self.shipgirls = [None, None, None]
         self.backups = [None, None, None]
 
     def begin_sortie(self):
-        for shipgirl in self.shipgirls + self.backups:
-            if shipgirl is not None:
-                shipgirl.battle_component.reset()
+        """Reset the battle components on sortie start."""
+        for shipgirl in self.fleet:
+            shipgirl.battle_component.reset()
 
     def begin_encounter(self):
+        """Activate battle components on encounter start."""
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
                 shipgirl.battle_component.active = True
 
     def end_encounter(self):
+        """Deactivate battle components on encounter end."""
         for shipgirl in self.shipgirls:
             if shipgirl is not None:
                 shipgirl.battle_component.target = None
@@ -923,49 +1048,30 @@ class PlayerFleet:
                 shipgirl.battle_component.attack_timer = 0
                 shipgirl.battle_component.active = False
 
-    def animate(self, dt):
+    def animate(self, dt: float):
+        """Animate the shipgirls in the player fleet.
+        
+        Set animations based on battle component state.
+        """
         for shipgirl in self.fleet:
-            if shipgirl is not None:
-                if shipgirl.battle_component.hp <= 0:
-                    shipgirl.sprite.set_animation(Live2D.SINK_ANIMATION)
-                elif shipgirl.battle_component.attack_animation:
-                    shipgirl.sprite.set_animation(Live2D.ATTACK_ANIMATION)
-                shipgirl.animate(dt)
+            if shipgirl.battle_component.hp <= 0:
+                shipgirl.sprite.set_animation(Live2D.SINK_ANIMATION)
+            elif shipgirl.battle_component.attack_animation:
+                shipgirl.sprite.set_animation(Live2D.ATTACK_ANIMATION)
+            shipgirl.animate(dt)
 
-    def update(self, dt, vfx_manager):
+    def update(self, dt: float, vfx_manager: VFXManager):
+        """Update the shipgirl battle components in the player fleet."""
         for shipgirl in self.fleet:
-            if shipgirl is not None:
-                if shipgirl.battle_component.hp <= 0:
-                    shipgirl.battle_component.active = False
-                elif shipgirl.battle_component.attack_animation:
-                    if shipgirl.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
-                        shipgirl.battle_component.attack(shipgirl.rect, vfx_manager)
-                shipgirl.battle_component.update(dt, shipgirl.rect, None, vfx_manager)
-
-    def draw_shipgirl(self, surface, font_registry):
-        for shipgirl in self.shipgirls:
-            if shipgirl is not None:
-                shipgirl.draw(surface, font_registry)
-        for shipgirl in self.backups:
-            if shipgirl is not None:
-                shipgirl.draw(surface, font_registry)
-    
-    def draw_battle_effects(self, surface, vfx_manager):
-        for shipgirl in self.shipgirls:
-            if shipgirl is not None:
-                shipgirl.battle_component.draw_effects(surface, shipgirl.rect, vfx_manager)
-        for shipgirl in self.backups:
-            if shipgirl is not None:
-                shipgirl.battle_component.draw_effects(surface, shipgirl.rect, vfx_manager)
-
-    def draw_battlestations(self, surface: pygame.Surface, font_registry: dict):
-        """Draw the battlestations for each shipgirl in the fleet."""
-        for shipgirl in self.fleet:
-            if shipgirl is None:
-                continue
-            shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
+            if shipgirl.battle_component.hp <= 0:
+                shipgirl.battle_component.active = False
+            elif shipgirl.battle_component.attack_animation:
+                if shipgirl.sprite.t > 2.5 * Live2D.KEYFRAME_DURATION:
+                    shipgirl.battle_component.attack(shipgirl.rect, vfx_manager)
+            shipgirl.battle_component.update(dt, shipgirl.rect, None, vfx_manager)
 
     def get_draw_indices(self):
+        """Get the draw indices for each shipgirl in the primary and backup fleets."""
         fixed_draw_indices = [1, 3, 5]
         return [
             (fixed_index, shipgirl)
@@ -981,57 +1087,69 @@ class SirenFleet:
     SLOT_SIZE = Shipgirl.SPRITE_SIZE
 
     def __init__(self):
-        self._front = []
-        self._back = []
+        self.front: list[Shipgirl] = []
+        self.back: list[Shipgirl] = []
 
-        self.dummy_target = None
+        self.dummy_target: DummyTarget | None = None
     
     @property
-    def afloat(self):
+    def afloat(self) -> bool:
+        """Check if any sirens are still afloat."""
         return any(siren.battle_component.hp > 0 for siren in self.fleet)
 
     @property
-    def siren_names(self):
+    def siren_names(self) -> list[str]:
+        """Get the names of the sirens."""
         return [siren.name for siren in self.fleet]
 
     @property
-    def front(self):
+    def afloat_front(self) -> list[Shipgirl]:
+        """Get the front-most fleet that is afloat.
+        
+        If a siren from the front row is afloat, then return the front. Otherwise,
+        return the back row.
+        """
         return (
-            [siren for siren in self._front if siren.battle_component.hp > 0]
-            or [siren for siren in self._back if siren.battle_component.hp > 0]
+            [siren for siren in self.front if siren.battle_component.hp > 0]
+            or [siren for siren in self.back if siren.battle_component.hp > 0]
         )
 
     @property
-    def fleet(self):
-        return self._front + self._back
+    def fleet(self) -> list[Shipgirl]:
+        """Get the full front + back fleet."""
+        return self.front + self.back
 
     def clear_fleet(self):
-        self._front = []
-        self._back = []
+        """Clear the fleet."""
+        self.front = []
+        self.back = []
 
     def begin_encounter(self):
+        """Activate siren battle components and align sirens to slot rects on encounter start."""
         for siren in self.fleet:
             siren.battle_component.active = True
         
         slot_size = siren.SPRITE_SIZE
-        front_offset = (len(self._front)-1)/2
-        for i, siren in enumerate(self._front):
-            siren.rect.centerx = screen_x(0.75) - slot_size + (i-front_offset)*slot_size/2
-            siren.rect.centery = screen_y(0.5) + (i-front_offset)*slot_size
+        front_offset = (len(self.front) - 1) / 2
+        for i, siren in enumerate(self.front):
+            siren.rect.centerx = screen_x(0.75) - slot_size + (i - front_offset) * slot_size / 2
+            siren.rect.centery = screen_y(0.5) + (i - front_offset) * slot_size
         
-        back_offset = (len(self._back)-1)/2
-        for i, siren in enumerate(self._back): 
-            siren.rect.centerx = screen_x(0.75) + slot_size + (i-back_offset)*slot_size/2
-            siren.rect.centery = screen_y(0.5) + (i-back_offset)*slot_size
+        back_offset = (len(self.back) - 1) / 2
+        for i, siren in enumerate(self.back): 
+            siren.rect.centerx = screen_x(0.75) + slot_size + (i - back_offset) * slot_size / 2
+            siren.rect.centery = screen_y(0.5) + (i - back_offset) * slot_size
     
     def end_encounter(self):
+        """Deactivate battle components on encounter end."""
         for siren in self.fleet:
             siren.battle_component.target = None
             siren.battle_component.attack_animation = False
             siren.battle_component.attack_timer = 0
             siren.battle_component.active = False
 
-    def animate(self, dt):
+    def animate(self, dt: float):
+        """Animate the sirens in the fleet."""
         for siren in self.fleet:
             if siren.battle_component.hp <= 0:
                 siren.sprite.set_animation(Live2D.SINK_ANIMATION)
@@ -1039,12 +1157,16 @@ class SirenFleet:
                 siren.sprite.set_animation(Live2D.ATTACK_ANIMATION)
             siren.animate(dt)
 
-    def update(self, dt, menu_manager, vfx_manager):
+    def update(self, dt: float, menu_manager: MenuManager, vfx_manager: VFXManager):
+        """Update the siren battle components."""
+        # Create the dummy target if it does not exist.
         if self.dummy_target is None:
             self.dummy_target = DummyTarget(menu_manager)
 
         for siren in self.fleet:
             if siren.battle_component.target is None:
+                # Use the siren's target pref to determine which shipgirl toa ttack
+                # if the siren currently has no target.
                 if siren.battle_component.target_pref == "highest_hp":
                     siren.battle_component.target = menu_manager.player_fleet.highest_hp
                 elif siren.battle_component.target_pref == "all":
@@ -1059,34 +1181,26 @@ class SirenFleet:
             siren.battle_component.update(dt, siren.rect, menu_manager.player_fleet, vfx_manager)
 
     def get_draw_indices(self):
+        """Compute the draw indices of the sirens in the front and back."""
         draw_indices = []
-        if len(self._front) == 1:
-            draw_indices.append((3, self._front[0]))
-        elif len(self._front) == 2:
-            draw_indices.append((2, self._front[0]))
-            draw_indices.append((4, self._front[1]))
-        elif len(self._front) == 3:
-            draw_indices.append((1, self._front[0]))
-            draw_indices.append((3, self._front[1]))
-            draw_indices.append((5, self._front[2]))
+        if len(self.front) == 1:
+            draw_indices.append((3, self.front[0]))
+        elif len(self.front) == 2:
+            draw_indices.append((2, self.front[0]))
+            draw_indices.append((4, self.front[1]))
+        elif len(self.front) == 3:
+            draw_indices.append((1, self.front[0]))
+            draw_indices.append((3, self.front[1]))
+            draw_indices.append((5, self.front[2]))
         
-        if len(self._back) == 1:
-            draw_indices.append((3, self._back[0]))
-        elif len(self._back) == 2:
-            draw_indices.append((2, self._back[0]))
-            draw_indices.append((4, self._back[1]))
-        elif len(self._back) == 3:
-            draw_indices.append((1, self._back[0]))
-            draw_indices.append((3, self._back[1]))
-            draw_indices.append((5, self._back[2]))
+        if len(self.back) == 1:
+            draw_indices.append((3, self.back[0]))
+        elif len(self.back) == 2:
+            draw_indices.append((2, self.back[0]))
+            draw_indices.append((4, self.back[1]))
+        elif len(self.back) == 3:
+            draw_indices.append((1, self.back[0]))
+            draw_indices.append((3, self.back[1]))
+            draw_indices.append((5, self.back[2]))
         
         return draw_indices
-
-    def draw_battle_effects(self, surface, vfx_manager):
-        for siren in self.fleet:
-            siren.battle_component.draw_effects(surface, siren.rect, vfx_manager)
-
-    def draw_battlestations(self, surface: pygame.Surface, font_registry: dict):
-        """Draw the battlestations for each siren in the fleet."""
-        for siren in self.menu_manager.siren_fleet.fleet:
-            siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
