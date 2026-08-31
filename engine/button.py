@@ -17,11 +17,11 @@ class Button:
 
         self.hovered = False
 
-    def hover(self, mpos: tuple[float, float]) -> bool:
+    def hover(self, mpos: tuple[int, int]) -> bool:
         """Abstract hover method."""
         pass
 
-    def click(self, mpos: tuple[float, float]) -> bool:
+    def click(self, mpos: tuple[int, int]) -> bool:
         """Abstract click method."""
         pass
 

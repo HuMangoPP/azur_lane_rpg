@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
 
@@ -8,7 +9,7 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, get_vec, pixel_to_hex, hex_to_pixel, hex_corners, get_cluster_edges, adjacent_hexes
+from engine.util import get_rect, get_vec, pixel_to_hex, hex_to_pixel, hex_corners, get_cluster_edges, draw_dashed_rect
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -30,23 +31,25 @@ class SortieNode:
     SELECTION_GLINT_MARGIN = 6
     SELECTION_GLINT_DRIFT = 12
 
-    def __init__(self, index, sortie_info):
-        self.chapter = sortie_info["chapter"]
+    def __init__(self, index: int, sortie_info: dict):
+        self.chapter: int = sortie_info["chapter"]
         self.index = index
         self.hexes = [tuple(h) for h in sortie_info["coordinates"]]
-        self.unlocked = self.index <= DataFiles.save_file["sortie_progress"]
-        self.cleared = self.index < DataFiles.save_file["sortie_progress"]
+        self.unlocked: bool = self.index <= DataFiles.save_file["sortie_progress"]
+        self.cleared: bool = self.index < DataFiles.save_file["sortie_progress"]
         self.hovered = False
 
         cluster_edges = get_cluster_edges(self.hexes, self.SIZE)
         self.polygon = [pygame.Vector2(point) for point in cluster_edges]
 
-    def hover(self, mouse_pos):
+    def hover(self, mouse_pos: tuple[int, int]):
+        """Update the hover state of this sortie node by checking collisions with its hexes."""
         mouse_x, mouse_y = mouse_pos
         hx, hy = pixel_to_hex(mouse_x - anchor().x, mouse_y - anchor().y, self.SIZE)
         self.hovered = self.unlocked and (hx, hy) in self.hexes
 
-    def select(self, mouse_pos):
+    def select(self, mouse_pos: tuple[int, int]) -> bool:
+        """Select this sortie node by checking collisions with its hexes."""
         if not self.unlocked:
             return False
 
@@ -57,14 +60,16 @@ class SortieNode:
         
         return True
 
-    def draw_shadow(self, surface):
+    def draw_shadow(self, surface: pygame.Surface):
+        """Draw the shadow of the hex polygon."""
         polygon = [
-            point + anchor() + pygame.Vector2(self.SIZE/4,self.SIZE/2)
+            point + anchor() + pygame.Vector2(self.SIZE / 4,self.SIZE / 2)
             for point in self.polygon
         ]
         pygame.draw.polygon(surface, Color.OCEAN_SHADOW, polygon)
 
-    def get_styling(self):
+    def _get_styling(self) -> tuple[tuple[int, int, int], tuple[int, int, int], pygame.Surface]:
+        """Get the styling of the sortie node based on status."""
         if self.cleared:
             return (
                 Color.CLEARED_ZONE_FILL,
@@ -86,7 +91,8 @@ class SortieNode:
                 DataFiles.sprites["user_interface"]["locked"],
             )
 
-    def get_selection_glow_sprite(self):
+    def _get_selection_glow_sprite(self) -> pygame.Surface:
+        """Get the selection glow sprite based on sortie node status."""
         if self.cleared:
             return DataFiles.sprites["sortie_selection"]["cleared_node_selection_glow"]
         elif self.unlocked:
@@ -94,32 +100,41 @@ class SortieNode:
         else:
             return DataFiles.sprites["sortie_selection"]["locked_node_selection_glow"]
 
-    def draw(self, surface):
-        fill, outline, icon = self.get_styling()
+    def draw(self, surface: pygame.Surface):
+        """Draw the sortie node."""
+        fill, outline, icon = self._get_styling()
+        # Draw the hex.
         polygon = [point + anchor() for point in self.polygon]
         if self.hovered:
             pygame.draw.polygon(surface, outline, polygon)
         else:
             pygame.draw.polygon(surface, fill, polygon)
         pygame.draw.polygon(surface, outline, polygon, width=Box.OUTLINE_WIDTH)
-        
+        # Draw the icon.
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
             icon_rect = icon.get_rect()
             icon_rect.center = pygame.Vector2(x,y) + anchor()
             surface.blit(icon, icon_rect)
 
-    def draw_selection_effect(self, surface, effect_time):
+    def draw_selection_effect(self, surface: pygame.Surface, effect_time: float):
+        """Draw the sortie node selection effect."""
+        # Generate the pulsing glow.
         pulse = (
             math.sin(effect_time * math.tau / self.SELECTION_PULSE_DURATION) + 1
         ) / 2
-        glow_base = self.get_selection_glow_sprite().copy()
+        glow_base = self._get_selection_glow_sprite().copy()
         glow_base.set_alpha(int(128 + 127*pulse))
         glow = pygame.Surface(glow_base.get_size())
         glow.blit(glow_base)
 
+        # Each glow is rendered for example one hex in the cluster.
+        # There is a floating point bug where sometimes the glow will
+        # not align exactly with the hex left and right boundaries, which
+        # makes the glow look weird.
+        # This block of code aims to resolve that bug.
         node_anchor = anchor()
-        glow_instances = []
+        glow_instances: list[tuple[pygame.Surface, pygame.Rect, pygame.Vector2]] = []
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
             hex_center = pygame.Vector2(x, y) + node_anchor
@@ -138,10 +153,15 @@ class SortieNode:
             glow_rect.bottom = hex_center.y
             hex_glow = pygame.transform.smoothscale(glow, glow_rect.size)
             glow_instances.append((hex_glow, glow_rect, hex_center))
-
         glow_bounds = glow_instances[0][1].unionall(
             [glow_rect for _, glow_rect, _ in glow_instances[1:]]
         )
+        # There is a floating point issue where if the glows are
+        # drawn directly onto the surface, then they can overlap,
+        # and since additive rendering is applied to these glow sprites,
+        # it means that there are sometimes a brighter glow than desired.
+        # To resolve this bug, we collect all of the glows onto a combined
+        # surface, then apply additive rendering to that combined glow.
         combined_glow = pygame.Surface(glow_bounds.size)
         for hex_glow, glow_rect, _ in glow_instances:
             local_rect = glow_rect.move(-glow_bounds.left, -glow_bounds.top)
@@ -155,24 +175,26 @@ class SortieNode:
             glow_bounds,
             special_flags=pygame.BLEND_RGB_ADD,
         )
-
-        _, outline, icon = self.get_styling()
+        # Render the hex polygon and icon on top so that the additive rendering
+        # from the glow does not cause the hex to be mis-colored.
+        _, outline, icon = self._get_styling()
         polygon = [point + anchor() for point in self.polygon]
         pygame.draw.polygon(surface, outline, polygon)
-        
+
         for q, r in self.hexes:
             x, y = hex_to_pixel(q, r, self.SIZE)
             icon_rect = icon.get_rect()
             icon_rect.center = pygame.Vector2(x,y) + anchor()
             surface.blit(icon, icon_rect)
 
+        # Glint particles.
         glint_count = len(glow_instances) * self.SELECTION_GLINTS_PER_HEX
         for hex_index, (_, _, hex_center) in enumerate(glow_instances):
             for glint_index in range(self.SELECTION_GLINTS_PER_HEX):
-                particle_index = glint_index*len(glow_instances) + hex_index
+                particle_index = glint_index * len(glow_instances) + hex_index
                 glint_time = (
                     effect_time
-                    + particle_index*self.SELECTION_GLINT_CYCLE/glint_count
+                    + particle_index * self.SELECTION_GLINT_CYCLE / glint_count
                 )
                 glint_age = glint_time % self.SELECTION_GLINT_CYCLE
                 if glint_age >= self.SELECTION_GLINT_LIFETIME:
@@ -182,39 +204,39 @@ class SortieNode:
                     glint_time / self.SELECTION_GLINT_CYCLE
                 )
                 glint_progress = glint_age / self.SELECTION_GLINT_LIFETIME
-                glint_strength = (1 - glint_progress)**1.5
+                glint_strength = (1 - glint_progress) ** 1.5
                 half_spawn_width = (
-                    math.sqrt(3)/2*self.SIZE - self.SELECTION_GLINT_MARGIN
+                    math.sqrt(3) / 2 * self.SIZE - self.SELECTION_GLINT_MARGIN
                 )
                 spawn_x = (
-                    (cycle_index*29 + particle_index*17) % (2*half_spawn_width)
+                    (cycle_index * 29 + particle_index * 17) % (2 * half_spawn_width)
                     - half_spawn_width
                 )
                 half_spawn_height = (
                     self.SIZE
-                    - abs(spawn_x)/math.sqrt(3)
+                    - abs(spawn_x) / math.sqrt(3)
                     - self.SELECTION_GLINT_MARGIN
                 )
                 spawn_y = (
-                    (cycle_index*19 + particle_index*31) % (2*half_spawn_height)
+                    (cycle_index * 19 + particle_index * 31) % (2 * half_spawn_height)
                     - half_spawn_height
                 )
                 spawn_center = hex_center + pygame.Vector2(spawn_x, spawn_y)
                 center = spawn_center - pygame.Vector2(
                     0,
-                    self.SELECTION_GLINT_DRIFT*glint_progress,
+                    self.SELECTION_GLINT_DRIFT * glint_progress,
                 )
                 glint_length = 1 + round(
-                    (self.SELECTION_GLINT_MAX_LENGTH - 1)*glint_strength
+                    (self.SELECTION_GLINT_MAX_LENGTH - 1) * glint_strength
                 )
                 glint_color = tuple(
-                    round(channel*glint_strength)
+                    round(channel * glint_strength)
                     for channel in outline
                 )
                 glint_surface = pygame.Surface(
                     (
-                        2*self.SELECTION_GLINT_MAX_LENGTH + 1,
-                        2*self.SELECTION_GLINT_MAX_LENGTH + 1,
+                        2 * self.SELECTION_GLINT_MAX_LENGTH + 1,
+                        2 * self.SELECTION_GLINT_MAX_LENGTH + 1,
                     )
                 )
                 glint_surface_center = pygame.Vector2(
@@ -240,6 +262,7 @@ class SortieNode:
                 )
 
     def get_bounding_rect(self):
+        """Compute the bounding rect of the hex polygon."""
         points = [point + anchor() for point in self.polygon]
         left = min(point.x for point in points)
         right = max(point.x for point in points)
@@ -255,7 +278,7 @@ class ChapterRegion:
     HATCH_ALPHA = 96
     OUTLINE_ALPHA = 190
 
-    def __init__(self, chapter, boundary_hexes, sortie_nodes):
+    def __init__(self, chapter: int, boundary_hexes: list[tuple[int, int]], sortie_nodes: list[SortieNode]):
         self.chapter = chapter
         self.sortie_nodes = sortie_nodes
         polygon = [
@@ -275,14 +298,16 @@ class ChapterRegion:
         ]
         self.styled_surfaces = {}
 
-    def get_state(self):
+    def _get_state(self) -> str:
+        """Get the status of the region."""
         if all(node.cleared for node in self.sortie_nodes):
             return "cleared"
         if any(node.unlocked for node in self.sortie_nodes):
             return "uncleared"
         return "locked"
 
-    def create_styled_surface(self, state):
+    def _create_styled_surface(self, state: str):
+        """Create the hatched region boundary surface."""
         colors = {
             "cleared": (Color.CLEARED_ZONE_FILL, Color.CLEARED_ZONE_OUTLINE),
             "uncleared": (Color.UNCLEARED_ZONE_FILL, Color.UNCLEARED_ZONE_OUTLINE),
@@ -291,12 +316,13 @@ class ChapterRegion:
         fill_color, outline_color = colors[state]
 
         styled_surface = pygame.Surface(self.size, pygame.SRCALPHA)
+        # Shade in region polygon.
         pygame.draw.polygon(
             styled_surface,
             (*fill_color, self.FILL_ALPHA),
             self.polygon,
         )
-
+        # Draw hatching within region polygon.
         hatch_surface = pygame.Surface(self.size, pygame.SRCALPHA)
         width, height = self.size
         for x in range(-height, width + height, self.HATCH_SPACING):
@@ -311,7 +337,7 @@ class ChapterRegion:
         pygame.draw.polygon(region_mask, (255, 255, 255, 255), self.polygon)
         hatch_surface.blit(region_mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
         styled_surface.blit(hatch_surface, (0, 0))
-
+        # Draw region polygon outline.
         pygame.draw.polygon(
             styled_surface,
             (*outline_color, self.OUTLINE_ALPHA),
@@ -320,43 +346,45 @@ class ChapterRegion:
         )
         return styled_surface
 
-    def draw(self, surface):
-        state = self.get_state()
+    def draw(self, surface: pygame.Surface):
+        """Draw the chapter region."""
+        state = self._get_state()
         if state not in self.styled_surfaces:
-            self.styled_surfaces[state] = self.create_styled_surface(state)
+            self.styled_surfaces[state] = self._create_styled_surface(state)
         surface.blit(self.styled_surfaces[state], self.position + anchor())
 
 
 class Fog:
-    def __init__(self, sortie_nodes, disperse=False):
-        self.centroids = []
+    def __init__(self, sortie_nodes: list[SortieNode], disperse: bool = False):
+        self.centroids: list[pygame.Vector2] = []
         for sortie_node in sortie_nodes:
             for q, r in sortie_node.hexes:
                 x, y = hex_to_pixel(q, r, sortie_node.SIZE)
                 self.centroids.append(pygame.Vector2(x, y))
         self.cloud_indices = [random.randint(4, 9) for _ in self.centroids]
-        self.cloud_sprites = {
+        self.cloud_sprites: dict[int, pygame.Surface] = {
             cloud_index: DataFiles.sprites["background"][f"cloud{cloud_index}"].copy()
-            for cloud_index in [4,5,6,7,8,9]
+            for cloud_index in [4, 5, 6, 7, 8, 9]
         }
-        self.cloud_shadow_sprites = {
+        self.cloud_shadow_sprites: dict[int, pygame.Surface] = {
             cloud_index: DataFiles.sprites["background"][f"cloud_shadow{cloud_index}"]
-            for cloud_index in [4,5,6,7,8,9]
+            for cloud_index in [4, 5, 6, 7, 8, 9]
         }
         self.disperse = disperse
-        self.disperse_timer = 1
+        self.disperse_timer: float = 1
 
         self.cloud_timers = [
             math.radians(random.randint(0, 359))
             for _ in self.centroids
         ]
     
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update all clouds in the fog."""
         if self.disperse_timer <= 0:
             return
         
         self.cloud_timers = [
-            (cloud_timer + dt)%math.radians(360)
+            (cloud_timer + dt) % math.radians(360)
             for cloud_timer in self.cloud_timers
         ]
         if self.disperse:
@@ -364,14 +392,20 @@ class Fog:
                 wind_sfx = DataFiles.sfx["wind"]
                 wind_sfx.play()
                 wind_sfx.fadeout(3000)
-            self.disperse_timer = max(0, self.disperse_timer - 1/3*dt)
+            self.disperse_timer = max(0, self.disperse_timer - 0.33 * dt)
 
-    def draw(self, surface):
+    def draw(self, surface: pygame.Surface):
+        """Draw all of the clouds in the fog.
+        
+        The clouds will move in a sinusoidal figure-8 pattern. If the clouds
+        are dispersing, then they will slowly fade out, and will be rendered
+        without a shadow.
+        """
         if self.disperse_timer <= 0:
             return
         
         if self.disperse_timer < 1:
-            cloud_alpha = int(255*self.disperse_timer)
+            cloud_alpha = int(255 * self.disperse_timer)
             for cloud_sprite in self.cloud_sprites.values():
                 cloud_sprite.set_alpha(cloud_alpha)
 
@@ -379,7 +413,7 @@ class Fog:
             center = (
                 centroid
                 + anchor()
-                + pygame.Vector2(16*math.sin(cloud_timer), 4*math.sin(2*cloud_timer))
+                + pygame.Vector2(16 * math.sin(cloud_timer), 4 * math.sin(2 * cloud_timer))
             )
 
             if self.disperse_timer >= 1:
@@ -393,30 +427,33 @@ class Fog:
             cloud_rect.center = center
             surface.blit(cloud_sprite, cloud_rect)
 
+
 class SortieProp:
-    def __init__(self, sprite_key, position):
+    def __init__(self, sprite_key: str, position: tuple[float, float]):
         self.sprite_key = sprite_key
         self.position = pygame.Vector2(position)
-        self.sprite = DataFiles.sprites["sortie_selection"][sprite_key]
+        self.sprite: pygame.Surface = DataFiles.sprites["sortie_selection"][sprite_key]
 
-    def get_rect(self):
+    def _get_rect(self):
+        """Get the rect of this prop based on camera pan anchor."""
         rect = self.sprite.get_rect()
         rect.center = self.position + anchor()
         return rect
 
     def draw(self, surface):
-        surface.blit(self.sprite, self.get_rect())
+        surface.blit(self.sprite, self._get_rect())
 
 
 class NameRibbon:
     PADDING_X = 24
     
-    def __init__(self, position, name, scale=1.0):
-        self.text = name
+    def __init__(self, position: tuple[float, float], text: str, scale: float = 1.0):
+        self.text = text
         self.position = pygame.Vector2(position)
         self.scale = scale
     
-    def get_width(self, font_registry):
+    def _get_width(self, font_registry: dict[str, Font]):
+        """Get the full width of the ribbon banner."""
         left = pygame.transform.scale_by(
             DataFiles.sprites["sortie_selection"]["name_left"], self.scale
         )
@@ -427,15 +464,18 @@ class NameRibbon:
             DataFiles.sprites["sortie_selection"]["name_middle"], self.scale
         )
         text_width = font_registry["handwritten"].get_width(self.text, self.scale, 0) - Box.WIDTH
+        # Extend the middle portion by the text width if necessary.
         middle_width = max(middle.get_width(), text_width + 2 * self.PADDING_X)
         return left.get_width() + middle_width + right.get_width()
 
-    def get_rect(self, font_registry):
-        width = self.get_width(font_registry)
+    def _get_rect(self, font_registry: dict[str, Font]):
+        """Get the bounding rectangle of the ribbon banner."""
+        width = self._get_width(font_registry)
         height = DataFiles.sprites["sortie_selection"]["name_middle"].get_height() * self.scale
         return get_rect(width=width, height=height, center=self.position + anchor())
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the ribbon banner and text."""
         left = pygame.transform.scale_by(
             DataFiles.sprites["sortie_selection"]["name_left"], self.scale
         )
@@ -445,7 +485,7 @@ class NameRibbon:
         middle = pygame.transform.scale_by(
             DataFiles.sprites["sortie_selection"]["name_middle"], self.scale
         )
-        rect = self.get_rect(font_registry)
+        rect = self._get_rect(font_registry)
 
         left_rect = left.get_rect(topleft=rect.topleft)
         surface.blit(left, left_rect)
@@ -455,6 +495,7 @@ class NameRibbon:
         middle_rect.top = rect.top
         middle_right = rect.right - right.get_width()
         while middle_rect.left < middle_right:
+            # Extend the middle portion by however much the text width requires.
             source_width = min(middle.get_width(), middle_right - middle_rect.left)
             source_rect = pygame.Rect(0, 0, source_width, middle.get_height())
             surface.blit(middle, middle_rect, source_rect)
@@ -475,16 +516,17 @@ class ChapterNameRibbon:
         "mirror sea"
     ]
 
-    def __init__(self, chapter, sortie_nodes):
+    def __init__(self, chapter: int, sortie_nodes: list[SortieNode]):
         if chapter < len(self.CHAPTER_NAMES):
             text = self.CHAPTER_NAMES[chapter]
         else:
-            text = f"chapter {chapter}"
-        position = self.get_position(sortie_nodes)
+            text = f"region {chapter}"
+        position = self._get_position(sortie_nodes)
 
         self.ribbon = NameRibbon(position, text)
 
-    def get_position(self, sortie_nodes):
+    def _get_position(self, sortie_nodes: list[SortieNode]):
+        """Compute the position to place the ribbon based on the sortie node bounding box."""
         hex_positions = []
         for sortie_node in sortie_nodes:
             for q, r in sortie_node.hexes:
@@ -495,10 +537,11 @@ class ChapterNameRibbon:
         bottom = max(position.y for position in hex_positions)
         return pygame.Vector2(
             (left + right) / 2,
-            bottom + self.Y_OFFSET_IN_HEXES*SortieNode.SIZE,
+            bottom + self.Y_OFFSET_IN_HEXES * SortieNode.SIZE,
         )
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the chapter name ribbon banner."""
         self.ribbon.draw(surface, font_registry)
 
 
@@ -514,10 +557,13 @@ class ChapterProgressAnnotation:
     ARROWHEAD_LENGTH = 12
     ARROWHEAD_ANGLE = math.radians(32)
 
-    def __init__(self, chapter, sortie_nodes, text_shift=16):
+    def __init__(self, chapter: int, sortie_nodes: list[SortieNode], text_shift: int = 16):
         self.chapter = chapter
         self.sortie_nodes = sortie_nodes
 
+        # This annotation is a upwards curving arrow from the leftside of the
+        # sortie node cluster to the right side, as the general layout of
+        # the sortie nodes for a given chapter climbs to the topright.
         hex_centers = [
             pygame.Vector2(hex_to_pixel(*hex_tile, SortieNode.SIZE))
             for sortie_node in sortie_nodes
@@ -528,7 +574,7 @@ class ChapterProgressAnnotation:
 
         width_extension = max(
             0,
-            (self.MIN_WIDTH - (rightmost_hex.x - leftmost_hex.x))/2,
+            (self.MIN_WIDTH - (rightmost_hex.x - leftmost_hex.x)) / 2,
         )
         start_point = leftmost_hex + pygame.Vector2(-width_extension, 64)
         end_point = rightmost_hex + pygame.Vector2(width_extension, 64)
@@ -539,6 +585,9 @@ class ChapterProgressAnnotation:
             mid_point,
             end_point,
         )
+        # The text is placed at the center of the curve.
+        # The text is also rotated so that it is tangent to the curve
+        # at that midpoint.
         mid_index = min(
             range(len(self.curve_points)),
             key=lambda index: self.curve_points[index].distance_squared_to(mid_point),
@@ -551,23 +600,24 @@ class ChapterProgressAnnotation:
             text_normal *= -1
         self.text_position = (
             self.curve_points[mid_index]
-            + text_normal*self.TEXT_OFFSET
-            + text_direction*text_shift
+            + text_normal * self.TEXT_OFFSET
+            + text_direction * text_shift
         )
-        self.text_angle = math.degrees(math.atan2(
-            -text_direction.y,
-            text_direction.x,
-        ))
+        self.text_angle = math.degrees(math.atan2(-text_direction.y, text_direction.x,))
 
     @classmethod
-    def create_circular_curve(cls, start_point, mid_point, end_point):
+    def create_circular_curve(
+        cls, start_point: pygame.Vector2, mid_point: pygame.Vector2, end_point: pygame.Vector2
+    ) -> list[pygame.Vector2]:
+        """Compute a circular point given the start, mid, and end points.
+        """
         start_x, start_y = start_point
         mid_x, mid_y = mid_point
         end_x, end_y = end_point
-        determinant = 2*(
-            start_x*(mid_y - end_y)
-            + mid_x*(end_y - start_y)
-            + end_x*(start_y - mid_y)
+        determinant = 2 * (
+            start_x * (mid_y - end_y)
+            + mid_x * (end_y - start_y)
+            + end_x * (start_y - mid_y)
         )
         if abs(determinant) < 0.001:
             return [start_point, mid_point, end_point]
@@ -577,14 +627,14 @@ class ChapterProgressAnnotation:
         end_length_squared = end_point.length_squared()
         center = pygame.Vector2(
             (
-                start_length_squared*(mid_y - end_y)
-                + mid_length_squared*(end_y - start_y)
-                + end_length_squared*(start_y - mid_y)
+                start_length_squared * (mid_y - end_y)
+                + mid_length_squared * (end_y - start_y)
+                + end_length_squared * (start_y - mid_y)
             ) / determinant,
             (
-                start_length_squared*(end_x - mid_x)
-                + mid_length_squared*(start_x - end_x)
-                + end_length_squared*(mid_x - start_x)
+                start_length_squared * (end_x - mid_x)
+                + mid_length_squared * (start_x - end_x)
+                + end_length_squared * (mid_x - start_x)
             ) / determinant,
         )
         radius = center.distance_to(start_point)
@@ -599,17 +649,18 @@ class ChapterProgressAnnotation:
         else:
             angle_span = -((start_angle - end_angle) % math.tau)
 
-        arc_length = radius*abs(angle_span)
+        arc_length = radius * abs(angle_span)
         num_segments = max(2, math.ceil(arc_length / cls.CURVE_SAMPLE_SPACING))
         return [
             center + get_vec(
                 radius,
-                start_angle + angle_span*segment/num_segments,
+                start_angle + angle_span * segment/num_segments,
             )
             for segment in range(num_segments + 1)
         ]
 
-    def get_text(self):
+    def _get_text(self) -> str | None:
+        """Get the text content of the annotation based on clear state."""
         if all(node.cleared for node in self.sortie_nodes):
             return "secured waters"
 
@@ -618,10 +669,12 @@ class ChapterProgressAnnotation:
             return "operation plan"
         return None
 
-    def get_curve_points(self):
+    def _get_curve_points(self) -> list[pygame.Vector2]:
+        """Offset the curve points based on the anchor."""
         return [point + anchor() for point in self.curve_points]
 
-    def draw_text(self, surface, font_registry, text):
+    def _draw_text(self, surface: pygame.Surface, font_registry: dict[str, Font], text: str):
+        """Render the rotated text annotation."""
         font = font_registry["handwritten"]
         text_size = (
             math.ceil(font.get_width(text, self.TEXT_SCALE, 0)),
@@ -629,8 +682,8 @@ class ChapterProgressAnnotation:
         )
         text_surface = pygame.Surface(
             (
-                text_size[0] + 2*self.TEXT_SURFACE_PADDING,
-                text_size[1] + 2*self.TEXT_SURFACE_PADDING,
+                text_size[0] + 2 * self.TEXT_SURFACE_PADDING,
+                text_size[1] + 2 * self.TEXT_SURFACE_PADDING,
             ),
             pygame.SRCALPHA,
         )
@@ -649,7 +702,8 @@ class ChapterProgressAnnotation:
         surface.blit(rotated_text, rotated_text_rect)
 
     @classmethod
-    def draw_dashed_curve(cls, surface, points):
+    def _draw_dashed_curve(cls, surface: pygame.Surface, points: list[pygame.Vector2]):
+        """Draw a curve using a dashed line."""
         drawing_dash = True
         distance_until_toggle = cls.DASH_LENGTH
 
@@ -664,7 +718,7 @@ class ChapterProgressAnnotation:
 
             while distance_remaining > 0:
                 step = min(distance_remaining, distance_until_toggle)
-                next_position = position + direction*step
+                next_position = position + direction * step
                 if drawing_dash:
                     pygame.draw.line(
                         surface,
@@ -683,14 +737,16 @@ class ChapterProgressAnnotation:
                         cls.DASH_LENGTH if drawing_dash else cls.DASH_GAP
                     )
 
-    def draw(self, surface, font_registry):
-        text = self.get_text()
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the chapter progress annotation."""
+        text = self._get_text()
         if text is None:
             return
 
-        curve_points = self.get_curve_points()
-        self.draw_dashed_curve(surface, curve_points)
+        curve_points = self._get_curve_points()
+        self._draw_dashed_curve(surface, curve_points)
 
+        # Draw the arrowhead at the end of the dashed curve.
         arrow_direction = (curve_points[-1] - curve_points[-2]).normalize()
         backwards_angle = math.atan2(-arrow_direction.y, -arrow_direction.x)
         for angle_offset in (-self.ARROWHEAD_ANGLE, self.ARROWHEAD_ANGLE):
@@ -706,7 +762,7 @@ class ChapterProgressAnnotation:
                 width=self.LINE_WIDTH,
             )
 
-        self.draw_text(surface, font_registry, text)
+        self._draw_text(surface, font_registry, text)
 
 
 class Background:
@@ -714,13 +770,15 @@ class Background:
         num_waves = 36
         self.wave_indices = random.choices(list(range(DataFiles.sprites["sortie_selection"]["num_wave_sprites"])), k=num_waves)
         wave_height = DataFiles.sprites["sortie_selection"]["wave"].get_height() / 2
-        self.wave_ys = [wave_height * (i - num_waves + 8) for i in range(num_waves)]
+        self.wave_ys: list[float] = [wave_height * (i - num_waves + 8) for i in range(num_waves)]
         self.wave_timers = [math.radians(random.randint(0, 359)) for _ in range(num_waves)]
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the background timers."""
         self.wave_timers = [(wave_timer + dt) % math.radians(360) for wave_timer in self.wave_timers]
 
-    def draw(self, surface):
+    def draw(self, surface: pygame.Surface):
+        """Draw the background waves."""
         num_wave_reps = 10
         for wave_index, wave_y, wave_timer in  zip(self.wave_indices, self.wave_ys, self.wave_timers):
             wave_sprite = DataFiles.sprites["sortie_selection"][f"wave{wave_index}"]
@@ -735,7 +793,8 @@ class Background:
                     continue
                 surface.blit(wave_sprite, wave_rect)
 
-    def draw_markings(self, surface, font_registry):
+    def draw_markings(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw background markings like a compass rose and cosmetic map scale."""
         compass_rose = DataFiles.sprites["sortie_selection"]["compass_rose"]
         compass_rose_rect = compass_rose.get_rect()
         compass_rose_rect.bottom = Box.BOTTOM_OF_SCREEN
@@ -775,8 +834,8 @@ class Background:
 
 
 class SortieOrderCard:
-    WIDTH = 3*(Box.WIDTH + Box.PADDING) + Box.PADDING + 2*Box.PADDING
-    HEIGHT = 5*Box.HEIGHT + 4*Box.PADDING
+    WIDTH = 3 * (Box.WIDTH + Box.PADDING) + Box.PADDING + 2 * Box.PADDING
+    HEIGHT = 5 * Box.HEIGHT + 4 * Box.PADDING
     HEADER_BOTTOM = 96
     REWARD_TOP = 116
     AUTHORIZATION_HEIGHT = 72
@@ -786,26 +845,22 @@ class SortieOrderCard:
     AUTHORIZATION_DISAPPEAR_TIME = 0.5
     CHART_GAP = 2 * Box.PADDING
 
-    def __init__(self, authorize_sortie):
+    def __init__(self, authorize_sortie: Callable):
         self.rect = get_rect(width=self.WIDTH, height=self.HEIGHT, left=0, top=0)
-        self.page_rect = self.rect.inflate(-2*Box.PADDING, -2*Box.PADDING - Box.HEIGHT/2)
+        self.page_rect = self.rect.inflate(-2 * Box.PADDING, -2 * Box.PADDING - Box.HEIGHT / 2)
         self.side = "right"
-        self.node = None
+        self.node: SortieNode | None = None
         self.authorize_sortie = authorize_sortie
         self.authorizing = False
         self.authorization_timer = 0
         self.authorization_impact_played = False
         self.authorization_pos = pygame.Vector2()
 
-        self.authorization_anchors = {
-            "muted": DataFiles.recolor_sprite("user_interface", "start_sortie", Color.DOSSIER_RULE),
-            "red":DataFiles.recolor_sprite("user_interface", "start_sortie", Color.START_SORTIE_BUTTON),
-        }
         self.authorization_stamp = DataFiles.sprites["props"]["stamp"]
 
         self.button = RectangularButton(
             get_rect(
-                width=self.WIDTH - 4*Box.PADDING,
+                width=self.WIDTH - 4 * Box.PADDING,
                 height=self.AUTHORIZATION_HEIGHT,
                 left=0,
                 top=0,
@@ -815,16 +870,21 @@ class SortieOrderCard:
         )
 
     @staticmethod
-    def get_safe_rect():
-        exit_button_clearance = 48 + Box.PADDING
+    def get_safe_rect() -> pygame.Rect:
+        """Compute the safe bound of the screen.
+        
+        This is the inset rect of the screen where this sortie order card can
+        be rendered without being off-screen.
+        """
         return pygame.Rect(
             Box.LEFT_OF_SCREEN,
             Box.TOP_OF_SCREEN,
-            Box.RIGHT_OF_SCREEN - exit_button_clearance - Box.LEFT_OF_SCREEN,
+            Box.RIGHT_OF_SCREEN - Box.LEFT_OF_SCREEN,
             Box.BOTTOM_OF_SCREEN - Box.TOP_OF_SCREEN,
         )
 
-    def get_unclamped_rect(self, node_rect, side=None):
+    def get_unclamped_rect(self, node_rect: pygame.Rect, side: str = None) -> pygame.Rect:
+        """Get the rect for the sortie order card that is not clamped to screen bounds."""
         side = side or self.side
         rect = self.rect.copy()
         rect.centery = node_rect.centery
@@ -835,6 +895,11 @@ class SortieOrderCard:
         return rect
 
     def layout(self):
+        """Format the screen to accommodate the sortie order card.
+        
+        Compute the node bounding rect and get the unclamped rect based off that
+        bounding rect. Then clamp the order card based on screen bounds.
+        """
         if self.node is None:
             return
 
@@ -851,7 +916,12 @@ class SortieOrderCard:
         if not self.authorizing:
             self.authorization_pos = pygame.Vector2(self.button.rect.center)
 
-    def select(self, node, side, authorize_immediately):
+    def select(self, node: SortieNode, side: str, authorize_immediately: bool):
+        """Select the node, and hence layout the order card next to the node bounding rect.
+        
+        The authorize_immediately flag indicates whether the button should immediately be
+        active or not.
+        """
         self.node = node
         self.side = side
         self.authorizing = False
@@ -862,7 +932,8 @@ class SortieOrderCard:
         self.button.active = authorize_immediately
 
     def clear(self):
-        self.node = None
+        """Clear the order card state."""
+        self.node: SortieNode | None = None
         self.button.active = False
         self.button.hovered = False
         self.authorizing = False
@@ -870,7 +941,8 @@ class SortieOrderCard:
         self.authorization_impact_played = False
         self.authorization_pos = pygame.Vector2()
 
-    def begin_authorization(self, click_pos=None):
+    def begin_authorization(self, click_pos: tuple[int, int] | None = None):
+        """Start the authorization animation."""
         if self.node is None or self.authorizing or not self.button.active:
             return
 
@@ -883,7 +955,8 @@ class SortieOrderCard:
         self.button.active = False
         self.button.hovered = False
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the order card, i.e. animate the authorization animation."""
         if not self.authorizing:
             return
 
@@ -903,20 +976,16 @@ class SortieOrderCard:
             self.authorizing = False
             self.authorize_sortie()
 
-    def get_status(self):
-        if self.node.cleared:
-            return "charted territory", Color.CLEARED_ZONE_FILL
-        return "uncharted waters", Color.UNCLEARED_ZONE_FILL
-
-    def draw_paper(self, surface):
-        dossier_rect = self.rect.inflate(0, -Box.HEIGHT/2)
+    def _draw_paper(self, surface: pygame.Surface):
+        """Draw the paper component of the order card."""
+        dossier_rect = self.rect.inflate(0, -Box.HEIGHT / 2)
         dossier_rect.bottomleft = self.rect.bottomleft
         pygame.draw.rect(surface, Color.DOSSIER, dossier_rect)
         dossier_tab = [
             pygame.Vector2(self.rect.topleft),
             pygame.Vector2(self.rect.topleft) + pygame.Vector2(Box.WIDTH - Box.PADDING, 0),
-            pygame.Vector2(self.rect.topleft) + pygame.Vector2(Box.WIDTH + Box.PADDING, Box.HEIGHT/2),
-            pygame.Vector2(self.rect.topleft) + pygame.Vector2(0, Box.HEIGHT/2),
+            pygame.Vector2(self.rect.topleft) + pygame.Vector2(Box.WIDTH + Box.PADDING, Box.HEIGHT / 2),
+            pygame.Vector2(self.rect.topleft) + pygame.Vector2(0, Box.HEIGHT / 2),
         ]
         pygame.draw.polygon(surface, Color.DOSSIER, dossier_tab)
 
@@ -932,13 +1001,24 @@ class SortieOrderCard:
             )
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.page_rect)
 
-    def draw_header(self, surface, font_registry):
+    def _draw_header(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the header section of the order card.
+        
+        This includes a title, subtitle, and cosmetic form details.
+        """
         font = font_registry["big_pixel"]
         small_font = font_registry["pixel"]
         left = self.page_rect.left + Box.PADDING
         right = self.page_rect.right - Box.PADDING
         top = self.page_rect.top + Box.PADDING
-        status, status_color = self.get_status()
+
+        # Get the header text based on node status.
+        if self.node.cleared:
+            status = "charted territory"
+            status_color = Color.CLEARED_ZONE_FILL
+        else:
+            status = "uncharted waters"
+            status_color = Color.UNCLEARED_ZONE_FILL
 
         small_font.render(surface, "azur lane naval command", (left, top), Color.DOSSIER_RULE, 1)
         form_text = f"form so-{self.node.index + 1:03d}"
@@ -947,7 +1027,7 @@ class SortieOrderCard:
         small_font.render(surface, "operation order", (left, top + 12), Color.DOSSIER_INK, 1)
         font.render(surface, f"sector {self.node.index + 1:02d}", (left, top + 27), Color.DOSSIER_INK, 2)
 
-        status_width = font.get_width(status, 1, 0) + 2*Box.PADDING
+        status_width = font.get_width(status, 1, 0) + 2 * Box.PADDING
         status_rect = get_rect(
             width=status_width,
             height=24,
@@ -965,7 +1045,8 @@ class SortieOrderCard:
             (right, self.page_rect.top + self.HEADER_BOTTOM),
         )
 
-    def draw_rewards(self, surface, font_registry):
+    def _draw_rewards(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the rewards section of the order card."""
         font = font_registry["big_pixel"]
         left = self.page_rect.left + Box.PADDING
         heading = "allotment issued" if self.node.cleared else "first-clear allotment"
@@ -973,7 +1054,11 @@ class SortieOrderCard:
 
         rewards = DataFiles.sortie_data[self.node.index]["rewards"]
         if not rewards:
-            reward_area = pygame.Rect(left, self.page_rect.top + self.REWARD_TOP, self.page_rect.width - 2*Box.PADDING, Box.HEIGHT)
+            # No rewards are present, so render a default empty text.
+            reward_area = pygame.Rect(
+                left, self.page_rect.top + self.REWARD_TOP,
+                self.page_rect.width - 2 * Box.PADDING, Box.HEIGHT
+            )
             font.render(surface, "no allotment on file", reward_area.center, Color.DOSSIER_RULE, 1, style="center")
             return
 
@@ -981,7 +1066,7 @@ class SortieOrderCard:
             rect = get_rect(
                 width=Box.WIDTH,
                 height=Box.HEIGHT,
-                left=left + i*(Box.WIDTH + Box.PADDING),
+                left=left + i * (Box.WIDTH + Box.PADDING),
                 top=self.page_rect.top + self.REWARD_TOP,
             )
             pygame.draw.rect(surface, Color.DOSSIER_CARD_SHADOW, rect.move(2, 2))
@@ -994,34 +1079,24 @@ class SortieOrderCard:
             font.render(surface, f"qty {count:02d}", quantity_rect.center, Color.DOSSIER_INK, 1, style="center")
             pygame.draw.rect(surface, Color.DOSSIER_INK, rect, width=1)
 
+        # The sortie has already been cleared.
+        # Render a special stamp sprite that indicates this to the player.
         if self.node.cleared:
             obtained_stamp = DataFiles.sprites["sortie_selection"]["obtained_stamp"].copy()
             obtained_stamp.set_alpha(128)
             obtained_stamp_rect = obtained_stamp.get_rect()
             obtained_stamp_rect.centerx = self.page_rect.centerx
-            obtained_stamp_rect.top = self.page_rect.top + self.REWARD_TOP - Box.HEIGHT/4
+            obtained_stamp_rect.top = self.page_rect.top + self.REWARD_TOP - Box.HEIGHT / 4
             surface.blit(obtained_stamp, obtained_stamp_rect)
 
-    @staticmethod
-    def draw_dashed_rect(surface, color, rect, dash_length=8, gap_length=4, width=2):
-        right = rect.right - 1
-        bottom = rect.bottom - 1
-        dash_step = dash_length + gap_length
-        for x in range(rect.left, right + 1, dash_step):
-            dash_right = min(x + dash_length, right)
-            pygame.draw.line(surface, color, (x, rect.top), (dash_right, rect.top), width)
-            pygame.draw.line(surface, color, (x, bottom), (dash_right, bottom), width)
-        for y in range(rect.top, bottom + 1, dash_step):
-            dash_bottom = min(y + dash_length, bottom)
-            pygame.draw.line(surface, color, (rect.left, y), (rect.left, dash_bottom), width)
-            pygame.draw.line(surface, color, (right, y), (right, dash_bottom), width)
-
-    def draw_authorization(self, surface, font_registry):
+    def _draw_authorization(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the authorization button."""
         field_rect = self.button.rect
         label_y = field_rect.top - 16
         rule_y = field_rect.top - 24
         content_left = self.page_rect.left + Box.PADDING
         content_right = self.page_rect.right - Box.PADDING
+        # Section header.
         pygame.draw.line(
             surface,
             Color.DOSSIER_RULE,
@@ -1036,6 +1111,7 @@ class SortieOrderCard:
             1,
         )
 
+        # Button with hover state.
         hovered = self.button.active and self.button.hovered
         imprint_visible = (
             self.authorizing
@@ -1046,7 +1122,7 @@ class SortieOrderCard:
 
         if hovered:
             pygame.draw.rect(surface, Color.DOSSIER_CARD, field_rect)
-        self.draw_dashed_rect(surface, ink_color, field_rect, width=Box.OUTLINE_WIDTH)
+        draw_dashed_rect(surface, ink_color, field_rect, dash_length=8, gap_length=4, width=Box.OUTLINE_WIDTH)
 
         font_registry["big_pixel"].render(
             surface,
@@ -1065,6 +1141,7 @@ class SortieOrderCard:
             style="center",
         )
 
+        # Stamp pattern for authorization animation.
         if imprint_visible:
             stamp_pattern_sprite = DataFiles.sprites["props"]["stamp_pattern"].copy()
             if self.authorization_timer >= self.AUTHORIZATION_DISAPPEAR_TIME:
@@ -1083,7 +1160,11 @@ class SortieOrderCard:
             stamp_pattern_rect.center = self.authorization_pos
             surface.blit(stamp_pattern_sprite, stamp_pattern_rect)
 
-    def draw_authorization_stamp(self, surface):
+    def _draw_authorization_stamp(self, surface: pygame.Surface):
+        """Draw the stamp prop for the authorization animation.
+        
+        This stamp plays an up and stamp down animation like the decoration store.
+        """
         if not self.authorizing or self.authorization_timer > self.AUTHORIZATION_LIFT_TIME:
             return
 
@@ -1102,28 +1183,28 @@ class SortieOrderCard:
 
         stamp_rect = self.authorization_stamp.get_rect()
         stamp_rect.centerx = round(stamp_pos.x)
-        stamp_rect.bottom = round(stamp_pos.y + Box.HEIGHT/2)
+        stamp_rect.bottom = round(stamp_pos.y + Box.HEIGHT / 2)
         surface.blit(self.authorization_stamp, stamp_rect)
 
-    def draw_props(self, surface):
-        paperclip = DataFiles.sprites["props"]["diagonal_paperclip"]
-        paperclip_rect = paperclip.get_rect()
-        paperclip_rect.left = self.rect.left - 16
-        paperclip_rect.top = self.rect.top - 8 + Box.HEIGHT/2
-        surface.blit(paperclip, paperclip_rect)
-
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the sortie order card."""
         if self.node is None:
             return
 
         self.layout()
-        self.draw_paper(surface)
-        self.draw_header(surface, font_registry)
-        self.draw_rewards(surface, font_registry)
-        self.draw_authorization(surface, font_registry)
-        self.button.draw(surface, font_registry)
-        self.draw_props(surface)
-        self.draw_authorization_stamp(surface)
+        self._draw_paper(surface)
+        self._draw_header(surface, font_registry)
+        self._draw_rewards(surface, font_registry)
+        self._draw_authorization(surface, font_registry)
+
+        # Draw paperclip prop.
+        paperclip = DataFiles.sprites["props"]["diagonal_paperclip"]
+        paperclip_rect = paperclip.get_rect()
+        paperclip_rect.left = self.rect.left - 16
+        paperclip_rect.top = self.rect.top - 8 + Box.HEIGHT / 2
+        surface.blit(paperclip, paperclip_rect)
+        
+        self._draw_authorization_stamp(surface)
 
 
 class SortieSelectionMenu(Menu):
@@ -1138,7 +1219,7 @@ class SortieSelectionMenu(Menu):
 
         self.mousedown = False
 
-        self.selected_sortie_node = None
+        self.selected_sortie_node: SortieNode | None = None
         self.selection_effect_time = 0
         self.sortie_nodes = [
             SortieNode(sortie_index, sortie_info)
@@ -1159,6 +1240,8 @@ class SortieSelectionMenu(Menu):
         
         self.sortie_order_card = SortieOrderCard(start_sortie)
         self.selected_sortie_info_panel = self.sortie_order_card.rect
+
+        # Camera pan logic for sortie order card.
         self.camera_pan_start = SortieNode.center.copy()
         self.camera_pan_target = SortieNode.center.copy()
         self.camera_pan_timer = 0
@@ -1167,8 +1250,12 @@ class SortieSelectionMenu(Menu):
             self.menu_manager.current_menu = self.menu_manager.port_menu
             DataFiles.sfx["waves"].fadeout(3000)
 
+        button_size = 48
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
-        button_rect = get_rect(width=48,height=48,right=Box.RIGHT_OF_SCREEN,top=Box.TOP_OF_SCREEN)
+        button_rect = get_rect(
+            width=button_size, height=button_size,
+            right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN
+        )
         self.exit_sortie_selection_menu_button = RectangularButton(
             button_rect,
             exit_sortie_selection_menu,
@@ -1181,20 +1268,53 @@ class SortieSelectionMenu(Menu):
         )
 
         self.background = Background()
-        self.chapter_regions = self.create_chapter_regions()
-        self.chapter_name_ribbons = self.create_chapter_name_ribbons()
-        self.chapter_progress_annotations = self.create_chapter_progress_annotations()
 
+        chapters = sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
+
+        # Generate the chapter region objects with boundary data.
+        self.chapter_regions: list[ChapterRegion] = []
+        boundary_data = DataFiles.sortie_selection_details["chapter_boundaries"]
+        for chapter in chapters:
+            chapter_nodes = [
+                sortie_node for sortie_node in self.sortie_nodes
+                if sortie_node.chapter == chapter
+            ]
+            self.chapter_regions.append(
+                ChapterRegion(chapter, boundary_data[str(chapter)], chapter_nodes)
+            )
+        # Generate the chapter name ribbon banners.
+        self.chapter_name_ribbons: list[ChapterNameRibbon] = []
+        for chapter in chapters:
+            chapter_nodes = [
+                sortie_node for sortie_node in self.sortie_nodes
+                if sortie_node.chapter == chapter
+            ]
+            if len(chapter_nodes) == 0:
+                continue
+            self.chapter_name_ribbons.append(ChapterNameRibbon(chapter, chapter_nodes))
+        # Generate the chapter progress annotations.
+        self.chapter_progress_annotations: list[ChapterProgressAnnotation] = []
+        for chapter in chapters:
+            chapter_nodes = [
+                sortie_node for sortie_node in self.sortie_nodes
+                if sortie_node.chapter == chapter
+            ]
+            if len(chapter_nodes) == 0:
+                continue
+            self.chapter_progress_annotations.append(
+                ChapterProgressAnnotation(chapter, chapter_nodes)
+            )
+        # Generate the fogs for each chapter region.
         self.fogs = [
             Fog(
                 [sortie_node for sortie_node in self.sortie_nodes if sortie_node.chapter == chapter],
                 disperse=DataFiles.save_file["chapter_progress"] >= chapter
             )
-            for chapter in range(4)
+            for chapter in chapters
         ]
 
         self.paths = {}
-        self.generate_paths()
+        self._generate_paths()
 
         self.sea_location_labels = [
             NameRibbon((-105, -390), "stormy", scale=0.75),
@@ -1206,7 +1326,8 @@ class SortieSelectionMenu(Menu):
             NameRibbon((1045, -790), "cinder isles", scale=0.75),
         ]
 
-    def generate_paths(self):
+    def _generate_paths(self):
+        """Generate paths based on pre-saved checkpoints in sortie_selection_details.json."""
         for chapter, checkpoints in DataFiles.sortie_selection_details["checkpoints"].items():
             checkpoints = [pygame.Vector2(checkpoint) for checkpoint in checkpoints]
             step = 1
@@ -1254,57 +1375,17 @@ class SortieSelectionMenu(Menu):
                 path.append((pos, angle))
             self.paths[int(chapter)] = path
 
-    def get_chapters(self):
-        return sorted({sortie_node.chapter for sortie_node in self.sortie_nodes})
-
-    def create_chapter_regions(self):
-        regions = []
-        boundary_data = DataFiles.sortie_selection_details["chapter_boundaries"]
-        for chapter in self.get_chapters():
-            chapter_nodes = [
-                sortie_node for sortie_node in self.sortie_nodes
-                if sortie_node.chapter == chapter
-            ]
-            regions.append(
-                ChapterRegion(chapter, boundary_data[str(chapter)], chapter_nodes)
-            )
-        return regions
-
-    def create_chapter_name_ribbons(self):
-        ribbons = []
-        for chapter in self.get_chapters():
-            chapter_nodes = [
-                sortie_node for sortie_node in self.sortie_nodes
-                if sortie_node.chapter == chapter
-            ]
-            if len(chapter_nodes) == 0:
-                continue
-            ribbons.append(ChapterNameRibbon(chapter, chapter_nodes))
-        return ribbons
-
-    def create_chapter_progress_annotations(self):
-        annotations = []
-        for chapter in self.get_chapters():
-            chapter_nodes = [
-                sortie_node for sortie_node in self.sortie_nodes
-                if sortie_node.chapter == chapter
-            ]
-            if len(chapter_nodes) == 0:
-                continue
-            annotations.append(
-                ChapterProgressAnnotation(chapter, chapter_nodes)
-            )
-        return annotations
-
     @classmethod
-    def clamp_camera_center(cls, center):
+    def _clamp_camera_center(cls, center: pygame.Vector2) -> pygame.Vector2:
+        """Clamp camera to the camera pan bounds."""
         return pygame.Vector2(
             min(max(cls.CAMERA_MIN.x, center.x), cls.CAMERA_MAX.x),
             min(max(cls.CAMERA_MIN.y, center.y), cls.CAMERA_MAX.y),
         )
 
     @staticmethod
-    def get_viewport_shift(rect, safe_rect):
+    def _get_viewport_shift(rect: pygame.Rect, safe_rect: pygame.Rect) -> pygame.Vector2:
+        """Get the required camera shift so that rect is within safe_rect."""
         shift = pygame.Vector2()
         if rect.left < safe_rect.left:
             shift.x = safe_rect.left - rect.left
@@ -1317,7 +1398,8 @@ class SortieSelectionMenu(Menu):
         return shift
 
     @staticmethod
-    def get_viewport_overflow(rect, safe_rect):
+    def _get_viewport_overflow(rect: pygame.Rect, safe_rect: pygame.Rect) -> float:
+        """Get the total overflow of the rect against the safe_rect, which it should be within."""
         return (
             max(0, safe_rect.left - rect.left)
             + max(0, rect.right - safe_rect.right)
@@ -1325,26 +1407,40 @@ class SortieSelectionMenu(Menu):
             + max(0, rect.bottom - safe_rect.bottom)
         )
 
-    def get_camera_target_for_card_side(self, node, side):
+    def _get_camera_target_for_card_side(self, node: SortieNode, side: str) -> tuple[pygame.Vector2, int]:
+        """Compute the camera target for the card side.
+        
+        The rect is the combined rect of the sortie node bounding box and the
+        sortie order card pinned to its side.
+        """
         node_rect = node.get_bounding_rect()
         card_rect = self.sortie_order_card.get_unclamped_rect(node_rect, side)
         combined_rect = node_rect.union(card_rect)
         safe_rect = self.sortie_order_card.get_safe_rect()
-        requested_shift = self.get_viewport_shift(combined_rect, safe_rect)
+        requested_shift = self._get_viewport_shift(combined_rect, safe_rect)
 
-        target = self.clamp_camera_center(SortieNode.center - requested_shift)
+        target = self._clamp_camera_center(SortieNode.center - requested_shift)
         actual_shift = SortieNode.center - target
         shifted_combined_rect = combined_rect.move(round(actual_shift.x), round(actual_shift.y))
-        overflow = self.get_viewport_overflow(shifted_combined_rect, safe_rect)
+        overflow = self._get_viewport_overflow(shifted_combined_rect, safe_rect)
         return target, overflow
 
-    def select_sortie_node(self, node):
-        right_target, right_overflow = self.get_camera_target_for_card_side(node, "right")
+    def _select_sortie_node(self, node: SortieNode):
+        """Update the selected sortie state with the input sortie node.
+        
+        Compare the total overflow as a result of needing to pan the camera in either
+        the right or left directions, and choose the camera pan which has the least
+        overflow (i.e. movement). Then pan the camera in that direction to make space
+        for the combined sortie node bounding rect and the sortie order card. Based
+        on if the camera needs to pan, the order card can either have its button active
+        immediately, or it will wait for the camera pan to finish and then make it active.
+        """
+        right_target, right_overflow = self._get_camera_target_for_card_side(node, "right")
         if right_overflow == 0:
             side = "right"
             target = right_target
         else:
-            left_target, left_overflow = self.get_camera_target_for_card_side(node, "left")
+            left_target, left_overflow = self._get_camera_target_for_card_side(node, "left")
             if left_overflow < right_overflow:
                 side = "left"
                 target = left_target
@@ -1360,7 +1456,8 @@ class SortieSelectionMenu(Menu):
         self.camera_pan_timer = self.CAMERA_PAN_DURATION if camera_will_move else 0
         self.sortie_order_card.select(node, side, authorize_immediately=not camera_will_move)
 
-    def clear_selected_sortie(self):
+    def _clear_selected_sortie(self):
+        """Clear the selected sortie state."""
         if self.selected_sortie_node is not None:
             self.selected_sortie_node.hovered = False
         self.selected_sortie_node = None
@@ -1369,7 +1466,8 @@ class SortieSelectionMenu(Menu):
         self.camera_pan_start = SortieNode.center.copy()
         self.camera_pan_target = SortieNode.center.copy()
 
-    def update_camera_pan(self, dt):
+    def _update_camera_pan(self, dt: float):
+        """Update the camera pan mechanic for the sortie selection."""
         if self.camera_pan_timer <= 0:
             return
 
@@ -1390,6 +1488,7 @@ class SortieSelectionMenu(Menu):
             if self.sortie_order_card.authorizing:
                 continue
             if event.type == pygame.MOUSEBUTTONDOWN:
+                # Prevent manual camera pans if the player clicks on any UI that is interactable.
                 if self.exit_sortie_selection_menu_button.rect.collidepoint(event.pos):
                     continue
                 if self.sortie_order_card.button.rect.collidepoint(event.pos):
@@ -1402,15 +1501,23 @@ class SortieSelectionMenu(Menu):
                 else:
                     self.mousedown = True
             if event.type == pygame.MOUSEMOTION:
-                self.sortie_order_card.button.hover(event.pos)
-
                 if self.selected_sortie_node is None:
-                    self.exit_sortie_selection_menu_button.hover(event.pos)
                     if self.mousedown:
+                        # Update manual camera panning.
                         movement = pygame.Vector2(event.rel)
                         SortieNode.center -= movement
-                        SortieNode.center = self.clamp_camera_center(SortieNode.center)
+                        SortieNode.center = self._clamp_camera_center(SortieNode.center)
+                    else:
+                        # Allow hovering if the player is not panning the camera.
+                        self.exit_sortie_selection_menu_button.hover(event.pos)
+                        for sortie_node in self.sortie_nodes:
+                            sortie_node.hover(event.pos)
+                else:
+                    # Update hover state for the sortie order card, which is rendered when
+                    # the selected sortie node is not None.
+                    self.sortie_order_card.button.hover(event.pos)
             if event.type == pygame.MOUSEBUTTONUP:
+                # Prevent mouse interactions when the player is panning camera.
                 if self.mousedown:
                     self.mousedown = False
                     continue
@@ -1426,22 +1533,20 @@ class SortieSelectionMenu(Menu):
                     continue
 
                 if self.selected_sortie_node is None:
+                    # Allow selection of sortie nodes when the selected node is None.
                     for sortie_node in self.sortie_nodes:
                         if not sortie_node.select(event.pos):
                             continue
-                        self.select_sortie_node(sortie_node)
+                        self._select_sortie_node(sortie_node)
                         DataFiles.sfx["click"].play()
                         break
                 else:
+                    # Player can de-select the selected sortie node by clicking outside
+                    # of the order card panel.
                     if not self.selected_sortie_info_panel.collidepoint(event.pos):
-                        self.clear_selected_sortie()
+                        self._clear_selected_sortie()
 
-            if event.type == pygame.MOUSEMOTION:
-                if self.selected_sortie_node is None:
-                    for sortie_node in self.sortie_nodes:
-                        sortie_node.hover(event.pos)
-
-        self.update_camera_pan(dt)
+        self._update_camera_pan(dt)
         self.sortie_order_card.update(dt)
         self.background.update(dt)
         for fog in self.fogs:
@@ -1453,7 +1558,8 @@ class SortieSelectionMenu(Menu):
         for chapter_region in self.chapter_regions:
             chapter_region.draw(surface)
 
-        for chapter in range(DataFiles.save_file["chapter_progress"]+1):
+        # Draw paths between chapters that have been unlocked.
+        for chapter in range(DataFiles.save_file["chapter_progress"] + 1):
             path = self.paths.get(chapter, [])
             for point, angle in path:
                 center = point + anchor()
@@ -1501,7 +1607,8 @@ class SortieSelectionMenu(Menu):
 
         for chapter_progress_annotation in self.chapter_progress_annotations:
             chapter_progress_annotation.draw(surface, font_registry)
-        
+
+        # Draw the current objective indicator.
         current_sortie_node = next(
             (
                 sortie_node for sortie_node in self.sortie_nodes

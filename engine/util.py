@@ -1,8 +1,19 @@
 import math
 import pygame
 
-def get_rect(width, height, left=None, centerx=None, right=None, top=None, centery=None, bottom=None, center=None):
-    rect = pygame.Rect(0,0,width,height)
+def get_rect(
+    width: float,
+    height: float,
+    left: float | None = None,
+    centerx: float | None = None,
+    right: float | None = None,
+    top: float | None = None,
+    centery: float | None = None,
+    bottom: float | None = None,
+    center: tuple[float, float] | None = None
+) -> pygame.Rect:
+    """Return a rect with the inputted sizing and positioning."""
+    rect = pygame.Rect(0, 0, width, height)
     if left is not None:
         rect.left = left
     if centerx is not None:
@@ -19,10 +30,21 @@ def get_rect(width, height, left=None, centerx=None, right=None, top=None, cente
         rect.center = center
     return rect
 
-def get_vec(length, angle):
+def get_vec(length: float, angle: float) -> pygame.Vector2:
+    """Return a vector computed from the inputted length and angle."""
     return length * pygame.Vector2(math.cos(angle), math.sin(angle))
 
-def draw_annulus(surface, color, center, inner_radius, outer_radius, start_angle, stop_angle, resolution=10):
+def draw_annulus(
+    surface: pygame.Surface,
+    color: tuple[int, int, int],
+    center: tuple[float, float],
+    inner_radius: float,
+    outer_radius: float,
+    start_angle: float,
+    stop_angle: float,
+    resolution: float = 10
+):
+    """Draw an annulus with the given parameters."""
     points = [pygame.Vector2(outer_radius, outer_radius)]
     current_angle = start_angle
     angles = []
@@ -36,21 +58,22 @@ def draw_annulus(surface, color, center, inner_radius, outer_radius, start_angle
             points.append(points[0] + vec)
         
         annulus = pygame.Surface((2*outer_radius, 2*outer_radius))
-        annulus.fill((0,0,0))
+        annulus.fill((0, 0, 0))
         pygame.draw.polygon(annulus, color, points)
-        pygame.draw.circle(annulus, (0,0,0), (outer_radius, outer_radius), inner_radius)
-        annulus.set_colorkey((0,0,0))
+        pygame.draw.circle(annulus, (0, 0, 0), (outer_radius, outer_radius), inner_radius)
+        annulus.set_colorkey((0, 0, 0))
         annulus_rect = annulus.get_rect()
         annulus_rect.center = center
         surface.blit(annulus, annulus_rect)
 
-def hex_to_pixel(q, r, size):
-    x = size * (math.sqrt(3) * q + math.sqrt(3)/2 * r)
-    y = size * (3/2 * r)
+def hex_to_pixel(q: int, r: int, size: float) -> tuple[float, float]:
+    """Compute the pixel position given a hex tile position."""
+    x = size * (math.sqrt(3) * q + math.sqrt(3) / 2 * r)
+    y = size * (3 / 2 * r)
     return (x, y)
 
-def hex_round(q, r):
-
+def hex_round(q: float, r: float) -> tuple[int, int]:
+    """Round decimal hex coordinates into integral hex-coordinates."""
     x = q
     z = r
     y = -x - z
@@ -72,8 +95,8 @@ def hex_round(q, r):
 
     return rx, rz
 
-def pixel_to_hex(x, y, size):
-
+def pixel_to_hex(x: float, y: float, size: float) -> tuple[int, int]:
+    """Compute the coordinates of the hex containing the input point."""
     q = (math.sqrt(3)/3 * x - 1/3 * y) / size
     r = (2/3 * y) / size
 
@@ -90,7 +113,8 @@ def hex_corners(x, y, size):
 
 HEX_DIRECTIONS = [(1,0), (0,1), (-1,1), (-1,0), (0,-1), (1,-1)]
 
-def get_cluster_edges(cluster_hexes, size):
+def get_cluster_edges(cluster_hexes: list[tuple[float, float]], size: float) -> list[tuple[float, float]]:
+    """Compute the vertices of a cluster of hexes."""
     cluster_set = set(cluster_hexes)
     edges = {}
 
@@ -117,7 +141,8 @@ def get_cluster_edges(cluster_hexes, size):
 
     return polygon
 
-def adjacent_hexes(q, r, steps):
+def adjacent_hexes(q: int, r: int, steps: int) -> set[tuple[int, int]]:
+    """Compute the set of hexes adjacent to the inputted hex, at most step tiles away."""
     adjacent = {(q, r)}
     if steps <= 0:
         return adjacent
