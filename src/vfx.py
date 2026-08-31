@@ -1,9 +1,14 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.font import Font
+
 import math
 import random
 import pygame
 
 from engine.util import get_vec
-from src.constants import Color
+from src.constants import Equipment
 
 
 SHELL_COLORS = {
@@ -50,7 +55,8 @@ DAMAGE_COUNTER_COLORS = {
 
 SHELL_SCALE = 1/1000
 
-def shell_path(start_pos, target_pos, t):
+def shell_path(start_pos: pygame.Vector2, target_pos: pygame.Vector2, t: float) -> pygame.Vector2:
+    """Compute a parabolic shell path from start to target, parametrized by t."""
     relpos = target_pos - start_pos
     distance = relpos.length()
     scale = distance * SHELL_SCALE
@@ -59,25 +65,40 @@ def shell_path(start_pos, target_pos, t):
 
 
 class VFX:
-    def __init__(self, duration, delay):
+    def __init__(self, duration: float, delay: float):
         self.lifetime = 0
         self.duration = duration
         self.delay = delay
     
     @property
-    def expired(self):
+    def expired(self) -> bool:
+        """Check if the vfx is expired."""
         return self.lifetime >= self.duration
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the vfx."""
         if self.delay > 0:
             self.delay -= dt
             return
         self.lifetime += (dt + abs(self.delay))
         self.delay = 0
 
+    def draw(self, dt: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the vfx."""
+        pass
+
 
 class Spark(VFX):
-    def __init__(self, pos, angle, color, duration=0.3, delay=0, fly_distance=64, size=(12,4)):
+    def __init__(
+        self,
+        pos: tuple[float, float],
+        angle: float,
+        color: tuple[int, int, int],
+        duration: float = 0.3,
+        delay: float = 0,
+        fly_distance: float = 64,
+        size: tuple[float, float] = (12, 4)
+    ):
         super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
@@ -86,12 +107,13 @@ class Spark(VFX):
         self.fly_distance = fly_distance
         self.spark_angle = angle
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the spark."""
         if self.delay > 0:
             return
         
         t = min(1, self.lifetime / self.duration)
-        quadratic_ease = 1 - (t-1)**2
+        quadratic_ease = 1 - (t - 1) ** 2
         linear_decay = 1 - t
         spark_dir = get_vec(1, self.spark_angle)
         spark_perp = pygame.Vector2(-spark_dir.y, spark_dir.x)
@@ -108,19 +130,27 @@ class Spark(VFX):
 
 
 class Ring(VFX):
-    def __init__(self, pos, color, duration=0.3, delay=0, radius=64):
+    def __init__(
+        self,
+        pos: tuple[float, float],
+        color: tuple[int, int, int],
+        duration: float = 0.3,
+        delay: float = 0,
+        radius: float = 64
+    ):
         super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
         self.radius = radius
         self.color = color
     
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the ring."""
         if self.delay > 0:
             return
         
         t = min(1, self.lifetime / self.duration)
-        quadratic_ease = 1 - (t-1)**2
+        quadratic_ease = 1 - (t - 1) ** 2
         boom_radius = self.radius * quadratic_ease
         boom_width = 2 + 16 * (1 - quadratic_ease)
         boom_width = int(min(boom_radius, boom_width))
@@ -128,7 +158,14 @@ class Ring(VFX):
 
 
 class Slash(VFX):
-    def __init__(self, pos, angle, color, delay=0, duration=0.2):
+    def __init__(
+        self,
+        pos: tuple[float, float],
+        angle: float,
+        color: tuple[int, int, int],
+        delay: float = 0,
+        duration: float = 0.2
+    ):
         super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
@@ -136,13 +173,14 @@ class Slash(VFX):
         self.perpendicular = pygame.Vector2(-self.direction.y, self.direction.x)
         self.color = color
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the slash."""
         if self.delay > 0:
             return
         
         t = min(1, self.lifetime / self.duration)
         linear_decay = 1 - t
-        steep_rise = 2*t - 1
+        steep_rise = 2 * t - 1
         hit_pos = self.pos + 100 * steep_rise * self.direction
         hit_length = 100 + 50 * linear_decay
         hit_width = 5 + 2 * linear_decay
@@ -156,7 +194,16 @@ class Slash(VFX):
 
 
 class Smoke(VFX):
-    def __init__(self, pos, angle, color, duration=0.3, delay=0, size=50, drift_distance=70):
+    def __init__(
+        self,
+        pos: tuple[float, float],
+        angle: float,
+        color: tuple[int, int, int],
+        duration: float = 0.3,
+        delay: float = 0,
+        size: float = 50,
+        drift_distance: float = 70
+    ):
         super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
@@ -165,18 +212,19 @@ class Smoke(VFX):
         self.size = int(size)
         self.drift_distance = drift_distance
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the smoke."""
         if self.delay > 0:
             return
         
         smoke_surf = pygame.Surface((self.size, self.size))
         smoke_surf.set_colorkey((0, 0, 0))
         rect = smoke_surf.get_rect()
-        pygame.draw.circle(smoke_surf, self.color, rect.center, self.size/2)
+        pygame.draw.circle(smoke_surf, self.color, rect.center, self.size / 2)
 
         t = min(1, self.lifetime / self.duration)
-        offset_circle_pos = pygame.Vector2(rect.center) + get_vec(-self.size/2 + self.size/2*t, self.angle)
-        offset_circle_size = self.size/1.5 * t
+        offset_circle_pos = pygame.Vector2(rect.center) + get_vec(-self.size / 2 + self.size / 2 * t, self.angle)
+        offset_circle_size = self.size / 1.5 * t
         pygame.draw.circle(smoke_surf, (0, 0, 0), offset_circle_pos, offset_circle_size)
 
         smoke_pos = self.pos + get_vec(self.drift_distance * t, self.angle)
@@ -185,11 +233,19 @@ class Smoke(VFX):
 
 
 class DamageCounter(VFX):
-    def __init__(self, pos, damage, shell_type, crit=False, text=None, duration=2, delay=0):
+    def __init__(
+        self,
+        pos: tuple[float, float],
+        text: str,
+        shell_type: str,
+        crit: bool = False,
+        duration: float = 2,
+        delay: float = 0
+    ):
         super().__init__(duration, delay)
 
         self.pos = pygame.Vector2(pos)
-        self.text = text or str(damage)
+        self.text = text
         if crit:
             self.text += "!"
         self.color, self.outline_color = DAMAGE_COUNTER_COLORS.get(
@@ -199,7 +255,8 @@ class DamageCounter(VFX):
         self.float_distance = 48
         self.font_registry_scale = 3 if crit else 2
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the damage counter."""
         if self.delay > 0:
             return
 
@@ -230,17 +287,19 @@ class DamageCounter(VFX):
 
 class VFXManager:
     def __init__(self):
-        self.effects = []
+        self.effects: list[VFX] = []
 
     def clear(self):
+        """Clear the vfx."""
         self.effects = []
 
-    def spawn_muzzle_flash(self, pos, shell_render_angle, shell_type):
+    def spawn_muzzle_flash(self, pos: tuple[float, float], shell_render_angle: float, shell_type: str):
+        """Spawn a muzzle flash vfx group."""
         pos = pygame.Vector2(pos) + get_vec(20, shell_render_angle)
         colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
         for i in range(3):
-            self.effects.append(Ring(pos, colors[i], duration=0.5-0.1*i, radius=32*(i+1)))
-        for _ in range(random.randint(18,22)):
+            self.effects.append(Ring(pos, colors[i], duration=0.5 - 0.1 * i, radius=32 * (i + 1)))
+        for _ in range(random.randint(18, 22)):
             spark_angle = math.radians(random.randint(0, 359))
             spark_color = random.choice(colors)
             spark_duration = random.uniform(0.3, 0.5)
@@ -250,7 +309,8 @@ class VFXManager:
                 pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
             ))
 
-    def spawn_torpedo_launch(self, pos):
+    def spawn_torpedo_launch(self, pos: tuple[float, float]):
+        """Spawn a torpedo launch vfx group."""
         for i, color in enumerate(TORPEDO_LAUNCH_COLORS):
             self.effects.append(Ring(
                 pos,
@@ -259,7 +319,8 @@ class VFXManager:
                 radius=24 + 18 * i,
             ))
 
-    def spawn_aircraft_launch(self, pos, launch_angle):
+    def spawn_aircraft_launch(self, pos: tuple[float, float], launch_angle: float):
+        """Spawn an aircraft launch vfx group."""
         for i, color in enumerate(AIRCRAFT_LAUNCH_RING_COLORS):
             self.effects.append(Ring(
                 pos,
@@ -286,7 +347,8 @@ class VFXManager:
                 size=smoke_size,
             ))
 
-    def spawn_shell_impact(self, pos, shell_render_angle, shell_type):
+    def spawn_shell_impact(self, pos: tuple[float, float], shell_render_angle: float, shell_type: str):
+        """Spawn a shell impact vfx group."""
         colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
         for _ in range(random.randint(2,4)):
             spark_angle = shell_render_angle + math.radians(180 + random.randint(-30, 30))
@@ -305,11 +367,18 @@ class VFXManager:
             smoke_distance = random.uniform(40, 60)
             smoke_size = random.uniform(40, 60)
             self.effects.append(Smoke(
-                pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, drift_distance=smoke_distance, size=smoke_size
+                pos,
+                smoke_angle,
+                smoke_color,
+                duration=smoke_duration,
+                delay=smoke_delay,
+                drift_distance=smoke_distance,
+                size=smoke_size
             ))
         self.effects.append(Slash(pos, shell_render_angle, colors[0]))
 
-    def spawn_splash_impact(self, pos):
+    def spawn_splash_impact(self, pos: tuple[float, float]):
+        """Spawn a splash impact vfx group."""
         colors = [(191, 224, 255), (158, 208, 255), (107, 183, 255)]
         pos = pygame.Vector2(pos) + pygame.Vector2(0, 32)
         spark_pos = pos + pygame.Vector2(16, 0)
@@ -355,20 +424,21 @@ class VFXManager:
 
     def spawn_wake(
         self,
-        pos,
-        torpedo_angle,
-        upward_bias=-0.35,
-        spark_chance=1.0,
-        spark_duration_range=(0.18, 0.28),
-        spark_distance_range=(14, 26),
-        spark_length_range=(8, 14),
-        spark_width_range=(2, 4),
-        smoke_chance=0.35,
-        smoke_duration_range=(0.25, 0.4),
-        smoke_distance_range=(10, 18),
-        smoke_size_range=(12, 20),
-        wake_colors=None,
+        pos: tuple[float, float],
+        torpedo_angle: float,
+        upward_bias: float = -0.35,
+        spark_chance: float = 1.0,
+        spark_duration_range: tuple[float, float] = (0.18, 0.28),
+        spark_distance_range: tuple[float, float] = (14, 26),
+        spark_length_range: tuple[float, float] = (8, 14),
+        spark_width_range: tuple[float, float] = (2, 4),
+        smoke_chance: float = 0.35,
+        smoke_duration_range: tuple[float, float] = (0.25, 0.4),
+        smoke_distance_range: tuple[float, float] = (10, 18),
+        smoke_size_range: tuple[float, float] = (12, 20),
+        wake_colors: list[tuple[int, int, int]] = None,
     ):
+        """Spawn a wake vfx group."""
         if random.random() > spark_chance:
             return
 
@@ -407,7 +477,8 @@ class VFXManager:
             size=smoke_size,
         ))
 
-    def spawn_fire(self, rect):
+    def spawn_fire(self, rect: pygame.Rect):
+        """Spawn on-fire particle effects."""
         spark_angle = math.radians(random.uniform(240, 300))
         spark_dir = get_vec(1, spark_angle)
         x = rect.centerx
@@ -444,18 +515,24 @@ class VFXManager:
             smoke_origin, smoke_angle, smoke_color, duration=smoke_duration, size=smoke_size, drift_distance=smoke_distance
         ))
 
-    def spawn_damage_counter(self, pos, damage, shell_type, crit=False):
-        self.effects.append(DamageCounter(pos, damage, shell_type, crit=crit))
+    def spawn_damage_counter(
+        self, pos: tuple[float, float], damage: float, shell_type: str, crit: bool = False
+    ):
+        """Spawn a damage counter."""
+        self.effects.append(DamageCounter(pos, str(damage), shell_type, crit=crit))
 
-    def spawn_miss_counter(self, pos):
-        self.effects.append(DamageCounter(pos, 0, "torpedo", text="miss"))
+    def spawn_miss_counter(self, pos: tuple[float, float]):
+        """Spawn a miss counter."""
+        self.effects.append(DamageCounter(pos, "miss", Equipment.TORPEDO))
 
-    def update(self, dt):
+    def update(self, dt: float):
+        """Update the vfx."""
         for effect in self.effects:
             effect.update(dt)
         self.effects = [effect for effect in self.effects if not effect.expired]
 
-    def draw(self, surface, font_registry):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the vfx."""
         overlay = pygame.Surface(surface.get_size(), flags=pygame.SRCALPHA)
         for effect in self.effects:
             effect.draw(overlay, font_registry)
