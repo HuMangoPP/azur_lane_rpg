@@ -1,17 +1,23 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.shipgirls import Shipgirl
+
 import json
 import colorsys
 import math
 import pygame
 
 from engine.util import get_vec
+from engine.load_assets import load_sprites, load_sound
 
 TEMP_SCREEN_SIZE = pygame.Vector2(960, 540)
 FPS = 60
 
-def screen_x(t):
+def screen_x(t: float):
     return TEMP_SCREEN_SIZE.x * t
 
-def screen_y(t):
+def screen_y(t: float):
     return TEMP_SCREEN_SIZE.y * t
 
 class Box:
@@ -28,10 +34,12 @@ class Box:
     BOTTOM_OF_SCREEN = screen_y(1) - EDGE_PADDING
 
     @staticmethod
-    def get_rotated_rect_polygon(rect, rotated_angle, offset=(0, 0)):
+    def get_rotated_rect_polygon(rect: pygame.Rect, rotated_angle: float, offset: tuple[float, float] = (0, 0)):
+        """Compute a rotated rect polygon."""
+        # TODO move this to engine util
         rect_center = pygame.Vector2(rect.center) + pygame.Vector2(offset)
-        rect_horizontal = get_vec(rect.width/2, math.radians(rotated_angle))
-        rect_vertical = get_vec(rect.height/2, math.radians(90 + rotated_angle))
+        rect_horizontal = get_vec(rect.width / 2, math.radians(rotated_angle))
+        rect_vertical = get_vec(rect.height / 2, math.radians(90 + rotated_angle))
         return [
             rect_center + rect_horizontal + rect_vertical,
             rect_center - rect_horizontal + rect_vertical,
@@ -145,15 +153,18 @@ class Stats:
     EXP_GROWTH = 2
 
     @classmethod
-    def exp_to_level(cls, level):
+    def exp_to_level(cls, level: float) -> float:
+        """The amount of exp required to reach this level."""
         return sum(cls.exp_amount_at_level(l) for l in range(level))
 
     @classmethod
-    def exp_amount_at_level(cls, level):
+    def exp_amount_at_level(cls, level: float) -> float:
+        """The amount of exp for this level."""
         return cls.EXP_BASE * (cls.EXP_GROWTH ** level)
 
     @classmethod
-    def level(cls, exp):
+    def level(cls, exp: float) -> int:
+        """The level given this amount of exp."""
         level = 0
         while exp >= cls.exp_amount_at_level(level):
             exp -= cls.exp_amount_at_level(level)
@@ -161,7 +172,8 @@ class Stats:
         return level
 
     @classmethod
-    def level_progress(cls, exp):
+    def level_progress(cls, exp: float) -> float:
+        """The progress through the current level given the exp."""
         level = 0
         while exp >= cls.exp_amount_at_level(level):
             exp -= cls.exp_amount_at_level(level)
@@ -169,14 +181,16 @@ class Stats:
         return exp / cls.exp_amount_at_level(level)
 
     @classmethod
-    def stat(cls, base_stat, stat_per_level, exp=None, level=None):
+    def stat(
+        cls, base_stat: float, stat_per_level: float, exp: float | None = None, level: float | None = None
+    ) -> float | None:
+        """The stat value given either the exp or level."""
         if exp is not None:
             return base_stat + stat_per_level * cls.level(exp)
         if level is not None:
             return base_stat + stat_per_level * level
         return None
 
-from engine.load_assets import load_sprites, load_sound
 
 class DataFiles:
     with open("data/save_file.json") as f:
@@ -213,25 +227,33 @@ class DataFiles:
     bgm = load_sound(master_file="bgm.json", file_ext="ogg")
 
     @classmethod
-    def recolor_sprite(cls, sprite_group, sprite_key, color):
+    def recolor_sprite(cls, sprite_group: str, sprite_key: str, color: tuple[int, int, int]) -> pygame.Surface:
+        """Recolor the white pixels of the sprite to the target color."""
         sprite = cls.sprites[sprite_group][sprite_key]
-        sprite.set_colorkey((255,255,255))
+        sprite.set_colorkey((255, 255, 255))
         colored_sprite = pygame.Surface(sprite.get_size())
         colored_sprite.fill(color)
-        colored_sprite.blit(sprite, (0,0))
-        colored_sprite.set_colorkey((255,0,0))
-        sprite.set_colorkey((255,0,0))
+        colored_sprite.blit(sprite, (0, 0))
+        colored_sprite.set_colorkey((255, 0, 0))
+        sprite.set_colorkey((255, 0, 0))
         return colored_sprite
 
     @classmethod
-    def get_entity_sprite(cls, sprite_key):
+    def get_entity_sprite(cls, sprite_key: str) -> pygame.Surface:
+        """Get sprites from the entity sprite group and fall back to placeholder if it does not exist."""
         if sprite_key in cls.sprites["entity"]:
             return cls.sprites["entity"][sprite_key]
         else:
             return cls.sprites["entity"]["placeholder"]
         
     @classmethod
-    def get_faction_shipgirls(cls):
+    def get_faction_shipgirls(cls) -> dict[str, str]:
+        """Get the shipgirls for the player's chosen faction.
+        
+        The returned object is formatted as a dictionary with the key
+        being the two letter hull type designation and the value being
+        the name of the shipgirl.
+        """
         if len(cls.save_file["unlocked_factions"]) == 0:
             return {}
         faction_shipgirls = {}
@@ -242,7 +264,11 @@ class DataFiles:
             faction_shipgirls[shipgirl_info["hull_type"]] = shipgirl
         return faction_shipgirls
 
-def create_shell_sprite(shell_key, color):
+# Generate recolored shell sprites for each shell type.
+for shell_type, shell_color in zip(
+    [Equipment.NORMAL_SHELL, Equipment.HE_SHELL, Equipment.AP_SHELL],
+    [(255, 242, 97), (255, 0, 64), (0, 255, 255)]
+):
     alphas = [10, 20, 50, 100, 200, 250]
     lengths = [64, 62, 58, 52, 44, 34]
     heights = [18, 16, 14, 12, 10, 8]
@@ -252,22 +278,11 @@ def create_shell_sprite(shell_key, color):
         rect = pygame.Rect(0, 0, l, h)
         rect.right = r
         rect.centery = heights[0] / 2
-        pygame.draw.ellipse(shell_sprite, (*color, a), rect)
-    DataFiles.sprites["encounter"][f"{shell_key}_shell"] = shell_sprite
+        pygame.draw.ellipse(shell_sprite, (*shell_color, a), rect)
+    DataFiles.sprites["encounter"][f"{shell_type}_shell"] = shell_sprite
 
-create_shell_sprite("normal", (255, 242, 97))
-create_shell_sprite("HE", (255, 0, 64))
-create_shell_sprite("AP", (0, 255, 255))
-
-def create_background_wave_sprite(wave_color):
-    wave = DataFiles.sprites["background"]["wave"]
-    higher_wave = pygame.Surface((wave.get_width(), 2*wave.get_height()))
-    higher_wave.fill(wave_color)
-    wave.set_colorkey((255,255,255))
-    higher_wave.blit(wave, (0,0))
-    higher_wave.set_colorkey((255,0,0))
-    return higher_wave
-
+# Generate wave sprites for each weather condition.
+# Wave colors are a gradient between two shades of a color.
 DataFiles.sprites["background"]["num_waves"] = 7
 background_wave_palettes = {
     "daytime": {
@@ -285,7 +300,7 @@ background_wave_palettes = {
 }
 DataFiles.sprites["background"]["wave_sets"] = {}
 for weather, palette in background_wave_palettes.items():
-    DataFiles.sprites["background"]["wave_sets"][weather] = []
+    wave_set = []
     for wave_index in range(DataFiles.sprites["background"]["num_waves"]):
         center_index = (DataFiles.sprites["background"]["num_waves"] - 1) / 2
         t = 1 - abs(wave_index - center_index) / center_index
@@ -293,38 +308,33 @@ for weather, palette in background_wave_palettes.items():
             int(dark + (light - dark) * t)
             for dark, light in zip(palette["darkest"], palette["lightest"])
         )
-        wave = create_background_wave_sprite(wave_color)
-        DataFiles.sprites["background"]["wave_sets"][weather].append(wave)
+        wave = DataFiles.sprites["background"]["wave"]
+        higher_wave = pygame.Surface((wave.get_width(), 2 * wave.get_height()))
+        higher_wave.fill(wave_color)
+        wave.set_colorkey((255, 255, 255))
+        higher_wave.blit(wave, (0, 0))
+        higher_wave.set_colorkey((255, 0, 0))
+        wave_set.append(higher_wave)
+    DataFiles.sprites["background"]["wave_sets"][weather] = wave_set
 
-def create_cloud_shadow_sprite(cloud_index):
+# Generate shadows for each cloud.
+DataFiles.sprites["background"]["num_clouds"] = 10
+for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
     cloud = DataFiles.sprites["background"][f"cloud{cloud_index}"]
     cloud_shadow = pygame.Surface(cloud.get_size())
-    cloud_shadow.fill((100,100,100))
-    cloud.set_colorkey((255,255,255))
-    cloud_shadow.blit(cloud, (0,0))
-    cloud_shadow.set_colorkey((255,0,0))
-    cloud.set_colorkey((255,0,0))
+    cloud_shadow.fill((100, 100, 100))
+    cloud.set_colorkey((255, 255, 255))
+    cloud_shadow.blit(cloud, (0, 0))
+    cloud_shadow.set_colorkey((255, 0, 0))
+    cloud.set_colorkey((255, 0, 0))
 
     cloud_shadow2 = pygame.Surface(cloud_shadow.get_size())
-    cloud_shadow2.fill((0,0,0))
-    cloud_shadow2.blit(cloud_shadow, (0,0))
+    cloud_shadow2.fill((0, 0, 0))
+    cloud_shadow2.blit(cloud_shadow, (0, 0))
 
     DataFiles.sprites["background"][f"cloud_shadow{cloud_index}"] = cloud_shadow2
 
-def create_cloud_sprite(cloud_index, color):
-    cloud = DataFiles.sprites["background"][f"cloud{cloud_index}"]
-    colored_cloud = pygame.Surface(cloud.get_size())
-    colored_cloud.fill(color)
-    cloud.set_colorkey((255,255,255))
-    colored_cloud.blit(cloud, (0,0))
-    colored_cloud.set_colorkey((255,0,0))
-    cloud.set_colorkey((255,0,0))
-    return colored_cloud
-
-DataFiles.sprites["background"]["num_clouds"] = 10
-for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
-    create_cloud_shadow_sprite(cloud_index)
-
+# Create cloud sprites corresponding to each weather condition.
 background_cloud_colors = {
     "daytime": (255, 255, 255),
     "nighttime": (132, 124, 162),
@@ -332,36 +342,43 @@ background_cloud_colors = {
 }
 DataFiles.sprites["background"]["cloud_sets"] = {}
 for weather, cloud_color in background_cloud_colors.items():
-    DataFiles.sprites["background"]["cloud_sets"][weather] = [
-        create_cloud_sprite(cloud_index, cloud_color)
-        for cloud_index in range(DataFiles.sprites["background"]["num_clouds"])
-    ]
+    cloud_set = []
+    for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
+        cloud = DataFiles.sprites["background"][f"cloud{cloud_index}"]
+        colored_cloud = pygame.Surface(cloud.get_size())
+        colored_cloud.fill(cloud_color)
+        cloud.set_colorkey((255, 255, 255))
+        colored_cloud.blit(cloud, (0, 0))
+        colored_cloud.set_colorkey((255, 0, 0))
+        cloud.set_colorkey((255, 0, 0))
+        cloud_set.append(colored_cloud)
+    DataFiles.sprites["background"]["cloud_sets"][weather] = cloud_set
 
-def create_sortie_selection_wave_sprite(wave_index, wave_color):
-    wave = DataFiles.sprites["sortie_selection"][f"wave"]
-    higher_wave = pygame.Surface((wave.get_width(), 2*wave.get_height()))
-    higher_wave.fill(wave_color)
-    wave.set_colorkey((255,255,255))
-    higher_wave.blit(wave, (0,0))
-    higher_wave.set_colorkey((255,0,0))
-    DataFiles.sprites["sortie_selection"][f"wave{wave_index}"] = higher_wave
-
+# Generate wave sprites for the sortie selection background.
+wave = DataFiles.sprites["sortie_selection"]["wave"]
+wave.set_colorkey((255, 255, 255))
 num_waves = 9
 DataFiles.sprites["sortie_selection"]["num_wave_sprites"] = num_waves
 base_hue = 0.65
 for wave_index in range(num_waves):
-    t = wave_index / (num_waves- 1)
-    saturation = 0.5 + t*0.1
-    value = 1.0 - t*0.1
+    t = wave_index / (num_waves - 1)
+    saturation = 0.5 + t * 0.1
+    value = 1.0 - t * 0.1
 
     r, g, b = colorsys.hsv_to_rgb(base_hue, saturation, value)
-    wave_color = (int(r*255), int(g*255), int(b*255))
-    create_sortie_selection_wave_sprite(wave_index, wave_color)
+    wave_color = (int(r * 255), int(g * 255), int(b * 255))
+    higher_wave = pygame.Surface((wave.get_width(), 2 * wave.get_height()))
+    higher_wave.fill(wave_color)
+    higher_wave.blit(wave, (0,0))
+    higher_wave.set_colorkey((255, 0, 0))
+    DataFiles.sprites["sortie_selection"][f"wave{wave_index}"] = higher_wave
 
-lightbulb_light = pygame.Surface((64,64))
-pygame.draw.circle(lightbulb_light, (28, 19, 0), (32,32), 32)
+# Generate a lightbulb light sprite for the lightbulb prop..
+lightbulb_light = pygame.Surface((64, 64))
+pygame.draw.circle(lightbulb_light, (28, 19, 0), (32, 32), 32)
 DataFiles.sprites["props"]["lightbulb_light"] = lightbulb_light
 
+# Generate a column glow for the blueprint slot.
 blueprint_slot_glow = pygame.Surface((1, 2))
 blueprint_slot_glow.set_at((0, 1), [c2 - c1 for c1, c2 in zip(
     Color.BLUEPRINT_PAGE, Color.BLUEPRINT_PAGE_GLOW
@@ -369,17 +386,18 @@ blueprint_slot_glow.set_at((0, 1), [c2 - c1 for c1, c2 in zip(
 blueprint_slot_glow = pygame.transform.smoothscale(blueprint_slot_glow, (Box.WIDTH, Box.HEIGHT))
 DataFiles.sprites["user_interface"]["blueprint_slot_glow"] = blueprint_slot_glow
 
-def create_sortie_node_selection_glow(sprite_key, color):
+# Generate column glows for sortie node hexes.
+for sprite_key, color in zip(
+    ["cleared_node_selection_glow", "uncleared_node_selection_glow", "locked_node_selection_glow"],
+    [Color.CLEARED_ZONE_OUTLINE, Color.UNCLEARED_ZONE_OUTLINE, Color.LOCKED_ZONE_OUTLINE]
+):
     glow_color = tuple(c // 2 for c in color)
     glow = pygame.Surface((1, 2))
     glow.set_at((0, 1), glow_color)
-    glow = pygame.transform.smoothscale(glow, (math.ceil(Box.WIDTH * 3**(1/2)/2), Box.HEIGHT))
+    glow = pygame.transform.smoothscale(glow, (math.ceil(Box.WIDTH * (3 ** 0.5) / 2), Box.HEIGHT))
     DataFiles.sprites["sortie_selection"][sprite_key] = glow
 
-create_sortie_node_selection_glow("cleared_node_selection_glow", Color.CLEARED_ZONE_OUTLINE)
-create_sortie_node_selection_glow("uncleared_node_selection_glow", Color.UNCLEARED_ZONE_OUTLINE)
-create_sortie_node_selection_glow("locked_node_selection_glow", Color.LOCKED_ZONE_OUTLINE)
-
+# Generate a conic glow for the fleet selection markers.
 fleet_marker_selection_glow_top_width = math.ceil(2 * Box.WIDTH)
 fleet_marker_selection_glow_bottom_width = math.ceil(0.75 * Box.WIDTH)
 fleet_marker_selection_glow_size = (fleet_marker_selection_glow_top_width, math.ceil(1.5 * Box.HEIGHT))
@@ -403,9 +421,10 @@ for y in range(fleet_marker_selection_glow_size[1]):
     )
 DataFiles.sprites["fleet_selection"]["marker_selection_glow"] = fleet_marker_selection_glow
 
-battlestation_glow_top_width = math.ceil(48 + 64 + 4*Box.PADDING)
+# Generate a conic glow for the shipgirl battlestation.
+battlestation_glow_top_width = math.ceil(48 + 64 + 4 * Box.PADDING)
 battlestation_glow_bottom_width = 2
-battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT/1.5))
+battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT / 1.5))
 battlestation_glow = pygame.Surface(battlestation_glow_size)
 battlestation_glow_color = Color.HOLOGRAM_GLOW
 for y in range(battlestation_glow_size[1]):
@@ -414,7 +433,7 @@ for y in range(battlestation_glow_size[1]):
         battlestation_glow_top_width
         - (battlestation_glow_top_width - battlestation_glow_bottom_width) * y_ratio
     )
-    top_blend = min(1, (0.5 + y_ratio)/1.5)
+    top_blend = min(1, (0.5 + y_ratio) / 1.5)
     glow_color = tuple(math.ceil(c * top_blend) for c in battlestation_glow_color)
     left = (battlestation_glow_size[0] - cone_width) // 2
     pygame.draw.line(
@@ -425,9 +444,10 @@ for y in range(battlestation_glow_size[1]):
     )
 DataFiles.sprites["encounter"]["shipgirl_battlestation_glow"] = battlestation_glow
 
-battlestation_glow_top_width = math.ceil(48 + 64 + 4*Box.PADDING)
+# Generate a conic glow for the siren battlestation.
+battlestation_glow_top_width = math.ceil(48 + 64 + 4 * Box.PADDING)
 battlestation_glow_bottom_width = 2
-battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT/1.5))
+battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT / 1.5))
 battlestation_glow = pygame.Surface(battlestation_glow_size)
 battlestation_glow_color = Color.SIREN_HOLOGRAM_GLOW
 for y in range(battlestation_glow_size[1]):
@@ -447,6 +467,7 @@ for y in range(battlestation_glow_size[1]):
     )
 DataFiles.sprites["encounter"]["siren_battlestation_glow"] = battlestation_glow
 
+# Generate a lightbulb glow for the equipment menu lightbulb prop.
 lightbulb_light = pygame.Surface((64, 64))
 pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)
 DataFiles.sprites["equipment_menu"]["lightbulb_light"] = lightbulb_light
@@ -461,14 +482,16 @@ class Decorations:
     WALLPAPER_HEIGHT = 128
 
     @staticmethod
-    def unpack_decoration_data(decoration_data):
+    def unpack_decoration_data(decoration_data: tuple[str, tuple[int, int], bool]) -> tuple[str, tuple[int, int], bool]:
+        """Unpack decoration data safely."""
         decoration, tilepos_anchor, flipped = decoration_data
         if not isinstance(flipped, bool):
             flipped = False
         return decoration, tilepos_anchor, flipped
 
     @staticmethod
-    def get_decoration_base_dimensions(decoration, flipped):
+    def get_decoration_base_dimensions(decoration: str, flipped: bool) -> tuple[int, int]:
+        """Get the footprint size of a decoration."""
         decoration_info = DataFiles.decoration_store[decoration]
         width = decoration_info["width"]
         height = decoration_info["height"]
@@ -477,28 +500,24 @@ class Decorations:
         return width, height
 
     @classmethod
-    def get_decoration_tiles(cls, decoration, flipped, tilepos_anchor):
+    def get_decoration_tiles(
+        cls, decoration: str, flipped: bool, tilepos_anchor: tuple[int, int]
+    ) -> set[tuple[int, int]]:
+        """Compute the occupied tiles of a decoration placed at this location."""
         base_width, base_height = cls.get_decoration_base_dimensions(decoration, flipped)
         decoration_tiles = set()
         for x in range(base_width):
             for y in range(base_height):
                 tilepos = (
-                    tilepos_anchor[0] - base_width + x,
-                    tilepos_anchor[1] - base_height + y
+                    tilepos_anchor[0] + 1 - base_width + x,
+                    tilepos_anchor[1] + 1 - base_height + y
                 )
                 decoration_tiles.add(tilepos)
         return decoration_tiles
 
-    @classmethod
-    def get_decoration_top_tilepos(cls, decoration, flipped, tilepos_anchor):
-        base_width, base_height = cls.get_decoration_base_dimensions(decoration, flipped)
-        return (
-            tilepos_anchor[0] - base_width,
-            tilepos_anchor[1] - base_height
-        )
-
     @staticmethod
-    def is_shipgirl_renderable(renderable):
+    def is_shipgirl_renderable(renderable: Shipgirl | tuple[str, tuple[int, int], bool]) -> bool:
+        """Checks if this renderable is a shipgirl."""
         return (
             hasattr(renderable, "rect")
             and hasattr(renderable, "SPRITE_SIZE")
@@ -506,14 +525,18 @@ class Decorations:
         )
 
     @classmethod
-    def get_shipgirl_standing_tilepos(cls, shipgirl):
+    def get_shipgirl_standing_tilepos(cls, shipgirl: Shipgirl) -> tuple[int, int]:
+        """Get the tilepos the shipgirl is standing on."""
         return cls.get_isometric_tilepos((
             shipgirl.rect.centerx,
             shipgirl.rect.bottom - shipgirl.SPRITE_SIZE / 8
         ))
 
     @classmethod
-    def get_render_order_tiles(cls, renderable):
+    def get_render_order_tiles(
+        cls, renderable: Shipgirl | tuple[str, tuple[int, int], bool]
+    ) -> set[tuple[int, int]]:
+        """Get the tiles occupied by this renderable."""
         if cls.is_shipgirl_renderable(renderable):
             return {cls.get_shipgirl_standing_tilepos(renderable)}
 
@@ -521,25 +544,20 @@ class Decorations:
         return cls.get_decoration_tiles(decoration, flipped, tilepos_anchor)
 
     @classmethod
-    def get_render_order_top_tilepos(cls, renderable):
-        if cls.is_shipgirl_renderable(renderable):
-            return cls.get_shipgirl_standing_tilepos(renderable)
-
-        decoration, tilepos_anchor, flipped = cls.unpack_decoration_data(renderable)
-        return cls.get_decoration_top_tilepos(decoration, flipped, tilepos_anchor)
-
-    @classmethod
-    def get_render_order_anchor(cls, renderable):
-        if cls.is_shipgirl_renderable(renderable):
-            if renderable.interacting_decoration is None:
-                return None
-            return tuple(renderable.interacting_decoration)
-
-        _, tilepos_anchor, _ = cls.unpack_decoration_data(renderable)
-        return tuple(tilepos_anchor)
-
-    @classmethod
-    def renderable_is_behind(cls, behind_renderable, front_renderable):
+    def renderable_is_behind(
+        cls,
+        behind_renderable: Shipgirl | tuple[str, tuple[int, int], bool],
+        front_renderable: Shipgirl | tuple[str, tuple[int, int], bool]
+    ) -> bool:
+        """Determines whether the behind renderable is behind the front renderable.
+        
+        A renderable is behind another renderable if the former's occupied tiles
+        overlaps a tile that is behind the latter.
+        A tile is behind another tile if the formers coordinates are both smaller
+        then the latter's.
+        A tile is behind a renderable if the tile if behind any of the tiles the
+        renderable occupies.
+        """
         behind_tiles = cls.get_render_order_tiles(behind_renderable)
         front_tiles = cls.get_render_order_tiles(front_renderable)
         return any(
@@ -550,14 +568,28 @@ class Decorations:
         )
 
     @classmethod
-    def compare_decoration_render_order(cls, renderable_a, renderable_b):
+    def compare_decoration_render_order(
+        cls,
+        renderable_a: Shipgirl | tuple[str, tuple[int, int], bool],
+        renderable_b: Shipgirl | tuple[str, tuple[int, int], bool],
+    ) -> int:
+        """Compare two renderables.
+        
+        If A is behind B but B is not behind A, then return a negative number.
+        If B is behind A but A is not behind B, then return a positive number.
+
+        """
+        # If both renderables are shipgirls, then order based on y-value.
         a_is_shipgirl = cls.is_shipgirl_renderable(renderable_a)
         b_is_shipgirl = cls.is_shipgirl_renderable(renderable_b)
-        anchor_a = cls.get_render_order_anchor(renderable_a)
-        anchor_b = cls.get_render_order_anchor(renderable_b)
-        if a_is_shipgirl != b_is_shipgirl and anchor_a == anchor_b:
-            return 1 if a_is_shipgirl else -1
+        if a_is_shipgirl and b_is_shipgirl:
+            if renderable_a.rect.centery > renderable_b.rect.centery:
+                return 1
+            else:
+                return -1
 
+        # Check if A is behind B and vice-versa.
+        # Early return if one is clearly behind the other.
         a_behind_b = cls.renderable_is_behind(renderable_a, renderable_b)
         b_behind_a = cls.renderable_is_behind(renderable_b, renderable_a)
         if a_behind_b and not b_behind_a:
@@ -565,24 +597,34 @@ class Decorations:
         if b_behind_a and not a_behind_b:
             return 1
 
-        top_tilepos_a = cls.get_render_order_top_tilepos(renderable_a)
-        top_tilepos_b = cls.get_render_order_top_tilepos(renderable_b)
-        fallback_a = (
-            top_tilepos_a[0] + top_tilepos_a[1],
-            top_tilepos_a[1],
-            top_tilepos_a[0],
-            1 if a_is_shipgirl else 0
-        )
-        fallback_b = (
-            top_tilepos_b[0] + top_tilepos_b[1],
-            top_tilepos_b[1],
-            top_tilepos_b[0],
-            1 if b_is_shipgirl else 0
-        )
-        return (fallback_a > fallback_b) - (fallback_a < fallback_b)
+        # Since the decoration footprints are all rectangular, the comparison
+        # only reaches this part of the code if exactly one of the renderables is
+        # a shipgirl and the other is a decoration.
+        # This means that the shipgirl is on a tile occupied by the decoration.
+        # Render the shipgirl above if the shipgirl is occuping a tile on the
+        # bottomleft and right edges of the decoration footprint.
+        if a_is_shipgirl:
+            shipgirl_anchor = cls.get_shipgirl_standing_tilepos(renderable_a)
+            _, decoration_anchor, _ = cls.unpack_decoration_data(renderable_b)
+            if (
+                shipgirl_anchor[0] == decoration_anchor[0]
+                or shipgirl_anchor[1] == decoration_anchor[1]
+            ):
+                return 1
+            return -1
+        else:
+            shipgirl_anchor = cls.get_shipgirl_standing_tilepos(renderable_b)
+            _, decoration_anchor, _ = cls.unpack_decoration_data(renderable_a)
+            if (
+                shipgirl_anchor[0] == decoration_anchor[0]
+                or shipgirl_anchor[1] == decoration_anchor[1]
+            ):
+                return -1
+            return 1
 
     @classmethod
-    def get_isometric_tilepos(cls, screen_pos):
+    def get_isometric_tilepos(cls, screen_pos: tuple[float, float]) -> tuple[int, int]:
+        """Convert a screen position to an isometric coordinate."""
         rel_x = screen_pos[0] - cls.floor_rect.left - cls.floor_rect.width / 2
         rel_y = screen_pos[1] - cls.floor_rect.top
         iso_x = (rel_y / cls.ISO_HALF_TILE_HEIGHT + rel_x / cls.ISO_HALF_TILE_WIDTH) / 2
@@ -590,29 +632,27 @@ class Decorations:
         return (math.floor(iso_x), math.floor(iso_y))
 
     @classmethod
-    def get_isometric_tilepos_anchor(cls, screen_pos):
-        tilepos = cls.get_isometric_tilepos(screen_pos)
-        return (tilepos[0] + 1, tilepos[1] + 1)
-
-    @classmethod
-    def get_isometric_floor_pos(cls, tilepos):
+    def get_isometric_floor_pos(cls, tilepos: tuple[int, int]) -> tuple[float, float]:
+        """Convert an isometric coordinate to to the bottom corner of that tile."""
         return pygame.Vector2(
             cls.floor_rect.left
             + cls.floor_rect.width / 2
             + (tilepos[0] - tilepos[1]) * cls.ISO_HALF_TILE_WIDTH,
             cls.floor_rect.top
-            + (tilepos[0] + tilepos[1]) * cls.ISO_HALF_TILE_HEIGHT
+            + (tilepos[0] + tilepos[1] + 2) * cls.ISO_HALF_TILE_HEIGHT
         )
 
     @staticmethod
-    def get_decoration_sprite(decoration, flipped):
+    def get_decoration_sprite(decoration: str, flipped: bool) -> pygame.Surface:
+        """Get the decoration sprite."""
         sprite = DataFiles.sprites["decorations"][decoration]
         if flipped:
             sprite = pygame.transform.flip(sprite, True, False)
         return sprite
 
     @classmethod
-    def get_decoration_sprite_rect(cls, decoration, flipped, tilepos_anchor):
+    def get_decoration_sprite_rect(cls, decoration: str, flipped: bool, tilepos_anchor: tuple[int, int]) -> pygame.Rect:
+        """Get the decoration sprite bounding rect."""
         base_width, _ = cls.get_decoration_base_dimensions(decoration, flipped)
         sprite = cls.get_decoration_sprite(decoration, flipped)
         sprite_rect = sprite.get_rect()
@@ -624,9 +664,15 @@ class Decorations:
         return sprite_rect
 
     @classmethod
-    def get_decoration_base_polygon(cls, decoration, flipped, tilepos_anchor):
+    def get_decoration_base_polygon(
+        cls, decoration: str, flipped: bool, tilepos_anchor: tuple[int, int]
+    ) -> list[tuple[float, float]]:
+        """Get the polygon which bounds the footprint of this decoration."""
         base_width, base_height = cls.get_decoration_base_dimensions(decoration, flipped)
-        top_tilepos = cls.get_decoration_top_tilepos(decoration, flipped, tilepos_anchor)
+        top_tilepos = (
+            tilepos_anchor[0] - base_width,
+            tilepos_anchor[1] - base_height
+        )
         left_tilepos = (
             tilepos_anchor[0] - base_width,
             tilepos_anchor[1]
@@ -653,6 +699,11 @@ class Decorations:
 
     @classmethod
     def create_wallpaper_surf(cls):
+        """Create the isometric wallpaper surface.
+        
+        The left and right wallpaper sprites are loaded from the spritesheet
+        then skewed so that it fits the slanted edge of the isometric floor.
+        """
         floor_width = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_WIDTH
         floor_height = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_HEIGHT
         wall_height = cls.WALLPAPER_HEIGHT
@@ -688,13 +739,15 @@ class Decorations:
         cls.wallpaper_rect.top = cls.floor_rect.top - wall_height
 
     @classmethod
-    def get_wallpaper_rect(cls):
+    def get_wallpaper_rect(cls) -> pygame.Rect:
+        """Get the bounding rect for the wallpaper surface."""
         wallpaper_rect = cls.wallpaper_surf.get_rect()
         wallpaper_rect.midbottom = cls.floor_rect.center
         return wallpaper_rect
 
     @classmethod
     def create_floor_surf(cls):
+        """Create the isometric floor surface."""
         floor_width = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_WIDTH
         floor_height = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_HEIGHT
 

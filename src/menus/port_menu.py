@@ -442,9 +442,9 @@ class PortMenu(Menu):
         self.selected_decoration_in_depot = None
         self.decoration_flipped = False
         self.deleting_decoration = False
-        self.decoration_depot_drag_offset = None
+        self.decoration_depot_drag_offset: tuple[float, float] = None
+        self.dragged_shipgirl: Shipgirl = None
         # Decoration depot and editing state for quests.
-        self.dragged_shipgirl = None
         self.moved_decoration_depot_overlay = False
         self.flipped_decoration = False
         self.placed_bed_decoration = False
@@ -584,11 +584,10 @@ class PortMenu(Menu):
 
         return not any(shipgirl.rect.collidepoint(pos) for shipgirl in self.menu_manager.available_shipgirls)
 
-    def _select_decoration_depot_entity(self, pos: tuple[int, int], allow_delete_toggle: bool) -> str:
+    def _select_decoration_depot_entity(self, pos: tuple[int, int], make_selection: bool) -> str:
         """Select the decoration whose icon rect contains the point.
 
-        If allow_delete_toggle is True, then allow the deletion toggle to switch if its
-        rect is clicked.
+        If make_selection is True, then allow this method to update the selection state.
         """
         selected_entity = None
         entities = self._get_visible_overlay_entities()
@@ -596,14 +595,17 @@ class PortMenu(Menu):
         for entity, rect in zip(entities, rects):
             if rect.collidepoint(pos):
                 selected_entity = entity
+
+        if not make_selection:
+            return selected_entity
+
         if selected_entity is None:
             return None
 
         if selected_entity == self.DELETE_DECORATION:
-            if allow_delete_toggle:
-                DataFiles.sfx["click"].play()
-                self.deleting_decoration = not self.deleting_decoration
-                self.selected_decoration_in_depot = None
+            DataFiles.sfx["click"].play()
+            self.deleting_decoration = not self.deleting_decoration
+            self.selected_decoration_in_depot = None
             return selected_entity
 
         DataFiles.sfx["click"].play()
@@ -1127,7 +1129,7 @@ class PortMenu(Menu):
                     continue
 
                 if self.decoration_depot_overlay.collidepoint(event.pos):
-                    selected_entity = self._select_decoration_depot_entity(event.pos, allow_delete_toggle=False)
+                    selected_entity = self._select_decoration_depot_entity(event.pos, make_selection=False)
                     if selected_entity is not None:
                         continue
 
@@ -1144,6 +1146,8 @@ class PortMenu(Menu):
                         self.dragged_shipgirl = shipgirl
                         shipgirl.sprite.set_animation(Live2D.DRAG_ANIMATION)
                         shipgirl.interacting_decoration = None
+                        shipgirl.pos = pygame.Vector2(event.pos)
+                        shipgirl.rect.center = shipgirl.pos
                         break
 
                 if self.dragged_shipgirl is not None:
@@ -1223,7 +1227,7 @@ class PortMenu(Menu):
                     continue
             
                 if self.decoration_depot_overlay.collidepoint(event.pos):
-                    self._select_decoration_depot_entity(event.pos, allow_delete_toggle=True)
+                    self._select_decoration_depot_entity(event.pos, make_selection=True)
                 elif self.deleting_decoration:
                     # Check if the player is clicking on the footprint of any decoration.
                     clicked_tilepos = Decorations.get_isometric_tilepos(event.pos)
@@ -1250,7 +1254,7 @@ class PortMenu(Menu):
                     # Check if the location that the player wishes to place the decoration
                     # is within the tileable area.
                     decoration = self.selected_decoration_in_depot
-                    clicked_tilepos = Decorations.get_isometric_tilepos_anchor(event.pos)
+                    clicked_tilepos = Decorations.get_isometric_tilepos(event.pos)
                     place_tiles = Decorations.get_decoration_tiles(decoration, self.decoration_flipped, clicked_tilepos)
                     if not Decorations.in_tileable_area(place_tiles):
                         continue
@@ -2681,7 +2685,7 @@ class PortMenu(Menu):
 
             decoration = self.selected_decoration_in_depot
             mpos = pygame.mouse.get_pos()
-            hovered_tilepos = Decorations.get_isometric_tilepos_anchor(mpos)
+            hovered_tilepos = Decorations.get_isometric_tilepos(mpos)
             place_tiles = Decorations.get_decoration_tiles(decoration, self.decoration_flipped, hovered_tilepos)
             sprite = Decorations.get_decoration_sprite(decoration, self.decoration_flipped)
             sprite_rect = Decorations.get_decoration_sprite_rect(decoration, self.decoration_flipped, hovered_tilepos)

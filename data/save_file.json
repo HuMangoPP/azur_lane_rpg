@@ -2,39 +2,43 @@
 	"unlocked_factions": ["USS"],
 	"shipgirls": {
 		"laffey": {
-			"equipment": [null, null, null],
-			"exp": 133
+			"equipment": ["twin_120", null, null],
+			"exp": 254
 		},
 		"new_jersey": {
 			"equipment": [null, null, null],
-			"exp": 133
+			"exp": 254
 		},
 		"guam": {
 			"equipment": [null, null, null],
-			"exp": 121
+			"exp": 242
 		}
 	},
 	"equipment": {
-		"twin_120": 1
+		"twin_120": 0
 	},
 	"inventory": {
 		"DD_blueprint": 0,
-		"BB_blueprint": 0,
+		"BB_blueprint": 1,
 		"wisdom_cube": 0,
 		"huggy_pillow": 0,
 		"dragon_cannon": 0,
-		"decoration_coin": 7,
+		"decoration_coin": 9,
 		"battle_mech": 0,
 		"CA_blueprint": 0,
 		"metals": 0,
-		"gunpowder": 0
+		"gunpowder": 0,
+		"plastics": 1,
+		"electronics": 1
 	},
 	"specialized_wisdom_cubes": {},
-	"decoration_depot": {},
+	"decoration_depot": {
+		"bed": 1
+	},
 	"decorations": [],
 	"research_target": null,
-	"sortie_progress": 3,
-	"chapter_progress": 0,
+	"sortie_progress": 4,
+	"chapter_progress": 1,
 	"quests": {
 		"choose_faction": "completed",
 		"construct_shipgirls": "completed",
@@ -44,6 +48,9 @@
 		"research_shipgirl": "completed",
 		"construct_shipgirl": "completed",
 		"craft_weapon": "completed",
-		"equip_weapon": "new"
+		"equip_weapon": "completed",
+		"clear_first_maritime_region": "completed",
+		"buy_decoration": "completed",
+		"decorate_port": "in_progress"
 	}
 }

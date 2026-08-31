@@ -1436,7 +1436,7 @@ class FleetSelectionMenu(Menu):
             if self.selected_shipgirl is not None:
                 # TODO make custom colors
                 pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_GLOW, slot)
-                draw_dashed_rect(surface, Color.WHITE, slot, dash_length=6, gap_length=6, dash_width=2)
+                draw_dashed_rect(surface, Color.WHITE, slot, dash_length=6, gap_length=6, width=2)
 
             # Draw the shipgirl marker in the fleet if it is not picked up.
             if shipgirl is not None:
