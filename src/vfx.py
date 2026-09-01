@@ -13,9 +13,9 @@ from src.constants import Equipment
 
 
 SHELL_COLORS = {
-    "normal": [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
-    "HE": [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
-    "AP": [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
+    Equipment.NORMAL_SHELL: [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
+    Equipment.HE_SHELL: [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
+    Equipment.AP_SHELL: [(255, 249, 181), (209, 119, 0), (28, 9, 0), (222, 180, 11), (247, 77, 111)],
 }
 FIRE_COLORS = [
     (255, 244, 128),
@@ -48,10 +48,10 @@ TORPEDO_LAUNCH_COLORS = [
     (18, 96, 190),
 ]
 DAMAGE_COUNTER_COLORS = {
-    "normal": ((255, 246, 126), (90, 65, 16)),
-    "HE": ((255, 94, 124), (88, 8, 31)),
-    "AP": ((105, 255, 255), (0, 76, 90)),
-    "torpedo": ((158, 208, 255), (18, 60, 102)),
+    Equipment.NORMAL_SHELL: ((255, 246, 126), (90, 65, 16)),
+    Equipment.HE_SHELL: ((255, 94, 124), (88, 8, 31)),
+    Equipment.AP_SHELL: ((105, 255, 255), (0, 76, 90)),
+    Equipment.TORPEDO: ((158, 208, 255), (18, 60, 102)),
 }
 
 SHELL_SCALE = 1 / 1000
@@ -252,7 +252,7 @@ class DamageCounter(VFX):
             self.text += "!"
         self.color, self.outline_color = DAMAGE_COUNTER_COLORS.get(
             shell_type,
-            DAMAGE_COUNTER_COLORS["normal"],
+            DAMAGE_COUNTER_COLORS[Equipment.NORMAL_SHELL],
         )
         self.float_distance = 48
         self.font_registry_scale = 3 if crit else 2
@@ -304,7 +304,7 @@ class VFXManager:
         """Spawn a muzzle flash vfx group."""
         muzzle_flash_distance_from_pos = 20
         pos = pygame.Vector2(pos) + get_vec(muzzle_flash_distance_from_pos, shell_render_angle)
-        colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
+        colors = SHELL_COLORS.get(shell_type, SHELL_COLORS[Equipment.NORMAL_SHELL])
         num_rings = 3
         for i in range(num_rings):
             ring_duration = 0.5 - 0.1 * i
@@ -348,7 +348,7 @@ class VFXManager:
 
     def spawn_shell_impact(self, pos: CoordinateType, shell_render_angle: float, shell_type: str):
         """Spawn a shell impact vfx group."""
-        colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
+        colors = SHELL_COLORS.get(shell_type, SHELL_COLORS[Equipment.NORMAL_SHELL])
         lightest_color = colors[0]
         darkest_color = colors[2]
         num_sparks = random.randint(2, 4)

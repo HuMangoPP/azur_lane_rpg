@@ -23,14 +23,12 @@ class MenuManager:
     ENCOUNTER = "encounter"
 
     def __init__(self):
-        # TODO technically might be able to move this into encounter menu, and if it is access elsewhere,
-        # then just access it from encounter menu
         self.player_fleet = PlayerFleet()
         self.siren_fleet = SirenFleet()
 
         self.available_shipgirls = [Shipgirl(shipgirl_name, True) for shipgirl_name in DataFiles.save_file["shipgirls"]]
 
-        self._menu_register: dict[str, Menu] = {
+        self.menu_register: dict[str, Menu] = {
             self.PORT: PortMenu(self),
             self.EQUIPMENT: EquipmentMenu(self),
             self.SORTIE_SELECTION: SortieSelectionMenu(self),
@@ -67,23 +65,23 @@ class MenuManager:
 
     @property
     def port_menu(self) -> PortMenu:
-        return self._menu_register[self.PORT]
+        return self.menu_register[self.PORT]
 
     @property
     def equipment_menu(self) -> EquipmentMenu:
-        return self._menu_register[self.EQUIPMENT]
+        return self.menu_register[self.EQUIPMENT]
     
     @property
     def sortie_selection_menu(self) -> SortieSelectionMenu:
-        return self._menu_register[self.SORTIE_SELECTION]
+        return self.menu_register[self.SORTIE_SELECTION]
     
     @property
     def fleet_selection_menu(self) -> FleetSelectionMenu:
-        return self._menu_register[self.FLEET_SELECTION]
+        return self.menu_register[self.FLEET_SELECTION]
     
     @property
     def encounter_menu(self) -> EncounterMenu:
-        return self._menu_register[self.ENCOUNTER]
+        return self.menu_register[self.ENCOUNTER]
 
     @property
     def current_menu(self) -> Menu:

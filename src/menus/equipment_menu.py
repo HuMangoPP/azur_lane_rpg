@@ -43,14 +43,14 @@ class EquipmentMenu(Menu):
         self.blueprint_page = get_rect(
             width=7 * Box.WIDTH + 2 * Box.PADDING,
             height=4.5 * Box.WIDTH + 2 * Box.PADDING,
-            left=screen_x(0.5) - Box.WIDTH * 3 / 2,
+            left=screen_x(0.5) - 1.5 * Box.WIDTH,
             top=2 * Box.PADDING,
         )
         self.equipped_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
                 centerx=self.blueprint_page.centerx,
-                centery=self.blueprint_page.bottom - 3*Box.HEIGHT - Box.PADDING
+                centery=self.blueprint_page.bottom - 3 * Box.HEIGHT - Box.PADDING
             ),
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
@@ -135,7 +135,7 @@ class EquipmentMenu(Menu):
         dossier_content_width = self.dossier_page.width - 2 * Box.PADDING
         self.dossier_header = get_rect(
             width=dossier_content_width,
-            height=62,
+            height=68,
             left=dossier_content_left,
             top=self.dossier_page.top + Box.PADDING,
         )
@@ -158,7 +158,7 @@ class EquipmentMenu(Menu):
             top=self.dossier_progress.top + 32,
         )
 
-        stat_row_height = 34
+        stat_row_height = 32
         stat_rows_top = self.dossier_capabilities.top + 14
         self.stat_row_rects = {
             stat: get_rect(
@@ -171,9 +171,9 @@ class EquipmentMenu(Menu):
         }
         self.stat_rects = {
             stat: get_rect(
-                width=32,
-                height=32,
-                left=self.dossier_page.left+3*Box.PADDING,
+                width=Box.WIDTH / 2,
+                height=Box.HEIGHT / 2,
+                left=self.dossier_page.left + 3 * Box.PADDING,
                 centery=self.stat_row_rects[stat].centery,
             )
             for stat in self.DOSSIER_STAT_LABELS
@@ -303,6 +303,7 @@ class EquipmentMenu(Menu):
         )
 
         # Animate the shipgirl wandering in the workshop.
+        shipgirl_to_target_x_tolerance = 10
         if self.shipgirl_x is None:
             self.shipgirl_x = screen_x(0.5)
             self.target_shipgirl_x = self.shipgirl_x
@@ -310,7 +311,7 @@ class EquipmentMenu(Menu):
         if self.shipgirl_pause_time > 0:
             self.shipgirl_pause_time -= dt
             self.selected_shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
-        elif abs(self.target_shipgirl_x - self.selected_shipgirl.rect.centerx) < 10:
+        elif abs(self.target_shipgirl_x - self.selected_shipgirl.rect.centerx) < shipgirl_to_target_x_tolerance:
             self.shipgirl_pause_time = random.uniform(1, 3)
             self.target_shipgirl_x = random.uniform(Box.LEFT_OF_SCREEN, Box.RIGHT_OF_SCREEN)
         else:
@@ -375,7 +376,6 @@ class EquipmentMenu(Menu):
 
     def _draw_blueprint_page(self, surface: pygame.Surface):
         """Helper to draw the blueprint page background."""
-        # Misaligned pages add depth.
         misaligned_pages = [
             (-6, pygame.Vector2(-5, 7), Color.BLUEPRINT_PAGE_BACK),
             (3, pygame.Vector2(8, -5), (34, 62, 125)),
@@ -390,7 +390,7 @@ class EquipmentMenu(Menu):
         pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
 
         # Blueprint grid.
-        grid_step = 2*Box.PADDING
+        grid_step = 2 * Box.PADDING
         for index, x in enumerate(range(
             self.blueprint_page.left + grid_step + Box.PADDING,
             self.blueprint_page.right - Box.PADDING,
@@ -416,7 +416,7 @@ class EquipmentMenu(Menu):
                 (self.blueprint_page.right, y),
             )
         # Blueprint inset border.
-        inset_rect = self.blueprint_page.inflate(-2*Box.PADDING, -2*Box.PADDING)
+        inset_rect = self.blueprint_page.inflate(-2 * Box.PADDING, -2 * Box.PADDING)
         pygame.draw.rect(
             surface,
             Color.BLUEPRINT_GRID_MAJOR,
@@ -430,7 +430,7 @@ class EquipmentMenu(Menu):
         faction = shipgirl_data["faction"]
         ship_class = shipgirl_data["class"].replace("_", " ")
         hull_type = shipgirl_data["hull_type"]
-        hull_name = Equipment.HULL_TYPE_MAPPING.get(hull_type, hull_type)
+        hull_name = Equipment.HULL_TYPE_MAPPING[hull_type]
 
         # Faction icon.
         faction_icon = DataFiles.sprites["user_interface"][f"{faction}_big"]
@@ -452,45 +452,42 @@ class EquipmentMenu(Menu):
             pygame.draw.line(surface, Color.BLUEPRINT_GRID_MAJOR, corner, corner + pygame.Vector2(dx * Box.PADDING, 0))
             pygame.draw.line(surface, Color.BLUEPRINT_GRID_MAJOR, corner, corner + pygame.Vector2(0, dy * Box.PADDING))
         # Blueprint header: title, shipgirl name, hull classification.
-        font = font_registry["big_pixel"]
-        text_left = faction_icon_rect.right + Box.PADDING
-        text_right = self.blueprint_page.right - 2 * Box.PADDING
-        text_width = text_right - text_left
+        pixel_font = font_registry["pixel"]
+        big_pixel_font = font_registry["big_pixel"]
+        text_left = faction_icon_rect.right + 4
         heading_top = self.blueprint_page.top + 2 * Box.PADDING
         display_name = self.selected_shipgirl.name.replace("_", " ")
-        name_scale = 2 if font.get_width(display_name, 2, 0) <= text_width else 1
-        name_top = heading_top + font.font_height + 2
-        classification_top = name_top + name_scale*font.font_height + 2
-        font.render(
+        name_scale = 1
+        blueprint_name_padding = 3
+        name_top = heading_top + pixel_font.font_height + blueprint_name_padding
+        classification_top = name_top + name_scale * big_pixel_font.font_height + blueprint_name_padding
+        pixel_font.render(
             surface,
             f"refit schematic // {faction}",
             (text_left, heading_top),
             Color.BLUEPRINT_INK_MUTED,
-            1,
+            scale=1,
         )
-        font.render(
+        big_pixel_font.render(
             surface,
             display_name,
             (text_left, name_top),
             Color.BLUEPRINT_SLOT_BORDER_GLOW,
             name_scale,
         )
-        font.render(
+        pixel_font.render(
             surface,
             f"{ship_class}-class // {hull_name} [{hull_type}]",
             (text_left, classification_top),
             Color.BLUEPRINT_INK_MUTED,
-            1,
+            scale=1,
         )
 
     def _draw_blueprint_slot_selection(self, surface: pygame.Surface, rect: pygame.Rect):
         """Draw the blueprint selected slot glow animation and glint particle effects."""
         # Selected slot glow animation.
         pulse = (math.sin(self.blueprint_effect_time * math.tau / 2.4) + 1) / 2
-        activation_progress = min(
-            1,
-            self.selection_activation_time / self.SELECTION_ACTIVATION_DURATION,
-        )
+        activation_progress = min(1, self.selection_activation_time / self.SELECTION_ACTIVATION_DURATION)
         activation_ease = 1 - (1 - activation_progress) ** 3
 
         beacon_base = DataFiles.sprites["user_interface"]["blueprint_slot_glow"].copy()
@@ -546,7 +543,6 @@ class EquipmentMenu(Menu):
         )
 
         # Glint particle effects.
-        # TODO can this be moved into a shared helper, as it is re-used in many places?
         glint_cycle = 0.9
         glint_lifetime = 0.7
         glint_max_length = 5
@@ -607,21 +603,23 @@ class EquipmentMenu(Menu):
             pygame.draw.rect(surface, slot_color, rect)
             if equipment is None:
                 # No equipment, render a default empty text.
-                label_y = rect.centery - font_registry["big_pixel"].font_height / 2 - 2
-                font_registry["big_pixel"].render(
+                slot_label_y_up_shift = 2
+                big_pixel_font = font_registry["big_pixel"]
+                big_pixel_font.render(
                     surface,
                     self.SLOT_LABELS[slot],
-                    (rect.centerx, label_y),
+                    (rect.centerx, rect.centery - big_pixel_font.font_height / 2 - slot_label_y_up_shift),
                     Color.BLUEPRINT_SLOT_BORDER_GLOW,
-                    1,
+                    scale=1,
                     style="center",
                 )
-                font_registry["pixel"].render(
+                pixel_font = font_registry["pixel"]
+                pixel_font.render(
                     surface,
                     "vacant",
-                    (rect.centerx, rect.centery + font_registry["pixel"].font_height),
+                    (rect.centerx, rect.centery + pixel_font.font_height),
                     Color.BLUEPRINT_INK_MUTED,
-                    1,
+                    scale=1,
                     style="center",
                 )
             else:
@@ -649,13 +647,13 @@ class EquipmentMenu(Menu):
         side_schematic = DataFiles.sprites["equipment_menu"]["side_schematic"]
         side_schematic_rect = side_schematic.get_rect()
         side_schematic_rect.left = self.blueprint_page.left
-        side_schematic_rect.centery = self.equipped_rects[0].centery
+        side_schematic_rect.centery = self.equipped_rects[Equipment.WEAPON].centery
         surface.blit(side_schematic, side_schematic_rect)
 
         top_schematic = DataFiles.sprites["equipment_menu"]["top_schematic"]
         top_schematic_rect = top_schematic.get_rect()
         top_schematic_rect.left = self.blueprint_page.left
-        top_schematic_rect.centery = self.equipped_rects[-1].centery
+        top_schematic_rect.centery = self.equipped_rects[Equipment.AUX1].centery
         surface.blit(top_schematic, top_schematic_rect)
 
         self._draw_blueprint_identity(surface, font_registry)
@@ -696,44 +694,49 @@ class EquipmentMenu(Menu):
             "azur lane naval command",
             self.dossier_header.topleft,
             Color.DOSSIER_RULE,
-            1,
+            scale=1,
         )
         form_text = "form er-01"
-        form_left = self.dossier_header.right - pixel_font.get_width(form_text, 1, 0)
+        form_left = self.dossier_header.right - pixel_font.get_width(form_text, scale=1, box_width=0)
         pixel_font.render(
             surface,
             form_text,
             (form_left, self.dossier_header.top),
             Color.DOSSIER_INK,
-            1,
+            scale=1,
         )
 
-        name_scale = 2 if title_font.get_width(display_name, 2, 0) <= self.dossier_header.width else 1
+        text_y_padding = 3
+        name_scale = 2
+        title_y = self.dossier_header.top + 11
         title_font.render(
             surface,
             display_name,
-            (self.dossier_header.left, self.dossier_header.top + 11),
+            (self.dossier_header.left, title_y),
             Color.DOSSIER_INK,
             name_scale,
         )
+        subtitle1_y = title_y + name_scale * title_font.font_height + 2 * text_y_padding
         pixel_font.render(
             surface,
             f"file: {faction}-{file_name}",
-            (self.dossier_header.left, self.dossier_header.top + 34),
+            (self.dossier_header.left, subtitle1_y),
             Color.DOSSIER_RULE,
-            1,
+            scale=1,
         )
+        subtitle2_y = subtitle1_y + pixel_font.font_height + text_y_padding
         pixel_font.render(
             surface,
             f"class: {shipgirl_data['class'].replace('_', ' ')}",
-            (self.dossier_header.left, self.dossier_header.top + 43),
+            (self.dossier_header.left, subtitle2_y),
             Color.DOSSIER_RULE,
-            1,
+            scale=1,
         )
+        subtitle3_y = subtitle2_y + pixel_font.font_height + text_y_padding
         pixel_font.render(
             surface,
             f"hull: {Equipment.HULL_TYPE_MAPPING[hull_type]} [{hull_type}]",
-            (self.dossier_header.left, self.dossier_header.top + 52),
+            (self.dossier_header.left, subtitle3_y),
             Color.DOSSIER_RULE,
             1,
         )
@@ -743,24 +746,26 @@ class EquipmentMenu(Menu):
         surface: pygame.Surface, font_registry: dict[str, Font], text: str, rect: pygame.Rect
     ):
         """Draw the dossier page section headers."""
+        horizontal_rule_up_shift = 4
         pygame.draw.line(
             surface,
             Color.DOSSIER_RULE,
-            (rect.left, rect.top - 4),
-            (rect.right, rect.top - 4),
+            (rect.left, rect.top - horizontal_rule_up_shift),
+            (rect.right, rect.top - horizontal_rule_up_shift),
         )
         font_registry["pixel"].render(
             surface,
             text,
             rect.topleft,
             Color.DOSSIER_RULE,
-            1,
+            scale=1,
         )
+        horizontal_rule_down_shift = 10
         pygame.draw.line(
             surface,
             Color.DOSSIER_RULE,
-            (rect.left, rect.top + 10),
-            (rect.right, rect.top + 10),
+            (rect.left, rect.top + horizontal_rule_down_shift),
+            (rect.right, rect.top + horizontal_rule_down_shift),
         )
 
     def _draw_dossier_progress(self, surface: pygame.Surface, font_registry: dict[str, Font]):
@@ -786,39 +791,40 @@ class EquipmentMenu(Menu):
         )
         surface.blit(medal_icon, medal_rect)
 
-        font_registry["pixel"].render(
+        pixel_font = font_registry["pixel"]
+        pixel_font.render(
             surface,
             "service level",
-            (medal_rect.right + Box.PADDING, self.dossier_progress.top + 14),
+            (medal_rect.right + Box.PADDING, medal_rect.top),
             Color.DOSSIER_RULE,
-            1,
+            scale=1,
         )
         font_registry["big_pixel"].render(
             surface,
             f"{level:02d}",
-            (medal_rect.right + Box.PADDING, self.dossier_progress.top + 23),
+            (medal_rect.right + Box.PADDING, medal_rect.top + pixel_font.font_height + 3),
             Color.DOSSIER_INK,
-            2,
+            scale=2,
         )
-        font_registry["pixel"].render(
+        pixel_font.render(
             surface,
             f"{level_exp}/{required_exp}",
-            (self.exp_bar_bg.centerx, self.exp_bar_bg.top - Box.PADDING),
+            (self.exp_bar_bg.centerx, self.exp_bar_bg.top - pixel_font.font_height),
             Color.DOSSIER_RULE,
-            1,
+            scale=1,
             style="center"
         )
 
         pygame.draw.rect(surface, Color.DOSSIER_RULE, self.exp_bar_bg)
         exp_bar = get_rect(
-            width=round(level_progress*self.exp_bar_bg.width),
+            width=round(level_progress * self.exp_bar_bg.width),
             height=self.exp_bar_bg.height,
             left=self.exp_bar_bg.left,
             top=self.exp_bar_bg.top,
         )
         pygame.draw.rect(surface, Color.DOSSIER_INK, exp_bar)
         for tick in (0.25, 0.5, 0.75):
-            tick_x = self.exp_bar_bg.left + round(self.exp_bar_bg.width*tick)
+            tick_x = self.exp_bar_bg.left + round(self.exp_bar_bg.width * tick)
             pygame.draw.line(
                 surface,
                 Color.DOSSIER_PAGE,
@@ -841,21 +847,27 @@ class EquipmentMenu(Menu):
             stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.DOSSIER_INK)
             surface.blit(stat_icon, icon_rect)
 
+            pixel_font = font_registry["pixel"]
+            big_pixel_font = font_registry["big_pixel"]
             value = str(self.selected_shipgirl.battle_component.stat(stat))
             value_left = icon_rect.right + Box.PADDING
-            font_registry["pixel"].render(
+            stat_label_y = row_rect.top + 6
+            pixel_font.render(
                 surface,
                 self.DOSSIER_STAT_LABELS[stat],
-                (value_left, row_rect.top + 2),
+                (value_left, stat_label_y),
                 Color.DOSSIER_RULE,
-                1,
+                scale=1,
             )
-            font_registry["big_pixel"].render(
+            text_y_padding = 3
+            value_font_scale = 1
+            value_text_y = stat_label_y + pixel_font.font_height + text_y_padding
+            big_pixel_font.render(
                 surface,
                 value,
-                (value_left, row_rect.top + 12),
+                (value_left, stat_label_y + pixel_font.font_height + text_y_padding),
                 Color.DOSSIER_INK,
-                2,
+                value_font_scale,
             )
             # Draw the stat deltas.
             stat_delta = self._get_stat_delta(self.selected_shipgirl, stat)
@@ -869,21 +881,23 @@ class EquipmentMenu(Menu):
                     [center + get_vec(length=Box.PADDING, angle=math.radians(angle)) for angle in angles],
                 )
 
-                value_width = font_registry["big_pixel"].get_width(value, 2, 0)
+                value_width = font_registry["big_pixel"].get_width(value, value_font_scale, box_width=0)
                 delta_text = f"+{stat_delta}" if stat_delta > 0 else str(stat_delta)
-                font_registry["big_pixel"].render(
+                delta_text_y = value_text_y + value_font_scale * big_pixel_font.font_height / 2
+                big_pixel_font.render(
                     surface,
                     delta_text,
-                    (value_left + value_width + Box.PADDING/2, icon_rect.centery + 5),
+                    (value_left + value_width + value_font_scale * big_pixel_font.font_width, delta_text_y),
                     color,
-                    1,
+                    scale=1,
                     style="centerleft",
                 )
+        horizontal_rule_up_shift = 1
         pygame.draw.line(
             surface,
             Color.DOSSIER_RULE,
-            (row_rect.left, row_rect.bottom - 1),
-            (row_rect.right, row_rect.bottom - 1),
+            (row_rect.left, row_rect.bottom - horizontal_rule_up_shift),
+            (row_rect.right, row_rect.bottom - horizontal_rule_up_shift),
         )
 
     def _draw_dossier(self, surface: pygame.Surface, font_registry: dict[str, Font]):
@@ -921,13 +935,11 @@ class EquipmentMenu(Menu):
         surface.blit(coffee_ring_sprite, coffee_ring_rect)
 
         # Draw the other props.
-        paperclip_sprite = pygame.transform.rotate(
-            DataFiles.sprites["props"]["paperclip"],
-            -90,
-        )
+        paperclip_sprite = pygame.transform.rotate(DataFiles.sprites["props"]["paperclip"], angle=-90)
+        paperclip_up_shift = 4
         paperclip_rect = paperclip_sprite.get_rect(
             right=self.dossier_bg.right + Box.PADDING,
-            top=self.dossier_bg.top - 4,
+            top=self.dossier_bg.top - paperclip_up_shift,
         )
         surface.blit(paperclip_sprite, paperclip_rect)
 
@@ -1067,7 +1079,7 @@ class EquipmentMenu(Menu):
             "depot",
             (sign_rect.centerx, sign_rect.centery - 1.25 * font.font_height),
             Color.BLACK,
-            1,
+            scale=1,
             style="center"
         )
         font.render(
@@ -1075,7 +1087,7 @@ class EquipmentMenu(Menu):
             str(self._get_equipment_page() + 1),
             (sign_rect.centerx, sign_rect.centery + font.font_height / 2),
             Color.BLACK,
-            2,
+            scale=2,
             style="center"
         )
 

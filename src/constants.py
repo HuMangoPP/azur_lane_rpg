@@ -15,11 +15,14 @@ from engine.load_assets import load_sprites, load_sound
 TEMP_SCREEN_SIZE = pygame.Vector2(960, 540)
 FPS = 60
 
+
 def screen_x(t: float):
     return TEMP_SCREEN_SIZE.x * t
 
+
 def screen_y(t: float):
     return TEMP_SCREEN_SIZE.y * t
+
 
 class Box:
     WIDTH = 64
@@ -28,16 +31,17 @@ class Box:
 
     PADDING = 8
 
-    EDGE_PADDING = 32
-    LEFT_OF_SCREEN = screen_x(0) + EDGE_PADDING
-    RIGHT_OF_SCREEN = screen_x(1) - EDGE_PADDING
-    TOP_OF_SCREEN = screen_y(0) + EDGE_PADDING
-    BOTTOM_OF_SCREEN = screen_y(1) - EDGE_PADDING
+    EDGE_MARGIN = 32
+    LEFT_OF_SCREEN = screen_x(0) + EDGE_MARGIN
+    RIGHT_OF_SCREEN = screen_x(1) - EDGE_MARGIN
+    TOP_OF_SCREEN = screen_y(0) + EDGE_MARGIN
+    BOTTOM_OF_SCREEN = screen_y(1) - EDGE_MARGIN
 
+
+    # TODO Consider whether this deserves to be in the engine.
     @staticmethod
     def get_rotated_rect_polygon(rect: pygame.Rect, rotated_angle: float, offset: CoordinateType = (0, 0)):
         """Compute a rotated rect polygon."""
-        # TODO move this to engine util
         rect_center = pygame.Vector2(rect.center) + pygame.Vector2(offset)
         rect_horizontal = get_vec(rect.width / 2, math.radians(rotated_angle))
         rect_vertical = get_vec(rect.height / 2, math.radians(90 + rotated_angle))
@@ -48,11 +52,15 @@ class Box:
             rect_center + rect_horizontal - rect_vertical,
         ]
 
+
 class Color:
-    WHITE = (255,255,255)
-    BLACK = (10,10,10)
-    GREY = (50,50,50)
-    RED = (255,10,10)
+    # TODO Look at which colors are no longer used.
+    # Also, if a color is only used in one file, consider moving it either completely.
+    # This should only be used for shared colors used across multiple modules.
+    WHITE = (255, 255, 255)
+    BLACK = (10, 10, 10)
+    GREY = (50, 50, 50)
+    RED = (255, 10, 10)
 
     CARGO_BOX = (184, 144, 114)
     CARGO_BOX_BACK = (112, 78, 53)
@@ -125,8 +133,8 @@ class Color:
     TARGET_INDICATOR = (225, 240, 255)
     MUTED_TARGET_INDICATOR = (192, 208, 224)
 
+
 class Equipment:
-    NUM_EQUIPS = 3
     WEAPON = 0
     AUX1 = 1
     AUX2 = 2
@@ -141,13 +149,14 @@ class Equipment:
         "BB": "battleship",
         "SS": "submarine",
         "CV": "aircraft carrier",
-        "AUX": "universal",
+        "aux": "universal",
     }
 
     AP_SHELL = "AP"
     HE_SHELL = "HE"
     NORMAL_SHELL = "normal"
     TORPEDO = "torpedo"
+
 
 class Stats:
     EXP_BASE = 12
@@ -156,7 +165,7 @@ class Stats:
     @classmethod
     def exp_to_level(cls, level: float) -> float:
         """The total amount of exp required to reach this level."""
-        return sum(cls.exp_amount_at_level(l) for l in range(level))
+        return sum(cls.exp_amount_at_level(lvl) for lvl in range(level))
 
     @classmethod
     def exp_amount_at_level(cls, level: float) -> float:
@@ -193,40 +202,40 @@ class Stats:
         return None
 
 
+# TODO Consider whether this serves to be split.
 class DataFiles:
     with open("data/save_file.json") as f:
         save_file = json.load(f)
 
     with open("data/sorties.json") as f:
-        sortie_data = json.load(f)
+        sortie_data: list[dict] = json.load(f)
 
     with open("data/shipgirls.json") as f:
-        shipgirl_data = json.load(f)
+        shipgirl_data: dict[str, dict[str, str]] = json.load(f)
 
     with open("data/stats.json") as f:
-        stats_data = json.load(f)
+        stats_data: dict[str, dict[str, CoordinateType]] = json.load(f)
 
     with open("data/sirens.json") as f:
-        siren_data = json.load(f)
+        siren_data: dict[str, dict] = json.load(f)
 
     with open("data/equipment.json") as f:
-        equipment_data = json.load(f)
+        equipment_data: dict[str, dict] = json.load(f)
 
     with open("data/decoration_store.json") as f:
-        decoration_store = json.load(f)
+        decoration_store: dict[str, dict] = json.load(f)
     
     with open("data/item_descriptions.json") as f:
-        item_descriptions = json.load(f)
+        item_descriptions: dict[str, str] = json.load(f)
     
     with open("data/sortie_selection_details.json") as f:
-        sortie_selection_details = json.load(f)
+        sortie_selection_details: dict[str, dict] = json.load(f)
 
-    sprites = load_sprites()
-    sprites["encounter"]["smoke"].set_alpha(128)
-    sprites["encounter"]["hull"].set_colorkey((255,255,255))
+    sprites: dict[str, dict[str, pygame.Surface | dict[str, pygame.Surface]]] = load_sprites()
     sfx = load_sound(master_file="sfx.json", file_ext="wav")
     bgm = load_sound(master_file="bgm.json", file_ext="ogg")
 
+    # TODO Consider whether this is a useful enough util to move to the engine.
     @classmethod
     def recolor_sprite(cls, sprite_group: str, sprite_key: str, color: ColorType) -> pygame.Surface:
         """Recolor the white pixels of the sprite to the target color."""
@@ -265,6 +274,8 @@ class DataFiles:
             faction_shipgirls[shipgirl_info["hull_type"]] = shipgirl
         return faction_shipgirls
 
+
+# TODO Consider whether these chould be classmethods in DataFiles that are invoked once.
 # Generate recolored shell sprites for each shell type.
 for shell_type, shell_color in zip(
     [Equipment.NORMAL_SHELL, Equipment.HE_SHELL, Equipment.AP_SHELL],
@@ -309,11 +320,15 @@ for weather, palette in background_wave_palettes.items():
             int(dark + (light - dark) * t)
             for dark, light in zip(palette["darkest"], palette["lightest"])
         )
+        # DataFiles.recolor_sprite not used here because the wave sprite also needs
+        # to get taller, and so this approach is actually more efficient than generating
+        # the colored sprite then having to manipulate that and make the sprite taller.
         wave = DataFiles.sprites["background"]["wave"]
         higher_wave = pygame.Surface((wave.get_width(), 2 * wave.get_height()))
         higher_wave.fill(wave_color)
         wave.set_colorkey((255, 255, 255))
         higher_wave.blit(wave, (0, 0))
+        wave.set_colorkey((255, 0, 0))
         higher_wave.set_colorkey((255, 0, 0))
         wave_set.append(higher_wave)
     DataFiles.sprites["background"]["wave_sets"][weather] = wave_set
@@ -321,19 +336,12 @@ for weather, palette in background_wave_palettes.items():
 # Generate shadows for each cloud.
 DataFiles.sprites["background"]["num_clouds"] = 10
 for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
-    cloud = DataFiles.sprites["background"][f"cloud{cloud_index}"]
-    cloud_shadow = pygame.Surface(cloud.get_size())
-    cloud_shadow.fill((100, 100, 100))
-    cloud.set_colorkey((255, 255, 255))
-    cloud_shadow.blit(cloud, (0, 0))
-    cloud_shadow.set_colorkey((255, 0, 0))
-    cloud.set_colorkey((255, 0, 0))
+    cloud_shadow = DataFiles.recolor_sprite("background", f"cloud{cloud_index}", (100, 100, 100))
+    cloud_shadow_black_bg = pygame.Surface(cloud_shadow.get_size())
+    cloud_shadow_black_bg.fill((0, 0, 0))
+    cloud_shadow_black_bg.blit(cloud_shadow, (0, 0))
 
-    cloud_shadow2 = pygame.Surface(cloud_shadow.get_size())
-    cloud_shadow2.fill((0, 0, 0))
-    cloud_shadow2.blit(cloud_shadow, (0, 0))
-
-    DataFiles.sprites["background"][f"cloud_shadow{cloud_index}"] = cloud_shadow2
+    DataFiles.sprites["background"][f"cloud_shadow{cloud_index}"] = cloud_shadow_black_bg
 
 # Create cloud sprites corresponding to each weather condition.
 background_cloud_colors = {
@@ -345,13 +353,7 @@ DataFiles.sprites["background"]["cloud_sets"] = {}
 for weather, cloud_color in background_cloud_colors.items():
     cloud_set = []
     for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
-        cloud = DataFiles.sprites["background"][f"cloud{cloud_index}"]
-        colored_cloud = pygame.Surface(cloud.get_size())
-        colored_cloud.fill(cloud_color)
-        cloud.set_colorkey((255, 255, 255))
-        colored_cloud.blit(cloud, (0, 0))
-        colored_cloud.set_colorkey((255, 0, 0))
-        cloud.set_colorkey((255, 0, 0))
+        colored_cloud = DataFiles.recolor_sprite("background", f"cloud{cloud_index}", cloud_color)
         cloud_set.append(colored_cloud)
     DataFiles.sprites["background"]["cloud_sets"][weather] = cloud_set
 
@@ -367,6 +369,7 @@ for wave_index in range(num_waves):
     value = 1.0 - t * 0.1
 
     r, g, b = colorsys.hsv_to_rgb(base_hue, saturation, value)
+    # Sprite gets taller, so DataFiles.recolor_sprite not used.
     wave_color = (int(r * 255), int(g * 255), int(b * 255))
     higher_wave = pygame.Surface((wave.get_width(), 2 * wave.get_height()))
     higher_wave.fill(wave_color)
@@ -395,7 +398,7 @@ for sprite_key, color in zip(
     glow_color = tuple(c // 2 for c in color)
     glow = pygame.Surface((1, 2))
     glow.set_at((0, 1), glow_color)
-    glow = pygame.transform.smoothscale(glow, (math.ceil(Box.WIDTH * (3 ** 0.5) / 2), Box.HEIGHT))
+    glow = pygame.transform.smoothscale(glow, (math.ceil(Box.WIDTH * math.sqrt(3) / 2), Box.HEIGHT))
     DataFiles.sprites["sortie_selection"][sprite_key] = glow
 
 # Generate a conic glow for the fleet selection markers.
@@ -422,57 +425,44 @@ for y in range(fleet_marker_selection_glow_size[1]):
     )
 DataFiles.sprites["fleet_selection"]["marker_selection_glow"] = fleet_marker_selection_glow
 
-# Generate a conic glow for the shipgirl battlestation.
-battlestation_glow_top_width = math.ceil(48 + 64 + 4 * Box.PADDING)
+# Generate a conic glow for the shipgirl and siren battlestations.
+reload_gauge_width = 48
+bar_width = 64
+battlestation_glow_top_width = math.ceil(reload_gauge_width + bar_width + 4 * Box.PADDING)
 battlestation_glow_bottom_width = 2
 battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT / 1.5))
-battlestation_glow = pygame.Surface(battlestation_glow_size)
-battlestation_glow_color = Color.HOLOGRAM_GLOW
-for y in range(battlestation_glow_size[1]):
-    y_ratio = y / (battlestation_glow_size[1] - 1)
-    cone_width = round(
-        battlestation_glow_top_width
-        - (battlestation_glow_top_width - battlestation_glow_bottom_width) * y_ratio
-    )
-    top_blend = min(1, (0.5 + y_ratio) / 1.5)
-    glow_color = tuple(math.ceil(c * top_blend) for c in battlestation_glow_color)
-    left = (battlestation_glow_size[0] - cone_width) // 2
-    pygame.draw.line(
-        battlestation_glow,
-        glow_color,
-        (left, y),
-        (left + cone_width - 1, y)
-    )
-DataFiles.sprites["encounter"]["shipgirl_battlestation_glow"] = battlestation_glow
-
-# Generate a conic glow for the siren battlestation.
-battlestation_glow_top_width = math.ceil(48 + 64 + 4 * Box.PADDING)
-battlestation_glow_bottom_width = 2
-battlestation_glow_size = (battlestation_glow_top_width, math.ceil(Box.HEIGHT / 1.5))
-battlestation_glow = pygame.Surface(battlestation_glow_size)
-battlestation_glow_color = Color.SIREN_HOLOGRAM_GLOW
-for y in range(battlestation_glow_size[1]):
-    y_ratio = y / (battlestation_glow_size[1] - 1)
-    cone_width = round(
-        battlestation_glow_top_width
-        - (battlestation_glow_top_width - battlestation_glow_bottom_width) * y_ratio
-    )
-    top_blend = min(1, (0.5 + y_ratio)/1.5)
-    glow_color = tuple(math.ceil(c * top_blend) for c in battlestation_glow_color)
-    left = (battlestation_glow_size[0] - cone_width) // 2
-    pygame.draw.line(
-        battlestation_glow,
-        glow_color,
-        (left, y),
-        (left + cone_width - 1, y)
-    )
-DataFiles.sprites["encounter"]["siren_battlestation_glow"] = battlestation_glow
+battlestation_glow_colors = [Color.HOLOGRAM_GLOW, Color.SIREN_HOLOGRAM_GLOW]
+battlestation_glow_keys = ["shipgirl_battlestation_glow", "siren_battlestation_glow"]
+for battlestation_glow_key, battlestation_glow_color in zip(
+    battlestation_glow_keys, battlestation_glow_colors
+):
+    battlestation_glow = pygame.Surface(battlestation_glow_size)
+    for y in range(battlestation_glow_size[1]):
+        y_ratio = y / (battlestation_glow_size[1] - 1)
+        cone_width = round(
+            battlestation_glow_top_width
+            - (battlestation_glow_top_width - battlestation_glow_bottom_width) * y_ratio
+        )
+        min_glow = 0.33
+        top_blend = min(1, min_glow + (1 - min_glow) * y_ratio)
+        glow_color = tuple(math.ceil(c * top_blend) for c in battlestation_glow_color)
+        left = (battlestation_glow_size[0] - cone_width) // 2
+        pygame.draw.line(
+            battlestation_glow,
+            glow_color,
+            (left, y),
+            (left + cone_width - 1, y)
+        )
+    DataFiles.sprites["encounter"][battlestation_glow_key] = battlestation_glow
 
 # Generate a lightbulb glow for the equipment menu lightbulb prop.
 lightbulb_light = pygame.Surface((64, 64))
 pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)
 DataFiles.sprites["equipment_menu"]["lightbulb_light"] = lightbulb_light
 
+
+# TODO Consider whether the isometric utilities for this class are useful as engine-level
+# utilities.
 class Decorations:
     FLOOR_TILES_WIDE = 14
     FLOOR_TILES_TALL = 14
@@ -521,7 +511,6 @@ class Decorations:
         """Checks if this renderable is a shipgirl."""
         return (
             hasattr(renderable, "rect")
-            and hasattr(renderable, "SPRITE_SIZE")
             and hasattr(renderable, "interacting_decoration")
         )
 
@@ -766,6 +755,7 @@ class Decorations:
         
         cls.floor_rect = cls.floor_surf.get_rect()
         cls.floor_rect.center = (screen_x(0.5), screen_y(0.5))
+
 
 Decorations.create_floor_surf()
 Decorations.create_wallpaper_surf()

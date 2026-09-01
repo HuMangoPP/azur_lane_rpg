@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from src.menus.menu_manager import MenuManager
 
 
+# TODO Consider whether this should be moved to the engine.
 class Menu:
     def __init__(self, menu_manager: MenuManager):
         pass

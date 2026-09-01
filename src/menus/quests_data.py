@@ -58,7 +58,8 @@ def draw_tb(surface: pygame.Surface, font_registry: dict[str, Font], text: str |
         text_scale = 1
         text_left_padding = 14
         text_right_padding = Box.PADDING
-        max_text_width = font_registry["big_pixel"].font_width * 25
+        max_chars_in_line = 25
+        max_text_width = font_registry["big_pixel"].font_width * max_chars_in_line
         text_height = font_registry["big_pixel"].get_height(text, text_scale, max_text_width)
         text_box_width = font_registry["big_pixel"].get_width(text, text_scale, max_text_width)
         text_rect = get_rect(
@@ -110,10 +111,11 @@ def draw_tb(surface: pygame.Surface, font_registry: dict[str, Font], text: str |
         )
         surface.blit(panel, text_rect)
 
+        rail_margins = 6
         rail_rect = get_rect(
             width=3,
-            height=max(1, text_rect.height - 12),
-            left=text_rect.left + 6,
+            height=max(1, text_rect.height - 2 * rail_margins),
+            left=text_rect.left + rail_margins,
             centery=text_rect.centery,
         )
         rail_glow = pygame.Surface(rail_rect.size, pygame.SRCALPHA)
@@ -492,7 +494,7 @@ def inventory_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, 
         draw_tb(
             surface, font_registry,
             "You can see all of your items here",
-            (rect.left + rect.width/3, rect.bottom),
+            (rect.left + rect.width / 3, rect.bottom),
             False, True
         )
         if menu_manager.port_menu.overlay_selected_entity is None:
@@ -1244,7 +1246,7 @@ def construct_additional_weapons_completion_criteria(menu_manager: MenuManager) 
     required_hull_types = {"DD", "BB", "CA", "CL", "SS", "CV"}
     required_weapons = [
         equipment for equipment, equipment_data in DataFiles.equipment_data.items()
-        if equipment_data["type"] == "weapon"
+        if equipment_data["type"] == Equipment.WEAPON_KEY
         and equipment_data["equippable_by"] in required_hull_types
     ]
     return all(_owned_equipment(equipment) >= 1 for equipment in required_weapons)
@@ -1285,7 +1287,7 @@ construct_auxiliary_equipment_post_quest_dialogue = [
 def construct_auxiliary_equipment_completion_criteria(menu_manager: MenuManager) -> bool:
     auxiliary_equipment = [
         equipment for equipment, equipment_data in DataFiles.equipment_data.items()
-        if equipment_data["type"] == "aux"
+        if equipment_data["type"] == Equipment.AUX_KEY
     ]
     return all(_owned_equipment(equipment) >= 2 for equipment in auxiliary_equipment)
 

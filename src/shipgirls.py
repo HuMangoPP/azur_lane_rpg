@@ -650,21 +650,21 @@ class ShipgirlBattleComponent:
 
         # Draw the hp bar, which is stylized as the side silhouette of a hull.
         hp_pct = self.hp / self.stat("max_hp")
-        hull_back = pygame.Surface(hull_sprite.get_size())
-        hull_back.fill(Color.EXP_BAR_BG)
-        hull_back.blit(hull_sprite)
-        hull_back.set_colorkey((255, 0, 0))
+        hull_back = pygame.transform.flip(
+            DataFiles.recolor_sprite("encounter", "hull", Color.EXP_BAR_BG),
+            flip_x=not self.is_player, flip_y=False
+        )
         battlestation_surf.blit(hull_back, hull_rect)
-        
-        hull_fill = pygame.Surface(hull_sprite.get_size())
+
         hp_bar_color = (0, 255, 205) if self.is_player else (255, 0, 50)
-        hull_fill.fill(hp_bar_color)
-        hull_fill.blit(hull_sprite)
+        hull_fill = pygame.transform.flip(
+            DataFiles.recolor_sprite("encounter", "hull", hp_bar_color),
+            flip_x=not self.is_player, flip_y=False
+        )
         missing_hp_rect = get_rect(width=hull_rect.width * (1 - hp_pct), height=hull_rect.height, left=0, top=0)
         if self.is_player:
             missing_hp_rect.right = hull_rect.width
         pygame.draw.rect(hull_fill, (255, 0, 0), missing_hp_rect)
-        hull_fill.set_colorkey((255, 0, 0))
         battlestation_surf.blit(hull_fill, hull_rect)
 
         if not self.is_player:

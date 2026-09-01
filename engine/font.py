@@ -33,7 +33,7 @@ class Font:
         only a single word and that word's render width exceeds the box width.
         """
         if box_width <= 0:
-            return [text]
+            return [text.strip()]
         else:
             char_width = self.font_width * scale
             max_chars_per_line = box_width // char_width

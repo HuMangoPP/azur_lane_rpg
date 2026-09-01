@@ -357,7 +357,7 @@ class Live2D:
 
     def set_animation(self, animation: str):
         """Set the animation for this live2d sprite."""
-        if animation not in self.animation:
+        if animation not in self.animations:
             return
         
         if self.animation != animation:

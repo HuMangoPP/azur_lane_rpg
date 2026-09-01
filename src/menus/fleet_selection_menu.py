@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from engine.types import CoordinateType, ColorType
     from engine.font import Font
@@ -25,6 +24,7 @@ from src.menus.sortie_selection_menu import (
 from live2d.live2d import Live2D
 
 
+# TODO Consider if this is useful enough to implement directly in Font.
 def draw_rotated_handwritten_text(
     surface: pygame.Surface,
     font_registry: dict[str, Font],
@@ -303,7 +303,7 @@ class FleetSelectionMenu(Menu):
             get_rect(
                 width=slot_size, height=slot_size,
                 centerx=screen_x(0.25) + 1.5 * slot_size - (slot_index - 1) * slot_size / 4,
-                centery=self.Y_ALIGN + (slot_index-1) * (slot_size + Box.PADDING)
+                centery=self.Y_ALIGN + (slot_index - 1) * (slot_size + Box.PADDING)
             ) for slot_index in range(num_slots)
         ]
         self.backup_fleet_slots = [
@@ -421,7 +421,8 @@ class FleetSelectionMenu(Menu):
                     checkpoint_turn_amount,
                     required_curvature * step,
                 )
-            while to_target.length() > 5:
+            to_target_tolerance = 5
+            while to_target.length() > to_target_tolerance:
                 pos = pos + get_vec(step, angle)
                 if record_every_counter == 0:
                     if draw_hex:
@@ -459,10 +460,7 @@ class FleetSelectionMenu(Menu):
         # Pick a subset of loops and place hexes, representing
         # the encounters along the path.
         # The final point of the path always has a hex.
-        encounter_loop_hexes = random.sample(
-            candidate_hexes[:-1],
-            k=num_encounters - 1,
-        )
+        encounter_loop_hexes = random.sample(candidate_hexes[:-1], k=num_encounters - 1)
         # Keep track of the loop which does not have a hex.
         # A prop will be placed here.
         self.empty_loop_position = next(
@@ -487,23 +485,25 @@ class FleetSelectionMenu(Menu):
         fleet box.
         """
         final_path_hex = self.path_hexes[-1]
-        upper_hex_edge = final_path_hex + pygame.Vector2(-24, -16)
-        lower_hex_edge = final_path_hex + pygame.Vector2(-24, 16)
+        final_hex_x_offset = 24
+        final_hex_y_offset = 16
+        upper_hex_edge = final_path_hex + pygame.Vector2(-final_hex_x_offset, -final_hex_y_offset)
+        lower_hex_edge = final_path_hex + pygame.Vector2(-final_hex_x_offset, final_hex_y_offset)
         self.path_annotations = [
             FleetPathAnnotation(
                 pygame.Vector2(self.primary_fleet_box.topright)
                 + pygame.Vector2(Box.PADDING, -Box.PADDING),
                 upper_hex_edge,
-                -40,
-                "initial strike group",
+                bend=-40,
+                text="initial strike group",
                 text_above=True,
             ),
             FleetPathAnnotation(
                 pygame.Vector2(self.backup_fleet_box.bottomright)
                 + pygame.Vector2(Box.PADDING, Box.PADDING),
                 lower_hex_edge,
-                64,
-                "delayed strike group",
+                bend=64,
+                text="delayed strike group",
             ),
         ]
 
@@ -541,7 +541,7 @@ class FleetSelectionMenu(Menu):
         """Randomly generate a random prop position until the position is valid."""
         screen_rect = pygame.Rect((0, 0), (screen_x(1), screen_y(1)))
         # Prevent the prop from generating too close to these UI components.
-        header_rect = pygame.Rect(0, 0, screen_x(1), 80)
+        header_rect = get_rect(width=screen_x(1), height=80)
         protected_rects = [
             header_rect,
             self.exit_fleet_selection_menu_button.rect,
@@ -621,8 +621,9 @@ class FleetSelectionMenu(Menu):
             rect.move(-self.tray_overlay.left, -self.tray_overlay.top)
             for rect in self.available_shipgirl_rects
         ]
+        bay_margins = 4
         for bay_rect in local_bays:
-            recess_rect = bay_rect.inflate(4, 4)
+            recess_rect = bay_rect.inflate(bay_margins, bay_margins)
             pygame.draw.rect(tray_surface, self.TRAY_RECESS_RIM, recess_rect)
             pygame.draw.rect(tray_surface, self.TRAY_BAY_COLOR, bay_rect)
 
@@ -641,17 +642,18 @@ class FleetSelectionMenu(Menu):
                 bay_rect.bottomleft,
                 width=2,
             )
+            bay_rim_offset = 2
             pygame.draw.line(
                 tray_surface,
                 self.TRAY_BAY_HIGHLIGHT,
-                bay_rect.bottomleft + pygame.Vector2(2, -2),
-                bay_rect.bottomright + pygame.Vector2(-2, -2),
+                bay_rect.bottomleft + pygame.Vector2(bay_rim_offset, -bay_rim_offset),
+                bay_rect.bottomright + pygame.Vector2(-bay_rim_offset, -bay_rim_offset),
             )
             pygame.draw.line(
                 tray_surface,
                 self.TRAY_BAY_HIGHLIGHT,
-                bay_rect.topright + pygame.Vector2(-2, 2),
-                bay_rect.bottomright + pygame.Vector2(-2, -2),
+                bay_rect.topright + pygame.Vector2(-bay_rim_offset, bay_rim_offset),
+                bay_rect.bottomright + pygame.Vector2(-bay_rim_offset, -bay_rim_offset),
             )
 
         width, height = tray_size
@@ -697,17 +699,18 @@ class FleetSelectionMenu(Menu):
                 screw_center,
                 radius=Box.PADDING,
             )
+            screw_size_padding = 2
             pygame.draw.circle(
                 tray_surface,
                 self.TRAY_SCREW_COLOR,
                 screw_center,
-                radius=Box.PADDING - 2,
+                radius=Box.PADDING - screw_size_padding,
             )
             pygame.draw.line(
                 tray_surface,
                 self.TRAY_FRAME_SHADOW,
-                (center_x - (Box.PADDING - 2), center_y),
-                (center_x + (Box.PADDING - 2), center_y),
+                (center_x - (Box.PADDING - screw_size_padding), center_y),
+                (center_x + (Box.PADDING - screw_size_padding), center_y),
                 width=3,
             )
 
@@ -717,7 +720,7 @@ class FleetSelectionMenu(Menu):
         """Pre-render tray shadow surface."""
         width, height = self.tray_overlay.size
         shadow_surface = pygame.Surface(
-            (width + 10, height + 12),
+            (width + 9, height + 12),
             flags=pygame.SRCALPHA,
         )
         pygame.draw.polygon(
@@ -878,7 +881,7 @@ class FleetSelectionMenu(Menu):
         return [
             pygame.Vector2(center) + get_vec(
                 self.LAUNCH_MARKER_RADIUS,
-                math.radians(30 + corner_index*60),
+                math.radians(30 + corner_index * 60),
             )
             for corner_index in range(6)
         ]
@@ -911,11 +914,10 @@ class FleetSelectionMenu(Menu):
             marker_polygon = self._get_launch_marker_polygon(token_center)
             glow_left = int(min(corner.x for corner in marker_polygon))
             glow_right = int(max(corner.x for corner in marker_polygon))
-            glow_rect = pygame.Rect(
-                glow_left,
-                0,
-                glow_right - glow_left + 1,
-                glow.get_height(),
+            glow_rect = get_rect(
+                width=glow_right - glow_left + 1,
+                height=glow.get_height(),
+                left=glow_left
             )
             glow_rect.bottom = token_center.y
             marker_glow = pygame.transform.smoothscale(glow, glow_rect.size)
@@ -994,12 +996,7 @@ class FleetSelectionMenu(Menu):
 
     def _get_pulsing_selection_glow(self, glow_sprite: pygame.Surface):
         """Get pulsing selection glow sprite."""
-        pulse = (
-            math.sin(
-                self.selection_effect_time * math.tau / self.SELECTION_PULSE_DURATION
-            )
-            + 1
-        ) / 2
+        pulse = (math.sin(self.selection_effect_time * math.tau / self.SELECTION_PULSE_DURATION) + 1) / 2
         glow_base = glow_sprite.copy()
         glow_base.set_alpha(int(128 + 127 * pulse))
         glow = pygame.Surface(glow_base.get_size())
@@ -1070,17 +1067,16 @@ class FleetSelectionMenu(Menu):
                 for corner_index in range(6)
             ]
 
-            shadow_polygon = [point + pygame.Vector2(2, 4) for point in polygon]
+            shadow_polygon = [point + pygame.Vector2(3, 6) for point in polygon]
             pygame.draw.polygon(surface, self.TRAY_CAST_SHADOW, shadow_polygon)
 
             # Hex glow.
             glow_left = int(min(corner.x for corner in polygon))
             glow_right = int(max(corner.x for corner in polygon))
-            glow_rect = pygame.Rect(
-                glow_left,
-                0,
-                glow_right - glow_left + 1,
-                glow.get_height(),
+            glow_rect = get_rect(
+                width=glow_right - glow_left + 1,
+                height=glow.get_height(),
+                left=glow_left,
             )
             glow_rect.bottom = hex_center.y
             hex_glow = pygame.transform.smoothscale(glow, glow_rect.size)
@@ -1329,18 +1325,19 @@ class FleetSelectionMenu(Menu):
 
         # Draw the rims of the tray bays.
         for rect in self.available_shipgirl_rects:
+            tray_rim_offset = 1
             pygame.draw.rect(surface, self.TRAY_RECESS_RIM, rect, width=2)
             pygame.draw.line(
                 surface,
                 self.TRAY_FRAME_HIGHLIGHT,
-                rect.bottomleft + pygame.Vector2(1, -1),
-                rect.bottomright + pygame.Vector2(-1, -1),
+                rect.bottomleft + pygame.Vector2(tray_rim_offset, -tray_rim_offset),
+                rect.bottomright + pygame.Vector2(-tray_rim_offset, -tray_rim_offset),
             )
             pygame.draw.line(
                 surface,
                 self.TRAY_FRAME_HIGHLIGHT,
-                rect.topright + pygame.Vector2(-1, 1),
-                rect.bottomright + pygame.Vector2(-1, -1),
+                rect.topright + pygame.Vector2(-tray_rim_offset, tray_rim_offset),
+                rect.bottomright + pygame.Vector2(-tray_rim_offset, -tray_rim_offset),
             )
 
         self._draw_tray_drop_target(surface, mouse_pos)
@@ -1435,7 +1432,6 @@ class FleetSelectionMenu(Menu):
             # Draw fleet slots when a shipgirl marker is picked up.
             # Should be drawn regardless of slot occupancy.
             if self.selected_shipgirl is not None:
-                # TODO make custom colors
                 pygame.draw.rect(surface, Color.BLUEPRINT_PAGE_GLOW, slot)
                 draw_dashed_rect(surface, Color.WHITE, slot, dash_length=6, gap_length=6, width=2)
 
@@ -1489,9 +1485,9 @@ class FleetSelectionMenu(Menu):
             )
             text_side = 1 if prop_is_above else -1
             text_position = marker_center + pygame.Vector2(
-                -4, text_side*self.SET_SAIL_TEXT_OFFSET,
+                -4, text_side * self.SET_SAIL_TEXT_OFFSET,
             )
-            text_angle = -self.SET_SAIL_TEXT_ANGLE*text_side
+            text_angle = -self.SET_SAIL_TEXT_ANGLE * text_side
             draw_rotated_handwritten_text(
                 surface,
                 font_registry,

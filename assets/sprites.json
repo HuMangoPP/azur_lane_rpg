@@ -337,7 +337,7 @@
 		"shipgirl_rigging": { "left": 0, "top": 64, "width": 64, "height": 48 },
 		"siren_rigging": { "left": 64, "top": 16, "width": 64, "height": 48 },
 
-		"smoke": { "left": 128, "top": 0, "width": 64, "height": 64 }
+		"smoke": { "left": 128, "top": 0, "width": 64, "height": 64, "opacity": 128 }
 	},
 	"background": {
 		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 },

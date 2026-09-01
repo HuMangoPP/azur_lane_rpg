@@ -23,7 +23,7 @@ from src.menus.quests_data import (
     construct_auxiliary_equipment_quest,
     complete_final_sortie_quest,
 )
-from src.shipgirls import Shipgirl
+from src.shipgirls import Shipgirl, LAYER_SIZE
 from src.vfx import VFXManager
 
 
@@ -178,7 +178,7 @@ class Background:
         ]
         self.sea_foam_spawned_this_rise: list[bool] = [False] * num_waves
         self.wave_ys: list[float] = [
-            screen_y(0.5) + self.Y_GAP*(i-num_waves/2) + 8
+            screen_y(0.5) + self.Y_GAP * (i - num_waves / 2) + 8
             for i in range(num_waves)
         ]
         self.wave_timers: list[float] = [
@@ -297,20 +297,21 @@ class Background:
         if self.cloud_timer > self.cloud_spawn_time:
             move_right = bool(random.randint(0, 1))
             self.clouds.append(Cloud(
-                random.randint(1, DataFiles.sprites["background"]["num_clouds"])-1,
-                0 if move_right else screen_x(1),
-                random.uniform(-64, 64),
-                random.uniform(32, 64) * (1 if move_right else -1),
-                self.cloud_sprites,
+                index=random.randint(1, DataFiles.sprites["background"]["num_clouds"])-1,
+                x=0 if move_right else screen_x(1),
+                y=random.uniform(-64, 64),
+                speed=random.uniform(32, 64) * (1 if move_right else -1),
+                cloud_sprites=self.cloud_sprites,
             ))
             self.cloud_timer = 0
             self.cloud_spawn_time = random.uniform(5, 10)
         for cloud in self.clouds:
             cloud.update(dt)
+        cloud_width = 128
         self.clouds = [
             cloud for cloud in self.clouds
-            if cloud.x >= -128
-            and cloud.x <= screen_x(1) + 128
+            if cloud.x >= -cloud_width
+            and cloud.x <= screen_x(1) + cloud_width
         ]
 
         # Update, despawn, and spawn sea foams.
@@ -338,8 +339,8 @@ class Background:
                 self.sea_foams.append(SeaFoam(
                     self.sea_foam_sprite,
                     wave_index,
-                    random.randrange(self.NUM_WAVE_REPS),
-                    math.cos(wave_timer) < 0,
+                    wave_rep_index=random.randrange(self.NUM_WAVE_REPS),
+                    moving_left=math.cos(wave_timer) < 0,
                 ))
                 self.sea_foam_spawned_this_rise[wave_index] = True
 
@@ -656,31 +657,25 @@ class EncounterMenu(Menu):
         )
         # Dossier-themed page.
         report_page_width = (
-            2*Box.PADDING
-            + self.SIREN_CARDS_PER_ROW*self.SIREN_CARD_WIDTH
-            + (self.SIREN_CARDS_PER_ROW - 1)*Box.PADDING
+            2 * Box.PADDING
+            + self.SIREN_CARDS_PER_ROW * self.SIREN_CARD_WIDTH
+            + (self.SIREN_CARDS_PER_ROW - 1) * Box.PADDING
         )
         report_page_height = (
             self.REWARDS_SECTION_TOP
-            + 2*Box.PADDING
-            + max_siren_rows*Box.HEIGHT
-            + (max_siren_rows - 1)*Box.PADDING
-            + 3*Box.PADDING
+            + 2 * Box.PADDING
+            + max_siren_rows * Box.HEIGHT
+            + (max_siren_rows - 1) * Box.PADDING
+            + 3 * Box.PADDING
         )
         self.dossier_overlay = get_rect(
-            width=report_page_width + 2*Box.PADDING,
-            height=report_page_height + 2*Box.PADDING + Box.HEIGHT/2,
+            width=report_page_width + 2 * Box.PADDING,
+            height=report_page_height + 2 * Box.PADDING + Box.HEIGHT / 2,
             center=(screen_x(0.5), screen_y(0.5)),
         )
-        self.dossier_bg = self.dossier_overlay.inflate(
-            0,
-            -Box.HEIGHT/2,
-        )
+        self.dossier_bg = self.dossier_overlay.inflate(0, -Box.HEIGHT / 2)
         self.dossier_bg.bottom = self.dossier_overlay.bottom
-        self.dossier_page = self.dossier_bg.inflate(
-            -2*Box.PADDING,
-            -2*Box.PADDING,
-        )
+        self.dossier_page = self.dossier_bg.inflate(-2 * Box.PADDING, -2 * Box.PADDING)
 
         def finish_return_to_port():
             if self.sortie_completed:
@@ -794,20 +789,19 @@ class EncounterMenu(Menu):
         self.slow_down = False
 
         # Primary and backup fleet slots for shipgirl sprites.
-        slot_size = 96
         num_fleet_slots = 3
-        fleet_slot_offset = (num_fleet_slots-1)/2
+        fleet_slot_offset = (num_fleet_slots - 1) / 2
         self.fleet_slots = [
             get_rect(
-                width=slot_size, height=slot_size,
-                centerx=screen_x(0.275) + slot_size - (slot_index - fleet_slot_offset) * slot_size / 2,
-                centery=screen_y(0.5) + (slot_index - fleet_slot_offset) * slot_size
+                width=LAYER_SIZE, height=LAYER_SIZE,
+                centerx=screen_x(0.275) + LAYER_SIZE - (slot_index - fleet_slot_offset) * LAYER_SIZE / 2,
+                centery=screen_y(0.5) + (slot_index - fleet_slot_offset) * LAYER_SIZE
             ) for slot_index in range(num_fleet_slots)
         ]
         self.backup_fleet_slots = [
             get_rect(
-                width=slot_size, height=slot_size,
-                centerx=slot.centerx - 2 * slot_size,
+                width=LAYER_SIZE, height=LAYER_SIZE,
+                centerx=slot.centerx - 2 * LAYER_SIZE,
                 centery=slot.centery,
             ) for slot in self.fleet_slots
         ]
@@ -1054,18 +1048,6 @@ class EncounterMenu(Menu):
 
         self.vfx_manager.update(dt)
 
-        # Update the background.
-        # The reward cache moves with the wave, which makes it look as if it is drifting
-        # in the ocean.
-        self.background.update(dt)
-        self.open_reward_cache_button.rect.center = (
-            pygame.Vector2(screen_x(0.75), screen_y(0.575))
-            + pygame.Vector2(
-                72 * math.sin(self.background.wave_timers[3]),
-                12 * self.background.wave_vertical_offset(self.background.wave_timers[3]),
-            )
-        )
-
     def _roll_time_weather(self):
         """Generate a random weather condition and apply the weather style."""
         weather_names = list(self.TIME_WEATHER_STYLES.keys())
@@ -1201,6 +1183,21 @@ class EncounterMenu(Menu):
 
     def update(self, dt: float, events: list[pygame.Event]):
         """Update the encounter menu."""
+        # Update the background.
+        # The reward cache moves with the wave, which makes it look as if it is drifting
+        # in the ocean.
+        middle_wave_timer = self.background.wave_timers[3]
+        horizontal_movement = 72
+        vertical_movement = 12
+        self.background.update(dt)
+        self.open_reward_cache_button.rect.center = (
+            pygame.Vector2(screen_x(0.75), screen_y(0.575))
+            + pygame.Vector2(
+                horizontal_movement * math.sin(middle_wave_timer),
+                vertical_movement * self.background.wave_vertical_offset(middle_wave_timer),
+            )
+        )
+
         if self.transition_active:
             self._update_encounter_transition(dt)
             return
@@ -1458,14 +1455,6 @@ class EncounterMenu(Menu):
 
         self.background.update(dt)
 
-        self.open_reward_cache_button.rect.center = (
-            pygame.Vector2(screen_x(0.75), screen_y(0.575))
-            + pygame.Vector2(
-                72 * math.sin(self.background.wave_timers[3]),
-                12 * self.background.wave_vertical_offset(self.background.wave_timers[3]),
-            )
-        )
-
     def _draw_transition_wave_wipe(self, surface: pygame.Surface):
         """Draw the wave cover and reveal wipe.
         
@@ -1498,10 +1487,9 @@ class EncounterMenu(Menu):
         ]
 
         for idx, (wave, stagger) in enumerate(zip(wave_sprites, staggers)):
-            progress = max(
-                0.0,
-                min(1.0, (progress - stagger) / (1 - stagger)),
-            )
+            # TODO The reveal animation is broken.
+            print(idx, stagger, (progress - stagger) / (1 - stagger))
+            progress = max(0.0, min(1.0, (progress - stagger) / (1 - stagger)))
             layer_progress = progress * progress * (3 - 2 * progress)
             if not covering:
                 layer_progress = 1 - layer_progress
@@ -1588,10 +1576,13 @@ class EncounterMenu(Menu):
             current_icon_x = first_icon_x + self.current_encounter * icon_spacing
             current_icon = DataFiles.sprites["user_interface"]["uncleared"]
             current_icon_top = Box.BOTTOM_OF_SCREEN - current_icon.get_height()
-            pointer_tip_y = current_icon_top - 4
+            pointer_padding = 4
+            pointer_tip_y = current_icon_top - pointer_padding
+            pointer_height = 10
+            pointer_width = 8
             pointer = [
-                (current_icon_x - 8, pointer_tip_y - 10),
-                (current_icon_x + 8, pointer_tip_y - 10),
+                (current_icon_x - pointer_width, pointer_tip_y - pointer_height),
+                (current_icon_x + pointer_width, pointer_tip_y - pointer_height),
                 (current_icon_x, pointer_tip_y),
             ]
             pygame.draw.polygon(surface, Color.WHITE, pointer)
@@ -1752,7 +1743,6 @@ class EncounterMenu(Menu):
         ]
         pygame.draw.polygon(surface, Color.DOSSIER, tab)
 
-        # Misaligned pages add depth.
         undersheets = [
             (-2, pygame.Vector2(-3, 4), Color.DOSSIER_PAPER_UNDERSIDE),
             (2, pygame.Vector2(4, 2), Color.DOSSIER_CARD),
@@ -1787,14 +1777,15 @@ class EncounterMenu(Menu):
                 header_y + font_registry["big_pixel"].font_height,
             ),
             Color.DOSSIER_INK,
-            2,
+            scale=2,
             style="center",
         )
+        horizontal_rule_down_shift = 32
         pygame.draw.line(
             surface,
             Color.DOSSIER_RULE,
-            (self.dossier_page.left + Box.PADDING, header_y + 32),
-            (self.dossier_page.right - Box.PADDING, header_y + 32),
+            (self.dossier_page.left + Box.PADDING, header_y + horizontal_rule_down_shift),
+            (self.dossier_page.right - Box.PADDING, header_y + horizontal_rule_down_shift),
         )
 
         # Based on the current page, render either the rewards collected report
@@ -1813,21 +1804,21 @@ class EncounterMenu(Menu):
             f"sheet {self.report_page + 1:02d} of {self.REPORT_PAGE_COUNT:02d}",
             (self.dossier_page.centerx, self.dossier_page.bottom - Box.PADDING),
             Color.DOSSIER_RULE,
-            1,
+            scale=1,
             style="center",
         )
 
         # Drop props.
         paperclip_sprite = DataFiles.sprites["props"]["diagonal_paperclip"]
         paperclip_rect = paperclip_sprite.get_rect()
-        paperclip_rect.left = self.dossier_page.left - 20
-        paperclip_rect.top = self.dossier_page.top - 20
+        paperclip_alignment = 20
+        paperclip_rect.left = self.dossier_page.left - paperclip_alignment
+        paperclip_rect.top = self.dossier_page.top - paperclip_alignment
         surface.blit(paperclip_sprite, paperclip_rect)
         self._draw_dossier_prev_page_fold(surface)
 
     def _draw_return_to_port_sticky_note(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Helper to draw the sticky note button styling for the return to port button."""
-        # Misaligned pages add depth.
         note_rect = self.return_to_port_button.rect
         misaligned_pages = [
             (4, pygame.Vector2(-5, 4), Color.STICKY_NOTE_BACK),
@@ -1867,7 +1858,7 @@ class EncounterMenu(Menu):
                 note_rect.top + 0.35 * note_rect.height,
             ),
             Color.STICKY_NOTE_HANDWRITING,
-            1,
+            scale=1,
             style="center",
             box_width=note_rect.width,
         )
@@ -1883,7 +1874,7 @@ class EncounterMenu(Menu):
             "recovered materials",
             (section_left, section_top),
             Color.DOSSIER_RULE,
-            1,
+            scale=1,
         )
 
         cards_top = section_top + font.font_height + Box.PADDING
@@ -1894,7 +1885,7 @@ class EncounterMenu(Menu):
                 "no materials recovered",
                 (self.dossier_page.centerx, cards_top + Box.HEIGHT / 2),
                 Color.DOSSIER_RULE,
-                2,
+                scale=2,
                 style="center",
             )
             return cards_top + Box.HEIGHT
@@ -1929,12 +1920,10 @@ class EncounterMenu(Menu):
                 reward_sprite,
                 reward_sprite.get_rect(center=reward_rect.center),
             )
-
-            quantity_rect = pygame.Rect(
-                reward_rect.left,
-                reward_rect.bottom - 14,
-                reward_rect.width,
-                14,
+            quantity_height = 14
+            quantity_rect = get_rect(
+                width=reward_rect.width, height=quantity_height,
+                left=reward_rect.left, bottom=reward_rect.bottom
             )
             pygame.draw.rect(surface, Color.DOSSIER_CARD, quantity_rect)
             pygame.draw.line(
@@ -1948,7 +1937,7 @@ class EncounterMenu(Menu):
                 f"qty {amount:02d}",
                 quantity_rect.center,
                 Color.DOSSIER_INK,
-                1,
+                scale=1,
                 style="center",
             )
             pygame.draw.rect(
@@ -1960,8 +1949,7 @@ class EncounterMenu(Menu):
 
     def _draw_defeated_sirens(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Helper to draw the defeated sirens page in the report."""
-        # TODO look into combining this with the above into a generic to render both with one method just
-        # input the things to draw.
+        # TODO Consider writing a generic which can render this and the above.
         # Page header.
         section_top = self.dossier_page.top + self.REWARDS_SECTION_TOP
         font = font_registry["big_pixel"]
@@ -1971,7 +1959,7 @@ class EncounterMenu(Menu):
             "enemy sirens sunk",
             (section_left, section_top),
             Color.DOSSIER_RULE,
-            1,
+            scale=1,
         )
 
         cards_top = section_top + font.font_height + Box.PADDING
@@ -1982,7 +1970,7 @@ class EncounterMenu(Menu):
                 "no confirmed siren vessels sunk",
                 (self.dossier_page.centerx, cards_top + Box.HEIGHT / 2),
                 Color.DOSSIER_RULE,
-                2,
+                scale=2,
                 style="center",
             )
             return
@@ -2031,26 +2019,28 @@ class EncounterMenu(Menu):
             )
 
             text_left = portrait_rect.right + Box.PADDING
+            siren_record_text_height = 16
+            siren_name_text_y = card_rect.top + Box.PADDING
             font.render(
                 surface,
                 siren_name.replace("_", " "),
-                (text_left, card_rect.top + Box.PADDING),
+                (text_left, siren_name_text_y),
                 Color.DOSSIER_INK,
-                1,
+                scale=1,
             )
             font.render(
                 surface,
                 f"level {siren_level:02d}",
-                (text_left, card_rect.top + Box.PADDING + 16),
+                (text_left, siren_name_text_y + siren_record_text_height),
                 Color.DOSSIER_RULE,
-                1,
+                scale=1,
             )
             font.render(
                 surface,
                 f"qty {amount:02d}",
-                (text_left, card_rect.top + Box.PADDING + 32),
+                (text_left, siren_name_text_y + 2 * siren_record_text_height),
                 Color.DOSSIER_INK,
-                1,
+                scale=1,
             )
             pygame.draw.rect(
                 surface,
@@ -2106,9 +2096,10 @@ class EncounterMenu(Menu):
                 centerx=screen_x(0.5),
                 centery=screen_y(0.5),
             )
+            widget_title_height = 38
             bar_background = get_rect(
                 width=bar_width, height=bar_height,
-                centerx=panel_rect.centerx, top=panel_rect.top + 38,
+                centerx=panel_rect.centerx, top=panel_rect.top + widget_title_height,
             )
             avg_shipgirl_level = int(
                 sum(
@@ -2153,32 +2144,35 @@ class EncounterMenu(Menu):
             )
             surface.blit(panel, panel_rect)
 
+            rail_margins = 8
             rail_rect = get_rect(
                 width=3,
-                height=panel_rect.height-16,
-                left=panel_rect.left+8,
+                height=panel_rect.height - 2 * rail_margins,
+                left=panel_rect.left + rail_margins,
                 centery=panel_rect.centery,
             )
             rail_glow = pygame.Surface(rail_rect.size, pygame.SRCALPHA)
-            rail_glow.fill((*accent, round(35 + 35*pulse)))
+            rail_glow.fill((*accent, round(35 + 35 * pulse)))
             surface.blit(
                 rail_glow,
                 rail_rect,
                 special_flags=pygame.BLEND_RGBA_ADD,
             )
 
+            # TODO Consider rendering the unique item icon here as well.
             bar_backplate = bar_background.inflate(4, 4)
             pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, bar_backplate)
             pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_MUTED, bar_backplate, width=1)
             pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
             pygame.draw.rect(surface, accent, bar_fill)
             banner_text = "shipgirl research progress"
+            text_top_margin = 12
             font_registry["big_pixel"].render(
                 surface,
                 banner_text,
-                (bar_background.left, panel_rect.top + 12),
+                (bar_background.left, panel_rect.top + text_top_margin),
                 accent,
-                1,
+                scale=1,
             )
 
         if self.return_to_port_button.active:
