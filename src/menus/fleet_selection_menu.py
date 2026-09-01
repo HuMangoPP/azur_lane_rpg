@@ -1500,4 +1500,4 @@ class FleetSelectionMenu(Menu):
         self._draw_dragged_marker(surface, mpos)
 
         if self.menu_manager.encounter_menu.transition_active:
-            self.menu_manager.encounter_menu._draw_transition_wave_wipe(surface)
+            self.menu_manager.encounter_menu.draw_transition_wave_wipe(surface)

@@ -1061,6 +1061,7 @@ class EncounterMenu(Menu):
     def _apply_time_weather_style(self):
         """Apply the style of the weather condition to the background."""
         weather_style = self.TIME_WEATHER_STYLES[self.weather_condition]
+        self.vfx_manager.wave_colors = self.SHIPGIRL_WAKE_COLORS[self.weather_condition]
         self.background.set_sky_colors(weather_style["sky_colors"])
         self.background.set_wave_sprites(self.weather_condition)
         self.background.set_cloud_sprites(self.weather_condition)
@@ -1186,10 +1187,11 @@ class EncounterMenu(Menu):
         # Update the background.
         # The reward cache moves with the wave, which makes it look as if it is drifting
         # in the ocean.
+        self.background.update(dt)
+
         middle_wave_timer = self.background.wave_timers[3]
         horizontal_movement = 72
         vertical_movement = 12
-        self.background.update(dt)
         self.open_reward_cache_button.rect.center = (
             pygame.Vector2(screen_x(0.75), screen_y(0.575))
             + pygame.Vector2(
@@ -1214,8 +1216,6 @@ class EncounterMenu(Menu):
 
         self._refresh_report_page_buttons()
         for event in events:
-            if self.transition_active:
-                break
             if event.type == pygame.MOUSEMOTION:
                 buttons: list[RectangularButton] = [
                     self.next_encounter_button,
@@ -1453,9 +1453,7 @@ class EncounterMenu(Menu):
         self._spawn_shipgirl_wakes(self.menu_manager.siren_fleet, False)
         self.vfx_manager.update(dt)
 
-        self.background.update(dt)
-
-    def _draw_transition_wave_wipe(self, surface: pygame.Surface):
+    def draw_transition_wave_wipe(self, surface: pygame.Surface):
         """Draw the wave cover and reveal wipe.
         
         This wipe consists of three waves with different colors based on the current wave palette
@@ -1487,10 +1485,8 @@ class EncounterMenu(Menu):
         ]
 
         for idx, (wave, stagger) in enumerate(zip(wave_sprites, staggers)):
-            # TODO The reveal animation is broken.
-            print(idx, stagger, (progress - stagger) / (1 - stagger))
-            progress = max(0.0, min(1.0, (progress - stagger) / (1 - stagger)))
-            layer_progress = progress * progress * (3 - 2 * progress)
+            layer_progress = max(0.0, min(1.0, (progress - stagger) / (1 - stagger)))
+            layer_progress = layer_progress * layer_progress * (3 - 2 * layer_progress)
             if not covering:
                 layer_progress = 1 - layer_progress
 
@@ -2067,7 +2063,7 @@ class EncounterMenu(Menu):
         self.open_reward_cache_button.draw(surface, font_registry)
 
         if self.transition_active and not self.transition_to_port:
-            self._draw_transition_wave_wipe(surface)
+            self.draw_transition_wave_wipe(surface)
             return
 
         for shipgirl in self.menu_manager.player_fleet.fleet:
@@ -2088,19 +2084,8 @@ class EncounterMenu(Menu):
 
         # Draw the research exp widget.
         if self.exp_timer > 0:
-            bar_width = 256
-            bar_height = 10
-            panel_rect = get_rect(
-                width=320,
-                height=64,
-                centerx=screen_x(0.5),
-                centery=screen_y(0.5),
-            )
-            widget_title_height = 38
-            bar_background = get_rect(
-                width=bar_width, height=bar_height,
-                centerx=panel_rect.centerx, top=panel_rect.top + widget_title_height,
-            )
+            research_target = DataFiles.save_file["research_target"]
+            unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
             avg_shipgirl_level = int(
                 sum(
                     Stats.level(shipgirl.battle_component.exp)
@@ -2109,15 +2094,35 @@ class EncounterMenu(Menu):
                 / len(self.menu_manager.available_shipgirls)
             )
             exp_req = Stats.exp_to_level(avg_shipgirl_level)
-            research_target = DataFiles.save_file["research_target"]
             research_progress = (
                 DataFiles.save_file["specialized_wisdom_cubes"][research_target]
                 + self.research_exp * self.exp_timer
             )
-            bar_fill = get_rect(
-                width=bar_width * min(1, research_progress / exp_req),
-                height=bar_height, left=bar_background.left, top=bar_background.top 
+
+            panel_rect = get_rect(
+                width=320,
+                height=88,
+                centerx=screen_x(0.5),
+                centery=screen_y(0.5),
             )
+            panel_margin = 8
+            icon_padding = 4
+            icon = DataFiles.get_entity_sprite(unique_item)
+            icon_frame = get_rect(
+                width=icon.get_width() + 2 * icon_padding,
+                height=icon.get_height() + 2 * icon_padding,
+                left=panel_rect.left + panel_margin,
+                centery=panel_rect.centery,
+            )
+            rail_rect = get_rect(
+                width=3,
+                height=panel_rect.height - 2 * panel_margin,
+                left=icon_frame.right + panel_margin,
+                centery=panel_rect.centery,
+            )
+            big_pixel_font = font_registry["big_pixel"]
+            content_left = rail_rect.right + panel_margin
+
             accent = Color.QUEST_NOTIFICATION_COMPLETE
             pulse = (math.sin(pygame.time.get_ticks() / 1000 * math.tau / 2.4) + 1) / 2
             panel = pygame.Surface(panel_rect.size, pygame.SRCALPHA)
@@ -2144,13 +2149,41 @@ class EncounterMenu(Menu):
             )
             surface.blit(panel, panel_rect)
 
-            rail_margins = 8
-            rail_rect = get_rect(
-                width=3,
-                height=panel_rect.height - 2 * rail_margins,
-                left=panel_rect.left + rail_margins,
-                centery=panel_rect.centery,
+            shipgirl_name_y = panel_rect.top + 1.5 * panel_margin
+            shipgirl_name_scale = 2
+            big_pixel_font.render(
+                surface,
+                unique_item.replace("_", " "),
+                (content_left, shipgirl_name_y),
+                accent,
+                scale=shipgirl_name_scale
             )
+            banner_text_y = shipgirl_name_y + shipgirl_name_scale * big_pixel_font.font_height + panel_margin
+            big_pixel_font.render(
+                surface,
+                "shipgirl research progress",
+                (content_left, banner_text_y),
+                accent,
+                scale=1,
+            )
+            bar_width = panel_rect.right - 2 * panel_margin - content_left
+            bar_height = 16
+            bar_background = get_rect(
+                width=bar_width, height=bar_height,
+                left=content_left,
+                top=banner_text_y + big_pixel_font.font_height + panel_margin,
+            )
+
+            bar_fill = get_rect(
+                width=bar_width * min(1, research_progress / exp_req),
+                height=bar_height, left=bar_background.left, top=bar_background.top
+            )
+            bar_backplate = bar_background.inflate(4, 4)
+            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, bar_backplate)
+            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_MUTED, bar_backplate, width=1)
+            pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
+            pygame.draw.rect(surface, accent, bar_fill)
+
             rail_glow = pygame.Surface(rail_rect.size, pygame.SRCALPHA)
             rail_glow.fill((*accent, round(35 + 35 * pulse)))
             surface.blit(
@@ -2159,21 +2192,9 @@ class EncounterMenu(Menu):
                 special_flags=pygame.BLEND_RGBA_ADD,
             )
 
-            # TODO Consider rendering the unique item icon here as well.
-            bar_backplate = bar_background.inflate(4, 4)
-            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, bar_backplate)
-            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_MUTED, bar_backplate, width=1)
-            pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
-            pygame.draw.rect(surface, accent, bar_fill)
-            banner_text = "shipgirl research progress"
-            text_top_margin = 12
-            font_registry["big_pixel"].render(
-                surface,
-                banner_text,
-                (bar_background.left, panel_rect.top + text_top_margin),
-                accent,
-                scale=1,
-            )
+            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, icon_frame)
+            pygame.draw.rect(surface, accent, icon_frame, width=Box.OUTLINE_WIDTH)
+            surface.blit(icon, icon.get_rect(center=icon_frame.center))
 
         if self.return_to_port_button.active:
             self._draw_dossier_overlay(surface, font_registry)
@@ -2227,4 +2248,4 @@ class EncounterMenu(Menu):
                     surface.blit(attack_icon, attack_icon_rect)
 
         if self.transition_to_port:
-            self._draw_transition_wave_wipe(surface)
+            self.draw_transition_wave_wipe(surface)

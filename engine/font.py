@@ -56,7 +56,7 @@ class Font:
         If box width > 0, get the render width of the longest line.
         """
         char_width = scale * self.font_width
-        lines = self._get_lines(text, char_width, box_width)
+        lines = self._get_lines(text, scale, box_width)
         return max(len(line) for line in lines) * char_width
 
     def get_height(self, text: str, scale: float, box_width: float) -> float:
@@ -66,9 +66,8 @@ class Font:
         If box width > 0, then this is the render height of all of the lines
         plus vertical padding in between.
         """
-        char_width = scale * self.font_width
         char_height = scale * self.font_height
-        lines = self._get_lines(text, char_width, box_width)
+        lines = self._get_lines(text, scale, box_width)
         return len(lines) * char_height + (len(lines) - 1) * self.padding
 
     # TODO Is this a useful enough util to move into a common space?

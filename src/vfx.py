@@ -295,6 +295,7 @@ class DamageCounter(VFX):
 class VFXManager:
     def __init__(self):
         self.effects: list[VFX] = []
+        self.wave_colors: list[ColorType] | None = None
 
     def clear(self):
         """Clear the vfx."""
@@ -322,8 +323,7 @@ class VFXManager:
 
     def spawn_torpedo_launch(self, pos: CoordinateType):
         """Spawn a torpedo launch vfx group."""
-        # TODO Update the torpedo launch colors to match the weather condition wave colors.
-        for i, color in enumerate(TORPEDO_LAUNCH_COLORS):
+        for i, color in enumerate(self.wave_colors):
             ring_duration = 0.45 - 0.08 * i
             ring_radius = 24 + 18 * i
             self.effects.append(Ring(pos, color, duration=ring_duration, radius=ring_radius))
@@ -373,8 +373,9 @@ class VFXManager:
 
     def spawn_splash_impact(self, pos: CoordinateType):
         """Spawn a splash impact vfx group."""
-        # TODO These colors should be based on the weather condition wave colors.
-        colors = [(191, 224, 255), (158, 208, 255), (107, 183, 255)]
+        if self.wave_colors is None:
+            return
+
         vertical_offset_to_feet = pygame.Vector2(0, 32)
         pos = pygame.Vector2(pos) + vertical_offset_to_feet
         horizontal_spark_spawn_offset = pygame.Vector2(16, 0)
@@ -383,7 +384,7 @@ class VFXManager:
         num_sparks = random.randint(4, 6)
         for _ in range(num_sparks):
             spark_angle = math.radians(random.randint(300, 330))
-            spark_color = random.choice(colors)
+            spark_color = random.choice(self.wave_colors)
             spark_duration = random.uniform(0.4, 0.6)
             spark_distance = random.randint(60, 80)
             spark_size = (random.randint(24, 30), random.randint(6, 10))
@@ -393,7 +394,7 @@ class VFXManager:
         num_sparks = random.randint(4, 6)
         for _ in range(num_sparks):
             spark_angle = math.radians(random.randint(210, 240))
-            spark_color = random.choice(colors)
+            spark_color = random.choice(self.wave_colors)
             spark_duration = random.uniform(0.4, 0.6)
             spark_distance = random.randint(60, 80)
             spark_size = (random.randint(24, 30), random.randint(6, 10))
@@ -404,7 +405,7 @@ class VFXManager:
             t = random.randint(-32, 32)
             spark_pos = pos + pygame.Vector2(t, 0)
             spark_angle = math.radians(270)
-            spark_color = random.choice(colors)
+            spark_color = random.choice(self.wave_colors)
             spark_duration = random.uniform(0.4, 0.6)
             spark_distance = 120 - abs(t)
             spark_size = (random.randint(30, 40), random.randint(6, 10))
@@ -413,7 +414,7 @@ class VFXManager:
         num_smokes = random.randint(4, 6)
         for _ in range(num_smokes):
             smoke_angle = math.radians(random.uniform(210, 330))
-            smoke_color = random.choice(colors)
+            smoke_color = random.choice(self.wave_colors)
             smoke_duration = random.uniform(0.4, 0.6)
             smoke_delay = random.uniform(0, 0.1)
             smoke_size = random.randint(40, 60)
