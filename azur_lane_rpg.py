@@ -64,6 +64,8 @@ if __name__ == "__main__":
 
         events = []
         for event in pygame.event.get():
+            # Convert event mouse positions from screen space to temporary
+            # display space as well.
             if hasattr(event, "pos"):
                 event.pos = (
                     event.pos[0] * mouse_scale[0],
@@ -84,19 +86,21 @@ if __name__ == "__main__":
 
         menu_manager.current_menu.update(dt, events)
 
-        # TODO update background so it is not a flat value
+        # TODO Update the background so it is not a flat value.
         display.fill(Color.BLACK)
         menu_manager.current_menu.draw(display, font_registry)
         if not menu_manager.encounter_menu.transition_active:
             for quest in menu_manager.quest_manager.started_quests.values():
                 if quest.started and not quest.completed:
                     quest.tutorial_draw(menu_manager, display, font_registry)
+
+        fps_margin = 32
         font_registry["big_pixel"].render(
             display,
             str(fps),
-            (32, TEMP_SCREEN_SIZE[1]-32),
+            (fps_margin, TEMP_SCREEN_SIZE[1] - fps_margin),
             Color.WHITE,
-            2,
+            scale=2,
             style="center",
             outline_color=Color.BLACK
         )
@@ -106,8 +110,8 @@ if __name__ == "__main__":
     DataFiles.bgm["lofi_loop"].stop()
     pygame.quit()
 
-    # TODO can the exp be saved directly to the save file without the need to keeping track
-    # of it separately in BattleComponent?
+    # TODO Make the exp saved directly to the save file, which prevents needing this block of code
+    # and also could potentially eliminate the need for the exp attribute in the battle component.
     for shipgirl in menu_manager.available_shipgirls:
         DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
 

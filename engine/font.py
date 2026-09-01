@@ -3,12 +3,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from engine.types import CoordinateType, ColorType
 
+import os
 import pygame
 
 
 class Font:
     def __init__(self, font_name: str, charset: str):
-        self.font = pygame.image.load(f"engine/{font_name}.png").convert_alpha()
+        self.font = pygame.image.load(os.path.join("engine", f"{font_name}.png")).convert_alpha()
         self.chars = list(charset)
         self.font_width = self.font.get_width() // len(self.chars)
         self.font_height = self.font.get_height()
@@ -70,6 +71,7 @@ class Font:
         lines = self._get_lines(text, char_width, box_width)
         return len(lines) * char_height + (len(lines) - 1) * self.padding
 
+    # TODO Is this a useful enough util to move into a common space?
     @staticmethod
     def _recolor_text(text_surf: pygame.Surface, color: ColorType) -> pygame.Surface:
         """Recolor the text to the desired color.
@@ -126,7 +128,7 @@ class Font:
     
         text_surf.set_colorkey((255, 255, 255))
         colored_text_surf = self._recolor_text(text_surf, color)
-        
+        # Align the text surface based on styling.
         if style == "center":
             text_rect = colored_text_surf.get_rect()
             text_rect.center = xy
@@ -136,7 +138,7 @@ class Font:
         elif style == "topleft":
             text_rect = colored_text_surf.get_rect()
             text_rect.topleft = xy
-
+        # Render the outline by rendering offset text surfs in all directions.
         if outline_color is not None:
             outline_text_surf = self._recolor_text(text_surf, outline_color)
             for offset in [(1, 0), (-1, 0), (0, 1), (0, -1)]:

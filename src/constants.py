@@ -155,12 +155,12 @@ class Stats:
 
     @classmethod
     def exp_to_level(cls, level: float) -> float:
-        """The amount of exp required to reach this level."""
+        """The total amount of exp required to reach this level."""
         return sum(cls.exp_amount_at_level(l) for l in range(level))
 
     @classmethod
     def exp_amount_at_level(cls, level: float) -> float:
-        """The amount of exp for this level."""
+        """The amount of exp to go from this level to the next."""
         return cls.EXP_BASE * (cls.EXP_GROWTH ** level)
 
     @classmethod

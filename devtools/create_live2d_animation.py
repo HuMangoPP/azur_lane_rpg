@@ -35,6 +35,7 @@ SELECTED_KEYFRAME_COLOR = (250, 220, 80)
 PLAYHEAD_COLOR = (90, 210, 255)
 CURSOR_COLOR = (245, 245, 245)
 PIVOT_COLOR = (255, 90, 120)
+NUM_FRAMES = 12
 
 
 def model_path_for(shipgirl):
@@ -68,7 +69,7 @@ def keyframe_time(keyframe_index):
 
 
 def timeline_end_time():
-    return keyframe_time(Live2D.NUM_FRAMES - 1)
+    return keyframe_time(NUM_FRAMES - 1)
 
 
 def draw_live2d_scaled(surface, live2d, center, selected_layer, edit_mode):
@@ -205,7 +206,7 @@ def get_timeline_points(surface):
     y = surface.get_height() - TIMELINE_Y_OFFSET
     start_x = TIMELINE_MARGIN
     end_x = surface.get_width() - TIMELINE_MARGIN
-    frame_count = Live2D.NUM_FRAMES
+    frame_count = NUM_FRAMES
 
     if frame_count <= 1:
         return [(surface.get_width() // 2, y)]

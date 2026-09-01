@@ -65,6 +65,11 @@ def _resolve_animation_copies(keyframes: dict) -> dict:
     resolved_keyframes = {}
 
     def _resolve_keyframe(keyframe_index: str, seen: set[str] | None = None) -> dict:
+        """Resolve the keyframe.
+        
+        If the keyframe is a copy of another keyframe, deepcopy that referenced keyframe.
+        Otherwise, return a deepcopy of this keyframe.
+        """
         if keyframe_index in resolved_keyframes:
             return deepcopy(resolved_keyframes[keyframe_index])
 
@@ -188,61 +193,35 @@ class Live2DPart:
         rect.center = root_pos + draw_offset
         surface.blit(rotated, rect)
 
-    def draw_with_part_transform(
-        self, surface: pygame.Surface, root_pos: pygame.Vector2, flipx: bool, transform_part: Live2DPart
-    ):
-        """Draw this part with the rotation and offset of the transform_part."""
-        rotation = transform_part.get_rotation()
-        rotated = pygame.transform.rotate(self.image, rotation)
-        rotated_pivot = transform_part.pivot.rotate(-rotation)
-        draw_offset = transform_part.get_pivot_offset() - rotated_pivot
-        if flipx:
-            rotated = pygame.transform.flip(rotated, True, False)
-            draw_offset.x = -draw_offset.x
-        rect = rotated.get_rect()
-        rect.center = root_pos + draw_offset
-        surface.blit(rotated, rect)
-
 
 class Cache:
     def __init__(self):
         self.model_dicts = {}
         self.part_sprites: dict[str, dict[str, pygame.Surface]] = {}
+
         self.shared_model_parts: dict | None = None
+        self._load_shared_model_parts()
+
         self.shared_animations: dict | None = None
 
-    def _get_shared_model_parts(self) -> dict:
-        """Get the parts data of the shared model.
-        
-        Load the shared model if not yet loaded.
-        """
-        if self.shared_model_parts is not None:
-            return self.shared_model_parts
-
+    def _load_shared_model_parts(self):
+        """Load the parts data of the shared model."""
         if not os.path.exists(SHARED_MODEL_FILE):
             self.shared_model_parts = {}
-            return self.shared_model_parts
+            return
 
         with open(SHARED_MODEL_FILE) as f:
             shared_model = json.load(f)
         self.shared_model_parts = _model_parts(shared_model) or shared_model
-        return self.shared_model_parts
 
-    def get_shared_animations(self) -> dict:
-        """Get the shared animations.
-        
-        Load the shared animations if not yet loaded.
-        """
-        if self.shared_animations is not None:
-            return self.shared_animations
-
+    def load_shared_animations(self):
+        """Load the shared animations."""
         if not os.path.exists(SHARED_ANIMATIONS_FILE):
             self.shared_animations = {}
-            return self.shared_animations
-
+            return
+        
         with open(SHARED_ANIMATIONS_FILE) as f:
             self.shared_animations = json.load(f)
-        return self.shared_animations
 
     def get_model_dict(self, model_file: str) -> dict:
         """Get the specific model dict.
@@ -274,11 +253,6 @@ class Cache:
         self.part_sprites[model_file] = parts
 
         return model_dict
-
-    def get_resolved_model_parts(self, model_file: str) -> dict:
-        """Get the final resolved model parts data."""
-        model_dict = self.get_model_dict(model_file)
-        return _merge_model_parts(self._get_shared_model_parts(), _model_parts(model_dict))
 
 
 class Live2D:
@@ -322,6 +296,10 @@ class Live2D:
         "bangs": "head",
         "right_arm": "torso",
         "headpiece": "head",
+        "neutral": "head",
+        "dizzy": "head",
+        "focused": "head",
+        "sleepy": "head",
     }
 
     IDLE_ANIMATION = "idle"
@@ -334,8 +312,6 @@ class Live2D:
     SLEEP_ANIMATION = "sleep"
     SIT_ANIMATION = "sit"
 
-    ANIMATION_SPEED = 1.0
-    NUM_FRAMES = 12
     KEYFRAME_DURATION = 0.3
 
     def __init__(self, model_file: str):
@@ -347,8 +323,11 @@ class Live2D:
         self.refresh_animations()
 
         # Create the Live2DPart objects and set their parents.
-        model_parts = self.cache.get_resolved_model_parts(model_file)
-        self.parts = {}
+        model_parts = _merge_model_parts(
+            self.cache.shared_model_parts,
+            _model_parts(self.cache.get_model_dict(model_file))
+        )
+        self.parts: dict[str, Live2DPart] = {}
         for part in PART_NAMES:
             part_data = model_parts[part]
             image = self.cache.part_sprites[model_file][part]
@@ -363,10 +342,10 @@ class Live2D:
         """Reload animations due to changes to the model dict.
 
         This API is exposed so devtools can make changes to the underlying
-        model dict, and the animations can be reloaded and cached from the updated
-        model dict.
+        model dict, and the animations can be reloaded from the updated model dict.
         """
-        shared_animations = self.cache.get_shared_animations()
+        self.cache.load_shared_animations()
+        shared_animations = self.cache.shared_animations
         model_animations = self.model_dict.get("animations", {})
         animations = {}
         for animation in set(shared_animations.keys()) | set(model_animations.keys()):
@@ -420,6 +399,7 @@ class Live2D:
     def _update_offset_and_rotation(self):
         """Update the offset and rotation of all parts based on the animation."""
         animation = self.animations.get(self.animation, {})
+        keyframe_duration = animation.get(KEYFRAME_DURATION_KEY, self.KEYFRAME_DURATION)
         master_keyframes = _animation_keyframes(animation)
         
         for part in PART_NAMES:
@@ -432,11 +412,12 @@ class Live2D:
                 self._set_offset(part, [0, 0])
                 self._set_rotation(part, 0)
                 continue
-            
+
+            # All animations have the initial keyframe.
+            # All parts have zero offset and rotation in the initial keyframe by default.
             if "0" not in keyframes:
                 keyframes["0"] = {part: {"offset": [0, 0], "rotation": 0}}
 
-            keyframe_duration = animation.get(KEYFRAME_DURATION_KEY, self.KEYFRAME_DURATION)
             keyframe_t = self.t / keyframe_duration
             prev_keyframe_index = max(
                 int(keyframe_index) for keyframe_index in keyframes.keys()
@@ -450,10 +431,15 @@ class Live2D:
                 default=prev_keyframe_index
             )
             if prev_keyframe_index == next_keyframe_index:
+                # All keyframes containing this part have passed, so the offset
+                # and rotation for this part remain fixed.
                 keyframe = keyframes[str(prev_keyframe_index)]
                 self._set_offset(part, keyframe[part]["offset"])
                 self._set_rotation(part, keyframe[part]["rotation"])
             else:
+                # The offset and rotation is interpolated between the offset and rotation
+                # values for the two adjacent keyframes containing this part.
+                # The interpolation is smoothed using the sine wave S shape.
                 prev_keyframe = keyframes[str(prev_keyframe_index)]
                 next_keyframe = keyframes[str(next_keyframe_index)]
                 s = (
@@ -463,11 +449,13 @@ class Live2D:
                 s = (1 + math.sin(math.radians(180) * (s - 0.5))) / 2
                 self._set_offset(
                     part,
-                    pygame.Vector2(prev_keyframe[part]["offset"]).lerp(pygame.Vector2(next_keyframe[part]["offset"]), s)
+                    pygame.Vector2(prev_keyframe[part]["offset"])
+                    .lerp(pygame.Vector2(next_keyframe[part]["offset"]), s)
                 )
                 self._set_rotation(
                     part,
-                    (1 - s) * prev_keyframe[part]["rotation"] + s * next_keyframe[part]["rotation"]
+                    (1 - s) * prev_keyframe[part]["rotation"]
+                    + s * next_keyframe[part]["rotation"]
                 )
 
     def update(self, dt: float):
@@ -477,11 +465,11 @@ class Live2D:
         if len(keyframes.keys()) <= 1:
             self.t = 0
         else:
-            # Check the progress along the current animation.
+            # Update the animation progress.
             max_keyframe_index = max(int(keyframe_index) for keyframe_index in keyframes.keys())
             keyframe_duration = animation.get(KEYFRAME_DURATION_KEY, self.KEYFRAME_DURATION)
             duration = max_keyframe_index * keyframe_duration
-            next_t = self.t + self.ANIMATION_SPEED * dt
+            next_t = self.t + dt
             if animation.get(NO_LOOP_KEY, False) is True:
                 # This animation does not loop; keep the sprite at the final keyframe.
                 self.t = min(next_t, duration)
@@ -510,6 +498,7 @@ class Live2D:
         alpha = int(max(0, min(255, alpha)))
         root = pygame.Vector2(LAYER_SIZE, LAYER_SIZE)
 
+        # Make the sprite surf larger to account for offsets and rotations.
         sprite_surf = pygame.Surface((2 * LAYER_SIZE, 2 * LAYER_SIZE))
         sprite_surf.fill((255, 0, 0))
         sprite_surf.set_colorkey((255, 0, 0))
@@ -519,7 +508,7 @@ class Live2D:
                 self.parts[part].draw(sprite_surf, root, flipx)
                 if part == "head":
                     expression = self._get_facial_expression()
-                    self.parts[expression].draw_with_part_transform(sprite_surf, root, flipx, self.parts["head"])
+                    self.parts[expression].draw(sprite_surf, root, flipx)
 
         sprite_surf.set_alpha(alpha)
         sprite_rect = sprite_surf.get_rect()

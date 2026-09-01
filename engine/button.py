@@ -48,14 +48,14 @@ class RectangularButton(Button):
         background_styling = background_styling or {}
         self.background_color: ColorType | None = background_styling.get("background_color")
         self.background_img: pygame.Surface | None = background_styling.get("background_img")
-        self.background_img_align: CoordinateType = background_styling.get("background_img_align", (1/2, 1/2))
+        self.background_img_align: CoordinateType = background_styling.get("background_img_align", (0.5, 0.5))
         self.outline_color: ColorType | None = background_styling.get("outline_color")
         self.outline_width: int = background_styling.get("outline_width", 2)
         self.opacity: int | None = background_styling.get("opacity")
 
         text_styling = text_styling or {}
         self.text: str | None = text_styling.get("text")
-        self.text_align: CoordinateType = text_styling.get("text_align", (1/2, 1/2))
+        self.text_align: CoordinateType = text_styling.get("text_align", (0.5, 0.5))
         self.text_font: str = text_styling.get("text_font", "big_pixel")
         self.text_color: ColorType = text_styling.get("text_color", (255, 255, 255))
         self.text_size: int = text_styling.get("text_size", 1)
@@ -93,6 +93,7 @@ class RectangularButton(Button):
         if not self.active:
             return
         
+        # Draw the rect with fill and opacity.
         background_color = self.hover_background_color if self.hovered else self.background_color
         opacity = self.hover_opacity if self.hovered else self.opacity
         if background_color is not None:
@@ -101,12 +102,12 @@ class RectangularButton(Button):
             if opacity is not None:
                 background.set_alpha(opacity)
             surface.blit(background, self.rect)
-        
+        # Outline styling.
         outline_color = self.hover_outline_color if self.hovered else self.outline_color
         outline_width = self.hover_outline_width if self.hovered else self.outline_width
         if outline_color is not None:
             pygame.draw.rect(surface, outline_color, self.rect, outline_width)
-
+        # Align the image, if applicable.
         if self.background_img is not None:
             img_rect = self.background_img.get_rect()
             img_rect.center = (
@@ -114,7 +115,7 @@ class RectangularButton(Button):
                 self.rect.top + self.rect.height * self.background_img_align[1]
             )
             surface.blit(self.background_img, img_rect)
-    
+        # Algin the text, if applicable.
         if self.text is not None:
             text_pos = (
                 self.rect.left + self.rect.width * self.text_align[0],
@@ -127,7 +128,7 @@ class RectangularButton(Button):
                 self.text_color,
                 self.text_size,
                 style="center",
-                box_width=self.rect.width - 2*self.text_margins
+                box_width=self.rect.width - 2 * self.text_margins
             )
 
 
@@ -193,7 +194,7 @@ class AnnularSectorButton(Button):
         "Draw this button."
         if not self.active:
             return
-
+        # Draw wedge with fill and opacity.
         background_color = self.hover_background_color if self.hovered else self.background_color
         opacity = self.hover_opacity if self.hovered else self.opacity
         if background_color is not None:
@@ -213,7 +214,7 @@ class AnnularSectorButton(Button):
             wedge_surface.set_colorkey((0, 0, 0))
             wedge_rect = wedge_surface.get_rect(center=self.center)
             surface.blit(wedge_surface, wedge_rect)
-
+        # Align image to wedge centroid.
         if self.background_img is not None:
             img_rect = self.background_img.get_rect()
             img_rect.center = self.get_wedge_centroid()

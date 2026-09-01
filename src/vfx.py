@@ -54,8 +54,9 @@ DAMAGE_COUNTER_COLORS = {
     "torpedo": ((158, 208, 255), (18, 60, 102)),
 }
 
-SHELL_SCALE = 1/1000
+SHELL_SCALE = 1 / 1000
 
+# TODO Not useful enough for common, but there is likely a better place for this function.
 def shell_path(start_pos: pygame.Vector2, target_pos: pygame.Vector2, t: float) -> pygame.Vector2:
     """Compute a parabolic shell path from start to target, parametrized by t."""
     relpos = target_pos - start_pos
@@ -84,7 +85,7 @@ class VFX:
         self.lifetime += (dt + abs(self.delay))
         self.delay = 0
 
-    def draw(self, dt: pygame.Surface, font_registry: dict[str, Font]):
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the vfx."""
         pass
 
@@ -266,9 +267,11 @@ class DamageCounter(VFX):
         y_offset = self.float_distance * (1 - (t - 1) ** 2)
         text_pos = self.pos - pygame.Vector2(0, y_offset)
 
+        # TODO Consider implementing alpha capabilities directly into Font instead of using this workaround.
+        outline_padding = 2
         text_surf = pygame.Surface((
-            font_registry["big_pixel"].get_width(self.text, self.font_registry_scale, 0) + 2,
-            font_registry["big_pixel"].get_height(self.text, self.font_registry_scale, 0) + 2,
+            font_registry["big_pixel"].get_width(self.text, self.font_registry_scale, 0) + outline_padding,
+            font_registry["big_pixel"].get_height(self.text, self.font_registry_scale, 0) + outline_padding,
         ))
         text_surf.set_colorkey((0, 0, 0))
         font_registry["big_pixel"].render(
@@ -286,6 +289,9 @@ class DamageCounter(VFX):
         surface.blit(text_surf, rect)
 
 
+# TODO Consider whether or not a trimmed version of this (i.e. only clear, update, and draw APIs)
+# and the VFX classes deserved to be in the engine.
+# Then the project specific vfx.py module can extend VFXManager with the project-specific particle spawning APIs.
 class VFXManager:
     def __init__(self):
         self.effects: list[VFX] = []
@@ -296,132 +302,123 @@ class VFXManager:
 
     def spawn_muzzle_flash(self, pos: CoordinateType, shell_render_angle: float, shell_type: str):
         """Spawn a muzzle flash vfx group."""
-        pos = pygame.Vector2(pos) + get_vec(20, shell_render_angle)
+        muzzle_flash_distance_from_pos = 20
+        pos = pygame.Vector2(pos) + get_vec(muzzle_flash_distance_from_pos, shell_render_angle)
         colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
-        for i in range(3):
-            self.effects.append(Ring(pos, colors[i], duration=0.5 - 0.1 * i, radius=32 * (i + 1)))
-        for _ in range(random.randint(18, 22)):
+        num_rings = 3
+        for i in range(num_rings):
+            ring_duration = 0.5 - 0.1 * i
+            ring_radius = 32 * (i + 1)
+            self.effects.append(Ring(pos, colors[i], duration=ring_duration, radius=ring_radius))
+
+        num_sparks = random.randint(18, 22)
+        for _ in range(num_sparks):
             spark_angle = math.radians(random.randint(0, 359))
             spark_color = random.choice(colors)
             spark_duration = random.uniform(0.3, 0.5)
             spark_distance = random.randint(64, 128)
             spark_size = (random.randint(16, 27), random.randint(4, 9))
-            self.effects.append(Spark(
-                pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
-            ))
+            self.effects.append(Spark(pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size))
 
     def spawn_torpedo_launch(self, pos: CoordinateType):
         """Spawn a torpedo launch vfx group."""
+        # TODO Update the torpedo launch colors to match the weather condition wave colors.
         for i, color in enumerate(TORPEDO_LAUNCH_COLORS):
-            self.effects.append(Ring(
-                pos,
-                color,
-                duration=0.45 - 0.08 * i,
-                radius=24 + 18 * i,
-            ))
+            ring_duration = 0.45 - 0.08 * i
+            ring_radius = 24 + 18 * i
+            self.effects.append(Ring(pos, color, duration=ring_duration, radius=ring_radius))
 
     def spawn_aircraft_launch(self, pos: CoordinateType, launch_angle: float):
         """Spawn an aircraft launch vfx group."""
         for i, color in enumerate(AIRCRAFT_LAUNCH_RING_COLORS):
-            self.effects.append(Ring(
-                pos,
-                color,
-                duration=0.48 - 0.07 * i,
-                radius=36 + 22 * i,
-            ))
+            ring_duration = 0.48 - 0.07 * i
+            ring_radius = 36 + 22 * i
+            self.effects.append(Ring(pos, color, duration=ring_duration, radius=ring_radius))
 
         exhaust_angle = launch_angle + math.pi
-        for _ in range(random.randint(4, 6)):
+        num_smokes = random.randint(4, 6)
+        for _ in range(num_smokes):
             smoke_angle = exhaust_angle + math.radians(random.uniform(-35, 35))
             smoke_color = random.choice(AIRCRAFT_LAUNCH_SMOKE_COLORS)
             smoke_duration = random.uniform(0.35, 0.55)
             smoke_delay = random.uniform(0, 0.08)
             smoke_distance = random.uniform(48, 64)
             smoke_size = random.randint(24, 38)
-            self.effects.append(Smoke(
-                pos,
-                smoke_angle,
-                smoke_color,
-                duration=smoke_duration,
-                delay=smoke_delay,
-                drift_distance=smoke_distance,
-                size=smoke_size,
-            ))
+            self.effects.append(Smoke(pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, drift_distance=smoke_distance, size=smoke_size))
 
     def spawn_shell_impact(self, pos: CoordinateType, shell_render_angle: float, shell_type: str):
         """Spawn a shell impact vfx group."""
         colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
-        for _ in range(random.randint(2,4)):
+        lightest_color = colors[0]
+        darkest_color = colors[2]
+        num_sparks = random.randint(2, 4)
+        for _ in range(num_sparks):
             spark_angle = shell_render_angle + math.radians(180 + random.randint(-30, 30))
-            spark_color = random.choice([colors[0], colors[2]])
+            spark_color = random.choice([lightest_color, darkest_color])
             spark_duration = random.uniform(0.3, 0.5)
             spark_distance = random.randint(80, 100)
             spark_size = (random.randint(40, 50), random.randint(8, 12))
-            self.effects.append(Spark(
-                pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
-            ))
-        for _ in range(random.randint(3,5)):
+            self.effects.append(Spark(pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size))
+        num_smokes = random.randint(3,5)
+        for _ in range(num_smokes):
             smoke_angle = math.radians(random.randint(210, 330))
-            smoke_color = random.choice([colors[0], colors[2]])
+            smoke_color = random.choice([lightest_color, darkest_color])
             smoke_delay = random.uniform(0, 0.1)
             smoke_duration = random.uniform(0.3, 0.5)
             smoke_distance = random.uniform(40, 60)
             smoke_size = random.uniform(40, 60)
-            self.effects.append(Smoke(
-                pos,
-                smoke_angle,
-                smoke_color,
-                duration=smoke_duration,
-                delay=smoke_delay,
-                drift_distance=smoke_distance,
-                size=smoke_size
-            ))
-        self.effects.append(Slash(pos, shell_render_angle, colors[0]))
+            self.effects.append(Smoke(pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, drift_distance=smoke_distance, size=smoke_size))
+        # Lightest color.
+        self.effects.append(Slash(pos, shell_render_angle, lightest_color))
 
     def spawn_splash_impact(self, pos: CoordinateType):
         """Spawn a splash impact vfx group."""
+        # TODO These colors should be based on the weather condition wave colors.
         colors = [(191, 224, 255), (158, 208, 255), (107, 183, 255)]
-        pos = pygame.Vector2(pos) + pygame.Vector2(0, 32)
-        spark_pos = pos + pygame.Vector2(16, 0)
-        for _ in range(random.randint(4,6)):
+        vertical_offset_to_feet = pygame.Vector2(0, 32)
+        pos = pygame.Vector2(pos) + vertical_offset_to_feet
+        horizontal_spark_spawn_offset = pygame.Vector2(16, 0)
+        # These sparks travel to the right, diagonally upward.
+        spark_pos = pos + horizontal_spark_spawn_offset
+        num_sparks = random.randint(4, 6)
+        for _ in range(num_sparks):
             spark_angle = math.radians(random.randint(300, 330))
             spark_color = random.choice(colors)
             spark_duration = random.uniform(0.4, 0.6)
             spark_distance = random.randint(60, 80)
             spark_size = (random.randint(24, 30), random.randint(6, 10))
-            self.effects.append(Spark(
-                spark_pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
-            ))
-        spark_pos = pos - pygame.Vector2(16, 0)
-        for _ in range(random.randint(4,6)):
+            self.effects.append(Spark(spark_pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size))
+        # These sparks travel to the left, diagonally upward.
+        spark_pos = pos - horizontal_spark_spawn_offset
+        num_sparks = random.randint(4, 6)
+        for _ in range(num_sparks):
             spark_angle = math.radians(random.randint(210, 240))
             spark_color = random.choice(colors)
             spark_duration = random.uniform(0.4, 0.6)
             spark_distance = random.randint(60, 80)
             spark_size = (random.randint(24, 30), random.randint(6, 10))
-            self.effects.append(Spark(
-                spark_pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
-            ))
-        for _ in range(random.randint(8,12)):
+            self.effects.append(Spark(spark_pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size))
+        # These sparks travel verticall upward.
+        num_sparks = random.randint(8, 12)
+        for _ in range(num_sparks):
             t = random.randint(-32, 32)
             spark_pos = pos + pygame.Vector2(t, 0)
+            spark_angle = math.radians(270)
             spark_color = random.choice(colors)
             spark_duration = random.uniform(0.4, 0.6)
             spark_distance = 120 - abs(t)
             spark_size = (random.randint(30, 40), random.randint(6, 10))
-            self.effects.append(Spark(
-                spark_pos, math.radians(270), spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
-            ))
-        for _ in range(random.randint(4, 6)):
+            self.effects.append(Spark(spark_pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size))
+
+        num_smokes = random.randint(4, 6)
+        for _ in range(num_smokes):
             smoke_angle = math.radians(random.uniform(210, 330))
             smoke_color = random.choice(colors)
             smoke_duration = random.uniform(0.4, 0.6)
             smoke_delay = random.uniform(0, 0.1)
             smoke_size = random.randint(40, 60)
             smoke_distance = random.randint(70, 90)
-            self.effects.append(Smoke(
-                pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, size=smoke_size, drift_distance=smoke_distance
-            ))
+            self.effects.append(Smoke(pos, smoke_angle, smoke_color, duration=smoke_duration, delay=smoke_delay, size=smoke_size, drift_distance=smoke_distance))
 
     def spawn_wake(
         self,
@@ -453,14 +450,7 @@ class VFXManager:
         spark_duration = random.uniform(*spark_duration_range)
         spark_distance = random.uniform(*spark_distance_range)
         spark_size = (random.uniform(*spark_length_range), random.uniform(*spark_width_range))
-        self.effects.append(Spark(
-            pos,
-            spark_angle,
-            spark_color,
-            duration=spark_duration,
-            fly_distance=spark_distance,
-            size=spark_size,
-        ))
+        self.effects.append(Spark(pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size))
 
         if random.random() > smoke_chance:
             return
@@ -469,43 +459,36 @@ class VFXManager:
         smoke_duration = random.uniform(*smoke_duration_range)
         smoke_distance = random.uniform(*smoke_distance_range)
         smoke_size = random.uniform(*smoke_size_range)
-        self.effects.append(Smoke(
-            pos,
-            smoke_angle,
-            smoke_color,
-            duration=smoke_duration,
-            drift_distance=smoke_distance,
-            size=smoke_size,
-        ))
+        self.effects.append(Smoke(pos, smoke_angle, smoke_color, duration=smoke_duration, drift_distance=smoke_distance, size=smoke_size))
 
     def spawn_fire(self, rect: pygame.Rect):
         """Spawn on-fire particle effects."""
         spark_angle = math.radians(random.uniform(240, 300))
         spark_dir = get_vec(1, spark_angle)
         x = rect.centerx
+        spark_bandwidth = rect.width * 0.2
         if spark_dir.x > 0:
-            x += random.uniform(0, rect.width * 0.2)
+            x += random.uniform(0, spark_bandwidth)
         elif spark_dir.x < 0:
-            x -= random.uniform(0, rect.width * 0.2)
+            x -= random.uniform(0, spark_bandwidth)
         y = rect.centery + random.uniform(-rect.height * 0.2, rect.height * 0.3)
         flame_origin = pygame.Vector2(x, y)
         spark_color = random.choice(FIRE_COLORS)
         spark_duration = random.uniform(0.25, 0.45)
         spark_distance = random.uniform(22, 46)
         spark_size = (random.uniform(14, 24), random.uniform(4, 8))
-        self.effects.append(Spark(
-            flame_origin, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
-        ))
+        self.effects.append(Spark(flame_origin, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size))
 
         if random.random() > 0.35:
             return
         smoke_angle = math.radians(random.uniform(245, 295))
         smoke_dir = get_vec(1, smoke_angle)
         x = rect.centerx
+        smoke_bandwidth = rect.width * 0.25
         if smoke_dir.x > 0:
-            x += random.uniform(0, rect.width * 0.25)
+            x += random.uniform(0, smoke_bandwidth)
         elif smoke_dir.x < 0:
-            x -= random.uniform(0, rect.width * 0.25)
+            x -= random.uniform(0, smoke_bandwidth)
         y = rect.centery + random.uniform(-rect.height * 0.3, rect.height * 0.2)
         smoke_origin = pygame.Vector2(x, y)
         smoke_color = random.choice(FIRE_SMOKE_COLORS)

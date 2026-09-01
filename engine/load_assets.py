@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from engine.types import ColorType
 
+import os
 import json
 import pygame
 
@@ -12,13 +13,13 @@ def load_sprites(
     master_sprite_file: str = "sprites.json",
     default_colorkey: ColorType = (255, 0, 0)
 ) -> dict[str, dict[str, pygame.Surface]]:
-    with open(f"{directory}/{master_sprite_file}") as f:
+    with open(os.path.join(directory, master_sprite_file)) as f:
         master_sprite_dict = json.load(f)
 
     sprites = {}
     for sprite_group, sprite_group_info in master_sprite_dict.items():
         group_sprites = {}
-        sprite_atlas_file = f"{directory}/{sprite_group}.png"
+        sprite_atlas_file = os.path.join(directory, f"{sprite_group}.png")
         
         sprite_atlas = pygame.image.load(sprite_atlas_file).convert()
         sprite_atlas.set_colorkey(default_colorkey)
@@ -32,14 +33,15 @@ def load_sprites(
 
     return sprites
 
+
 def load_sound(
     directory: str = "assets", master_file: str = "sfx.json", file_ext: str = "wav"
 ) -> dict[str, pygame.mixer.Sound]:
-    with open(f"{directory}/{master_file}") as f:
+    with open(os.path.join(directory, master_file)) as f:
         master_dict = json.load(f)
     sounds = {}
     for sound_key, sound_volume in master_dict.items():
-        sound = pygame.mixer.Sound(f"{directory}/{sound_key}.{file_ext}")
+        sound = pygame.mixer.Sound(os.path.join(directory, f"{sound_key}.{file_ext}"))
         sound.set_volume(sound_volume)
         sounds[sound_key] = sound
     return sounds
