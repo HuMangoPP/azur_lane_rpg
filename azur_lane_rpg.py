@@ -1,3 +1,8 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.types import CoordinateType
+
 import pygame
 import json
 
@@ -25,7 +30,7 @@ if __name__ == "__main__":
 
     get_physical_mouse_pos = pygame.mouse.get_pos
 
-    def _get_scaled_mouse_pos() -> tuple[float, float]:
+    def _get_scaled_mouse_pos() -> CoordinateType:
         """Get the mouse cursor position in the actual game screen space.
 
         Monkeypatch of pygame.mouse.get_pos(), which scales the true mouse position

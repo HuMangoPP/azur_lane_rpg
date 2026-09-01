@@ -1,5 +1,11 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.types import CoordinateType, ColorType
+
 import math
 import pygame
+
 
 def get_rect(
     width: float,
@@ -10,7 +16,7 @@ def get_rect(
     top: float | None = None,
     centery: float | None = None,
     bottom: float | None = None,
-    center: tuple[float, float] | None = None
+    center: CoordinateType | None = None
 ) -> pygame.Rect:
     """Return a rect with the inputted sizing and positioning."""
     rect = pygame.Rect(0, 0, width, height)
@@ -36,8 +42,8 @@ def get_vec(length: float, angle: float) -> pygame.Vector2:
 
 def draw_annulus(
     surface: pygame.Surface,
-    color: tuple[int, int, int],
-    center: tuple[float, float],
+    color: ColorType,
+    center: CoordinateType,
     inner_radius: float,
     outer_radius: float,
     start_angle: float,
@@ -66,13 +72,13 @@ def draw_annulus(
         annulus_rect.center = center
         surface.blit(annulus, annulus_rect)
 
-def hex_to_pixel(q: int, r: int, size: float) -> tuple[float, float]:
+def hex_to_pixel(q: int, r: int, size: float) -> CoordinateType:
     """Compute the pixel position given a hex tile position."""
     x = size * (math.sqrt(3) * q + math.sqrt(3) / 2 * r)
     y = size * (3 / 2 * r)
     return (x, y)
 
-def hex_round(q: float, r: float) -> tuple[int, int]:
+def hex_round(q: float, r: float) -> CoordinateType:
     """Round decimal hex coordinates into integral hex-coordinates."""
     x = q
     z = r
@@ -95,25 +101,26 @@ def hex_round(q: float, r: float) -> tuple[int, int]:
 
     return rx, rz
 
-def pixel_to_hex(x: float, y: float, size: float) -> tuple[int, int]:
+def pixel_to_hex(x: float, y: float, size: float) -> CoordinateType:
     """Compute the coordinates of the hex containing the input point."""
     q = (math.sqrt(3)/3 * x - 1/3 * y) / size
     r = (2/3 * y) / size
 
     return hex_round(q, r)
 
-def hex_corners(x, y, size):
+def hex_corners(x: float, y: float, size: float) -> list[CoordinateType]:
+    """Generate the corners of a hexagon with a pointy top."""
     corners = []
     for i in range(6):
-        angle = math.radians(60 * i - 30)  # pointy top
+        angle = math.radians(60 * i - 30)
         cx = round(x + size * math.cos(angle), 2)
         cy = round(y + size * math.sin(angle), 2)
         corners.append((cx, cy))
     return corners
 
-HEX_DIRECTIONS = [(1,0), (0,1), (-1,1), (-1,0), (0,-1), (1,-1)]
+HEX_DIRECTIONS = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
-def get_cluster_edges(cluster_hexes: list[tuple[float, float]], size: float) -> list[tuple[float, float]]:
+def get_cluster_edges(cluster_hexes: list[CoordinateType], size: float) -> list[CoordinateType]:
     """Compute the vertices of a cluster of hexes."""
     cluster_set = set(cluster_hexes)
     edges = {}
@@ -141,7 +148,7 @@ def get_cluster_edges(cluster_hexes: list[tuple[float, float]], size: float) -> 
 
     return polygon
 
-def adjacent_hexes(q: int, r: int, steps: int) -> set[tuple[int, int]]:
+def adjacent_hexes(q: int, r: int, steps: int) -> set[CoordinateType]:
     """Compute the set of hexes adjacent to the inputted hex, at most step tiles away."""
     adjacent = {(q, r)}
     if steps <= 0:
@@ -152,7 +159,7 @@ def adjacent_hexes(q: int, r: int, steps: int) -> set[tuple[int, int]]:
 
 def draw_dashed_rect(
     surface: pygame.Surface,
-    color: tuple[int, int, int],
+    color: ColorType,
     rect: pygame.Rect,
     dash_length: int,
     gap_length: int,

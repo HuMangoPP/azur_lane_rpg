@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from engine.types import CoordinateType, ColorType
     from engine.font import Font
     from engine.button import Button
     from src.menus.menu_manager import MenuManager
@@ -442,7 +443,7 @@ class PortMenu(Menu):
         self.selected_decoration_in_depot = None
         self.decoration_flipped = False
         self.deleting_decoration = False
-        self.decoration_depot_drag_offset: tuple[float, float] = None
+        self.decoration_depot_drag_offset: CoordinateType = None
         self.dragged_shipgirl: Shipgirl = None
         # Decoration depot and editing state for quests.
         self.moved_decoration_depot_overlay = False
@@ -555,7 +556,7 @@ class PortMenu(Menu):
         self._position_shipgirl_dialogue_options()
         return True
 
-    def _can_start_no_overlay_camera_drag(self, pos: tuple[int, int]) -> bool:
+    def _can_start_no_overlay_camera_drag(self, pos: CoordinateType) -> bool:
         """Check if the camera can be dragged when no overlay is present."""
         if self.menu_manager.quest_manager.selected_quest is not None:
             return False
@@ -584,7 +585,7 @@ class PortMenu(Menu):
 
         return not any(shipgirl.rect.collidepoint(pos) for shipgirl in self.menu_manager.available_shipgirls)
 
-    def _select_decoration_depot_entity(self, pos: tuple[int, int], make_selection: bool) -> str:
+    def _select_decoration_depot_entity(self, pos: CoordinateType, make_selection: bool) -> str:
         """Select the decoration whose icon rect contains the point.
 
         If make_selection is True, then allow this method to update the selection state.
@@ -1751,7 +1752,7 @@ class PortMenu(Menu):
         self,
         surface: pygame.Surface,
         rect: pygame.Rect,
-        color: tuple[int, int, int],
+        color: ColorType,
         length: int = 8,
     ):
         """Corner bracket rendering helper for the blueprint overlay."""

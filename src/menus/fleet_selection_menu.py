@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from engine.types import CoordinateType, ColorType
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
     from src.shipgirls import Shipgirl
@@ -28,7 +29,7 @@ def draw_rotated_handwritten_text(
     surface: pygame.Surface,
     font_registry: dict[str, Font],
     text: str,
-    position: tuple[float, float],
+    position: CoordinateType,
     angle: float,
     scale: float = 1.0,
     padding: int = 2,
@@ -236,7 +237,7 @@ class FleetSelectionMenu(Menu):
         )
         self.tray_surface_cache: pygame.Surface | None = None
         self.tray_shadow_cache: pygame.Surface | None = None
-        self.tray_cache_size: tuple[int, int] | None = None
+        self.tray_cache_size: CoordinateType | None = None
         self.tray_marker_shadow_cache: dict[str, pygame.Vector2] = {}
         self.available_shipgirl_rects = [
             get_rect(
@@ -247,7 +248,7 @@ class FleetSelectionMenu(Menu):
         ]
 
         # Mouse interaction state.
-        self.mouse_start_drag: tuple[int, int] | None = None
+        self.mouse_start_drag: CoordinateType | None = None
         self.selected_shipgirl_index_from_fleet: int | None = None
         self.selected_shipgirl_index_from_backup: int | None = None
         self.selected_shipgirl: Shipgirl | None = None
@@ -593,7 +594,7 @@ class FleetSelectionMenu(Menu):
         return position
 
     @classmethod
-    def _get_tray_polygon(cls, size: tuple[float, float], offset: tuple[float, float] = (0, 0)):
+    def _get_tray_polygon(cls, size: CoordinateType, offset: CoordinateType = (0, 0)):
         """Get the polygon of the marker tray."""
         width, height = size
         offset_x, offset_y = offset
@@ -872,7 +873,7 @@ class FleetSelectionMenu(Menu):
             if shipgirl is not None:
                 shipgirl.animate(dt)
 
-    def _get_launch_marker_polygon(self, center: tuple[float, float]) -> list[pygame.Vector2]:
+    def _get_launch_marker_polygon(self, center: CoordinateType) -> list[pygame.Vector2]:
         """Get the hex marker for the start sortie button."""
         return [
             pygame.Vector2(center) + get_vec(
@@ -1006,7 +1007,7 @@ class FleetSelectionMenu(Menu):
         return glow
 
     def _draw_selection_glint(
-        self, surface: pygame.Surface, center: tuple[float, float], color: tuple[int, int, int], strength: float
+        self, surface: pygame.Surface, center: CoordinateType, color: ColorType, strength: float
     ):
         """Helper to render glint particles."""
         glint_length = 1 + round(
@@ -1267,7 +1268,7 @@ class FleetSelectionMenu(Menu):
         self.tray_marker_shadow_cache[marker_key] = marker_shadow
         return marker_shadow
 
-    def _draw_dragged_marker(self, surface: pygame.Surface, mouse_pos: tuple[int, int]):
+    def _draw_dragged_marker(self, surface: pygame.Surface, mouse_pos: CoordinateType):
         """Draw the currently dragged shipgirl marker."""
         if self.mouse_start_drag is None or self.selected_shipgirl is None:
             return
@@ -1288,7 +1289,7 @@ class FleetSelectionMenu(Menu):
         surface.blit(marker_shadow, marker_rect.move(self.TRAY_DRAG_SHADOW_OFFSET))
         surface.blit(marker, marker_rect)
 
-    def _draw_tray_drop_target(self, surface: pygame.Surface, mouse_pos: tuple[int, int]):
+    def _draw_tray_drop_target(self, surface: pygame.Surface, mouse_pos: CoordinateType):
         """Render a border on the tray to indicate it as a valid drop target."""
         dragging_deployed_marker = (
             self.mouse_start_drag is not None

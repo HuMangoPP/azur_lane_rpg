@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from engine.types import CoordinateType, ColorType
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
 
@@ -42,13 +43,13 @@ class SortieNode:
         cluster_edges = get_cluster_edges(self.hexes, self.SIZE)
         self.polygon = [pygame.Vector2(point) for point in cluster_edges]
 
-    def hover(self, mouse_pos: tuple[int, int]):
+    def hover(self, mouse_pos: CoordinateType):
         """Update the hover state of this sortie node by checking collisions with its hexes."""
         mouse_x, mouse_y = mouse_pos
         hx, hy = pixel_to_hex(mouse_x - anchor().x, mouse_y - anchor().y, self.SIZE)
         self.hovered = self.unlocked and (hx, hy) in self.hexes
 
-    def select(self, mouse_pos: tuple[int, int]) -> bool:
+    def select(self, mouse_pos: CoordinateType) -> bool:
         """Select this sortie node by checking collisions with its hexes."""
         if not self.unlocked:
             return False
@@ -68,7 +69,7 @@ class SortieNode:
         ]
         pygame.draw.polygon(surface, Color.OCEAN_SHADOW, polygon)
 
-    def _get_styling(self) -> tuple[tuple[int, int, int], tuple[int, int, int], pygame.Surface]:
+    def _get_styling(self) -> tuple[ColorType, ColorType, pygame.Surface]:
         """Get the styling of the sortie node based on status."""
         if self.cleared:
             return (
@@ -278,7 +279,7 @@ class ChapterRegion:
     HATCH_ALPHA = 96
     OUTLINE_ALPHA = 190
 
-    def __init__(self, chapter: int, boundary_hexes: list[tuple[int, int]], sortie_nodes: list[SortieNode]):
+    def __init__(self, chapter: int, boundary_hexes: list[CoordinateType], sortie_nodes: list[SortieNode]):
         self.chapter = chapter
         self.sortie_nodes = sortie_nodes
         polygon = [
@@ -429,7 +430,7 @@ class Fog:
 
 
 class SortieProp:
-    def __init__(self, sprite_key: str, position: tuple[float, float]):
+    def __init__(self, sprite_key: str, position: CoordinateType):
         self.sprite_key = sprite_key
         self.position = pygame.Vector2(position)
         self.sprite: pygame.Surface = DataFiles.sprites["sortie_selection"][sprite_key]
@@ -447,7 +448,7 @@ class SortieProp:
 class NameRibbon:
     PADDING_X = 24
     
-    def __init__(self, position: tuple[float, float], text: str, scale: float = 1.0):
+    def __init__(self, position: CoordinateType, text: str, scale: float = 1.0):
         self.text = text
         self.position = pygame.Vector2(position)
         self.scale = scale
@@ -941,7 +942,7 @@ class SortieOrderCard:
         self.authorization_impact_played = False
         self.authorization_pos = pygame.Vector2()
 
-    def begin_authorization(self, click_pos: tuple[int, int] | None = None):
+    def begin_authorization(self, click_pos: CoordinateType | None = None):
         """Start the authorization animation."""
         if self.node is None or self.authorizing or not self.button.active:
             return

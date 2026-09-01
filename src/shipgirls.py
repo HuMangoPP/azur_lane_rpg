@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from engine.types import CoordinateType, ColorType
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
     from src.vfx import VFXManager
@@ -85,7 +86,7 @@ class ShipgirlBattleComponent:
 
         self.name = name
         stat_keys = ["max_hp", "evasion", "firepower", "reload"]
-        self.base_stats: dict[str, tuple[float, float]] = {
+        self.base_stats: dict[str, CoordinateType] = {
             stat_key: info[stat_key]
             for stat_key in stat_keys
         }
@@ -763,7 +764,7 @@ class ShipgirlBattleComponent:
         )
 
     def _draw_battlestation_glint(
-        self, surface: pygame.Surface, center: tuple[float, float], color: tuple[int, int, int], strength: float
+        self, surface: pygame.Surface, center: CoordinateType, color: ColorType, strength: float
     ):
         """Draw the glint particle effects for the battlestation."""
         glint_length = 1 + round(
@@ -889,7 +890,7 @@ class Shipgirl:
         self.pos = self._get_random_floor_pos()
         self.wander_target = self.pos.copy()
         self.pause_time = 0
-        self.interacting_decoration : tuple[int, int] = None
+        self.interacting_decoration : CoordinateType = None
 
         # Get the sprite if it exists and otherwise fall back to TB.
         if os.path.exists(f"live2d/{self.name}.json"):

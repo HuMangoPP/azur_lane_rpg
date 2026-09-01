@@ -1,4 +1,7 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from engine.types import CoordinateType
 
 import json
 import math
@@ -146,7 +149,7 @@ def _merge_model_parts(shared_parts: dict, model_specific_parts: dict) -> dict:
 
 
 class Live2DPart:
-    def __init__(self, image: pygame.Surface, pivot: tuple[float, float]):
+    def __init__(self, image: pygame.Surface, pivot: CoordinateType):
         self.image = image
 
         self.pivot = pygame.Vector2(pivot) - 0.5 * pygame.Vector2(image.get_size()) 
@@ -340,8 +343,8 @@ class Live2D:
 
         self.animation = self.IDLE_ANIMATION
 
-        self.refresh_animations()
         self.model_dict = self.cache.get_model_dict(model_file)
+        self.refresh_animations()
 
         # Create the Live2DPart objects and set their parents.
         model_parts = self.cache.get_resolved_model_parts(model_file)
@@ -408,7 +411,7 @@ class Live2D:
         if part in self.parts:
             self.parts[part].rotation = angle
     
-    def _set_offset(self, part: str, offset: tuple[float, float]):
+    def _set_offset(self, part: str, offset: CoordinateType):
         """Set the offset of this part."""
         if part in self.parts:
             self.parts[part].offset = pygame.Vector2(offset)

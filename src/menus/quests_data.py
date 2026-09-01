@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from engine.types import CoordinateType
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
     from src.menus.port_menu import PortMenu
@@ -29,7 +30,7 @@ def empty_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font
     """Empty draw for tutorials that don't need tutorial rendering."""
     pass
 
-def draw_tb(surface: pygame.Surface, font_registry: dict[str, Font], text: str | None, point_pos: tuple[float, float], point_down: bool, point_right: bool):
+def draw_tb(surface: pygame.Surface, font_registry: dict[str, Font], text: str | None, point_pos: CoordinateType, point_down: bool, point_right: bool):
     """Render the TB pointer sprite, pointing to the point pos, with a text bubble if provided."""
     # Make the TB pointer sprite point towards the point pos.
     # The TB pointer points diagonally.
@@ -950,7 +951,7 @@ def _decorate_port_get_delete_rect(port_menu: PortMenu) -> pygame.Rect:
         top=port_menu.decoration_depot_overlay.top + (decoration_index // 3) * (Box.HEIGHT + Box.PADDING) + Box.PADDING
     )
 
-def _decorate_port_get_placed_bed_data() -> tuple[str, tuple[int, int], bool] | None:
+def _decorate_port_get_placed_bed_data() -> tuple[str, CoordinateType, bool] | None:
     """Get the decoration data of the first placed bed."""
     for decoration_data in DataFiles.save_file["decorations"]:
         decoration, _, _ = Decorations.unpack_decoration_data(decoration_data)

@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from engine.types import CoordinateType, ColorType
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
     from src.shipgirls import PlayerFleet, SirenFleet
@@ -111,7 +112,7 @@ class SeaFoam:
 
 
 class RainDrop:
-    def __init__(self, pos: tuple[float, float], color: tuple[int, int, int], bottom: float):
+    def __init__(self, pos: CoordinateType, color: ColorType, bottom: float):
         self.pos = pygame.Vector2(pos)
         self.color = color
         self.bottom = bottom
@@ -151,10 +152,10 @@ class Background:
 
     def __init__(
         self,
-        sky_colors: list[tuple[int, int, int]],
+        sky_colors: list[ColorType],
         wave_sprites: list[pygame.Surface],
         cloud_sprites: list[pygame.Surface],
-        rain_colors: list[tuple[int, int, int]]
+        rain_colors: list[ColorType]
     ):
         self.set_sky_colors(sky_colors)
 
@@ -164,7 +165,7 @@ class Background:
         self.rain_spawn_progress = 0
 
         self.night_sky_visible = False
-        self.stars: list[tuple[pygame.Vector2, int, tuple[int, int, int]]] = []
+        self.stars: list[tuple[pygame.Vector2, int, ColorType]] = []
         self.moon_pos = pygame.Vector2(screen_x(0.36), screen_y(0.12))
 
         self.wave_sprites = wave_sprites
@@ -190,7 +191,7 @@ class Background:
         self.cloud_spawn_time = 0
         self.clouds: list[Cloud] = []
 
-    def set_sky_colors(self, sky_colors: list[tuple[int, int, int]]):
+    def set_sky_colors(self, sky_colors: list[ColorType]):
         """Set the sky color based on the weather conditions."""
         sky_surf = pygame.Surface((1, len(sky_colors)))
         for y, color in enumerate(sky_colors):
@@ -231,7 +232,7 @@ class Background:
         for cloud in self.clouds:
             cloud.set_cloud_sprites(self.cloud_sprites)
 
-    def set_rain(self, raining: bool, rain_colors: list[tuple[int, int, int]]):
+    def set_rain(self, raining: bool, rain_colors: list[ColorType]):
         """Set the raining animation state based on weather conditions."""
         self.raining = raining
         self.rain_colors = rain_colors
@@ -566,7 +567,7 @@ class EncounterMenu(Menu):
         self.weather_condition = "daytime"
 
         # Player controls.
-        self.mouse_start_drag: tuple[int, int] | None = None
+        self.mouse_start_drag: CoordinateType | None = None
         self.selected_shipgirl: Shipgirl | None = None
         self.selected_shipgirl_index: int | None = None
 
@@ -1109,7 +1110,7 @@ class EncounterMenu(Menu):
 
         self._begin_encounter()
 
-    def _add_sortie_drop(self, item: str, pos: tuple[float, float], amount: int = 1):
+    def _add_sortie_drop(self, item: str, pos: CoordinateType, amount: int = 1):
         """Create amount number of drops of this item."""
         for _ in range(amount):
             self.drops.append(Drop(

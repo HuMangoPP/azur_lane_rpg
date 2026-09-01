@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from engine.types import CoordinateType, ColorType
     from src.shipgirls import Shipgirl
 
 import json
@@ -34,7 +35,7 @@ class Box:
     BOTTOM_OF_SCREEN = screen_y(1) - EDGE_PADDING
 
     @staticmethod
-    def get_rotated_rect_polygon(rect: pygame.Rect, rotated_angle: float, offset: tuple[float, float] = (0, 0)):
+    def get_rotated_rect_polygon(rect: pygame.Rect, rotated_angle: float, offset: CoordinateType = (0, 0)):
         """Compute a rotated rect polygon."""
         # TODO move this to engine util
         rect_center = pygame.Vector2(rect.center) + pygame.Vector2(offset)
@@ -227,7 +228,7 @@ class DataFiles:
     bgm = load_sound(master_file="bgm.json", file_ext="ogg")
 
     @classmethod
-    def recolor_sprite(cls, sprite_group: str, sprite_key: str, color: tuple[int, int, int]) -> pygame.Surface:
+    def recolor_sprite(cls, sprite_group: str, sprite_key: str, color: ColorType) -> pygame.Surface:
         """Recolor the white pixels of the sprite to the target color."""
         sprite = cls.sprites[sprite_group][sprite_key]
         sprite.set_colorkey((255, 255, 255))
@@ -482,7 +483,7 @@ class Decorations:
     WALLPAPER_HEIGHT = 128
 
     @staticmethod
-    def unpack_decoration_data(decoration_data: tuple[str, tuple[int, int], bool]) -> tuple[str, tuple[int, int], bool]:
+    def unpack_decoration_data(decoration_data: tuple[str, CoordinateType, bool]) -> tuple[str, CoordinateType, bool]:
         """Unpack decoration data safely."""
         decoration, tilepos_anchor, flipped = decoration_data
         if not isinstance(flipped, bool):
@@ -490,7 +491,7 @@ class Decorations:
         return decoration, tilepos_anchor, flipped
 
     @staticmethod
-    def get_decoration_base_dimensions(decoration: str, flipped: bool) -> tuple[int, int]:
+    def get_decoration_base_dimensions(decoration: str, flipped: bool) -> CoordinateType:
         """Get the footprint size of a decoration."""
         decoration_info = DataFiles.decoration_store[decoration]
         width = decoration_info["width"]
@@ -501,8 +502,8 @@ class Decorations:
 
     @classmethod
     def get_decoration_tiles(
-        cls, decoration: str, flipped: bool, tilepos_anchor: tuple[int, int]
-    ) -> set[tuple[int, int]]:
+        cls, decoration: str, flipped: bool, tilepos_anchor: CoordinateType
+    ) -> set[CoordinateType]:
         """Compute the occupied tiles of a decoration placed at this location."""
         base_width, base_height = cls.get_decoration_base_dimensions(decoration, flipped)
         decoration_tiles = set()
@@ -516,7 +517,7 @@ class Decorations:
         return decoration_tiles
 
     @staticmethod
-    def is_shipgirl_renderable(renderable: Shipgirl | tuple[str, tuple[int, int], bool]) -> bool:
+    def is_shipgirl_renderable(renderable: Shipgirl | tuple[str, CoordinateType, bool]) -> bool:
         """Checks if this renderable is a shipgirl."""
         return (
             hasattr(renderable, "rect")
@@ -525,7 +526,7 @@ class Decorations:
         )
 
     @classmethod
-    def get_shipgirl_standing_tilepos(cls, shipgirl: Shipgirl) -> tuple[int, int]:
+    def get_shipgirl_standing_tilepos(cls, shipgirl: Shipgirl) -> CoordinateType:
         """Get the tilepos the shipgirl is standing on."""
         return cls.get_isometric_tilepos((
             shipgirl.rect.centerx,
@@ -534,8 +535,8 @@ class Decorations:
 
     @classmethod
     def get_render_order_tiles(
-        cls, renderable: Shipgirl | tuple[str, tuple[int, int], bool]
-    ) -> set[tuple[int, int]]:
+        cls, renderable: Shipgirl | tuple[str, CoordinateType, bool]
+    ) -> set[CoordinateType]:
         """Get the tiles occupied by this renderable."""
         if cls.is_shipgirl_renderable(renderable):
             return {cls.get_shipgirl_standing_tilepos(renderable)}
@@ -546,8 +547,8 @@ class Decorations:
     @classmethod
     def renderable_is_behind(
         cls,
-        behind_renderable: Shipgirl | tuple[str, tuple[int, int], bool],
-        front_renderable: Shipgirl | tuple[str, tuple[int, int], bool]
+        behind_renderable: Shipgirl | tuple[str, CoordinateType, bool],
+        front_renderable: Shipgirl | tuple[str, CoordinateType, bool]
     ) -> bool:
         """Determines whether the behind renderable is behind the front renderable.
         
@@ -570,8 +571,8 @@ class Decorations:
     @classmethod
     def compare_decoration_render_order(
         cls,
-        renderable_a: Shipgirl | tuple[str, tuple[int, int], bool],
-        renderable_b: Shipgirl | tuple[str, tuple[int, int], bool],
+        renderable_a: Shipgirl | tuple[str, CoordinateType, bool],
+        renderable_b: Shipgirl | tuple[str, CoordinateType, bool],
     ) -> int:
         """Compare two renderables.
         
@@ -623,7 +624,7 @@ class Decorations:
             return 1
 
     @classmethod
-    def get_isometric_tilepos(cls, screen_pos: tuple[float, float]) -> tuple[int, int]:
+    def get_isometric_tilepos(cls, screen_pos: CoordinateType) -> CoordinateType:
         """Convert a screen position to an isometric coordinate."""
         rel_x = screen_pos[0] - cls.floor_rect.left - cls.floor_rect.width / 2
         rel_y = screen_pos[1] - cls.floor_rect.top
@@ -632,7 +633,7 @@ class Decorations:
         return (math.floor(iso_x), math.floor(iso_y))
 
     @classmethod
-    def get_isometric_floor_pos(cls, tilepos: tuple[int, int]) -> tuple[float, float]:
+    def get_isometric_floor_pos(cls, tilepos: CoordinateType) -> CoordinateType:
         """Convert an isometric coordinate to to the bottom corner of that tile."""
         return pygame.Vector2(
             cls.floor_rect.left
@@ -651,7 +652,7 @@ class Decorations:
         return sprite
 
     @classmethod
-    def get_decoration_sprite_rect(cls, decoration: str, flipped: bool, tilepos_anchor: tuple[int, int]) -> pygame.Rect:
+    def get_decoration_sprite_rect(cls, decoration: str, flipped: bool, tilepos_anchor: CoordinateType) -> pygame.Rect:
         """Get the decoration sprite bounding rect."""
         base_width, _ = cls.get_decoration_base_dimensions(decoration, flipped)
         sprite = cls.get_decoration_sprite(decoration, flipped)
@@ -665,8 +666,8 @@ class Decorations:
 
     @classmethod
     def get_decoration_base_polygon(
-        cls, decoration: str, flipped: bool, tilepos_anchor: tuple[int, int]
-    ) -> list[tuple[float, float]]:
+        cls, decoration: str, flipped: bool, tilepos_anchor: CoordinateType
+    ) -> list[CoordinateType]:
         """Get the polygon which bounds the footprint of this decoration."""
         base_width, base_height = cls.get_decoration_base_dimensions(decoration, flipped)
         top_tilepos = (

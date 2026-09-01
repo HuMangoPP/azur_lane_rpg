@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from engine.types import CoordinateType, ColorType
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
 
@@ -103,14 +104,14 @@ class QuestManager:
             for i, quest in enumerate(self._ordered_quests())
         ]
 
-    def notifications_collidepoint(self, point: tuple[float, float]) -> bool:
+    def notifications_collidepoint(self, point: CoordinateType) -> bool:
         """Check if this point collides with any notification entries."""
         return any(
             rect.collidepoint(point)
             for _, rect in self._get_notification_entries()
         )
 
-    def select_quest(self, mpos: tuple[int, int]) -> bool:
+    def select_quest(self, mpos: CoordinateType) -> bool:
         """Select the quest by this mouse pos."""
         for quest, rect in self._get_notification_entries():
             if rect.collidepoint(mpos):
@@ -120,7 +121,7 @@ class QuestManager:
         return False
 
     @classmethod
-    def _panel_polygon(cls, size: tuple[float, float]) -> list[tuple[float, float]]:
+    def _panel_polygon(cls, size: CoordinateType) -> list[CoordinateType]:
         """Get the cut panel polygon."""
         width, height = size
         cut = cls.NOTIFICATION_CUT
@@ -137,8 +138,8 @@ class QuestManager:
         self,
         surface: pygame.Surface,
         rect: pygame.Rect,
-        fill_color: tuple[int, int, int],
-        edge_color: tuple[int, int, int],
+        fill_color: ColorType,
+        edge_color: ColorType,
         pulse: float,
         opacity: float = NOTIFICATION_PANEL_ALPHA,
     ):
@@ -160,7 +161,7 @@ class QuestManager:
         self,
         surface: pygame.Surface,
         rect: pygame.Rect,
-        color: tuple[int, int, int],
+        color: ColorType,
         count: int,
         intensity: float,
         seed: float,
@@ -503,7 +504,7 @@ class Quest:
             for i in range(reward_count)
         ]
 
-    def go_next(self, menu_manager: MenuManager, mpos: tuple[int, int]) -> bool:
+    def go_next(self, menu_manager: MenuManager, mpos: CoordinateType) -> bool:
         """Go to the next dialogue.
         
         Return true if the dialogue should exit and return false if not.
@@ -543,7 +544,7 @@ class Quest:
         return False
 
     @classmethod
-    def _panel_polygon(cls, size: tuple[float, float]):
+    def _panel_polygon(cls, size: CoordinateType):
         """Get the panel polygon."""
         width, height = size
         return [
@@ -565,7 +566,7 @@ class Quest:
         })
 
     def _draw_panel(
-        self, surface: pygame.Surface, rect: pygame.Rect, accent: tuple[int, int, int], effect_time: float, intensity: float = 1
+        self, surface: pygame.Surface, rect: pygame.Rect, accent: ColorType, effect_time: float, intensity: float = 1
     ):
         """Draw the panel."""
         pulse = (math.sin(effect_time * math.tau / 2.4) + 1) / 2
@@ -597,7 +598,7 @@ class Quest:
     def _draw_panel_glints(
         surface: pygame.Surface,
         rect: pygame.Rect,
-        color: tuple[int, int, int],
+        color: ColorType,
         effect_time: float,
         count: int,
         intensity: float,
@@ -665,7 +666,7 @@ class Quest:
         text_box: pygame.Rect,
         context_label: str,
         text: str,
-        accent: tuple[int, int, int],
+        accent: ColorType,
         effect_time: float,
         intensity: float = 1,
     ):
@@ -709,7 +710,7 @@ class Quest:
         self,
         surface: pygame.Surface,
         font_registry: dict[str, Font],
-        accent: tuple[int, int, int],
+        accent: ColorType,
         effect_time: float,
         intensity: float,
     ):
@@ -774,7 +775,7 @@ class Quest:
         font_registry: dict[str, Font],
         rect: pygame.Rect,
         label: str,
-        accent: tuple[int, int, int],
+        accent: ColorType,
     ):
         """Draw the action button."""
         hovered = rect.collidepoint(pygame.mouse.get_pos())

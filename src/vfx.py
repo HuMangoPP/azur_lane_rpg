@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from engine.types import CoordinateType, ColorType
     from engine.font import Font
 
 import math
@@ -91,13 +92,13 @@ class VFX:
 class Spark(VFX):
     def __init__(
         self,
-        pos: tuple[float, float],
+        pos: CoordinateType,
         angle: float,
-        color: tuple[int, int, int],
+        color: ColorType,
         duration: float = 0.3,
         delay: float = 0,
         fly_distance: float = 64,
-        size: tuple[float, float] = (12, 4)
+        size: CoordinateType = (12, 4)
     ):
         super().__init__(duration, delay)
 
@@ -132,8 +133,8 @@ class Spark(VFX):
 class Ring(VFX):
     def __init__(
         self,
-        pos: tuple[float, float],
-        color: tuple[int, int, int],
+        pos: CoordinateType,
+        color: ColorType,
         duration: float = 0.3,
         delay: float = 0,
         radius: float = 64
@@ -160,9 +161,9 @@ class Ring(VFX):
 class Slash(VFX):
     def __init__(
         self,
-        pos: tuple[float, float],
+        pos: CoordinateType,
         angle: float,
-        color: tuple[int, int, int],
+        color: ColorType,
         delay: float = 0,
         duration: float = 0.2
     ):
@@ -196,9 +197,9 @@ class Slash(VFX):
 class Smoke(VFX):
     def __init__(
         self,
-        pos: tuple[float, float],
+        pos: CoordinateType,
         angle: float,
-        color: tuple[int, int, int],
+        color: ColorType,
         duration: float = 0.3,
         delay: float = 0,
         size: float = 50,
@@ -235,7 +236,7 @@ class Smoke(VFX):
 class DamageCounter(VFX):
     def __init__(
         self,
-        pos: tuple[float, float],
+        pos: CoordinateType,
         text: str,
         shell_type: str,
         crit: bool = False,
@@ -293,7 +294,7 @@ class VFXManager:
         """Clear the vfx."""
         self.effects = []
 
-    def spawn_muzzle_flash(self, pos: tuple[float, float], shell_render_angle: float, shell_type: str):
+    def spawn_muzzle_flash(self, pos: CoordinateType, shell_render_angle: float, shell_type: str):
         """Spawn a muzzle flash vfx group."""
         pos = pygame.Vector2(pos) + get_vec(20, shell_render_angle)
         colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
@@ -309,7 +310,7 @@ class VFXManager:
                 pos, spark_angle, spark_color, duration=spark_duration, fly_distance=spark_distance, size=spark_size
             ))
 
-    def spawn_torpedo_launch(self, pos: tuple[float, float]):
+    def spawn_torpedo_launch(self, pos: CoordinateType):
         """Spawn a torpedo launch vfx group."""
         for i, color in enumerate(TORPEDO_LAUNCH_COLORS):
             self.effects.append(Ring(
@@ -319,7 +320,7 @@ class VFXManager:
                 radius=24 + 18 * i,
             ))
 
-    def spawn_aircraft_launch(self, pos: tuple[float, float], launch_angle: float):
+    def spawn_aircraft_launch(self, pos: CoordinateType, launch_angle: float):
         """Spawn an aircraft launch vfx group."""
         for i, color in enumerate(AIRCRAFT_LAUNCH_RING_COLORS):
             self.effects.append(Ring(
@@ -347,7 +348,7 @@ class VFXManager:
                 size=smoke_size,
             ))
 
-    def spawn_shell_impact(self, pos: tuple[float, float], shell_render_angle: float, shell_type: str):
+    def spawn_shell_impact(self, pos: CoordinateType, shell_render_angle: float, shell_type: str):
         """Spawn a shell impact vfx group."""
         colors = SHELL_COLORS.get(shell_type, SHELL_COLORS["normal"])
         for _ in range(random.randint(2,4)):
@@ -377,7 +378,7 @@ class VFXManager:
             ))
         self.effects.append(Slash(pos, shell_render_angle, colors[0]))
 
-    def spawn_splash_impact(self, pos: tuple[float, float]):
+    def spawn_splash_impact(self, pos: CoordinateType):
         """Spawn a splash impact vfx group."""
         colors = [(191, 224, 255), (158, 208, 255), (107, 183, 255)]
         pos = pygame.Vector2(pos) + pygame.Vector2(0, 32)
@@ -424,19 +425,19 @@ class VFXManager:
 
     def spawn_wake(
         self,
-        pos: tuple[float, float],
+        pos: CoordinateType,
         torpedo_angle: float,
         upward_bias: float = -0.35,
         spark_chance: float = 1.0,
-        spark_duration_range: tuple[float, float] = (0.18, 0.28),
-        spark_distance_range: tuple[float, float] = (14, 26),
-        spark_length_range: tuple[float, float] = (8, 14),
-        spark_width_range: tuple[float, float] = (2, 4),
+        spark_duration_range: CoordinateType = (0.18, 0.28),
+        spark_distance_range: CoordinateType = (14, 26),
+        spark_length_range: CoordinateType = (8, 14),
+        spark_width_range: CoordinateType = (2, 4),
         smoke_chance: float = 0.35,
-        smoke_duration_range: tuple[float, float] = (0.25, 0.4),
-        smoke_distance_range: tuple[float, float] = (10, 18),
-        smoke_size_range: tuple[float, float] = (12, 20),
-        wake_colors: list[tuple[int, int, int]] = None,
+        smoke_duration_range: CoordinateType = (0.25, 0.4),
+        smoke_distance_range: CoordinateType = (10, 18),
+        smoke_size_range: CoordinateType = (12, 20),
+        wake_colors: list[ColorType] = None,
     ):
         """Spawn a wake vfx group."""
         if random.random() > spark_chance:
@@ -516,12 +517,12 @@ class VFXManager:
         ))
 
     def spawn_damage_counter(
-        self, pos: tuple[float, float], damage: float, shell_type: str, crit: bool = False
+        self, pos: CoordinateType, damage: float, shell_type: str, crit: bool = False
     ):
         """Spawn a damage counter."""
         self.effects.append(DamageCounter(pos, str(damage), shell_type, crit=crit))
 
-    def spawn_miss_counter(self, pos: tuple[float, float]):
+    def spawn_miss_counter(self, pos: CoordinateType):
         """Spawn a miss counter."""
         self.effects.append(DamageCounter(pos, "miss", Equipment.TORPEDO))
 

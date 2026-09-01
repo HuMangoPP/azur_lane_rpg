@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from engine.types import CoordinateType, ColorType
     from engine.font import Font
 
 import math
@@ -17,11 +18,11 @@ class Button:
 
         self.hovered = False
 
-    def hover(self, mpos: tuple[int, int]) -> bool:
+    def hover(self, mpos: CoordinateType) -> bool:
         """Abstract hover method."""
         pass
 
-    def click(self, mpos: tuple[int, int]) -> bool:
+    def click(self, mpos: CoordinateType) -> bool:
         """Abstract click method."""
         pass
 
@@ -45,28 +46,28 @@ class RectangularButton(Button):
         self.rect = rect
 
         background_styling = background_styling or {}
-        self.background_color: tuple[int, int, int] | None = background_styling.get("background_color")
+        self.background_color: ColorType | None = background_styling.get("background_color")
         self.background_img: pygame.Surface | None = background_styling.get("background_img")
-        self.background_img_align: tuple[float, float] = background_styling.get("background_img_align", (1/2, 1/2))
-        self.outline_color: tuple[int, int, int] | None = background_styling.get("outline_color")
+        self.background_img_align: CoordinateType = background_styling.get("background_img_align", (1/2, 1/2))
+        self.outline_color: ColorType | None = background_styling.get("outline_color")
         self.outline_width: int = background_styling.get("outline_width", 2)
         self.opacity: int | None = background_styling.get("opacity")
 
         text_styling = text_styling or {}
         self.text: str | None = text_styling.get("text")
-        self.text_align: tuple[float, float] = text_styling.get("text_align", (1/2, 1/2))
+        self.text_align: CoordinateType = text_styling.get("text_align", (1/2, 1/2))
         self.text_font: str = text_styling.get("text_font", "big_pixel")
-        self.text_color: tuple[int, int, int] = text_styling.get("text_color", (255, 255, 255))
+        self.text_color: ColorType = text_styling.get("text_color", (255, 255, 255))
         self.text_size: int = text_styling.get("text_size", 1)
         self.text_margins: float = text_styling.get("text_margins", 8)
 
         hover_styling = hover_styling or {}
-        self.hover_background_color: tuple[int, int, int] | None = hover_styling.get("background_color", self.background_color)
-        self.hover_outline_color: tuple[int, int, int] | None = hover_styling.get("outline_color", self.outline_color)
+        self.hover_background_color: ColorType | None = hover_styling.get("background_color", self.background_color)
+        self.hover_outline_color: ColorType | None = hover_styling.get("outline_color", self.outline_color)
         self.hover_outline_width: int = hover_styling.get("outline_width", self.outline_width)
         self.hover_opacity: int | None = hover_styling.get("opacity", self.opacity)
     
-    def hover(self, mpos: tuple[int, int]) -> bool:
+    def hover(self, mpos: CoordinateType) -> bool:
         """Check if the mouse is hovering over this button."""
         if not self.active:
             self.hovered = False
@@ -76,7 +77,7 @@ class RectangularButton(Button):
             self.hovered = True
         return self.hovered
 
-    def click(self, mpos: tuple[int, int]) -> bool:
+    def click(self, mpos: CoordinateType) -> bool:
         """Check if the mouse has clicked this button, and call the callback if so."""
         if not self.active:
             return False
@@ -161,7 +162,7 @@ class AnnularSectorButton(Button):
         self.hover_opacity = hover_styling.get("opacity", self.opacity)
         self.hovered = False
 
-    def contains_point(self, mpos: tuple[int, int]) -> bool:
+    def contains_point(self, mpos: CoordinateType) -> bool:
         """Check if the mouse position is contained within the annular sector."""
         relpos = pygame.Vector2(mpos) - self.center
         distance = relpos.length()
@@ -172,12 +173,12 @@ class AnnularSectorButton(Button):
         angle_delta = (point_angle - self.angle + math.pi) % (2 * math.pi) - math.pi
         return abs(angle_delta) <= self.angle_width / 2
 
-    def hover(self, mpos: tuple[int, int]) -> bool:
+    def hover(self, mpos: CoordinateType) -> bool:
         """Check if the mouse is hovering over this button."""
         self.hovered = self.active and self.contains_point(mpos)
         return self.hovered
 
-    def click(self, mpos: tuple[int, int]) -> bool:
+    def click(self, mpos: CoordinateType) -> bool:
         """Check if the mouse has clicked this button, and call the callback if so."""
         if not self.active or not self.contains_point(mpos):
             return False
