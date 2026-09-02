@@ -20,6 +20,7 @@ from src.menus.fleet_selection_menu import FleetNameRibbon
 from src.menus.quests_data import (
     assign_quest,
     first_sortie_quest,
+    backup_fleet_quest,
     construct_auxiliary_equipment_quest,
     complete_final_sortie_quest,
 )
@@ -1279,6 +1280,8 @@ class EncounterMenu(Menu):
                         backup_shipgirl.battle_component.active = self.encounter_has_not_ended
                         self.menu_manager.player_fleet.backups[i] = self.selected_shipgirl
                         self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index] = backup_shipgirl
+                        if backup_fleet_quest.quest_id in self.menu_manager.quest_manager.started_quests:
+                            backup_fleet_quest.swap_attempted = True
 
                     # The sirens should not be able to target the shipgirl that was just swapped out.
                     for siren in self.menu_manager.siren_fleet.fleet:

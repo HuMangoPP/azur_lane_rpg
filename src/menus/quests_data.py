@@ -1277,6 +1277,140 @@ construct_additional_weapons_quest = Quest(
     decoration_voucher_reward
 )
 
+backup_fleet_pre_quest_dialogue = [
+    "Your fleet has grown, Commander. You can now deploy a backup fleet alongside your primary fleet.",
+    "Backup shipgirls remain in reserve until you need them to relieve a member of the primary fleet.",
+    "Prepare both fleets for a sortie, then practice swapping a shipgirl during the first encounter.",
+]
+backup_fleet_quest_line = (
+    "Deploy a backup fleet, swap a primary shipgirl with a backup shipgirl, and finish the encounter."
+)
+backup_fleet_post_quest_dialogue = [
+    "Backup fleet procedure confirmed.",
+    "Use swaps to adapt your active fleet to changing conditions during future encounters.",
+]
+
+def backup_fleet_completion_criteria(menu_manager: MenuManager) -> bool:
+    return backup_fleet_quest.swap_attempted
+
+def backup_fleet_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
+    if menu_manager.current_menu == menu_manager.fleet_selection_menu:
+        fleet_selection_menu = menu_manager.fleet_selection_menu
+        if menu_manager.encounter_menu.transition_active:
+            return
+
+        if (
+            menu_manager.player_fleet.primary_fleet_size > 0
+            and menu_manager.player_fleet.backup_fleet_size > 0
+        ):
+            rect = fleet_selection_menu.start_sortie_button.rect.inflate(
+                -Box.WIDTH / 2, -Box.HEIGHT / 2
+            )
+            draw_tb(surface, font_registry, None, rect.topright, True, False)
+            return
+
+        primary_rect = fleet_selection_menu.fleet_slots[0].unionall(
+            fleet_selection_menu.fleet_slots[1:]
+        ).inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
+        draw_tb(
+            surface,
+            font_registry,
+            "assign at least one shipgirl to the primary fleet",
+            primary_rect.bottomright,
+            False,
+            False,
+        )
+
+        backup_rect = fleet_selection_menu.backup_fleet_slots[0].unionall(
+            fleet_selection_menu.backup_fleet_slots[1:]
+        ).inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
+        draw_tb(
+            surface,
+            font_registry,
+            "assign at least one shipgirl to the backup fleet",
+            backup_rect.topright,
+            True,
+            False,
+        )
+    elif menu_manager.current_menu == menu_manager.encounter_menu:
+        encounter_menu = menu_manager.encounter_menu
+        if (
+            encounter_menu.transition_active
+            or encounter_menu.current_encounter != 0
+            or encounter_menu.encounter_started
+            or not encounter_menu.encounter_has_not_ended
+        ):
+            return
+
+        primary_shipgirl = next(
+            (shipgirl for shipgirl in menu_manager.player_fleet.shipgirls if shipgirl is not None),
+            None,
+        )
+        backup_shipgirl = next(
+            (shipgirl for shipgirl in menu_manager.player_fleet.backups if shipgirl is not None),
+            None,
+        )
+        # Without a backup shipgirl there is no valid swap to demonstrate.
+        if primary_shipgirl is None or backup_shipgirl is None:
+            return
+
+        if not backup_fleet_quest.swap_attempted:
+            draw_tb(
+                surface,
+                font_registry,
+                "drag from this primary shipgirl...",
+                primary_shipgirl.rect.topright,
+                True,
+                False,
+            )
+            draw_tb(
+                surface,
+                font_registry,
+                "...to this backup shipgirl to swap them",
+                backup_shipgirl.rect.bottomright,
+                False,
+                False,
+            )
+        else:
+            siren = next(iter(menu_manager.siren_fleet.fleet), None)
+            if siren is not None:
+                draw_tb(
+                    surface,
+                    font_registry,
+                    "start the encounter by assigning a target to this shipgirl",
+                    primary_shipgirl.rect.topright,
+                    True,
+                    False,
+                )
+                draw_tb(
+                    surface,
+                    font_registry,
+                    "use swaps during combat maintain a strategic advantage",
+                    siren.rect.bottomleft,
+                    False,
+                    True,
+                )
+
+def backup_fleet_on_start(menu_manager: MenuManager):
+    backup_fleet_quest.swap_attempted = False
+
+def backup_fleet_on_complete(menu_manager: MenuManager):
+    pass
+
+backup_fleet_quest = Quest(
+    "backup_fleet",
+    backup_fleet_pre_quest_dialogue,
+    backup_fleet_quest_line,
+    backup_fleet_post_quest_dialogue,
+    backup_fleet_completion_criteria,
+    backup_fleet_tutorial_draw,
+    backup_fleet_on_start,
+    backup_fleet_on_complete,
+    decoration_voucher_reward,
+)
+backup_fleet_quest.swap_attempted = False
+backup_fleet_quest.encounter_finished_after_swap = False
+
 construct_auxiliary_equipment_pre_quest_dialogue = [
     "Operations in the next maritime region are expected to place greater demands on every fleet role.",
     "Auxiliary equipment can improve attributes such as durability, evasion, firepower, and reload speed.",
@@ -1408,6 +1542,7 @@ quests = [
     decorate_port_quest,
     construct_additional_shipgirls_quest,
     construct_additional_weapons_quest,
+    backup_fleet_quest,
     construct_auxiliary_equipment_quest,
     construct_three_auxiliary_equipment_quest,
     complete_final_sortie_quest,

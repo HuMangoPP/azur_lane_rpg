@@ -27,6 +27,7 @@ from src.constants import (
 from src.shipgirls import Shipgirl, LAYER_SIZE
 from src.menus.base_menu import Menu
 from live2d.live2d import Live2D
+from src.menus.quests_data import assign_quest, backup_fleet_quest
 
 
 class PortWallpaper:
@@ -387,6 +388,8 @@ class PortMenu(Menu):
                 }
                 shipgirl = Shipgirl(self.overlay_selected_entity, True)
                 self.menu_manager.available_shipgirls.append(shipgirl)
+                if len(DataFiles.save_file["shipgirls"]) >= 4:
+                    assign_quest(self.menu_manager, backup_fleet_quest)
                 for ingredient, req in self._get_selected_shipyard_reqs().items():
                     inventory[ingredient] -= req
                 specialized_wisdom_cubes.pop(self.overlay_selected_entity)
