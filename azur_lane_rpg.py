@@ -14,6 +14,7 @@ if __name__ == "__main__":
 
     pygame.mixer.init()
 
+    from engine.profiler import profile, print_execution_times
     from engine.font import Font
 
     from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles, Color
@@ -95,7 +96,8 @@ if __name__ == "__main__":
 
         # Clear the previous frame. Each menu can draw its own background over this.
         display.fill(Color.BLACK)
-        menu_manager.current_menu.draw(display, font_registry)
+        with profile(f"draw menu {menu_manager.current_menu.__class__}"):
+            menu_manager.current_menu.draw(display, font_registry)
         if not menu_manager.encounter_menu.transition_active:
             for quest in menu_manager.quest_manager.started_quests.values():
                 if quest.started and not quest.completed:
@@ -116,6 +118,8 @@ if __name__ == "__main__":
 
     DataFiles.bgm["lofi_loop"].stop()
     pygame.quit()
+
+    print_execution_times()
 
     # TODO Make the exp saved directly to the save file, which prevents needing this block of code
     # and also could potentially eliminate the need for the exp attribute in the battle component.

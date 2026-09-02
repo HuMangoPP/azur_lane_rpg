@@ -1026,7 +1026,7 @@ class PortMenu(Menu):
                         shipgirls_clicked_on.append(shipgirl)
                 # Click on the foremost (render-order) shipgirl.
                 if shipgirls_clicked_on:
-                    shipgirl = min(shipgirls_clicked_on, key=lambda shipgirl : shipgirl.rect.centery)
+                    shipgirl = max(shipgirls_clicked_on, key=lambda shipgirl : shipgirl.rect.centery)
                     DataFiles.sfx["click"].play()
                     self.hovered_shipgirl = shipgirl
                     if self.hovered_shipgirl.interacting_decoration is None:

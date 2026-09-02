@@ -10,6 +10,7 @@ from copy import deepcopy
 import pygame
 
 LAYER_SIZE = 96
+PRE_RENDER_FPS = 30
 PART_NAMES = [
     "bangs",
     "right_bangs",
@@ -514,3 +515,238 @@ class Live2D:
         sprite_rect = sprite_surf.get_rect()
         sprite_rect.center = (x, y)
         surface.blit(sprite_surf, sprite_rect)
+
+
+class PreRenderCache:
+    """In-memory cache of pre-rendered Live2D animation frames."""
+
+    def __init__(self):
+        self._models: dict[
+            str,
+            tuple[
+                Live2D,
+                dict[str, tuple[pygame.Surface, ...]],
+                dict[str, pygame.Surface],
+            ],
+        ] = {}
+
+    @staticmethod
+    def _cache_key(model_file: str) -> str:
+        """Normalize a model path so equivalent paths share a cache entry."""
+        return os.path.normcase(os.path.abspath(os.path.normpath(model_file)))
+
+    def get(
+        self,
+        model_file: str,
+    ) -> tuple[
+        Live2D,
+        dict[str, tuple[pygame.Surface, ...]],
+        dict[str, pygame.Surface],
+    ] | None:
+        """Get the cached renderer, playback frames, and terminal frames."""
+        return self._models.get(self._cache_key(model_file))
+
+    def store(
+        self,
+        model_file: str,
+        live2d: Live2D,
+        animation_frames: dict[str, tuple[pygame.Surface, ...]],
+        terminal_frames: dict[str, pygame.Surface],
+    ):
+        """Store all pre-rendered data for a model."""
+        self._models[self._cache_key(model_file)] = (
+            live2d,
+            animation_frames,
+            terminal_frames,
+        )
+
+
+class PreRenderLive2D:
+    """Live2D-compatible sprite backed by pre-rendered animation frames."""
+
+    cache = PreRenderCache()
+
+    DRAW_ORDER = Live2D.DRAW_ORDER
+    CONNECTIONS = Live2D.CONNECTIONS
+
+    IDLE_ANIMATION = Live2D.IDLE_ANIMATION
+    BOUNCE_ANIMATION = Live2D.BOUNCE_ANIMATION
+    DRAG_ANIMATION = Live2D.DRAG_ANIMATION
+    WALK_ANIMATION = Live2D.WALK_ANIMATION
+    SAIL_ANIMATION = Live2D.SAIL_ANIMATION
+    ATTACK_ANIMATION = Live2D.ATTACK_ANIMATION
+    SINK_ANIMATION = Live2D.SINK_ANIMATION
+    SLEEP_ANIMATION = Live2D.SLEEP_ANIMATION
+    SIT_ANIMATION = Live2D.SIT_ANIMATION
+
+    KEYFRAME_DURATION = Live2D.KEYFRAME_DURATION
+
+    def __init__(self, model_file: str):
+        cached_model = self.cache.get(model_file)
+        if cached_model is None:
+            live2d = Live2D(model_file)
+            animation_frames, terminal_frames = self._pre_render(live2d)
+            self.cache.store(
+                model_file,
+                live2d,
+                animation_frames,
+                terminal_frames,
+            )
+            cached_model = self.cache.get(model_file)
+
+        self.live2d, self._animation_frames, self._terminal_frames = cached_model
+        self.model_dict = self.live2d.model_dict
+        self.animations = self.live2d.animations
+
+        self.t = 0
+        self.animation = self.IDLE_ANIMATION
+
+    @staticmethod
+    def _render_frame(
+        live2d: Live2D,
+        animation: str,
+        animation_t: float,
+    ) -> pygame.Surface:
+        """Render one animation sample onto a transparent sprite surface."""
+        live2d.animation = animation
+        live2d.t = animation_t
+        live2d._update_offset_and_rotation()
+
+        frame = pygame.Surface(
+            (2 * LAYER_SIZE, 2 * LAYER_SIZE),
+            pygame.SRCALPHA,
+        )
+        live2d.draw(frame, LAYER_SIZE, LAYER_SIZE, False)
+        return frame
+
+    @classmethod
+    def _pre_render(
+        cls,
+        live2d: Live2D,
+    ) -> tuple[
+        dict[str, tuple[pygame.Surface, ...]],
+        dict[str, pygame.Surface],
+    ]:
+        """Pre-render every animation on a Live2D model at a fixed frame rate."""
+        animation_frames = {}
+        terminal_frames = {}
+
+        for animation_name, animation_data in live2d.animations.items():
+            keyframes = _animation_keyframes(animation_data)
+            if len(keyframes) <= 1:
+                duration = 0
+            else:
+                final_keyframe = max(int(index) for index in keyframes)
+                keyframe_duration = animation_data.get(
+                    KEYFRAME_DURATION_KEY,
+                    cls.KEYFRAME_DURATION,
+                )
+                duration = final_keyframe * keyframe_duration
+
+            # The terminal timestamp is excluded from playback because looping
+            # and chained animations transition as soon as they reach it.
+            frame_count = max(1, math.ceil(duration * PRE_RENDER_FPS - 1e-9))
+            frames = tuple(
+                cls._render_frame(
+                    live2d,
+                    animation_name,
+                    frame_index / PRE_RENDER_FPS,
+                )
+                for frame_index in range(frame_count)
+            )
+            animation_frames[animation_name] = frames
+            terminal_frames[animation_name] = (
+                frames[0]
+                if duration == 0
+                else cls._render_frame(live2d, animation_name, duration)
+            )
+
+        return animation_frames, terminal_frames
+
+    def refresh_animations(self):
+        """Pre-rendered animations remain fixed for the process lifetime."""
+        pass
+
+    def set_animation(self, animation: str):
+        """Set the animation for this pre-rendered sprite."""
+        if animation not in self.animations:
+            return
+
+        if self.animation != animation:
+            self.animation = animation
+            self.t = 0
+
+    def animation_finished(self, animation: str | None = None) -> bool:
+        """Check if the current non-looping animation has finished."""
+        animation_name = animation or self.animation
+        if self.animation != animation_name:
+            return False
+
+        animation_data = self.animations.get(animation_name, {})
+        if not animation_data.get(NO_LOOP_KEY, False):
+            return False
+
+        keyframes = _animation_keyframes(animation_data)
+        if len(keyframes) <= 1:
+            return True
+
+        final_keyframe = max(int(index) for index in keyframes)
+        keyframe_duration = animation_data.get(
+            KEYFRAME_DURATION_KEY,
+            self.KEYFRAME_DURATION,
+        )
+        return self.t >= final_keyframe * keyframe_duration
+
+    def update(self, dt: float):
+        """Update the pre-rendered sprite's independent animation state."""
+        animation = self.animations.get(self.animation, {})
+        keyframes = _animation_keyframes(animation)
+        if len(keyframes) <= 1:
+            self.t = 0
+            return
+
+        max_keyframe_index = max(int(index) for index in keyframes)
+        keyframe_duration = animation.get(
+            KEYFRAME_DURATION_KEY,
+            self.KEYFRAME_DURATION,
+        )
+        duration = max_keyframe_index * keyframe_duration
+        next_t = self.t + dt
+        if animation.get(NO_LOOP_KEY, False) is True:
+            self.t = min(next_t, duration)
+        elif (new_animation := animation.get(NEXT_ANIMATION_KEY)) is not None:
+            if next_t >= duration:
+                self.set_animation(new_animation)
+            else:
+                self.t = next_t
+        else:
+            self.t = next_t % duration
+
+    def draw(
+        self,
+        surface: pygame.Surface,
+        x: float,
+        y: float,
+        flipx: bool,
+        alpha: float = 255,
+    ):
+        """Draw the current cached animation frame."""
+        frames = self._animation_frames.get(self.animation)
+        if not frames:
+            return
+
+        if self.animation_finished():
+            frame = self._terminal_frames[self.animation]
+        else:
+            frame_index = min(int(self.t * PRE_RENDER_FPS), len(frames) - 1)
+            frame = frames[frame_index]
+
+        sprite = pygame.transform.flip(frame, True, False) if flipx else frame
+        alpha = int(max(0, min(255, alpha)))
+        if alpha != 255:
+            # Cached surfaces are shared, so apply alpha only to a temporary copy.
+            sprite = sprite.copy()
+            sprite.set_alpha(alpha)
+
+        sprite_rect = sprite.get_rect(center=(x, y))
+        surface.blit(sprite, sprite_rect)

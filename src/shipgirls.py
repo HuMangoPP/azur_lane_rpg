@@ -15,7 +15,7 @@ from engine.util import get_rect, get_vec, draw_annulus
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y, Decorations
 from src.vfx import shell_path, SHELL_SCALE
-from live2d.live2d import Live2D, LAYER_SIZE
+from live2d.live2d import Live2D, PreRenderLive2D, LAYER_SIZE
 
 
 class Smokescreen:
@@ -901,9 +901,9 @@ class Shipgirl:
 
         # Get the sprite if it exists and otherwise fall back to TB.
         if os.path.exists(f"live2d/{self.name}.json"):
-            self.sprite = Live2D(f"live2d/{self.name}.json")
+            self.sprite = PreRenderLive2D(f"live2d/{self.name}.json")
         elif os.path.exists("live2d/TB.json"):
-            self.sprite = Live2D("live2d/TB.json")
+            self.sprite = PreRenderLive2D("live2d/TB.json")
         else:
             self.sprite = None
         self.facing_left = False
