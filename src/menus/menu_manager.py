@@ -96,6 +96,10 @@ class MenuManager:
         """
         if menu is self.port_menu:
             self.port_menu.restore_shipgirl_decoration_interactions()
+        if menu is self.equipment_menu:
+            self.equipment_menu.selected_shipgirl = None
+            self.equipment_menu.shipgirl_x = None
+            self.equipment_menu.selection_activation_time = 0
         if menu is self.fleet_selection_menu:
             if self.fleet_selection_menu.sortie_index < 0:
                 return

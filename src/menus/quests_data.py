@@ -15,7 +15,7 @@ from engine.util import get_rect, get_vec, hex_to_pixel
 from src.constants import DataFiles, Box, Color, Equipment, Decorations
 
 from src.menus.quests import Quest
-from src.menus.sortie_selection_menu import SortieNode
+from src.menus.sortie_selection_menu import SortieNode, anchor
 
 
 def assign_quest(menu_manager: MenuManager, quest: Quest):
@@ -351,14 +351,17 @@ def first_sortie_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surfac
             xy = hex_to_pixel(q, r, SortieNode.SIZE)
             rect = get_rect(
                 width=SortieNode.SIZE, height=SortieNode.SIZE,
-                center=pygame.Vector2(xy) + SortieNode.center
+                center=pygame.Vector2(xy) + anchor()
             )
             rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.bottomleft, False, True)
-        # Point towards the exit button.
-        rect = menu_manager.sortie_selection_menu.exit_sortie_selection_menu_button.rect
-        rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
-        draw_tb(surface, font_registry, "click this to go back", rect.bottomleft, False, True)
+            # Point towards the exit button.
+            rect = menu_manager.sortie_selection_menu.exit_sortie_selection_menu_button.rect
+            rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
+            draw_tb(surface, font_registry, "click this to go back", rect.bottomleft, False, True)
+            # Point towards empty space to teach camera panning.
+            point = pygame.Vector2(Box.WIDTH, Box.HEIGHT)
+            draw_tb(surface, font_registry, "click and drag on empty space to pan the camera", point, False, False)
     elif menu_manager.current_menu == menu_manager.fleet_selection_menu:
         if menu_manager.encounter_menu.transition_active:
             return
@@ -660,10 +663,10 @@ construct_shipgirl_quest = Quest(
 )
 
 craft_weapon_pre_quest_dialogue = [
-    "Sector 3 has been secured.",
-    "The recovered materials are sufficient to craft new equipment.",
+    "The next sector contains materials we can use to craft new equipment.",
+    "Continue the sortie and recover the materials needed for production.",
     "The gear lab is now available for equipment production.",
-    "Open the gear lab and craft a twin 120mm gun for {DD_shipgirl}.",
+    "Once you have the materials, open the gear lab and craft a twin 120mm gun for {DD_shipgirl}.",
 ]
 craft_weapon_quest_line = "Craft the twin 120mm gun in the gear lab."
 craft_weapon_post_quest_dialogue = [
@@ -990,10 +993,11 @@ def _decorate_port_draw_bed_depot_item(
     menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font], text: str
 ):
     """Draw a pointer towards the first placed bed bounding rect."""
-    rect = _decorate_port_get_depot_decoration_rect(menu_manager.port_menu, "bed").inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
+    rect = _decorate_port_get_depot_decoration_rect(menu_manager.port_menu, "bed")
     if rect is None:
         draw_tb(surface, font_registry, text, pygame.mouse.get_pos(), False, False)
         return
+    rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
     draw_tb(
         surface, font_registry,
         text,
@@ -1155,10 +1159,14 @@ def decorate_port_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surfa
 def decorate_port_on_start(menu_manager: MenuManager):
     port_menu = menu_manager.port_menu
     # Reset tutorial state.
+    bed_in_decorations = any(
+        decoration_data[0] == "bed"
+        for decoration_data in DataFiles.save_file["decorations"]
+    )
     port_menu.toggle_decoration_mode_button.active = True
-    port_menu.moved_decoration_depot_overlay = False
-    port_menu.flipped_decoration = False
-    port_menu.placed_bed_decoration = False
+    port_menu.moved_decoration_depot_overlay = bed_in_decorations
+    port_menu.flipped_decoration = bed_in_decorations
+    port_menu.placed_bed_decoration = bed_in_decorations
     port_menu.removed_bed_decoration = False
     port_menu.shipgirl_interacted_with_bed = False
 

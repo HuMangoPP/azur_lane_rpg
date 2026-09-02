@@ -238,6 +238,10 @@ class ShipgirlBattleComponent:
                 if random.randint(0, 99) < ignite_chance:
                     target.battle_component.ignite(ignite_damage, ignite_ticks)
             target.battle_component.shake()
+            if target.battle_component.hp <= 0:
+                target.battle_component.target = None
+                target.battle_component.attack_animation = False
+                target.battle_component.attack_timer = 0
             return True
 
     def _spawn_attacking_effects(self, rect: pygame.Rect, vfx_manager: VFXManager):
@@ -325,8 +329,6 @@ class ShipgirlBattleComponent:
 
     def update(self, dt: float, rect: pygame.Rect, fleet: PlayerFleet | SirenFleet, vfx_manager: VFXManager):
         """Update the shipgirl battle component."""
-        self.battlestation_effect_time += dt
-
         self.shake_time = max(0, self.shake_time - dt)
 
         # Exp bar animation.
@@ -353,9 +355,6 @@ class ShipgirlBattleComponent:
         self._update_ignite(dt, rect, vfx_manager)
         if self.ignite_ticks > 0:
             vfx_manager.spawn_fire(rect)
-        
-        if self.evasion_gauge >= 1:
-            self.smokescreen.update(dt)
 
         if self.attack_animation:
             return
@@ -674,7 +673,7 @@ class ShipgirlBattleComponent:
                 topleft=(Box.PADDING, Box.PADDING)
             )
             battlestation_surf.blit(star_icon, star_rect)
-            font_registry["big_pixel"].render(
+            font_registry["pixel"].render(
                 battlestation_surf,
                 str(Stats.level(self.exp)),
                 star_rect.center,
@@ -721,7 +720,7 @@ class ShipgirlBattleComponent:
         pygame.draw.rect(battlestation_surf, Color.EXP_BAR_BG, bar_background)
         pygame.draw.rect(battlestation_surf, Color.EXP_BAR_FILL, bar_fill)
         battlestation_surf.blit(star_icon, star_rect)
-        font_registry["big_pixel"].render(
+        font_registry["pixel"].render(
             battlestation_surf,
             str(self.last_level),
             star_rect.center,
@@ -978,6 +977,9 @@ class Shipgirl:
 
     def animate(self, dt: float):
         """Animate the sprite."""
+        self.battle_component.battlestation_effect_time += dt
+        if self.battle_component.evasion_gauge >= 1:
+            self.battle_component.smokescreen.update(dt)
         self.sprite.update(dt)
 
     def draw(self, surface: pygame.Surface, font_registry: dict[str, Font], alpha: int = 255):

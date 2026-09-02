@@ -8,8 +8,8 @@ import json
 
 if __name__ == "__main__":
     pygame.init()
-    # SCREEN_SIZE = pygame.Vector2(1920, 1080)
-    SCREEN_SIZE = pygame.Vector2(960, 540)
+    SCREEN_SIZE = pygame.Vector2(1920, 1080)
+    # SCREEN_SIZE = pygame.Vector2(960, 540)
     screen = pygame.display.set_mode(SCREEN_SIZE)
 
     pygame.mixer.init()
@@ -81,6 +81,13 @@ if __name__ == "__main__":
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                # Dev util that allows me to save and "reload" the game.
+                for shipgirl in menu_manager.available_shipgirls:
+                    DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
+                with open("data/save_file.json", "w") as f:
+                    json.dump(DataFiles.save_file, f, indent=4)
+                menu_manager = MenuManager()
 
             events.append(event)
 

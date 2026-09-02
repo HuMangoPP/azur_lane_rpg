@@ -134,7 +134,7 @@ class Color:
     HOLOGRAM_GLOW = (51, 55, 128)
     SIREN_HOLOGRAM_GLOW = (128, 55, 51)
 
-    TARGET_INDICATOR = (225, 240, 255)
+    TARGET_INDICATOR = (255, 255, 255)
     MUTED_TARGET_INDICATOR = (192, 208, 224)
 
 
@@ -204,6 +204,13 @@ class Stats:
         if level is not None:
             return base_stat + stat_per_level * level
         return None
+
+    @classmethod
+    def exp_requirement(cls, shipgirls: list[Shipgirl]) -> float:
+        """The exp requirement for a new research project."""
+        max_shipgirl_level = max(Stats.level(shipgirl.battle_component.exp) for shipgirl in shipgirls)
+        research_shipgirl_level = max(1, max_shipgirl_level - 1)
+        return Stats.exp_to_level(research_shipgirl_level)
 
 
 # TODO Consider whether this serves to be split up into multiple objects.

@@ -350,13 +350,11 @@ class Background:
         font_registry: dict[str, Font],
         player_fleet: PlayerFleet | None = None,
         siren_fleet: SirenFleet | None = None,
-        player_shipgirl_filter: Callable[[Shipgirl], bool] | None = None,
     ):
         """Draw the background.
         
         If the PlayerFleet or SirenFleet are provided, then render the shipgirls or sirens among
         the wave strips, so that they feel embedded into the theme.
-        If player_shipgirl_filter is provided, render only the shipgirls passing this filter.
         """
         # The sky surf is not wider enough to fill the whole screen, so it is repeated
         # horizontally to completely fill the background.
@@ -416,12 +414,6 @@ class Background:
 
         if player_fleet is not None:
             shipgirl_draw_indices = player_fleet.get_draw_indices()
-            if player_shipgirl_filter is not None:
-                shipgirl_draw_indices = [
-                    (draw_index, shipgirl)
-                    for draw_index, shipgirl in shipgirl_draw_indices
-                    if player_shipgirl_filter(shipgirl)
-                ]
         else:
             shipgirl_draw_indices = None
 
@@ -430,15 +422,15 @@ class Background:
         wave_rep_offset = (num_wave_reps - 1) / 2
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
             # Draw the shipgirl and sirens at this wave index before the wave itself.
+            if siren_draw_indices is not None:
+                for draw_index, siren in siren_draw_indices:
+                    if i == draw_index:
+                        siren.draw(surface, font_registry)
             if shipgirl_draw_indices is not None:
                 for draw_index, shipgirl in shipgirl_draw_indices:
                     if i == draw_index:
                         shipgirl.draw(surface, font_registry)
 
-            if siren_draw_indices is not None:
-                for draw_index, siren in siren_draw_indices:
-                    if i == draw_index:
-                        siren.draw(surface, font_registry)
             # The horizontal motion of the wave is a sine wave.
             # The wave motion is in such a way that it reaches its crest in
             # the middle of its horizontal motion in both directions.
@@ -627,9 +619,10 @@ class EncounterMenu(Menu):
                 )
             self._claim_drops()
 
-            self.return_to_port_button.active = True
+            self.return_to_port_button.active = False
+            self.opened_reward_report_timer = 3 * self.OPENED_REWARD_REPORT_DELAY
 
-            DataFiles.sfx["open"].play()
+            DataFiles.sfx["scale"].play()
 
         button_sprite = DataFiles.sprites["user_interface"]["closed_reward_cache"]
         button_rect = button_sprite.get_rect()
@@ -1012,6 +1005,7 @@ class EncounterMenu(Menu):
         # is started.
         elif state == self.TRANSITION_WAVE_REVEAL:
             self.transition_timer += dt
+            self.menu_manager.siren_fleet.animate(dt)
             if self.transition_timer >= self.TRANSITION_WAVE_DURATION:
                 if self.transition_to_port:
                     self._finish_encounter_transition()
@@ -1129,13 +1123,11 @@ class EncounterMenu(Menu):
             self.open_reward_cache_button.active = True
             if self.current_sortie < DataFiles.save_file["sortie_progress"]:
                 # If this sortie has already been cleared, then the rewards have already
-                # been cleared.
+                # been collected.
                 # After a brief delay, open the end of sortie report.
                 # Do not allow the player to claim rewards again.
                 self.return_to_port_button.active = False
-                self.opened_reward_report_timer = (
-                    self.OPENED_REWARD_REPORT_DELAY
-                )
+                self.opened_reward_report_timer = self.OPENED_REWARD_REPORT_DELAY
                 self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["open_reward_cache"]
             else:
                 self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["closed_reward_cache"]
@@ -1284,8 +1276,8 @@ class EncounterMenu(Menu):
                             self.selected_shipgirl.rect.center,
                         )
                         self.selected_shipgirl.battle_component.active = False
+                        backup_shipgirl.battle_component.active = self.encounter_has_not_ended
                         self.menu_manager.player_fleet.backups[i] = self.selected_shipgirl
-                        backup_shipgirl.battle_component.active = True
                         self.menu_manager.player_fleet.shipgirls[self.selected_shipgirl_index] = backup_shipgirl
 
                     # The sirens should not be able to target the shipgirl that was just swapped out.
@@ -1377,20 +1369,13 @@ class EncounterMenu(Menu):
                 research_target = DataFiles.save_file["research_target"]
                 specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
                 specialized_wisdom_cubes[research_target] += self.research_exp
-                avg_shipgirl_level = int(
-                    sum(
-                        Stats.level(shipgirl.battle_component.exp)
-                        for shipgirl in self.menu_manager.available_shipgirls
-                    )
-                    / len(self.menu_manager.available_shipgirls)
-                )
-                exp_req = Stats.exp_to_level(avg_shipgirl_level)
+                exp_req = Stats.exp_requirement(self.menu_manager.available_shipgirls)
                 if specialized_wisdom_cubes[research_target] >= exp_req:
                     unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) == 0:
                         self._add_sortie_drop(
                             unique_item,
-                            (screen_x(0.5), screen_y(0.5)),
+                            (-100, -100),
                         )
                 self.research_exp = 0
         elif self.exp_timer > 0:
@@ -2052,11 +2037,6 @@ class EncounterMenu(Menu):
             font_registry,
             player_fleet=self.menu_manager.player_fleet,
             siren_fleet=self.menu_manager.siren_fleet,
-            player_shipgirl_filter=(
-                (lambda shipgirl: shipgirl.battle_component.hp > 0)
-                if self.transition_active and not self.transition_to_port
-                else None
-            ),
         )
         self.vfx_manager.draw(surface, font_registry)
 
@@ -2086,21 +2066,15 @@ class EncounterMenu(Menu):
         if self.exp_timer > 0:
             research_target = DataFiles.save_file["research_target"]
             unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
-            avg_shipgirl_level = int(
-                sum(
-                    Stats.level(shipgirl.battle_component.exp)
-                    for shipgirl in self.menu_manager.available_shipgirls
-                )
-                / len(self.menu_manager.available_shipgirls)
-            )
-            exp_req = Stats.exp_to_level(avg_shipgirl_level)
+            unique_item_exists = DataFiles.save_file["inventory"].get(unique_item, 0) > 0
+            exp_req = Stats.exp_requirement(self.menu_manager.available_shipgirls)
             research_progress = (
                 DataFiles.save_file["specialized_wisdom_cubes"][research_target]
                 + self.research_exp * self.exp_timer
             )
 
             panel_rect = get_rect(
-                width=320,
+                width=384,
                 height=88,
                 centerx=screen_x(0.5),
                 centery=screen_y(0.5),
@@ -2129,9 +2103,9 @@ class EncounterMenu(Menu):
             panel_cut_size = 7
             panel_polygon = [
                 (panel_cut_size, panel_rect.height),
-                (0, panel_rect.height-panel_cut_size),
+                (0, panel_rect.height - panel_cut_size),
                 (0, 0),
-                (panel_rect.width-panel_cut_size, 0),
+                (panel_rect.width - panel_cut_size, 0),
                 (panel_rect.width, panel_cut_size),
                 (panel_rect.width, panel_rect.height),
             ]
@@ -2159,9 +2133,13 @@ class EncounterMenu(Menu):
                 scale=shipgirl_name_scale
             )
             banner_text_y = shipgirl_name_y + shipgirl_name_scale * big_pixel_font.font_height + panel_margin
+            research_state_text = (
+                "shipgirl research in progress" if (research_progress < exp_req and not unique_item_exists)
+                else "shipgirl research complete"
+            )
             big_pixel_font.render(
                 surface,
-                "shipgirl research progress",
+                research_state_text,
                 (content_left, banner_text_y),
                 accent,
                 scale=1,
@@ -2173,9 +2151,12 @@ class EncounterMenu(Menu):
                 left=content_left,
                 top=banner_text_y + big_pixel_font.font_height + panel_margin,
             )
-
+            bar_fill_width = bar_width * (
+                min(1, research_progress / exp_req) if (research_progress < exp_req and not unique_item_exists)
+                else 1
+            )
             bar_fill = get_rect(
-                width=bar_width * min(1, research_progress / exp_req),
+                width=bar_fill_width,
                 height=bar_height, left=bar_background.left, top=bar_background.top
             )
             bar_backplate = bar_background.inflate(4, 4)

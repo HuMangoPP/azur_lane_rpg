@@ -1324,10 +1324,10 @@ class SortieSelectionMenu(Menu):
         self._generate_paths()
 
         self.sea_location_labels = [
-            NameRibbon((-105, -390), "stormy", scale=0.75),
-            NameRibbon((747, 69), "glaciers", scale=0.75),
-            NameRibbon((670, -618), "glaciers", scale=0.75),
-            NameRibbon((1658, -587), "stormy", scale=0.75),
+            NameRibbon((-105, -390), "western stormbelt", scale=0.75),
+            NameRibbon((747, 69), "southreach glaciers", scale=0.75),
+            NameRibbon((670, -618), "northreach glaciers", scale=0.75),
+            NameRibbon((1658, -587), "eastern stormbelt", scale=0.75),
             NameRibbon((188, -565), "northwind archipelago", scale=0.75),
             NameRibbon((1250, 100), "sunward archipelago", scale=0.75),
             NameRibbon((1045, -790), "cinder isles", scale=0.75),

@@ -182,9 +182,6 @@ class EquipmentMenu(Menu):
         # Exit menu button.
         def exit_equipment_menu():
             self.menu_manager.current_menu = self.menu_manager.port_menu
-            self.selected_shipgirl = None
-            self.shipgirl_x = None
-            self.selection_activation_time = 0
 
         button_sprite = DataFiles.sprites["user_interface"]["prev"]
         button_size = 48
@@ -938,7 +935,7 @@ class EquipmentMenu(Menu):
         paperclip_sprite = pygame.transform.rotate(DataFiles.sprites["props"]["paperclip"], angle=-90)
         paperclip_up_shift = 4
         paperclip_rect = paperclip_sprite.get_rect(
-            right=self.dossier_bg.right + Box.PADDING,
+            right=self.dossier_bg.right,
             top=self.dossier_bg.top - paperclip_up_shift,
         )
         surface.blit(paperclip_sprite, paperclip_rect)

@@ -398,6 +398,13 @@ class PortMenu(Menu):
                 inventory["wisdom_cube"] -= 1
                 specialized_wisdom_cubes[self.overlay_selected_entity] = 0
                 DataFiles.save_file["research_target"] = self.overlay_selected_entity
+            elif (
+                self.overlay_selected_entity is not None
+                and self.overlay_selected_entity in DataFiles.save_file["specialized_wisdom_cubes"]
+            ):
+                # Resume research.
+                DataFiles.sfx["frequency"].play()
+                DataFiles.save_file["research_target"] = self.overlay_selected_entity
             self._refresh_overlay_action_buttons()
         
         self.shipyard_sticky_note_button = RectangularButton(
@@ -529,8 +536,8 @@ class PortMenu(Menu):
         self.hovered_shipgirl = None
         def open_equipment_menu():
             """Open the equipment menu."""
-            self.menu_manager.equipment_menu.selected_shipgirl = self.hovered_shipgirl
             self.menu_manager.current_menu = self.menu_manager.equipment_menu
+            self.menu_manager.equipment_menu.selected_shipgirl = self.hovered_shipgirl
 
             close_shipgirl_dialogue_options()
 
@@ -775,14 +782,7 @@ class PortMenu(Menu):
             ):
                 self.shipyard_sticky_note_button.active = True
                 research_exp = DataFiles.save_file["specialized_wisdom_cubes"].get(self.overlay_selected_entity, 0)
-                avg_shipgirl_level = int(
-                    sum(
-                        Stats.level(shipgirl.battle_component.exp)
-                        for shipgirl in self.menu_manager.available_shipgirls
-                    )
-                    / len(self.menu_manager.available_shipgirls)
-                )
-                exp_req = max(1, Stats.exp_to_level(avg_shipgirl_level))
+                exp_req = Stats.exp_requirement(self.menu_manager.available_shipgirls)
                 research_percentage = int(100 * min(1, research_exp / exp_req))
                 self.shipyard_sticky_note_button.text = f"research progress {research_percentage}%"
         elif self.current_overlay == self.GEAR_LAB:
@@ -1017,15 +1017,20 @@ class PortMenu(Menu):
                     continue
 
                 # Shipgirl interactions.
+                shipgirls_clicked_on = []
                 for shipgirl in self.menu_manager.available_shipgirls:
                     if shipgirl.rect.collidepoint(event.pos):
-                        DataFiles.sfx["click"].play()
-                        self.hovered_shipgirl = shipgirl
-                        if self.hovered_shipgirl.interacting_decoration is None:
-                            self.hovered_shipgirl.sprite.set_animation(Live2D.BOUNCE_ANIMATION)
-                        self._position_shipgirl_dialogue_options()
-                        for option in self.shipgirl_dialogue_options:
-                            option.active = True
+                        shipgirls_clicked_on.append(shipgirl)
+                # Click on the foremost (render-order) shipgirl.
+                if shipgirls_clicked_on:
+                    shipgirl = min(shipgirls_clicked_on, key=lambda shipgirl : shipgirl.rect.centery)
+                    DataFiles.sfx["click"].play()
+                    self.hovered_shipgirl = shipgirl
+                    if self.hovered_shipgirl.interacting_decoration is None:
+                        self.hovered_shipgirl.sprite.set_animation(Live2D.BOUNCE_ANIMATION)
+                    self._position_shipgirl_dialogue_options()
+                    for option in self.shipgirl_dialogue_options:
+                        option.active = True
 
     def _exit_overlay(self, mouseup_event: pygame.Event) -> bool:
         """Logic for exiting the current overlay.
