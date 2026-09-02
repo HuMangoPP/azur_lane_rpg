@@ -13,7 +13,7 @@ from engine.util import get_vec
 from engine.load_assets import load_sprites, load_sound
 
 TEMP_SCREEN_SIZE = pygame.Vector2(960, 540)
-FPS = 60
+FPS = 0
 
 
 def screen_x(t: float):

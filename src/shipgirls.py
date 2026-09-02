@@ -6,7 +6,6 @@ if TYPE_CHECKING:
     from src.menus.menu_manager import MenuManager
     from src.vfx import VFXManager
 
-import os
 import math
 import random
 import pygame
@@ -15,7 +14,12 @@ from engine.util import get_rect, get_vec, draw_annulus
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y, Decorations
 from src.vfx import shell_path, SHELL_SCALE
-from live2d.live2d import Live2D, PreRenderLive2D, LAYER_SIZE
+from live2d.live2d import (
+    Live2D,
+    PreRenderLive2D,
+    LAYER_SIZE,
+    get_live2d_model_file,
+)
 
 
 class Smokescreen:
@@ -900,12 +904,8 @@ class Shipgirl:
         self.interacting_decoration: CoordinateType = None
 
         # Get the sprite if it exists and otherwise fall back to TB.
-        if os.path.exists(f"live2d/{self.name}.json"):
-            self.sprite = PreRenderLive2D(f"live2d/{self.name}.json")
-        elif os.path.exists("live2d/TB.json"):
-            self.sprite = PreRenderLive2D("live2d/TB.json")
-        else:
-            self.sprite = None
+        model_file = get_live2d_model_file(self.name)
+        self.sprite = PreRenderLive2D(model_file) if model_file is not None else None
         self.facing_left = False
 
         self.rect = get_rect(width=LAYER_SIZE, height=LAYER_SIZE, center=self.pos)

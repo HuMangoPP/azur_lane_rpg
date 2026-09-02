@@ -1,16 +1,19 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
     from engine.types import CoordinateType
 
 import json
 import math
 import os
+import time
 from copy import deepcopy
 import pygame
 
 LAYER_SIZE = 96
-PRE_RENDER_FPS = 30
+PRE_RENDER_FPS = 24
+PRE_RENDER_BUDGET_MS = 8
 PART_NAMES = [
     "bangs",
     "right_bangs",
@@ -43,6 +46,19 @@ KEYFRAMES_KEY = "keyframes"
 NO_LOOP_KEY = "no_loop"
 NEXT_ANIMATION_KEY = "next_animation"
 FACIAL_EXPRESSION_KEY = "facial_expression"
+
+
+def get_live2d_model_file(name: str) -> str | None:
+    """Resolve an entity name to its Live2D model, falling back to TB."""
+    model_name = name.split(":")[0]
+    model_file = os.path.join("live2d", f"{model_name}.json")
+    if os.path.exists(model_file):
+        return model_file
+
+    fallback_model_file = os.path.join("live2d", "TB.json")
+    if os.path.exists(fallback_model_file):
+        return fallback_model_file
+    return None
 
 
 def _animation_keyframes(animation: str) -> dict:
@@ -560,6 +576,13 @@ class PreRenderCache:
             terminal_frames,
         )
 
+    def create_pre_render_task(
+        self,
+        model_files: Iterable[str | None],
+    ) -> PreRenderTask:
+        """Create an incremental task for the supplied uncached models."""
+        return PreRenderTask(self, model_files)
+
 
 class PreRenderLive2D:
     """Live2D-compatible sprite backed by pre-rendered animation frames."""
@@ -584,15 +607,12 @@ class PreRenderLive2D:
     def __init__(self, model_file: str):
         cached_model = self.cache.get(model_file)
         if cached_model is None:
-            live2d = Live2D(model_file)
-            animation_frames, terminal_frames = self._pre_render(live2d)
-            self.cache.store(
-                model_file,
-                live2d,
-                animation_frames,
-                terminal_frames,
-            )
+            pre_render_task = self.cache.create_pre_render_task([model_file])
+            pre_render_task.finish()
             cached_model = self.cache.get(model_file)
+
+        if cached_model is None:
+            raise RuntimeError(f"Failed to pre-render Live2D model: {model_file}")
 
         self.live2d, self._animation_frames, self._terminal_frames = cached_model
         self.model_dict = self.live2d.model_dict
@@ -618,50 +638,6 @@ class PreRenderLive2D:
         )
         live2d.draw(frame, LAYER_SIZE, LAYER_SIZE, False)
         return frame
-
-    @classmethod
-    def _pre_render(
-        cls,
-        live2d: Live2D,
-    ) -> tuple[
-        dict[str, tuple[pygame.Surface, ...]],
-        dict[str, pygame.Surface],
-    ]:
-        """Pre-render every animation on a Live2D model at a fixed frame rate."""
-        animation_frames = {}
-        terminal_frames = {}
-
-        for animation_name, animation_data in live2d.animations.items():
-            keyframes = _animation_keyframes(animation_data)
-            if len(keyframes) <= 1:
-                duration = 0
-            else:
-                final_keyframe = max(int(index) for index in keyframes)
-                keyframe_duration = animation_data.get(
-                    KEYFRAME_DURATION_KEY,
-                    cls.KEYFRAME_DURATION,
-                )
-                duration = final_keyframe * keyframe_duration
-
-            # The terminal timestamp is excluded from playback because looping
-            # and chained animations transition as soon as they reach it.
-            frame_count = max(1, math.ceil(duration * PRE_RENDER_FPS - 1e-9))
-            frames = tuple(
-                cls._render_frame(
-                    live2d,
-                    animation_name,
-                    frame_index / PRE_RENDER_FPS,
-                )
-                for frame_index in range(frame_count)
-            )
-            animation_frames[animation_name] = frames
-            terminal_frames[animation_name] = (
-                frames[0]
-                if duration == 0
-                else cls._render_frame(live2d, animation_name, duration)
-            )
-
-        return animation_frames, terminal_frames
 
     def refresh_animations(self):
         """Pre-rendered animations remain fixed for the process lifetime."""
@@ -750,3 +726,146 @@ class PreRenderLive2D:
 
         sprite_rect = sprite.get_rect(center=(x, y))
         surface.blit(sprite, sprite_rect)
+
+
+class PreRenderTask:
+    """Cooperatively pre-render Live2D models within a per-update time budget."""
+
+    def __init__(
+        self,
+        cache: PreRenderCache,
+        model_files: Iterable[str | None],
+    ):
+        self.cache = cache
+
+        seen_cache_keys = set()
+        self.model_files = []
+        for model_file in model_files:
+            if model_file is None:
+                continue
+            cache_key = cache._cache_key(model_file)
+            if cache_key in seen_cache_keys or cache.get(model_file) is not None:
+                continue
+            seen_cache_keys.add(cache_key)
+            self.model_files.append(model_file)
+
+        self.total_models = len(self.model_files)
+        self.completed_models = 0
+        self.current_model_file: str | None = None
+        self.current_frame = 0
+        self.current_total_frames = 0
+        self.finished = self.total_models == 0
+        self._iterator = self._render_models()
+
+    @property
+    def progress(self) -> float:
+        """Get overall progress, including progress through the current model."""
+        if self.total_models == 0:
+            return 1.0
+        current_model_progress = (
+            self.current_frame / self.current_total_frames
+            if self.current_total_frames > 0
+            else 0
+        )
+        return min(
+            1.0,
+            (self.completed_models + current_model_progress) / self.total_models,
+        )
+
+    @staticmethod
+    def _animation_duration(animation_data: dict) -> float:
+        """Get the duration represented by an animation's final keyframe."""
+        keyframes = _animation_keyframes(animation_data)
+        if len(keyframes) <= 1:
+            return 0
+        final_keyframe = max(int(index) for index in keyframes)
+        keyframe_duration = animation_data.get(
+            KEYFRAME_DURATION_KEY,
+            PreRenderLive2D.KEYFRAME_DURATION,
+        )
+        return final_keyframe * keyframe_duration
+
+    def _render_models(self) -> Iterator[None]:
+        """Render queued models and yield after each animation frame."""
+        for model_file in self.model_files:
+            # A synchronous caller may have populated this model after this
+            # task was created.
+            if self.cache.get(model_file) is not None:
+                self.completed_models += 1
+                continue
+
+            self.current_model_file = model_file
+            live2d = Live2D(model_file)
+            animation_frames: dict[str, list[pygame.Surface]] = {
+                animation_name: []
+                for animation_name in live2d.animations
+            }
+            terminal_frames = {}
+            render_steps = []
+
+            for animation_name, animation_data in live2d.animations.items():
+                duration = self._animation_duration(animation_data)
+                # The terminal timestamp is excluded from playback because
+                # looping and chained animations transition upon reaching it.
+                frame_count = max(
+                    1,
+                    math.ceil(duration * PRE_RENDER_FPS - 1e-9),
+                )
+                render_steps.extend(
+                    (animation_name, frame_index / PRE_RENDER_FPS, False)
+                    for frame_index in range(frame_count)
+                )
+                if duration > 0:
+                    render_steps.append((animation_name, duration, True))
+
+            self.current_frame = 0
+            self.current_total_frames = len(render_steps)
+            for animation_name, animation_t, is_terminal in render_steps:
+                frame = PreRenderLive2D._render_frame(
+                    live2d,
+                    animation_name,
+                    animation_t,
+                )
+                if is_terminal:
+                    terminal_frames[animation_name] = frame
+                else:
+                    animation_frames[animation_name].append(frame)
+                self.current_frame += 1
+                yield
+
+            for animation_name, frames in animation_frames.items():
+                if animation_name not in terminal_frames:
+                    terminal_frames[animation_name] = frames[0]
+
+            self.cache.store(
+                model_file,
+                live2d,
+                {
+                    animation_name: tuple(frames)
+                    for animation_name, frames in animation_frames.items()
+                },
+                terminal_frames,
+            )
+            self.completed_models += 1
+
+    def update(self, budget_ms: float = PRE_RENDER_BUDGET_MS):
+        """Render until the budget expires, guaranteeing one work unit."""
+        if self.finished:
+            return
+
+        start_time = time.perf_counter()
+        while not self.finished:
+            try:
+                next(self._iterator)
+            except StopIteration:
+                self.finished = True
+                break
+
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            if elapsed_ms >= max(0, budget_ms):
+                break
+
+    def finish(self):
+        """Complete all remaining work synchronously."""
+        while not self.finished:
+            self.update(float("inf"))

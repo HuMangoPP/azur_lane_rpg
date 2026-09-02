@@ -26,6 +26,7 @@ from src.menus.quests_data import (
 )
 from src.shipgirls import Shipgirl, LAYER_SIZE
 from src.vfx import VFXManager
+from live2d.live2d import PreRenderLive2D, PreRenderTask, get_live2d_model_file
 
 
 class Cloud:
@@ -494,6 +495,7 @@ class EncounterMenu(Menu):
     TRANSITION_IDLE = "idle"
     TRANSITION_EXITING = "exiting"
     TRANSITION_WAVE_COVER = "wave_cover"
+    TRANSITION_PRE_RENDER = "pre_render"
     TRANSITION_WAVE_REVEAL = "wave_reveal"
     TRANSITION_ENTERING = "entering"
 
@@ -587,6 +589,7 @@ class EncounterMenu(Menu):
         self.transition_starts_sortie = False
         self.transition_to_port = False
         self.transition_port_callback: Callable = None
+        self.transition_pre_render_task: PreRenderTask | None = None
         self.opened_reward_report_timer: float = None
 
         def next_encounter():
@@ -883,6 +886,7 @@ class EncounterMenu(Menu):
         self.transition_port_callback = None
         self.transition_shipgirls = []
         self.transition_slot_positions = {}
+        self.transition_pre_render_task = None
         self._set_transition_state(self.TRANSITION_WAVE_COVER)
 
     def _start_port_transition(self, destination_callback: Callable):
@@ -898,6 +902,7 @@ class EncounterMenu(Menu):
         self.transition_port_callback = destination_callback
         self.transition_shipgirls = []
         self.transition_slot_positions = {}
+        self.transition_pre_render_task = None
         self._set_transition_state(self.TRANSITION_WAVE_COVER)
 
     def _start_encounter_transition(self):
@@ -924,8 +929,48 @@ class EncounterMenu(Menu):
         self.transition_starts_sortie = False
         self.transition_to_port = False
         self.transition_port_callback = None
+        self.transition_pre_render_task = None
         self._prepare_transition_shipgirls()
         self._set_transition_state(self.TRANSITION_EXITING)
+
+    def _get_transition_destination_model_files(self) -> list[str]:
+        """Get the Live2D models needed by the destination encounter."""
+        if self.transition_to_port:
+            return []
+
+        destination_encounter = (
+            self.current_encounter
+            if self.transition_starts_sortie
+            else self.current_encounter + 1
+        )
+        encounters = DataFiles.sortie_data[self.current_sortie]["encounters"]
+        if destination_encounter >= len(encounters):
+            return []
+
+        encounter_data = encounters[destination_encounter]
+        siren_names = encounter_data["front"] + encounter_data["back"]
+        return [
+            model_file
+            for siren_name in siren_names
+            if (model_file := get_live2d_model_file(siren_name)) is not None
+        ]
+
+    def _finish_transition_pre_render(self):
+        """Load and reveal a destination after its models are cached."""
+        self.transition_pre_render_task = None
+        self._load_transition_destination()
+        self._set_transition_state(self.TRANSITION_WAVE_REVEAL)
+
+    def _start_transition_pre_render(self):
+        """Begin incremental pre-rendering behind the fully covered wave."""
+        model_files = self._get_transition_destination_model_files()
+        self.transition_pre_render_task = (
+            PreRenderLive2D.cache.create_pre_render_task(model_files)
+        )
+        if self.transition_pre_render_task.finished:
+            self._finish_transition_pre_render()
+        else:
+            self._set_transition_state(self.TRANSITION_PRE_RENDER)
 
     def _load_transition_destination(self):
         """Load the transition destination.
@@ -963,6 +1008,7 @@ class EncounterMenu(Menu):
         self.transition_starts_sortie = False
         self.transition_to_port = False
         self.transition_port_callback = None
+        self.transition_pre_render_task = None
         self._set_transition_state(self.TRANSITION_IDLE)
 
     def _update_transition_shipgirl_animation(self, dt: float):
@@ -997,8 +1043,18 @@ class EncounterMenu(Menu):
         elif state == self.TRANSITION_WAVE_COVER:
             self.transition_timer += dt
             if self.transition_timer >= self.TRANSITION_WAVE_DURATION:
-                self._load_transition_destination()
-                self._set_transition_state(self.TRANSITION_WAVE_REVEAL)
+                self._start_transition_pre_render()
+
+        # Keep the destination covered while its Live2D models are rendered
+        # incrementally on the main thread.
+        elif state == self.TRANSITION_PRE_RENDER:
+            pre_render_task = self.transition_pre_render_task
+            if pre_render_task is None:
+                self._finish_transition_pre_render()
+            else:
+                pre_render_task.update()
+                if pre_render_task.finished:
+                    self._finish_transition_pre_render()
 
         # In this state, the same wave animation crashes down to reveal the screen.
         # If the player is returning to the port menu, this is the terminal transition state.
@@ -1075,6 +1131,7 @@ class EncounterMenu(Menu):
         self.transition_starts_sortie = False
         self.transition_to_port = False
         self.transition_port_callback = None
+        self.transition_pre_render_task = None
         self.opened_reward_report_timer = None
 
         self.open_reward_cache_button.active = False
@@ -1450,15 +1507,21 @@ class EncounterMenu(Menu):
         """
         if self.transition_state not in (
             self.TRANSITION_WAVE_COVER,
+            self.TRANSITION_PRE_RENDER,
             self.TRANSITION_WAVE_REVEAL,
         ):
             return
 
-        progress = min(
-            1.0,
-            self.transition_timer / self.TRANSITION_WAVE_DURATION,
+        pre_rendering = self.transition_state == self.TRANSITION_PRE_RENDER
+        progress = (
+            1.0
+            if pre_rendering
+            else min(1.0, self.transition_timer / self.TRANSITION_WAVE_DURATION)
         )
-        covering = self.transition_state == self.TRANSITION_WAVE_COVER
+        covering = self.transition_state in (
+            self.TRANSITION_WAVE_COVER,
+            self.TRANSITION_PRE_RENDER,
+        )
         staggers = (
             self.TRANSITION_WAVE_STAGGERS
             if covering

@@ -4,9 +4,11 @@ if TYPE_CHECKING:
     from engine.types import CoordinateType
 
 import asyncio
-import pygame
 import json
+import os
+import pygame
 
+pygame.mixer.pre_init(44100, -16, 2, 4096)
 pygame.init()
 SCREEN_SIZE = pygame.Vector2(1920, 1080)
 # SCREEN_SIZE = pygame.Vector2(960, 540)
@@ -17,6 +19,7 @@ pygame.mixer.init()
 from engine.font import Font
 
 from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles, Color
+from live2d.live2d import PreRenderLive2D, get_live2d_model_file
 from src.menus.menu_manager import MenuManager
 
 # Rendering will be done on this display, then scaled up to the window display.
@@ -53,14 +56,81 @@ with open("engine/fonts.json") as f:
         for font, charset in fonts.items()
     }
 
-menu_manager = MenuManager()
+async def _pre_render_startup_models() -> bool:
+    """Pre-render saved shipgirls while displaying a loading screen."""
+    model_files = (
+        get_live2d_model_file(shipgirl_name)
+        for shipgirl_name in DataFiles.save_file["shipgirls"]
+    )
+    pre_render_task = PreRenderLive2D.cache.create_pre_render_task(model_files)
+
+    while not pre_render_task.finished:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return False
+
+        pre_render_task.update()
+
+        display.fill(Color.BLACK)
+        center_x = TEMP_SCREEN_SIZE.x / 2
+        font_registry["big_pixel"].render(
+            display,
+            "loading live2d sprites",
+            (center_x, TEMP_SCREEN_SIZE.y * 0.4),
+            Color.WHITE,
+            scale=2,
+            style="center",
+        )
+
+        model_name = ""
+        if pre_render_task.current_model_file is not None:
+            model_name = os.path.splitext(
+                os.path.basename(pre_render_task.current_model_file)
+            )[0]
+        model_number = min(
+            pre_render_task.completed_models + 1,
+            pre_render_task.total_models,
+        )
+        loading_detail = (
+            f"model {model_number}/{pre_render_task.total_models}: {model_name}  "
+            f"frame {pre_render_task.current_frame}/{pre_render_task.current_total_frames}"
+        )
+        font_registry["big_pixel"].render(
+            display,
+            loading_detail,
+            (center_x, TEMP_SCREEN_SIZE.y * 0.52),
+            Color.WHITE,
+            scale=1,
+            style="center",
+        )
+
+        progress_bar = pygame.Rect(0, 0, TEMP_SCREEN_SIZE.x / 2, 12)
+        progress_bar.center = (center_x, TEMP_SCREEN_SIZE.y * 0.6)
+        pygame.draw.rect(display, Color.WHITE, progress_bar, width=2)
+        progress_fill = progress_bar.inflate(-6, -6)
+        progress_fill.width = round(progress_fill.width * pre_render_task.progress)
+        if progress_fill.width > 0:
+            pygame.draw.rect(display, Color.WHITE, progress_fill)
+
+        screen.blit(pygame.transform.scale(display, screen.get_size()))
+        pygame.display.flip()
+        await asyncio.sleep(0)
+
+    return True
 
 async def main():
+    if not await _pre_render_startup_models():
+        pygame.quit()
+        return None
+
+    menu_manager = MenuManager()
     DataFiles.bgm["lofi_loop"].play(loops=-1, fade_ms=10000)
     running = True
     while running:
-        clock.tick(FPS)
-        dt = clock.get_time() / 1000
+        dt = clock.tick(FPS) / 1000
         fps = int(clock.get_fps())
 
         events = []
@@ -119,16 +189,15 @@ async def main():
     DataFiles.bgm["lofi_loop"].stop()
     pygame.quit()
 
+    # TODO Make the exp saved directly to the save file, which prevents needing this block of code
+    # and also could potentially eliminate the need for the exp attribute in the battle component.
+    for shipgirl in menu_manager.available_shipgirls:
+        DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
+
+    # save_file = input("Save file? ")
+    # if save_file == "y":
+    with open("data/save_file.json", "w") as f:
+        json.dump(DataFiles.save_file, f, indent=4)
+
 
 asyncio.run(main())
-
-
-# TODO Make the exp saved directly to the save file, which prevents needing this block of code
-# and also could potentially eliminate the need for the exp attribute in the battle component.
-for shipgirl in menu_manager.available_shipgirls:
-    DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
-
-# save_file = input("Save file? ")
-# if save_file == "y":
-with open("data/save_file.json", "w") as f:
-    json.dump(DataFiles.save_file, f, indent=4)

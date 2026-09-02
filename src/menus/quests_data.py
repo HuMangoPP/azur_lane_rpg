@@ -279,6 +279,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types: list[str]):
             
             if (
                 menu_manager.port_menu.overlay_selected_entity in shipgirls
+                and menu_manager.port_menu.shipyard_sticky_note_button.active
                 and menu_manager.port_menu.shipyard_sticky_note_button.text in ["construct?", "research?"]
             ):
                 # Point towards the sticky note button if the correct shipgirl is selected.
@@ -289,7 +290,7 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types: list[str]):
 
             # The tutorial has been completed i.e. TB is not pointing to anything,
             # so draw TB pointing outside of the overlay to tell the player to exit.
-            if tutorial_done:
+            if tutorial_done and menu_manager.port_menu.shipgirl_construction_pre_render_task is None:
                 point = menu_manager.port_menu.dossier_bg.bottomright + pygame.Vector2(-32, 32)
                 draw_tb(surface, font_registry, "exit the shipyard", point, True, True)
 

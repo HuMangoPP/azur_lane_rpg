@@ -26,7 +26,12 @@ from src.constants import (
 )
 from src.shipgirls import Shipgirl, LAYER_SIZE
 from src.menus.base_menu import Menu
-from live2d.live2d import Live2D
+from live2d.live2d import (
+    Live2D,
+    PreRenderLive2D,
+    PreRenderTask,
+    get_live2d_model_file,
+)
 from src.menus.quests_data import assign_quest, backup_fleet_quest
 
 
@@ -367,6 +372,8 @@ class PortMenu(Menu):
 
         # Overlay logic.
         self.overlay_selected_entity = None
+        self.shipgirl_construction_pre_render_task: PreRenderTask | None = None
+        self.constructing_shipgirl_name: str | None = None
 
         def confirm_shipyard_sticky_note():
             """Sticky note action button for the shipyard.
@@ -381,21 +388,24 @@ class PortMenu(Menu):
             specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
             if self._can_construct_selected_shipgirl():
                 DataFiles.sfx["knock"].play()
-                shipgirl_exp = specialized_wisdom_cubes[self.overlay_selected_entity]
-                DataFiles.save_file["shipgirls"][self.overlay_selected_entity] = {
+                shipgirl_name = self.overlay_selected_entity
+                shipgirl_exp = specialized_wisdom_cubes[shipgirl_name]
+                DataFiles.save_file["shipgirls"][shipgirl_name] = {
                     "equipment": [None, None, None],
                     "exp": shipgirl_exp
                 }
-                shipgirl = Shipgirl(self.overlay_selected_entity, True)
-                self.menu_manager.available_shipgirls.append(shipgirl)
-                if len(DataFiles.save_file["shipgirls"]) >= 4:
-                    assign_quest(self.menu_manager, backup_fleet_quest)
                 for ingredient, req in self._get_selected_shipyard_reqs().items():
                     inventory[ingredient] -= req
-                specialized_wisdom_cubes.pop(self.overlay_selected_entity)
-                if DataFiles.save_file["research_target"] == self.overlay_selected_entity:
+                specialized_wisdom_cubes.pop(shipgirl_name)
+                if DataFiles.save_file["research_target"] == shipgirl_name:
                     DataFiles.save_file["research_target"] = None
-                self.overlay_selected_entity = None
+                self.constructing_shipgirl_name = shipgirl_name
+                model_file = get_live2d_model_file(shipgirl_name)
+                self.shipgirl_construction_pre_render_task = (
+                    PreRenderLive2D.cache.create_pre_render_task([model_file])
+                )
+                if self.shipgirl_construction_pre_render_task.finished:
+                    self._finish_shipgirl_construction()
             elif self._can_start_selected_shipgirl_research():
                 DataFiles.sfx["frequency"].play()
                 inventory["wisdom_cube"] -= 1
@@ -532,6 +542,7 @@ class PortMenu(Menu):
         self.removed_bed_decoration = False
         self.shipgirl_interacted_with_bed = False
         self._refresh_occupied_decoration_tiles()
+
         # Floor and background camera controls.
         self.camera_dragging = False
 
@@ -719,6 +730,22 @@ class PortMenu(Menu):
             f"{hull_type}_blueprint": 1,
             unique_item: 1
         }
+
+    def _finish_shipgirl_construction(self):
+        """Create a constructed shipgirl after its Live2D model is cached."""
+        shipgirl_name = self.constructing_shipgirl_name
+        if shipgirl_name is None:
+            return
+
+        shipgirl = Shipgirl(shipgirl_name, True)
+        self.menu_manager.available_shipgirls.append(shipgirl)
+        if len(DataFiles.save_file["shipgirls"]) >= 4:
+            assign_quest(self.menu_manager, backup_fleet_quest)
+
+        self.constructing_shipgirl_name = None
+        self.shipgirl_construction_pre_render_task = None
+        self.overlay_selected_entity = None
+        self._refresh_overlay_action_buttons()
 
     def _can_construct_selected_shipgirl(self) -> bool:
         """Check if the player can construct the selected shipgirl."""
@@ -1366,6 +1393,17 @@ class PortMenu(Menu):
         """Update the port menu."""
         self.menu_manager.quest_manager.update(dt)
 
+        for shipgirl in self.menu_manager.available_shipgirls:
+            if shipgirl not in [self.hovered_shipgirl, self.dragged_shipgirl]:
+                shipgirl.update(dt)
+            shipgirl.animate(dt)
+
+        if self.shipgirl_construction_pre_render_task is not None:
+            self.shipgirl_construction_pre_render_task.update()
+            if self.shipgirl_construction_pre_render_task.finished:
+                self._finish_shipgirl_construction()
+            return
+
         # Update encounter menu transition.
         encounter_menu = self.menu_manager.encounter_menu
         # TODO should the transition logic be pulled out instead of encounter menu-owned?
@@ -1409,6 +1447,8 @@ class PortMenu(Menu):
                     action_button = self._get_current_overlay_action_button()
                     if action_button is not None:
                         action_button.click(event.pos)
+                    if self.shipgirl_construction_pre_render_task is not None:
+                        return
 
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             # Forklift animation.
@@ -1432,11 +1472,6 @@ class PortMenu(Menu):
                 if self.forklift_x <= 0:
                     self.forklift_x = 0
                     self.forklift_pause = 1
-
-        for shipgirl in self.menu_manager.available_shipgirls:
-            if shipgirl not in [self.hovered_shipgirl, self.dragged_shipgirl]:
-                shipgirl.update(dt)
-            shipgirl.animate(dt)
 
     def _draw_overlay_page_buttons(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the pagination controls for the current overlay."""
