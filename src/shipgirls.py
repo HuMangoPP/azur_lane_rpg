@@ -909,7 +909,7 @@ class Shipgirl:
             self.sprite = None
         self.facing_left = False
 
-        self.rect = get_rect(width=LAYER_SIZE, height=LAYER_SIZE, centerx=self.pos.x, centery=self.pos.y)
+        self.rect = get_rect(width=LAYER_SIZE, height=LAYER_SIZE, center=self.pos)
 
         self.battle_component = ShipgirlBattleComponent(name, is_player)
 
@@ -919,9 +919,27 @@ class Shipgirl:
     @staticmethod
     def _get_random_floor_pos() -> pygame.Vector2:
         """Get a random position on the port floor."""
-        iso_x = random.uniform(0, Decorations.FLOOR_TILES_WIDE)
-        iso_y = random.uniform(0, Decorations.FLOOR_TILES_TALL)
+        iso_x = random.uniform(-1, Decorations.FLOOR_TILES_WIDE - 1)
+        iso_y = random.uniform(-1, Decorations.FLOOR_TILES_TALL - 1)
         return pygame.Vector2(Decorations.get_isometric_floor_pos((iso_x, iso_y)))
+
+    def clamp_to_floor_bounds(self):
+        """Push the shipgirl's position inside the port wandering bounds."""
+        rel_x = self.pos.x - Decorations.floor_rect.left - Decorations.floor_rect.width / 2
+        rel_y = self.pos.y - Decorations.floor_rect.top
+        iso_x = (
+            rel_y / Decorations.ISO_HALF_TILE_HEIGHT
+            + rel_x / Decorations.ISO_HALF_TILE_WIDTH
+        ) / 2 - 1
+        iso_y = (
+            rel_y / Decorations.ISO_HALF_TILE_HEIGHT
+            - rel_x / Decorations.ISO_HALF_TILE_WIDTH
+        ) / 2 - 1
+        iso_x = max(-1, min(iso_x, Decorations.FLOOR_TILES_WIDE - 1))
+        iso_y = max(-1, min(iso_y, Decorations.FLOOR_TILES_TALL - 1))
+        self.pos = Decorations.get_isometric_floor_pos((iso_x, iso_y))
+        self.rect.centerx = self.pos.x
+        self.rect.bottom = self.pos.y + self.rect.height / 8
 
     def pick_new_wander_target(self):
         """Pick a new wander target and pause time."""
@@ -955,7 +973,8 @@ class Shipgirl:
                     self.facing_left = True
             
             self.sprite.set_animation(Live2D.WALK_ANIMATION)
-        self.rect.center = self.pos
+        self.rect.centerx = self.pos.x
+        self.rect.bottom = self.pos.y + self.rect.height / 8
 
     def animate(self, dt: float):
         """Animate the sprite."""

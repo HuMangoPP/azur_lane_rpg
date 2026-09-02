@@ -326,7 +326,7 @@ first_sortie_quest_line = "Complete a sortie in sector 1."
 first_sortie_post_quest_dialogue = [
     "Sortie complete.",
     "Sector 1 is secure, and the recovered resources have been transferred to the port.",
-    "Further sorties will expand our operational range and provide materials for fleet development.",
+    "Securing additional sectors will expand our operational range, while their material allotments can support fleet development.",
     "Additional port assignments are now available.",
 ]
 
@@ -590,7 +590,7 @@ intel_center_quest = Quest(
 )
 
 research_shipgirl_pre_quest_dialogue = [
-    "A larger fleet will be required as operations extend into more dangerous territory.",
+    "Operational projections call for a larger fleet as deployments extend into more dangerous territory.",
     "Each shipgirl has a unique item that is required for construction.",
     "To obtain one, begin a research project and collect combat data during sorties.",
     "Once sufficient data has been collected, the project will synthesize the unique item.",
@@ -600,7 +600,7 @@ research_shipgirl_pre_quest_dialogue = [
 research_shipgirl_quest_line = "Begin researching {CA_shipgirl} in the shipyard."
 research_shipgirl_post_quest_dialogue = [
     "Research project started.",
-    "Future sorties will now contribute combat data to {CA_shipgirl}'s research project.",
+    "Combat data collected during subsequent sorties will be applied to {CA_shipgirl}'s research project.",
     "Continue into the newly unlocked sector to gather the required data.",
 ]
 
@@ -1189,8 +1189,8 @@ def _owned_equipment(equipment: str) -> int:
     )
 
 construct_additional_shipgirls_pre_quest_dialogue = [
-    "Operations in the next maritime region will require a more versatile fleet.",
-    "Upcoming sorties will provide the materials needed to initiate three additional research projects.",
+    "Operational plans for the next maritime region call for a more versatile fleet.",
+    "The material allotments listed for its sectors can support three additional research projects.",
     "Each project will also require combat data before its unique construction item can be synthesized.",
     "As resources become available, research and construct {CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}.",
 ]
@@ -1229,9 +1229,9 @@ construct_additional_shipgirls_quest = Quest(
 )
 
 construct_additional_weapons_pre_quest_dialogue = [
-    "Sorties in the next maritime region will provide blueprints and materials for additional weapon classes.",
+    "The sector allotments listed for the next maritime region include blueprints and materials for additional weapon classes.",
     "The gear lab can produce new weapons for {BB_shipgirl}, {CA_shipgirl}, {CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}.",
-    "Construct one weapon for each of these five hull types as the required materials are recovered.",
+    "As new sectors are secured, use their allotments to construct one weapon for each of these five hull types.",
 ]
 construct_additional_weapons_quest_line = (
     "Construct weapons for {BB_shipgirl}, {CA_shipgirl}, {CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}."
@@ -1272,16 +1272,16 @@ construct_additional_weapons_quest = Quest(
 construct_auxiliary_equipment_pre_quest_dialogue = [
     "Operations in the next maritime region are expected to place greater demands on every fleet role.",
     "Auxiliary equipment can improve attributes such as durability, evasion, firepower, and reload speed.",
-    "Materials recovered throughout the operation will be sufficient to produce every auxiliary equipment design.",
+    "The material allotments listed for its sectors can support production of every auxiliary equipment design.",
     "Construct one of each auxiliary equipment item in the gear lab.",
 ]
 construct_auxiliary_equipment_quest_line = (
     "Construct one of every auxiliary equipment item in the gear lab."
 )
 construct_auxiliary_equipment_post_quest_dialogue = [
-    "Auxiliary equipment production complete.",
+    "Initial auxiliary equipment production complete.",
     "All current auxiliary designs are now available for fleet loadouts.",
-    "Distribute them according to the attributes required by each shipgirl.",
+    "Continue production as more materials are recovered so the entire fleet can be outfitted.",
 ]
 
 def construct_auxiliary_equipment_completion_criteria(menu_manager: MenuManager) -> bool:
@@ -1289,13 +1289,13 @@ def construct_auxiliary_equipment_completion_criteria(menu_manager: MenuManager)
         equipment for equipment, equipment_data in DataFiles.equipment_data.items()
         if equipment_data["type"] == Equipment.AUX_KEY
     ]
-    return all(_owned_equipment(equipment) >= 2 for equipment in auxiliary_equipment)
+    return all(_owned_equipment(equipment) >= 1 for equipment in auxiliary_equipment)
 
 def construct_auxiliary_equipment_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
 
 def construct_auxiliary_equipment_on_complete(menu_manager: MenuManager):
-    pass
+    assign_quest(menu_manager, construct_three_auxiliary_equipment_quest)
 
 construct_auxiliary_equipment_quest = Quest(
     "construct_auxiliary_equipment",
@@ -1309,9 +1309,49 @@ construct_auxiliary_equipment_quest = Quest(
     decoration_voucher_reward
 )
 
+construct_three_auxiliary_equipment_pre_quest_dialogue = [
+    "The initial auxiliary equipment run produced one of every available design.",
+    "Each shipgirl can carry two auxiliary items.",
+    "As new sectors are secured, commit their material allotments to auxiliary equipment production.",
+    "Construct three copies of each auxiliary equipment item and distribute them throughout the fleet.",
+]
+construct_three_auxiliary_equipment_quest_line = (
+    "Construct three copies of every auxiliary equipment item in the gear lab."
+)
+construct_three_auxiliary_equipment_post_quest_dialogue = [
+    "Fleet-wide auxiliary equipment production complete.",
+    "Three copies of every current auxiliary design are now available.",
+    "Distribute all twelve items according to the attributes required by each shipgirl before the final sortie.",
+]
+
+def construct_three_auxiliary_equipment_completion_criteria(menu_manager: MenuManager) -> bool:
+    auxiliary_equipment = [
+        equipment for equipment, equipment_data in DataFiles.equipment_data.items()
+        if equipment_data["type"] == Equipment.AUX_KEY
+    ]
+    return all(_owned_equipment(equipment) >= 3 for equipment in auxiliary_equipment)
+
+def construct_three_auxiliary_equipment_on_start(menu_manager: MenuManager):
+    menu_manager.port_menu.open_gear_lab_overlay_button.active = True
+
+def construct_three_auxiliary_equipment_on_complete(menu_manager: MenuManager):
+    pass
+
+construct_three_auxiliary_equipment_quest = Quest(
+    "construct_three_auxiliary_equipment",
+    construct_three_auxiliary_equipment_pre_quest_dialogue,
+    construct_three_auxiliary_equipment_quest_line,
+    construct_three_auxiliary_equipment_post_quest_dialogue,
+    construct_three_auxiliary_equipment_completion_criteria,
+    empty_tutorial_draw,
+    construct_three_auxiliary_equipment_on_start,
+    construct_three_auxiliary_equipment_on_complete,
+    decoration_voucher_reward
+)
+
 complete_final_sortie_pre_quest_dialogue = [
     "The final accessible sector has been unlocked.",
-    "Siren resistance in this area exceeds all previously recorded encounters.",
+    "Operational intelligence indicates Siren resistance beyond that of all previously recorded encounters.",
     "Review fleet composition and equipment before deployment.",
     "Complete the final sortie and secure the remaining operational area.",
 ]
@@ -1361,5 +1401,6 @@ quests = [
     construct_additional_shipgirls_quest,
     construct_additional_weapons_quest,
     construct_auxiliary_equipment_quest,
+    construct_three_auxiliary_equipment_quest,
     complete_final_sortie_quest,
 ]

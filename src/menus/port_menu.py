@@ -13,10 +13,80 @@ import pygame
 from engine.util import get_rect, draw_dashed_rect
 from engine.button import RectangularButton, AnnularSectorButton
 
-from src.constants import DataFiles, Color, Box, Equipment, Stats, screen_x, screen_y, Decorations
+from src.constants import (
+    TEMP_SCREEN_SIZE,
+    DataFiles,
+    Color,
+    Box,
+    Equipment,
+    Stats,
+    screen_x,
+    screen_y,
+    Decorations,
+)
 from src.shipgirls import Shipgirl, LAYER_SIZE
 from src.menus.base_menu import Menu
 from live2d.live2d import Live2D
+
+
+class PortWallpaper:
+    """A subdued, home-themed backdrop for the port diorama."""
+
+    BACKGROUND_COLOR = (25, 43, 61)
+    STRIPE_COLOR = (29, 48, 67)
+    ANCHOR_COLOR = (40, 63, 82)
+
+    STRIPE_SPACING = 256
+    STRIPE_WIDTH = 128
+    ANCHOR_SPACING = (256, 192)
+    ANCHOR_SCALE = 2
+
+    def __init__(self):
+        self.surface = pygame.Surface(
+            (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
+        )
+        self.surface.fill(self.BACKGROUND_COLOR)
+
+        # Start above the left edge so the diagonal pattern covers both corners.
+        # Each stripe slopes down and to the right at 45 degrees.
+        stripe_run = self.surface.get_height()
+        for x in range(
+            -stripe_run,
+            self.surface.get_width() + stripe_run,
+            self.STRIPE_SPACING,
+        ):
+            pygame.draw.line(
+                self.surface,
+                self.STRIPE_COLOR,
+                (x, 0),
+                (x - stripe_run, self.surface.get_height()),
+                width=self.STRIPE_WIDTH,
+            )
+
+        anchor = pygame.transform.scale_by(
+            DataFiles.recolor_sprite("user_interface", "start_sortie", self.ANCHOR_COLOR),
+            self.ANCHOR_SCALE
+        )
+
+        spacing_x, spacing_y = self.ANCHOR_SPACING
+        anchor_rows = range(
+            -spacing_y // 2,
+            self.surface.get_height(),
+            spacing_y,
+        )
+        for row, y in enumerate(anchor_rows):
+            row_offset = spacing_x // 2 if row % 2 else 0
+            anchor_columns = range(
+                -spacing_x + row_offset,
+                self.surface.get_width(),
+                spacing_x,
+            )
+            for x in anchor_columns:
+                self.surface.blit(anchor, (x, y))
+
+    def draw(self, surface: pygame.Surface):
+        """Draw the cached wallpaper across the complete logical display."""
+        surface.blit(self.surface, (0, 0))
 
 
 class PortMenu(Menu):
@@ -45,6 +115,7 @@ class PortMenu(Menu):
 
     def __init__(self, menu_manager: MenuManager):
         self.menu_manager = menu_manager
+        self.background = PortWallpaper()
 
         # Choose faction buttons.
         factions = ["USS", "HMS", "IJN", "KMS"]
@@ -450,8 +521,8 @@ class PortMenu(Menu):
         self.placed_bed_decoration = False
         self.removed_bed_decoration = False
         self.shipgirl_interacted_with_bed = False
+        self._refresh_occupied_decoration_tiles()
         # Floor and background camera controls.
-        Decorations.floor_rect.center = (screen_x(0.5), screen_y(0.5))
         self.camera_dragging = False
 
         # Equipment menu entrypoint
@@ -543,7 +614,7 @@ class PortMenu(Menu):
             Decorations.floor_rect.left = min(0, max(Decorations.floor_rect.left, screen_width - Decorations.floor_rect.width))
 
         if Decorations.floor_rect.height <= screen_height:
-            Decorations.floor_rect.centery = screen_y(0.5)
+            Decorations.floor_rect.centery = screen_y(0.55)
         else:
             Decorations.floor_rect.top = min(0, max(Decorations.floor_rect.top, screen_height - Decorations.floor_rect.height))
 
@@ -616,6 +687,15 @@ class PortMenu(Menu):
             self.selected_decoration_in_depot = selected_entity
             self.deleting_decoration = False
         return selected_entity
+
+    def _refresh_occupied_decoration_tiles(self):
+        """Cache the tiles occupied by all currently placed decorations."""
+        self.occupied_decoration_tiles = set()
+        for decoration_data in DataFiles.save_file["decorations"]:
+            decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
+            self.occupied_decoration_tiles.update(
+                Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor)
+            )
 
     def _get_selected_shipyard_reqs(self) -> dict[str, int]:
         """Get the construction requirements for the selected shipgirl."""
@@ -1147,8 +1227,6 @@ class PortMenu(Menu):
                         self.dragged_shipgirl = shipgirl
                         shipgirl.sprite.set_animation(Live2D.DRAG_ANIMATION)
                         shipgirl.interacting_decoration = None
-                        shipgirl.pos = pygame.Vector2(event.pos)
-                        shipgirl.rect.center = shipgirl.pos
                         break
 
                 if self.dragged_shipgirl is not None:
@@ -1202,6 +1280,7 @@ class PortMenu(Menu):
                 if self.dragged_shipgirl is not None:
                     if not self._snap_shipgirl_to_interactable_decoration(self.dragged_shipgirl):
                         self.dragged_shipgirl.interacting_decoration = None
+                        self.dragged_shipgirl.clamp_to_floor_bounds()
                         self.dragged_shipgirl.pick_new_wander_target()
 
                     self.dragged_shipgirl = None
@@ -1245,6 +1324,7 @@ class PortMenu(Menu):
                                     shipgirl.pick_new_wander_target()
 
                             DataFiles.save_file["decorations"].pop(decoration_index)
+                            self._refresh_occupied_decoration_tiles()
                             DataFiles.save_file["decoration_depot"][decoration] = (
                                 DataFiles.save_file["decoration_depot"].get(decoration, 0) + 1
                             )
@@ -1262,20 +1342,12 @@ class PortMenu(Menu):
                     # Check if the location that the player wishes to place the decoration
                     # will not cause the decoration to overlap other decorations that already
                     # exist in the space.
-                    # TODO Cache this calculation so that it is not performed every frame.
-                    # The occupied tiles only updates when the player places down or removes
-                    # a decoration.
-                    # Write a function that performs this calculation and saves it to an attribute, then
-                    # call that function only when the above actions occur.
-                    occupied_tiles = set()
-                    for decoration_data in DataFiles.save_file["decorations"]:
-                        decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
-                        occupied_tiles.update(Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor))
-                    if place_tiles.intersection(occupied_tiles):
+                    if place_tiles.intersection(self.occupied_decoration_tiles):
                         continue
                     # Place the decoration.
                     DataFiles.sfx["click"].play()
                     DataFiles.save_file["decorations"].append((decoration, clicked_tilepos, self.decoration_flipped))
+                    self._refresh_occupied_decoration_tiles()
                     DataFiles.save_file["decoration_depot"][decoration] -= 1
                     if decoration == "bed":
                         self.placed_bed_decoration = True
@@ -2223,21 +2295,19 @@ class PortMenu(Menu):
         content_left = self.clipboard_page.left + Box.PADDING
         content_width = self.clipboard_page.width - 2 * Box.PADDING
         content_top = self.clipboard_page.top + Box.HEIGHT / 4 + Box.PADDING
-        # TODO Update the rendering so that different text on the form has different colors (i.e. muted colors)
-        # rather than everything being pure black.
         # Header.
         font.render(
             surface,
             "warehouse stock record",
             (content_left, content_top),
-            Color.BLACK,
+            Color.CLIPBOARD_INK_MUTED,
             scale=1,
             style="topleft"
         )
         header_rule_y = content_top + font.font_height + Box.PADDING
         pygame.draw.line(
             surface,
-            Color.BLACK,
+            Color.CLIPBOARD_RULE,
             (content_left, header_rule_y),
             (content_left + content_width, header_rule_y),
             width=Box.OUTLINE_WIDTH
@@ -2278,10 +2348,10 @@ class PortMenu(Menu):
         )
 
         surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), icon_rect)
-        pygame.draw.rect(surface, Color.BLACK, identity_rect, width=Box.OUTLINE_WIDTH)
+        pygame.draw.rect(surface, Color.CLIPBOARD_RULE, identity_rect, width=Box.OUTLINE_WIDTH)
         pygame.draw.line(
             surface,
-            Color.BLACK,
+            Color.CLIPBOARD_RULE,
             icon_rect.topright,
             icon_rect.bottomright,
             width=Box.OUTLINE_WIDTH
@@ -2292,13 +2362,13 @@ class PortMenu(Menu):
             surface,
             "qty",
             (quantity_rect.centerx, (quantity_rect.top + quantity_header_rule_y) / 2),
-            Color.BLACK,
+            Color.CLIPBOARD_INK_MUTED,
             scale=1,
             style="center"
         )
         pygame.draw.line(
             surface,
-            Color.BLACK,
+            Color.CLIPBOARD_RULE,
             (quantity_rect.left, quantity_header_rule_y),
             (quantity_rect.right, quantity_header_rule_y),
             width=Box.OUTLINE_WIDTH
@@ -2316,7 +2386,7 @@ class PortMenu(Menu):
             surface,
             "in stock",
             (quantity_rect.centerx, quantity_rect.bottom - Box.PADDING - font.font_height / 2),
-            Color.BLACK,
+            Color.CLIPBOARD_INK_MUTED,
             scale=1,
             style="center"
         )
@@ -2327,14 +2397,14 @@ class PortMenu(Menu):
             surface,
             "description",
             (content_left, description_label_top),
-            Color.BLACK,
+            Color.CLIPBOARD_INK_MUTED,
             scale=1,
             style="topleft"
         )
         description_top = description_label_top + font.font_height + Box.PADDING
         description_bottom = self.clipboard_page.bottom - Box.PADDING
         line_spacing = font.font_height + font.padding
-        ruled_line_color = (210, 210, 200)
+        ruled_line_color = Color.CLIPBOARD_RULE
         for line_y in range(
             round(description_top + font.font_height + 2),
             round(description_bottom),
@@ -2367,21 +2437,19 @@ class PortMenu(Menu):
         content_left = self.clipboard_page.left + Box.PADDING
         content_width = self.clipboard_page.width - 2 * Box.PADDING
         content_top = self.clipboard_page.top + Box.HEIGHT / 4 + Box.PADDING
-        # TODO Update the rendering so that different text on the form has different colors (i.e. muted colors)
-        # rather than everything being pure black.
         # Header.
         font.render(
             surface,
             "decoration purchase form",
             (content_left, content_top),
-            Color.BLACK,
+            Color.CLIPBOARD_INK_MUTED,
             scale=1,
             style="topleft"
         )
         header_rule_y = content_top + font.font_height + Box.PADDING
         pygame.draw.line(
             surface,
-            Color.BLACK,
+            Color.CLIPBOARD_RULE,
             (content_left, header_rule_y),
             (content_left + content_width, header_rule_y),
             width=Box.OUTLINE_WIDTH
@@ -2429,11 +2497,11 @@ class PortMenu(Menu):
         )
 
         surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), icon_rect)
-        pygame.draw.rect(surface, Color.BLACK, product_rect, width=Box.OUTLINE_WIDTH)
+        pygame.draw.rect(surface, Color.CLIPBOARD_RULE, product_rect, width=Box.OUTLINE_WIDTH)
         for divider_x in [icon_rect.right, quantity_rect.right]:
             pygame.draw.line(
                 surface,
-                Color.BLACK,
+                Color.CLIPBOARD_RULE,
                 (divider_x, product_rect.top),
                 (divider_x, product_rect.bottom),
                 width=Box.OUTLINE_WIDTH
@@ -2455,13 +2523,13 @@ class PortMenu(Menu):
                 surface,
                 label,
                 (field_rect.centerx, (field_rect.top + field_header_rule_y) / 2),
-                Color.BLACK,
+                Color.CLIPBOARD_INK_MUTED,
                 scale=1,
                 style="center"
             )
             pygame.draw.line(
                 surface,
-                Color.BLACK,
+                Color.CLIPBOARD_RULE,
                 (field_rect.left, field_header_rule_y),
                 (field_rect.right, field_header_rule_y),
                 width=Box.OUTLINE_WIDTH
@@ -2478,7 +2546,7 @@ class PortMenu(Menu):
                 surface,
                 footer,
                 (field_rect.centerx, field_rect.bottom - Box.PADDING - font.font_height / 2),
-                Color.BLACK,
+                Color.CLIPBOARD_INK_MUTED,
                 scale=1,
                 style="center"
             )
@@ -2489,14 +2557,14 @@ class PortMenu(Menu):
             surface,
             "description",
             (content_left, description_label_top),
-            Color.BLACK,
+            Color.CLIPBOARD_INK_MUTED,
             scale=1,
             style="topleft"
         )
         description_rule_y = description_label_top + font.font_height + Box.PADDING
         pygame.draw.line(
             surface,
-            Color.BLACK,
+            Color.CLIPBOARD_RULE,
             (content_left, description_rule_y),
             (content_left + content_width, description_rule_y),
             width=Box.OUTLINE_WIDTH
@@ -2523,19 +2591,17 @@ class PortMenu(Menu):
             surface,
             "purchase approval",
             approval_label_pos,
-            Color.BLACK,
+            Color.CLIPBOARD_INK_MUTED,
             scale=1,
             style="topleft"
         )
 
-        has_funds = (
-            DataFiles.save_file["inventory"].get("decoration_coin", 0)
-            >= self.DECORATION_PRICE
-        )
-        stamp_box_color = (
-            (Color.RED if self.decoration_signature_button.hovered else Color.BLACK)
-            if has_funds else Color.CLIPBOARD_CLIP
-        )
+        if not self.decoration_signature_button.active:
+            stamp_box_color = Color.CLIPBOARD_RULE
+        elif self.decoration_signature_button.hovered:
+            stamp_box_color = Color.CLIPBOARD_APPROVAL_INK_HOVER
+        else:
+            stamp_box_color = Color.CLIPBOARD_APPROVAL_INK
         draw_dashed_rect(
             surface,
             stamp_box_color,
@@ -2688,14 +2754,6 @@ class PortMenu(Menu):
         # it overlaps an existing decoration, then render a red outline on the footprint to indicate
         # this.
         if self.selected_decoration_in_depot:
-            # TODO Instead of computing this every frame, write a function to compute the value and save it
-            # to a variable, and only recompute this value when the player places down or removes
-            # a decoration, as the occupied tiles only change in these circumstances.
-            occupied_tiles = set()
-            for decoration_data in DataFiles.save_file["decorations"]:
-                decoration, tilepos_anchor, flipped = Decorations.unpack_decoration_data(decoration_data)
-                occupied_tiles.update(Decorations.get_decoration_tiles(decoration, flipped, tilepos_anchor))
-
             decoration = self.selected_decoration_in_depot
             mpos = pygame.mouse.get_pos()
             hovered_tilepos = Decorations.get_isometric_tilepos(mpos)
@@ -2703,7 +2761,7 @@ class PortMenu(Menu):
             sprite = Decorations.get_decoration_sprite(decoration, self.decoration_flipped)
             sprite_rect = Decorations.get_decoration_sprite_rect(decoration, self.decoration_flipped, hovered_tilepos)
             surface.blit(sprite, sprite_rect)
-            if not place_tiles.intersection(occupied_tiles) and Decorations.in_tileable_area(place_tiles):
+            if not place_tiles.intersection(self.occupied_decoration_tiles) and Decorations.in_tileable_area(place_tiles):
                 outline_color = Color.WHITE
             else:
                 outline_color = Color.RED
@@ -2875,6 +2933,7 @@ class PortMenu(Menu):
 
     def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the port menu."""
+        self.background.draw(surface)
         surface.blit(Decorations.wallpaper_surf, Decorations.get_wallpaper_rect())
         surface.blit(Decorations.floor_surf, Decorations.floor_rect)
 

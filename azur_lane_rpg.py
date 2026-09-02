@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
         menu_manager.current_menu.update(dt, events)
 
-        # TODO Update the background so it is not a flat value.
+        # Clear the previous frame. Each menu can draw its own background over this.
         display.fill(Color.BLACK)
         menu_manager.current_menu.draw(display, font_registry)
         if not menu_manager.encounter_menu.transition_active:

@@ -126,6 +126,10 @@ class Color:
 
     CLIPBOARD_CLIP = (150, 150, 150)
     CLIPBOARD_CLIP_FRONT = (175, 175, 175)
+    CLIPBOARD_INK_MUTED = (110, 110, 105)
+    CLIPBOARD_RULE = (190, 190, 180)
+    CLIPBOARD_APPROVAL_INK = (38, 112, 72)
+    CLIPBOARD_APPROVAL_INK_HOVER = (42, 154, 88)
 
     HOLOGRAM_GLOW = (51, 55, 128)
     SIREN_HOLOGRAM_GLOW = (128, 55, 51)
@@ -202,7 +206,7 @@ class Stats:
         return None
 
 
-# TODO Consider whether this serves to be split.
+# TODO Consider whether this serves to be split up into multiple objects.
 class DataFiles:
     with open("data/save_file.json") as f:
         save_file = json.load(f)
@@ -461,6 +465,69 @@ pygame.draw.circle(lightbulb_light, (54, 39, 10), (32, 32), 32)
 DataFiles.sprites["equipment_menu"]["lightbulb_light"] = lightbulb_light
 
 
+def create_port_wallpaper_sprite(sprite_key: str, palette: dict[str, ColorType]):
+    """Create one rectangular wall source before it is skewed isometrically."""
+    wallpaper_size = DataFiles.sprites["decorations"][sprite_key].get_size()
+    wallpaper = pygame.Surface(wallpaper_size)
+    wallpaper.fill(palette["background"])
+
+    pinstripe_spacing = 16
+    pinstripe_width = 2
+    for x in range(0, wallpaper.get_width(), pinstripe_spacing):
+        pygame.draw.rect(
+            wallpaper,
+            palette["stripe"],
+            (x, 0, pinstripe_width, wallpaper.get_height()),
+        )
+
+    anchor = pygame.transform.scale_by(
+        DataFiles.recolor_sprite(
+            "user_interface",
+            "start_sortie",
+            palette["anchor"],
+        ),
+        0.5,
+    )
+    baseboard_height = 24
+    wallpaper_height = wallpaper.get_height() - baseboard_height
+    anchor_spacing_x = 96
+    anchor_spacing_y = 56
+    for row, y in enumerate(
+        range(8, wallpaper_height - anchor.get_height() + 1, anchor_spacing_y)
+    ):
+        row_offset = anchor_spacing_x // 2 if row % 2 else 0
+        for x in range(32 + row_offset, wallpaper.get_width(), anchor_spacing_x):
+            wallpaper.blit(anchor, (x, y))
+
+    pygame.draw.rect(
+        wallpaper,
+        palette["baseboard"],
+        (0, wallpaper_height, wallpaper.get_width(), baseboard_height),
+    )
+    return wallpaper
+
+
+port_wallpaper_palettes = {
+    "wallpaper_left": {
+        "background": (175, 196, 204),
+        "stripe": (155, 179, 190),
+        "anchor": (120, 148, 161),
+        "baseboard": (64, 92, 107),
+    },
+    "wallpaper_right": {
+        "background": (145, 170, 181),
+        "stripe": (128, 154, 166),
+        "anchor": (104, 127, 139),
+        "baseboard": (53, 77, 89),
+    },
+}
+for wallpaper_key, wallpaper_palette in port_wallpaper_palettes.items():
+    DataFiles.sprites["decorations"][wallpaper_key] = create_port_wallpaper_sprite(
+        wallpaper_key,
+        wallpaper_palette,
+    )
+
+
 # TODO Consider whether the isometric utilities for this class are useful as engine-level
 # utilities.
 class Decorations:
@@ -519,7 +586,7 @@ class Decorations:
         """Get the tilepos the shipgirl is standing on."""
         return cls.get_isometric_tilepos((
             shipgirl.rect.centerx,
-            shipgirl.rect.bottom - shipgirl.SPRITE_SIZE / 8
+            shipgirl.rect.bottom - shipgirl.rect.height / 8
         ))
 
     @classmethod
@@ -754,7 +821,7 @@ class Decorations:
                 cls.floor_surf.blit(tile, (x,y))
         
         cls.floor_rect = cls.floor_surf.get_rect()
-        cls.floor_rect.center = (screen_x(0.5), screen_y(0.5))
+        cls.floor_rect.center = (screen_x(0.5), screen_y(0.55))
 
 
 Decorations.create_floor_surf()
