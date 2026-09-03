@@ -65,6 +65,17 @@ class EquipmentMenu(Menu):
         ]
         self.selected_slot = Equipment.WEAPON
 
+        # Lazily populated blueprint layers. The selection glow remains live so
+        # its pulse and activation animation are not frozen into the cache.
+        self._blueprint_static_surface: pygame.Surface | None = None
+        self._blueprint_composite_surface: pygame.Surface | None = None
+        self._blueprint_foreground_surface: pygame.Surface | None = None
+        self._blueprint_static_bounds: pygame.Rect | None = None
+        self._blueprint_cache_bounds: pygame.Rect | None = None
+        self._blueprint_foreground_bounds: pygame.Rect | None = None
+        self._blueprint_static_key: tuple | None = None
+        self._blueprint_render_key: tuple | None = None
+
         # Warehouse-themed equipment depot component.
         num_equipment_per_row = 7
         num_equipment_rows = 2
@@ -178,6 +189,17 @@ class EquipmentMenu(Menu):
             )
             for stat in self.DOSSIER_STAT_LABELS
         }
+
+        # Lazily populated once the draw surface and font registry are available.
+        # The static surface contains the dossier paper and fixed document content;
+        # the composed surface contains the final dossier for the current UI state.
+        self._dossier_static_surface: pygame.Surface | None = None
+        self._dossier_composite_surface: pygame.Surface | None = None
+        self._dossier_static_bounds: pygame.Rect | None = None
+        self._dossier_cache_bounds: pygame.Rect | None = None
+        self._dossier_static_key: tuple | None = None
+        self._dossier_render_key: tuple | None = None
+        self._dossier_prop_sprites: dict[str, pygame.Surface] = {}
 
         # Exit menu button.
         def exit_equipment_menu():
@@ -589,7 +611,7 @@ class EquipmentMenu(Menu):
             )
 
     def _draw_blueprint_slots(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """"Draw the blueprint slots, with inset equipment if applicable."""
+        """Draw the cacheable blueprint slot content and inactive borders."""
         equipment_slots = self.selected_shipgirl.battle_component.equipment
         for slot, (equipment, rect) in enumerate(zip(equipment_slots, self.equipped_rects)):
             slot_color = (
@@ -624,9 +646,7 @@ class EquipmentMenu(Menu):
                 surface.blit(equipment_sprite, equipment_sprite.get_rect(center=rect.center))
 
             # Slot border.
-            if self.selected_slot == slot:
-                self._draw_blueprint_slot_selection(surface, rect)
-            else:
+            if self.selected_slot != slot:
                 draw_dashed_rect(
                     surface,
                     Color.BLUEPRINT_INK_MUTED,
@@ -636,8 +656,8 @@ class EquipmentMenu(Menu):
                     width=Box.OUTLINE_WIDTH,
                 )
 
-    def _draw_blueprint(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the full blueprint component."""
+    def _draw_blueprint_static_backdrop(self, surface: pygame.Surface):
+        """Draw blueprint content which is invariant across menu frames."""
         self._draw_blueprint_page(surface)
 
         # Draw the warship side and top schematic sprites.
@@ -653,10 +673,8 @@ class EquipmentMenu(Menu):
         top_schematic_rect.centery = self.equipped_rects[Equipment.AUX1].centery
         surface.blit(top_schematic, top_schematic_rect)
 
-        self._draw_blueprint_identity(surface, font_registry)
-        self._draw_blueprint_slots(surface, font_registry)
-
-        # Draw the blueprint props.
+    def _draw_blueprint_foreground(self, surface: pygame.Surface):
+        """Draw the fixed props which appear above the animated selection."""
         page_bottom = self.blueprint_page.bottom + Box.HEIGHT / 2
 
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
@@ -676,16 +694,78 @@ class EquipmentMenu(Menu):
         compass_rect.bottom = page_bottom
         surface.blit(compass_sprite, compass_rect)
 
-    def _draw_dossier_header(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the dossier page header section."""
-        pixel_font = font_registry["pixel"]
-        title_font = font_registry["big_pixel"]
-        shipgirl_data = DataFiles.shipgirl_data[self.selected_shipgirl.name]
-        faction = shipgirl_data["faction"]
-        hull_type = shipgirl_data["hull_type"]
-        display_name = self.selected_shipgirl.name.replace("_", " ")
-        file_name = self.selected_shipgirl.name.replace("_", "-")
+    def _get_blueprint_static_key(self, surface: pygame.Surface) -> tuple:
+        """Return inputs which determine the blueprint's fixed render layers."""
+        return (surface.get_size(),)
 
+    def _get_blueprint_render_key(self, font_registry: dict[str, Font]) -> tuple:
+        """Return the inexpensive inputs which determine cached blueprint state."""
+        return (
+            self.selected_shipgirl.name,
+            tuple(self.selected_shipgirl.battle_component.equipment),
+            self.selected_slot,
+            id(font_registry["pixel"]),
+            id(font_registry["big_pixel"]),
+        )
+
+    def _ensure_blueprint_static_cache(self, surface: pygame.Surface):
+        """Build or refresh the blueprint's frame-invariant layers."""
+        static_key = self._get_blueprint_static_key(surface)
+        if static_key == self._blueprint_static_key:
+            return
+
+        self._blueprint_static_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        self._blueprint_composite_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        self._blueprint_foreground_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        self._draw_blueprint_static_backdrop(self._blueprint_static_surface)
+        self._draw_blueprint_foreground(self._blueprint_foreground_surface)
+
+        self._blueprint_static_bounds = self._blueprint_static_surface.get_bounding_rect(min_alpha=1)
+        self._blueprint_foreground_bounds = self._blueprint_foreground_surface.get_bounding_rect(min_alpha=1)
+        self._blueprint_cache_bounds = None
+        self._blueprint_static_key = static_key
+        self._blueprint_render_key = None
+
+    def _rebuild_blueprint_cache(self, font_registry: dict[str, Font], render_key: tuple):
+        """Compose shipgirl and equipment state over the static blueprint."""
+        if self._blueprint_cache_bounds is not None:
+            self._blueprint_composite_surface.fill((0, 0, 0, 0), self._blueprint_cache_bounds)
+        self._blueprint_composite_surface.blit(
+            self._blueprint_static_surface,
+            self._blueprint_static_bounds,
+            self._blueprint_static_bounds,
+        )
+        self._draw_blueprint_identity(self._blueprint_composite_surface, font_registry)
+        self._draw_blueprint_slots(self._blueprint_composite_surface, font_registry)
+
+        self._blueprint_cache_bounds = self._blueprint_composite_surface.get_bounding_rect(min_alpha=1)
+        self._blueprint_render_key = render_key
+
+    def _draw_blueprint(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the cached blueprint with its live selection animation."""
+        self._ensure_blueprint_static_cache(surface)
+        render_key = self._get_blueprint_render_key(font_registry)
+        if render_key != self._blueprint_render_key:
+            self._rebuild_blueprint_cache(font_registry, render_key)
+
+        surface.blit(
+            self._blueprint_composite_surface,
+            self._blueprint_cache_bounds,
+            self._blueprint_cache_bounds,
+        )
+        self._draw_blueprint_slot_selection(
+            surface,
+            self.equipped_rects[self.selected_slot],
+        )
+        surface.blit(
+            self._blueprint_foreground_surface,
+            self._blueprint_foreground_bounds,
+            self._blueprint_foreground_bounds,
+        )
+
+    def _draw_dossier_header_static(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the parts of the dossier header shared by every shipgirl."""
+        pixel_font = font_registry["pixel"]
         pixel_font.render(
             surface,
             "azur lane naval command",
@@ -702,6 +782,16 @@ class EquipmentMenu(Menu):
             Color.DOSSIER_INK,
             scale=1,
         )
+
+    def _draw_dossier_header(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the shipgirl-specific dossier header content."""
+        pixel_font = font_registry["pixel"]
+        title_font = font_registry["big_pixel"]
+        shipgirl_data = DataFiles.shipgirl_data[self.selected_shipgirl.name]
+        faction = shipgirl_data["faction"]
+        hull_type = shipgirl_data["hull_type"]
+        display_name = self.selected_shipgirl.name.replace("_", " ")
+        file_name = self.selected_shipgirl.name.replace("_", "-")
 
         text_y_padding = 3
         name_scale = 2
@@ -765,8 +855,8 @@ class EquipmentMenu(Menu):
             (rect.right, rect.top + horizontal_rule_down_shift),
         )
 
-    def _draw_dossier_progress(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the progress section of the dossier page, which includes the exp."""
+    def _draw_dossier_progress_static(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the fixed labels and geometry in the dossier progress section."""
         self._draw_dossier_section_header(
             surface,
             font_registry,
@@ -774,6 +864,24 @@ class EquipmentMenu(Menu):
             self.dossier_progress,
         )
 
+        medal_icon = DataFiles.sprites["user_interface"]["medal"]
+        medal_rect = medal_icon.get_rect(
+            left=self.dossier_progress.left,
+            top=self.dossier_progress.top + 14,
+        )
+        surface.blit(medal_icon, medal_rect)
+
+        font_registry["pixel"].render(
+            surface,
+            "service level",
+            (medal_rect.right + Box.PADDING, medal_rect.top),
+            Color.DOSSIER_RULE,
+            scale=1,
+        )
+        pygame.draw.rect(surface, Color.DOSSIER_RULE, self.exp_bar_bg)
+
+    def _draw_dossier_progress(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the state-dependent level and EXP progress."""
         exp = self.selected_shipgirl.battle_component.exp
         level_index = Stats.level(exp)
         level = level_index + 1
@@ -786,16 +894,8 @@ class EquipmentMenu(Menu):
             left=self.dossier_progress.left,
             top=self.dossier_progress.top + 14,
         )
-        surface.blit(medal_icon, medal_rect)
 
         pixel_font = font_registry["pixel"]
-        pixel_font.render(
-            surface,
-            "service level",
-            (medal_rect.right + Box.PADDING, medal_rect.top),
-            Color.DOSSIER_RULE,
-            scale=1,
-        )
         font_registry["big_pixel"].render(
             surface,
             f"{level:02d}",
@@ -812,7 +912,6 @@ class EquipmentMenu(Menu):
             style="center"
         )
 
-        pygame.draw.rect(surface, Color.DOSSIER_RULE, self.exp_bar_bg)
         exp_bar = get_rect(
             width=round(level_progress * self.exp_bar_bg.width),
             height=self.exp_bar_bg.height,
@@ -820,6 +919,9 @@ class EquipmentMenu(Menu):
             top=self.exp_bar_bg.top,
         )
         pygame.draw.rect(surface, Color.DOSSIER_INK, exp_bar)
+
+    def _draw_dossier_progress_foreground(self, surface: pygame.Surface):
+        """Draw EXP bar marks which must appear above the progress fill."""
         for tick in (0.25, 0.5, 0.75):
             tick_x = self.exp_bar_bg.left + round(self.exp_bar_bg.width * tick)
             pygame.draw.line(
@@ -830,8 +932,8 @@ class EquipmentMenu(Menu):
             )
         pygame.draw.rect(surface, Color.DOSSIER_INK, self.exp_bar_bg, width=1)
 
-    def _draw_dossier_capabilities(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the capabilities section of the dossier, which includes the stats and stat deltas."""
+    def _draw_dossier_capabilities_static(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw fixed labels and icons in the dossier capabilities section."""
         self._draw_dossier_section_header(
             surface,
             font_registry,
@@ -839,23 +941,36 @@ class EquipmentMenu(Menu):
             self.dossier_capabilities,
         )
 
+        pixel_font = font_registry["pixel"]
         for stat, row_rect in self.stat_row_rects.items():
             icon_rect = self.stat_rects[stat]
             stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.DOSSIER_INK)
             surface.blit(stat_icon, icon_rect)
+            pixel_font.render(
+                surface,
+                self.DOSSIER_STAT_LABELS[stat],
+                (icon_rect.right + Box.PADDING, row_rect.top + 6),
+                Color.DOSSIER_RULE,
+                scale=1,
+            )
 
+        horizontal_rule_up_shift = 1
+        pygame.draw.line(
+            surface,
+            Color.DOSSIER_RULE,
+            (row_rect.left, row_rect.bottom - horizontal_rule_up_shift),
+            (row_rect.right, row_rect.bottom - horizontal_rule_up_shift),
+        )
+
+    def _draw_dossier_capabilities(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the state-dependent stat values and equipment deltas."""
+        for stat, row_rect in self.stat_row_rects.items():
+            icon_rect = self.stat_rects[stat]
             pixel_font = font_registry["pixel"]
             big_pixel_font = font_registry["big_pixel"]
             value = str(self.selected_shipgirl.battle_component.stat(stat))
             value_left = icon_rect.right + Box.PADDING
             stat_label_y = row_rect.top + 6
-            pixel_font.render(
-                surface,
-                self.DOSSIER_STAT_LABELS[stat],
-                (value_left, stat_label_y),
-                Color.DOSSIER_RULE,
-                scale=1,
-            )
             text_y_padding = 3
             value_font_scale = 1
             value_text_y = stat_label_y + pixel_font.font_height + text_y_padding
@@ -889,17 +1004,9 @@ class EquipmentMenu(Menu):
                     scale=1,
                     style="centerleft",
                 )
-        horizontal_rule_up_shift = 1
-        pygame.draw.line(
-            surface,
-            Color.DOSSIER_RULE,
-            (row_rect.left, row_rect.bottom - horizontal_rule_up_shift),
-            (row_rect.right, row_rect.bottom - horizontal_rule_up_shift),
-        )
 
-    def _draw_dossier(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the full dossier page component."""
-        # Draw the dossier page.
+    def _draw_dossier_static_backdrop(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw dossier content which is invariant across menu frames."""
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
         pygame.draw.polygon(surface, Color.DOSSIER, self.dossier_tab)
 
@@ -916,29 +1023,125 @@ class EquipmentMenu(Menu):
             )
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
 
-        self._draw_dossier_header(surface, font_registry)
-        self._draw_dossier_progress(surface, font_registry)
-        self._draw_dossier_capabilities(surface, font_registry)
+        self._draw_dossier_header_static(surface, font_registry)
+        self._draw_dossier_progress_static(surface, font_registry)
+        self._draw_dossier_capabilities_static(surface, font_registry)
 
-        # Draw the dossier watermark props.
+    def _prepare_dossier_props(self):
+        """Prepare transformed and translucent dossier props once per static cache."""
         classified_sprite = DataFiles.sprites["props"]["classified"].copy()
         classified_sprite.set_alpha(80)
-        classified_rect = classified_sprite.get_rect(topright=self.dossier_bg.topright)
-        surface.blit(classified_sprite, classified_rect)
-
         coffee_ring_sprite = DataFiles.sprites["props"]["coffee_ring"].copy()
         coffee_ring_sprite.set_alpha(144)
-        coffee_ring_rect = coffee_ring_sprite.get_rect(bottomleft=self.dossier_bg.bottomleft)
-        surface.blit(coffee_ring_sprite, coffee_ring_rect)
-
-        # Draw the other props.
-        paperclip_sprite = pygame.transform.rotate(DataFiles.sprites["props"]["paperclip"], angle=-90)
-        paperclip_up_shift = 4
-        paperclip_rect = paperclip_sprite.get_rect(
-            right=self.dossier_bg.right,
-            top=self.dossier_bg.top - paperclip_up_shift,
+        paperclip_sprite = pygame.transform.rotate(
+            DataFiles.sprites["props"]["paperclip"],
+            angle=-90,
         )
-        surface.blit(paperclip_sprite, paperclip_rect)
+        self._dossier_prop_sprites = {
+            "classified": classified_sprite,
+            "coffee_ring": coffee_ring_sprite,
+            "paperclip": paperclip_sprite,
+        }
+
+    def _get_dossier_prop_rects(self) -> dict[str, pygame.Rect]:
+        """Return the fixed destination rectangles for the prepared props."""
+        classified_rect = self._dossier_prop_sprites["classified"].get_rect(
+            topright=self.dossier_bg.topright,
+        )
+        coffee_ring_rect = self._dossier_prop_sprites["coffee_ring"].get_rect(
+            bottomleft=self.dossier_bg.bottomleft,
+        )
+        paperclip_rect = self._dossier_prop_sprites["paperclip"].get_rect(
+            right=self.dossier_bg.right,
+            top=self.dossier_bg.top - 4,
+        )
+        return {
+            "classified": classified_rect,
+            "coffee_ring": coffee_ring_rect,
+            "paperclip": paperclip_rect,
+        }
+
+    def _draw_dossier_foreground(self, surface: pygame.Surface):
+        """Draw fixed details which must remain above state-dependent content."""
+        self._draw_dossier_progress_foreground(surface)
+        for prop_name, prop_rect in self._get_dossier_prop_rects().items():
+            surface.blit(self._dossier_prop_sprites[prop_name], prop_rect)
+
+    def _get_dossier_static_key(
+        self,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+    ) -> tuple:
+        """Return inputs which determine the static cache's rendering environment."""
+        return (
+            surface.get_size(),
+            id(font_registry["pixel"]),
+            id(font_registry["big_pixel"]),
+        )
+
+    def _get_dossier_render_key(self) -> tuple:
+        """Return the inexpensive inputs which determine visible dossier state."""
+        battle_component = self.selected_shipgirl.battle_component
+        return (
+            self.selected_shipgirl.name,
+            battle_component.exp,
+            tuple(battle_component.equipment),
+            self.selected_slot,
+            self.hovered_equipment,
+        )
+
+    def _ensure_dossier_static_cache(
+        self,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+    ):
+        """Build or refresh static dossier resources for the render environment."""
+        static_key = self._get_dossier_static_key(surface, font_registry)
+        if static_key == self._dossier_static_key:
+            return
+
+        self._dossier_static_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        self._dossier_composite_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        self._prepare_dossier_props()
+        self._draw_dossier_static_backdrop(self._dossier_static_surface, font_registry)
+
+        static_bounds = self._dossier_static_surface.get_bounding_rect(min_alpha=1)
+        for prop_rect in self._get_dossier_prop_rects().values():
+            static_bounds.union_ip(prop_rect)
+        self._dossier_static_bounds = static_bounds.clip(self._dossier_static_surface.get_rect())
+        self._dossier_cache_bounds = None
+        self._dossier_static_key = static_key
+        self._dossier_render_key = None
+
+    def _rebuild_dossier_cache(self, font_registry: dict[str, Font], render_key: tuple):
+        """Compose the dossier for the current state onto the persistent cache."""
+        if self._dossier_cache_bounds is not None:
+            self._dossier_composite_surface.fill((0, 0, 0, 0), self._dossier_cache_bounds)
+        self._dossier_composite_surface.blit(
+            self._dossier_static_surface,
+            self._dossier_static_bounds,
+            self._dossier_static_bounds,
+        )
+        self._draw_dossier_header(self._dossier_composite_surface, font_registry)
+        self._draw_dossier_progress(self._dossier_composite_surface, font_registry)
+        self._draw_dossier_capabilities(self._dossier_composite_surface, font_registry)
+        self._draw_dossier_foreground(self._dossier_composite_surface)
+
+        self._dossier_cache_bounds = self._dossier_composite_surface.get_bounding_rect(min_alpha=1)
+        self._dossier_render_key = render_key
+
+    def _draw_dossier(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the cached dossier, rebuilding it only when visible state changes."""
+        self._ensure_dossier_static_cache(surface, font_registry)
+        render_key = self._get_dossier_render_key()
+        if render_key != self._dossier_render_key:
+            self._rebuild_dossier_cache(font_registry, render_key)
+
+        surface.blit(
+            self._dossier_composite_surface,
+            self._dossier_cache_bounds,
+            self._dossier_cache_bounds,
+        )
 
     def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         floor_color = (71, 71, 71)

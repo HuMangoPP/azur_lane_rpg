@@ -16,6 +16,7 @@ screen = pygame.display.set_mode(SCREEN_SIZE)
 
 pygame.mixer.init()
 
+from engine.profiler import profile, print_execution_times
 from engine.font import Font
 
 from src.constants import TEMP_SCREEN_SIZE, FPS, DataFiles, Color
@@ -166,7 +167,8 @@ async def main():
 
         # Clear the previous frame. Each menu can draw its own background over this.
         display.fill(Color.BLACK)
-        menu_manager.current_menu.draw(display, font_registry)
+        with profile(f"draw {menu_manager.current_menu.__class__}"):
+            menu_manager.current_menu.draw(display, font_registry)
         if not menu_manager.encounter_menu.transition_active:
             for quest in menu_manager.quest_manager.started_quests.values():
                 if quest.started and not quest.completed:
@@ -201,3 +203,5 @@ async def main():
 
 
 asyncio.run(main())
+
+print_execution_times()
