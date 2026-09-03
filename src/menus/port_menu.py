@@ -292,14 +292,18 @@ class PortMenu(Menu):
                 top=dossier_icon_grid_top + (i // num_items_in_row) * (Box.HEIGHT + Box.PADDING),
             ) for i in range(num_items_in_row * num_items_in_col)
         ]
+        self._pre_render_dossier_layers()
 
         # Blueprint-themed right panel.
+        self._blueprint_content_cache_key: tuple[str, ...] | None = None
         self.blueprint_page = get_rect(
             width=5 * Box.WIDTH + 2 * Box.PADDING,
             height=7.5 * Box.HEIGHT + 2 * Box.PADDING,
             left=self.dossier_overlay.right + Box.PADDING,
             centery=screen_y(0.5),
         )
+        self._pre_render_blueprint_page()
+        self._pre_render_blueprint_tools()
         # Sticky-note confirm surface attached to the blueprint's top-right corner.
         self.sticky_note_page = get_rect(
             width=2 * Box.WIDTH + 2 * Box.PADDING,
@@ -325,6 +329,7 @@ class PortMenu(Menu):
                 top=self.warehouse_overlay.top + Box.PADDING + (i // num_items_in_row) * (Box.HEIGHT + Box.PADDING)
             ) for i in range(num_items_in_row * num_items_in_col)
         ]
+        self._pre_render_warehouse_prop_layers()
         self.warehouse_selected_item = None
         # Manjuu forklift animation at the bottom of the panel.
         self.forklift_x = 0
@@ -369,6 +374,13 @@ class PortMenu(Menu):
             centerx=self.clipboard_bg.centerx,
             bottom=self.clipboard_bg.bottom - Box.PADDING
         )
+        self._pre_render_clipboard_background()
+        self._depot_stock_record_static_surface: pygame.Surface | None = None
+        self._depot_stock_record_static_bounds: pygame.Rect | None = None
+        self._depot_stock_record_static_key: tuple | None = None
+        self._decoration_purchase_form_static_surface: pygame.Surface | None = None
+        self._decoration_purchase_form_static_bounds: pygame.Rect | None = None
+        self._decoration_purchase_form_static_key: tuple | None = None
 
         # Overlay logic.
         self.overlay_selected_entity = None
@@ -1646,6 +1658,55 @@ class PortMenu(Menu):
                 style="center",
             )
 
+    def _pre_render_dossier_layers(self):
+        """Pre-render the static dossier page stack, sticky tabs, and props."""
+        layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
+        self._dossier_page_stack_layer = pygame.Surface(layer_size, pygame.SRCALPHA)
+        self._dossier_props_layer = pygame.Surface(layer_size, pygame.SRCALPHA)
+
+        misaligned_pages = [
+            (-5, pygame.Vector2(-8, 6), (224, 218, 201)),
+            (4, pygame.Vector2(6, -4), (235, 229, 212)),
+            (-2, pygame.Vector2(3, 5), (244, 239, 224)),
+        ]
+        for rotated_angle, offset, color in misaligned_pages:
+            pygame.draw.polygon(
+                self._dossier_page_stack_layer,
+                color,
+                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
+            )
+        # Sticky tab props on the left-edge of the dossier.
+        sticky_tabs = [
+            (-7, 78, "yellow"),
+            (-5, 159, "green"),
+            (-12, 203, "pink"),
+        ]
+        for sticky_tab_offsetx, sticky_tab_offsety, sticky_tab_color in sticky_tabs:
+            sticky_tab_sprite = DataFiles.sprites["props"][f"sticky_tab_{sticky_tab_color}"]
+            sticky_tab_rect = sticky_tab_sprite.get_rect()
+            sticky_tab_rect.centerx = self.dossier_page.left + sticky_tab_offsetx
+            sticky_tab_rect.centery = self.dossier_page.top + sticky_tab_offsety
+            self._dossier_page_stack_layer.blit(sticky_tab_sprite, sticky_tab_rect)
+
+        paperclip_sprite = DataFiles.sprites["props"]["diagonal_paperclip"]
+        paperclip_rect = paperclip_sprite.get_rect()
+        paperclip_rect.left = self.dossier_bg.left - 16
+        paperclip_rect.top = self.dossier_bg.top - 8
+        self._dossier_props_layer.blit(paperclip_sprite, paperclip_rect)
+
+        classified_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["classified"], 1.5)
+        classified_rect = classified_sprite.get_rect()
+        classified_rect.topright = self.dossier_bg.topright
+        self._dossier_props_layer.blit(classified_sprite, classified_rect)
+
+        coffee_ring_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["coffee_ring"], 1.5)
+        coffee_ring_rect = coffee_ring_sprite.get_rect()
+        coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
+        self._dossier_props_layer.blit(coffee_ring_sprite, coffee_ring_rect)
+
+        self._dossier_page_stack_bounds = self._dossier_page_stack_layer.get_bounding_rect(min_alpha=1)
+        self._dossier_props_bounds = self._dossier_props_layer.get_bounding_rect(min_alpha=1)
+
     def _draw_dossier_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the dossier overlay."""
         # Draw the dossier tabs.
@@ -1670,29 +1731,11 @@ class PortMenu(Menu):
             icon_rect.centery = rect.top + rect.height / 2
             surface.blit(icon, icon_rect)
 
-        misaligned_pages = [
-            (-5, pygame.Vector2(-8, 6), (224, 218, 201)),
-            (4, pygame.Vector2(6, -4), (235, 229, 212)),
-            (-2, pygame.Vector2(3, 5), (244, 239, 224)),
-        ]
-        for rotated_angle, offset, color in misaligned_pages:
-            pygame.draw.polygon(
-                surface,
-                color,
-                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
-            )
-        # Sticky tab props on the left-edge of the dossier.
-        sticky_tabs = [
-            (-7, 78, "yellow"),
-            (-5, 159, "green"),
-            (-12, 203, "pink"),
-        ]
-        for sticky_tab_offsetx, sticky_tab_offsety, sticky_tab_color in sticky_tabs:
-            sticky_tab_sprite = DataFiles.sprites["props"][f"sticky_tab_{sticky_tab_color}"]
-            sticky_tab_rect = sticky_tab_sprite.get_rect()
-            sticky_tab_rect.centerx = self.dossier_page.left + sticky_tab_offsetx
-            sticky_tab_rect.centery = self.dossier_page.top + sticky_tab_offsety
-            surface.blit(sticky_tab_sprite, sticky_tab_rect)
+        surface.blit(
+            self._dossier_page_stack_layer,
+            self._dossier_page_stack_bounds,
+            self._dossier_page_stack_bounds,
+        )
 
         entities = self._get_visible_overlay_entities()
         self._refresh_overlay_page_buttons()
@@ -1716,25 +1759,12 @@ class PortMenu(Menu):
             pygame.draw.rect(surface, Color.DOSSIER_INK, rect, width=Box.OUTLINE_WIDTH)
         surface.blit(red_circle_sprite, red_circle_rect)
 
-        # Props
-        paperclip_sprite = DataFiles.sprites["props"]["diagonal_paperclip"]
-        paperclip_rect = paperclip_sprite.get_rect()
-        paperclip_rect.left = self.dossier_bg.left - 16
-        paperclip_rect.top = self.dossier_bg.top - 8
-        surface.blit(paperclip_sprite, paperclip_rect)
+        surface.blit(
+            self._dossier_props_layer,
+            self._dossier_props_bounds,
+            self._dossier_props_bounds,
+        )
         self._draw_dossier_prev_page_fold(surface)
-
-        classified_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["classified"], 1.5)
-        classified_rect = classified_sprite.get_rect()
-        classified_rect.topright = self.dossier_bg.topright
-        surface.blit(classified_sprite, classified_rect)
-
-        coffee_ring_sprite = pygame.transform.scale_by(DataFiles.sprites["props"]["coffee_ring"], 1.5)
-        coffee_ring_rect = coffee_ring_sprite.get_rect()
-        coffee_ring_rect.bottomleft = self.dossier_bg.bottomleft
-        surface.blit(coffee_ring_sprite, coffee_ring_rect)
-
-        self._draw_overlay_page_buttons(surface, font_registry)
 
     def _draw_sticky_note_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the sticky note action button."""
@@ -1890,8 +1920,10 @@ class PortMenu(Menu):
             pygame.draw.line(surface, color, corner, corner + pygame.Vector2(dx * length, 0))
             pygame.draw.line(surface, color, corner, corner + pygame.Vector2(0, dy * length))
 
-    def _draw_blueprint_page(self, surface: pygame.Surface):
-        """Draw the blueprint page background."""
+    def _pre_render_blueprint_page(self):
+        """Pre-render the blueprint page background."""
+        layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
+        self._blueprint_page_surface = pygame.Surface(layer_size, pygame.SRCALPHA)
         misaligned_pages = [
             (-5, pygame.Vector2(-7, 6), Color.BLUEPRINT_PAGE_BACK),
             (4, pygame.Vector2(7, -4), (34, 62, 125)),
@@ -1899,11 +1931,11 @@ class PortMenu(Menu):
         ]
         for rotated_angle, offset, color in misaligned_pages:
             pygame.draw.polygon(
-                surface,
+                self._blueprint_page_surface,
                 color,
                 Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset),
             )
-        pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
+        pygame.draw.rect(self._blueprint_page_surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
 
         # Grid lines
         grid_step = 2 * Box.PADDING
@@ -1914,18 +1946,34 @@ class PortMenu(Menu):
             grid_step
         ), 1):
             color = Color.BLUEPRINT_GRID_MAJOR if index % major_grid_every == 0 else Color.BLUEPRINT_GRID_MINOR
-            pygame.draw.line(surface, color, (x, self.blueprint_page.top), (x, self.blueprint_page.bottom))
+            pygame.draw.line(
+                self._blueprint_page_surface,
+                color,
+                (x, self.blueprint_page.top),
+                (x, self.blueprint_page.bottom),
+            )
         for index, y in enumerate(range(
             self.blueprint_page.top + grid_step + Box.PADDING,
             self.blueprint_page.bottom - Box.PADDING,
             grid_step), 1
         ):
             color = Color.BLUEPRINT_GRID_MAJOR if index % major_grid_every == 0 else Color.BLUEPRINT_GRID_MINOR
-            pygame.draw.line(surface, color, (self.blueprint_page.left, y), (self.blueprint_page.right, y))
+            pygame.draw.line(
+                self._blueprint_page_surface,
+                color,
+                (self.blueprint_page.left, y),
+                (self.blueprint_page.right, y),
+            )
 
         # Inset border.
         inset_rect = self.blueprint_page.inflate(-2 * Box.PADDING, -2 * Box.PADDING)
-        pygame.draw.rect(surface, Color.BLUEPRINT_GRID_MAJOR, inset_rect, width=Box.OUTLINE_WIDTH)
+        pygame.draw.rect(
+            self._blueprint_page_surface,
+            Color.BLUEPRINT_GRID_MAJOR,
+            inset_rect,
+            width=Box.OUTLINE_WIDTH,
+        )
+        self._blueprint_page_bounds = self._blueprint_page_surface.get_bounding_rect(min_alpha=1)
 
     def _draw_blueprint_title_and_profile(self, surface: pygame.Surface, font_registry: dict[str, Font], document: dict):
         """Draw helper to render the header and profile icon for the blueprint overlay."""
@@ -2144,12 +2192,11 @@ class PortMenu(Menu):
                     style="center",
                 )
 
-    def _draw_blueprint_tools(self, surface: pygame.Surface):
-        """Render the props around the blueprint."""
-        # Props are not drawn for intel center, since they are not present.
-        if self.current_overlay == self.INTEL_CENTER:
-            return
-        
+    def _pre_render_blueprint_tools(self):
+        """Pre-render the props around the blueprint."""
+        layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
+        self._blueprint_tools_layer = pygame.Surface(layer_size, pygame.SRCALPHA)
+
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
         pencil_rect.right = self.blueprint_page.right + Box.WIDTH / 4
@@ -2158,34 +2205,45 @@ class PortMenu(Menu):
         ruler_sprite = DataFiles.sprites["props"]["ruler"]
         ruler_rect = ruler_sprite.get_rect()
         ruler_rect.center = pencil_rect.midleft
-        surface.blit(ruler_sprite, ruler_rect)
-        surface.blit(pencil_sprite, pencil_rect)
+        self._blueprint_tools_layer.blit(ruler_sprite, ruler_rect)
+        self._blueprint_tools_layer.blit(pencil_sprite, pencil_rect)
 
         compass_sprite = DataFiles.sprites["props"]["compass"]
         compass_rect = compass_sprite.get_rect()
         compass_rect.left = self.blueprint_page.left - Box.WIDTH / 4
         compass_rect.bottom = self.blueprint_page.bottom + Box.HEIGHT / 2
-        surface.blit(compass_sprite, compass_rect)
+        self._blueprint_tools_layer.blit(compass_sprite, compass_rect)
+        self._blueprint_tools_bounds = self._blueprint_tools_layer.get_bounding_rect(min_alpha=1)
 
-    def _draw_blueprint_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Render the full blueprint overlay."""
-        if self.overlay_selected_entity is None:
-            return
+    def _get_blueprint_content_cache_key(self, document: dict) -> tuple[str, ...]:
+        """Get the cache key for the blueprint content."""
+        return (
+            self.overlay_selected_entity,
+            *(material[1] for material in document["materials"])
+        )
 
-        document = self._get_blueprint_document_data()
-        self._draw_blueprint_page(surface)
-        self._draw_blueprint_title_and_profile(surface, font_registry, document)
+    def _rebuild_blueprint_surface(self, document: dict, font_registry: dict[str, Font]):
+        """Rebuild the blueprint overlay content after a cache-miss."""
+        layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
+        self._blueprint_content_layer = pygame.Surface(layer_size, pygame.SRCALPHA)
+
+        self._blueprint_content_layer.blit(
+            self._blueprint_page_surface,
+            self._blueprint_page_bounds,
+            self._blueprint_page_bounds,
+        )
+        self._draw_blueprint_title_and_profile(self._blueprint_content_layer, font_registry, document)
 
         specifications_header_top = self.blueprint_page.top + 2 * Box.HEIGHT + Box.PADDING
         specifications_header_rect = self._draw_blueprint_section_header(
-            surface,
+            self._blueprint_content_layer,
             font_registry,
             "01",
             document["specifications_header"],
             specifications_header_top,
         )
         self._draw_blueprint_specifications(
-            surface,
+            self._blueprint_content_layer,
             font_registry,
             document["specifications"],
             specifications_header_rect.bottom + Box.PADDING / 2,
@@ -2193,22 +2251,117 @@ class PortMenu(Menu):
 
         materials_header_top = self.blueprint_page.top + 4.5 * Box.HEIGHT + Box.PADDING
         materials_header_rect = self._draw_blueprint_section_header(
-            surface,
+            self._blueprint_content_layer,
             font_registry,
             "02",
             document["materials_header"],
             materials_header_top,
         )
         self._draw_blueprint_materials(
-            surface,
+            self._blueprint_content_layer,
             font_registry,
             document["materials"],
             document["empty_materials"],
             materials_header_rect.bottom + Box.PADDING,
         )
 
-        self._draw_blueprint_tools(surface)
+        self._blueprint_content_bounds = self._blueprint_content_layer.get_bounding_rect(min_alpha=1)
+        self._blueprint_content_cache_key = self._get_blueprint_content_cache_key(document)
+
+    def _draw_blueprint_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Render the full blueprint overlay."""
+        if self.overlay_selected_entity is None:
+            return
+
+        document = self._get_blueprint_document_data()
+        cache_key = self._get_blueprint_content_cache_key(document)
+        if self._blueprint_content_cache_key != cache_key:
+            self._rebuild_blueprint_surface(document, font_registry)
+        surface.blit(
+            self._blueprint_content_layer,
+            self._blueprint_content_bounds,
+            self._blueprint_content_bounds,
+        )
+
+        if self.current_overlay != self.INTEL_CENTER:
+            surface.blit(
+                self._blueprint_tools_layer,
+                self._blueprint_tools_bounds,
+                self._blueprint_tools_bounds,
+            )
         self._draw_sticky_note_overlay(surface, font_registry)
+
+    def _pre_render_warehouse_prop_layers(self):
+        """Pre-render the static warehouse props around the animated forklift."""
+        layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
+        self.warehouse_prop_layer_1 = pygame.Surface(layer_size, pygame.SRCALPHA)
+        self.warehouse_prop_layer_2 = pygame.Surface(layer_size, pygame.SRCALPHA)
+
+        cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
+        cargo_box_rect = cargo_box_sprite.get_rect()
+        for cargo_box_pos in [
+            pygame.Vector2(self.warehouse_overlay.bottomleft),
+            pygame.Vector2(self.warehouse_overlay.bottomleft) + pygame.Vector2(cargo_box_rect.width, 0),
+            pygame.Vector2(self.warehouse_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width, 0),
+
+            pygame.Vector2(self.warehouse_overlay.bottomright),
+            pygame.Vector2(self.warehouse_overlay.bottomright) + pygame.Vector2(0, -cargo_box_rect.height),
+            pygame.Vector2(self.warehouse_overlay.bottomright) + pygame.Vector2(-cargo_box_rect.width, 0),
+        ]:
+            cargo_box_rect.center = cargo_box_pos
+            self.warehouse_prop_layer_1.blit(cargo_box_sprite, cargo_box_rect)
+
+        # Rope props hanging from warehouse ceiling.
+        warehouse_decoration_top = self.warehouse_overlay.top - Box.WIDTH / 8
+        corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
+        corner_rope_rect = corner_rope_sprite.get_rect()
+        corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH / 8
+        corner_rope_rect.top = warehouse_decoration_top
+        self.warehouse_prop_layer_1.blit(corner_rope_sprite, corner_rope_rect)
+
+        big_corner_rope_sprite = DataFiles.sprites["props"]["big_corner_rope"]
+        big_corner_rope_rect = big_corner_rope_sprite.get_rect()
+        big_corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH / 8
+        big_corner_rope_rect.top = warehouse_decoration_top
+        self.warehouse_prop_layer_1.blit(big_corner_rope_sprite, big_corner_rope_rect)
+
+        top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
+        top_rope_rect = top_rope_sprite.get_rect()
+        top_rope_rect.left = self.warehouse_overlay.centerx + Box.WIDTH / 4
+        top_rope_rect.top = warehouse_decoration_top
+        self.warehouse_prop_layer_1.blit(top_rope_sprite, top_rope_rect)
+
+        big_top_rope_sprite = DataFiles.sprites["props"]["big_top_rope"]
+        big_top_rope_rect = big_top_rope_sprite.get_rect()
+        big_top_rope_rect.right = self.warehouse_overlay.centerx
+        big_top_rope_rect.top = warehouse_decoration_top
+        self.warehouse_prop_layer_1.blit(big_top_rope_sprite, big_top_rope_rect)
+
+        rope_hook_sprite = DataFiles.sprites["props"]["rope_hook"]
+        self.warehouse_rope_hook_rect = rope_hook_sprite.get_rect()
+        self.warehouse_rope_hook_rect.centerx = self.warehouse_overlay.left + Box.PADDING
+        self.warehouse_rope_hook_rect.top = warehouse_decoration_top
+        self.warehouse_prop_layer_1.blit(rope_hook_sprite, self.warehouse_rope_hook_rect)
+
+        # Lightbulb prop hanging from warehouse ceiling.
+        lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
+        self.warehouse_lightbulb_rect = lightbulb_sprite.get_rect()
+        self.warehouse_lightbulb_rect.left = self.warehouse_overlay.left + Box.WIDTH
+        self.warehouse_lightbulb_rect.top = warehouse_decoration_top
+        self.warehouse_prop_layer_1.blit(lightbulb_sprite, self.warehouse_lightbulb_rect)
+
+        for cargo_box_pos in [
+            pygame.Vector2(self.warehouse_overlay.bottomleft) + (cargo_box_rect.width / 2, cargo_box_rect.height / 2),
+            pygame.Vector2(self.warehouse_overlay.bottomleft) + (-cargo_box_rect.width / 2, cargo_box_rect.height / 2),
+
+            pygame.Vector2(self.warehouse_overlay.bottomright) + (-cargo_box_rect.width / 2, cargo_box_rect.height / 2),
+            pygame.Vector2(self.warehouse_overlay.bottomright) + (-cargo_box_rect.width * 1.5, cargo_box_rect.height / 2),
+        ]:
+            cargo_box_rect.center = cargo_box_pos
+            self.warehouse_prop_layer_2.blit(cargo_box_sprite, cargo_box_rect)
+
+        self.warehouse_prop_layer_1_bounds = self.warehouse_prop_layer_1.get_bounding_rect(min_alpha=1)
+        self.warehouse_prop_layer_2_bounds = self.warehouse_prop_layer_2.get_bounding_rect(min_alpha=1)
 
     def _draw_warehouse_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Render the full warehouse overlay."""
@@ -2223,20 +2376,11 @@ class PortMenu(Menu):
             surface.blit(image, image_rect)
             pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, image_rect, width=2*Box.OUTLINE_WIDTH)
 
-        # Cargo box props.
-        cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
-        cargo_box_rect = cargo_box_sprite.get_rect()
-        for cargo_box_pos in [
-            pygame.Vector2(self.warehouse_overlay.bottomleft),
-            pygame.Vector2(self.warehouse_overlay.bottomleft) + pygame.Vector2(cargo_box_rect.width, 0),
-            pygame.Vector2(self.warehouse_overlay.bottomleft) + pygame.Vector2(-cargo_box_rect.width, 0),
-
-            pygame.Vector2(self.warehouse_overlay.bottomright),
-            pygame.Vector2(self.warehouse_overlay.bottomright) + pygame.Vector2(0, -cargo_box_rect.height),
-            pygame.Vector2(self.warehouse_overlay.bottomright) + pygame.Vector2(-cargo_box_rect.width, 0),
-        ]:
-            cargo_box_rect.center = cargo_box_pos
-            surface.blit(cargo_box_sprite, cargo_box_rect)
+        surface.blit(
+            self.warehouse_prop_layer_1,
+            self.warehouse_prop_layer_1_bounds,
+            self.warehouse_prop_layer_1_bounds,
+        )
         # Animated manjuu forklift prop.
         forklift_sprite = pygame.transform.scale_by(
             pygame.transform.flip(
@@ -2252,53 +2396,17 @@ class PortMenu(Menu):
             + pygame.Vector2(self.forklift_x * self.warehouse_overlay.width, 0)
         )
         surface.blit(forklift_sprite, forklift_rect)
-        for cargo_box_pos in [
-            pygame.Vector2(self.warehouse_overlay.bottomleft) + (cargo_box_rect.width / 2, cargo_box_rect.height / 2),
-            pygame.Vector2(self.warehouse_overlay.bottomleft) + (-cargo_box_rect.width / 2, cargo_box_rect.height / 2),
-
-            pygame.Vector2(self.warehouse_overlay.bottomright) + (-cargo_box_rect.width / 2, cargo_box_rect.height / 2),
-            pygame.Vector2(self.warehouse_overlay.bottomright) + (-cargo_box_rect.width * 1.5, cargo_box_rect.height / 2),
-        ]:
-            cargo_box_rect.center = cargo_box_pos
-            surface.blit(cargo_box_sprite, cargo_box_rect)
-        # Rope props hanging from warehouse ceiling.
-        warehouse_decoration_top = self.warehouse_overlay.top - Box.WIDTH / 8
-        corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
-        corner_rope_rect = corner_rope_sprite.get_rect()
-        corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH / 8
-        corner_rope_rect.top = warehouse_decoration_top
-        surface.blit(corner_rope_sprite, corner_rope_rect)
-
-        big_corner_rope_sprite = DataFiles.sprites["props"]["big_corner_rope"]
-        big_corner_rope_rect = big_corner_rope_sprite.get_rect()
-        big_corner_rope_rect.right = self.warehouse_overlay.right + Box.WIDTH / 8
-        big_corner_rope_rect.top = warehouse_decoration_top
-        surface.blit(big_corner_rope_sprite, big_corner_rope_rect)
-
-        top_rope_sprite = DataFiles.sprites["props"]["top_rope"]
-        top_rope_rect = top_rope_sprite.get_rect()
-        top_rope_rect.left = self.warehouse_overlay.centerx + Box.WIDTH / 4
-        top_rope_rect.top = warehouse_decoration_top
-        surface.blit(top_rope_sprite, top_rope_rect)
-
-        big_top_rope_sprite = DataFiles.sprites["props"]["big_top_rope"]
-        big_top_rope_rect = big_top_rope_sprite.get_rect()
-        big_top_rope_rect.right = self.warehouse_overlay.centerx
-        big_top_rope_rect.top = warehouse_decoration_top
-        surface.blit(big_top_rope_sprite, big_top_rope_rect)
-
-        rope_hook_sprite = DataFiles.sprites["props"]["rope_hook"]
-        rope_hook_rect = rope_hook_sprite.get_rect()
-        rope_hook_rect.centerx = self.warehouse_overlay.left + Box.PADDING
-        rope_hook_rect.top = warehouse_decoration_top
-        surface.blit(rope_hook_sprite, rope_hook_rect)
-
+        surface.blit(
+            self.warehouse_prop_layer_2,
+            self.warehouse_prop_layer_2_bounds,
+            self.warehouse_prop_layer_2_bounds,
+        )
         # Sign is used to communicate pagination.
         sign_rect = get_rect(
             width=Box.WIDTH,
             height=Box.HEIGHT,
-            centerx=rope_hook_rect.centerx,
-            bottom=rope_hook_rect.bottom
+            centerx=self.warehouse_rope_hook_rect.centerx,
+            bottom=self.warehouse_rope_hook_rect.bottom
         )
         font = font_registry["big_pixel"]
         font.render(
@@ -2318,59 +2426,22 @@ class PortMenu(Menu):
             style="center"
         )
 
-        # Lightbulb prop hanging from warehouse ceiling.
-        lightbulb_sprite = DataFiles.sprites["props"]["lightbulb"]
-        lightbulb_rect = lightbulb_sprite.get_rect()
-        lightbulb_rect.left = self.warehouse_overlay.left + Box.WIDTH
-        lightbulb_rect.top = warehouse_decoration_top
-        surface.blit(lightbulb_sprite, lightbulb_rect)
-
+        # Addtive light from lightbulb.
         lightbulb_light_sprite = DataFiles.sprites["props"]["lightbulb_light"]
         lightbulb_light_rect = lightbulb_light_sprite.get_rect()
-        lightbulb_light_rect.centerx = lightbulb_rect.centerx
-        lightbulb_light_rect.bottom = lightbulb_rect.bottom + Box.HEIGHT / 4
+        lightbulb_light_rect.centerx = self.warehouse_lightbulb_rect.centerx
+        lightbulb_light_rect.bottom = self.warehouse_lightbulb_rect.bottom + Box.HEIGHT / 4
         surface.blit(lightbulb_light_sprite, lightbulb_light_rect, special_flags=pygame.BLEND_RGB_ADD)
         self._draw_overlay_page_buttons(surface, font_registry)
 
-    def _draw_depot_stock_record(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the depot stock record overlay."""
-        font = font_registry["big_pixel"]
+    def _get_depot_stock_record_layout(self, font: Font, display_name: str) -> dict:
+        """Return the stock-record layout for the selected item's name height."""
         content_left = self.clipboard_page.left + Box.PADDING
         content_width = self.clipboard_page.width - 2 * Box.PADDING
         content_top = self.clipboard_page.top + Box.HEIGHT / 4 + Box.PADDING
-        # Header.
-        font.render(
-            surface,
-            "warehouse stock record",
-            (content_left, content_top),
-            Color.CLIPBOARD_INK_MUTED,
-            scale=1,
-            style="topleft"
-        )
         header_rule_y = content_top + font.font_height + Box.PADDING
-        pygame.draw.line(
-            surface,
-            Color.CLIPBOARD_RULE,
-            (content_left, header_rule_y),
-            (content_left + content_width, header_rule_y),
-            width=Box.OUTLINE_WIDTH
-        )
-
-        # Table with icon name, icon, and quantity.
-        display_name = self.overlay_selected_entity.replace("_", " ")
         name_top = header_rule_y + Box.PADDING
-        display_name_scale = 2
-        name_height = font.get_height(display_name, display_name_scale, content_width)
-        font.render(
-            surface,
-            display_name,
-            (content_left, name_top),
-            Color.BLACK,
-            display_name_scale,
-            style="topleft",
-            box_width=content_width
-        )
-
+        name_height = font.get_height(display_name, scale=2, box_width=content_width)
         identity_rect = get_rect(
             width=content_width,
             height=Box.HEIGHT,
@@ -2389,8 +2460,59 @@ class PortMenu(Menu):
             left=icon_rect.right,
             top=identity_rect.top
         )
+        quantity_header_rule_y = quantity_rect.top + font.font_height + Box.PADDING
+        description_label_top = identity_rect.bottom + Box.PADDING
+        description_top = description_label_top + font.font_height + Box.PADDING
 
-        surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), icon_rect)
+        return {
+            "content_left": content_left,
+            "content_width": content_width,
+            "content_top": content_top,
+            "header_rule_y": header_rule_y,
+            "name_top": name_top,
+            "name_height": name_height,
+            "identity_rect": identity_rect,
+            "icon_rect": icon_rect,
+            "quantity_rect": quantity_rect,
+            "quantity_header_rule_y": quantity_header_rule_y,
+            "description_label_top": description_label_top,
+            "description_top": description_top,
+        }
+
+    def _draw_depot_stock_record_static(
+        self,
+        surface: pygame.Surface,
+        font: Font,
+        layout: dict,
+    ):
+        """Draw the state-independent stock-record artwork."""
+        content_left = layout["content_left"]
+        content_width = layout["content_width"]
+        content_top = layout["content_top"]
+        header_rule_y = layout["header_rule_y"]
+        identity_rect = layout["identity_rect"]
+        icon_rect = layout["icon_rect"]
+        quantity_rect = layout["quantity_rect"]
+        quantity_header_rule_y = layout["quantity_header_rule_y"]
+        description_label_top = layout["description_label_top"]
+        description_top = layout["description_top"]
+
+        font.render(
+            surface,
+            "warehouse stock record",
+            (content_left, content_top),
+            Color.CLIPBOARD_INK_MUTED,
+            scale=1,
+            style="topleft"
+        )
+        pygame.draw.line(
+            surface,
+            Color.CLIPBOARD_RULE,
+            (content_left, header_rule_y),
+            (content_left + content_width, header_rule_y),
+            width=Box.OUTLINE_WIDTH
+        )
+
         pygame.draw.rect(surface, Color.CLIPBOARD_RULE, identity_rect, width=Box.OUTLINE_WIDTH)
         pygame.draw.line(
             surface,
@@ -2400,7 +2522,6 @@ class PortMenu(Menu):
             width=Box.OUTLINE_WIDTH
         )
 
-        quantity_header_rule_y = quantity_rect.top + font.font_height + Box.PADDING
         font.render(
             surface,
             "qty",
@@ -2416,15 +2537,6 @@ class PortMenu(Menu):
             (quantity_rect.right, quantity_header_rule_y),
             width=Box.OUTLINE_WIDTH
         )
-        quantity = DataFiles.save_file["inventory"].get(self.overlay_selected_entity, 0)
-        font.render(
-            surface,
-            str(quantity),
-            (quantity_rect.centerx, quantity_header_rule_y + Box.PADDING + font.font_height),
-            Color.BLACK,
-            scale=2,
-            style="center"
-        )
         font.render(
             surface,
             "in stock",
@@ -2435,7 +2547,6 @@ class PortMenu(Menu):
         )
 
         # Description section.
-        description_label_top = identity_rect.bottom + Box.PADDING
         font.render(
             surface,
             "description",
@@ -2444,10 +2555,8 @@ class PortMenu(Menu):
             scale=1,
             style="topleft"
         )
-        description_top = description_label_top + font.font_height + Box.PADDING
         description_bottom = self.clipboard_page.bottom - Box.PADDING
         line_spacing = font.font_height + font.padding
-        ruled_line_color = Color.CLIPBOARD_RULE
         for line_y in range(
             round(description_top + font.font_height + 2),
             round(description_bottom),
@@ -2455,10 +2564,80 @@ class PortMenu(Menu):
         ):
             pygame.draw.line(
                 surface,
-                ruled_line_color,
+                Color.CLIPBOARD_RULE,
                 (content_left, line_y),
                 (content_left + content_width, line_y)
             )
+
+    def _ensure_depot_stock_record_static_surface(
+        self,
+        surface: pygame.Surface,
+        font: Font,
+        layout: dict,
+    ):
+        """Build the static stock-record surface when its layout changes."""
+        static_key = (
+            surface.get_size(),
+            tuple(self.clipboard_page),
+            id(font),
+            layout["name_height"],
+        )
+        if static_key == self._depot_stock_record_static_key:
+            return
+
+        self._depot_stock_record_static_surface = pygame.Surface(
+            surface.get_size(),
+            pygame.SRCALPHA,
+        )
+        self._draw_depot_stock_record_static(
+            self._depot_stock_record_static_surface,
+            font,
+            layout,
+        )
+        self._depot_stock_record_static_bounds = (
+            self._depot_stock_record_static_surface.get_bounding_rect(min_alpha=1)
+        )
+        self._depot_stock_record_static_key = static_key
+
+    def _draw_depot_stock_record(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw static stock-record artwork with state-dependent content on top."""
+        font = font_registry["big_pixel"]
+        display_name = self.overlay_selected_entity.replace("_", " ")
+        layout = self._get_depot_stock_record_layout(font, display_name)
+        self._ensure_depot_stock_record_static_surface(surface, font, layout)
+        surface.blit(
+            self._depot_stock_record_static_surface,
+            self._depot_stock_record_static_bounds,
+            self._depot_stock_record_static_bounds,
+        )
+
+        content_left = layout["content_left"]
+        content_width = layout["content_width"]
+        font.render(
+            surface,
+            display_name,
+            (content_left, layout["name_top"]),
+            Color.BLACK,
+            scale=2,
+            style="topleft",
+            box_width=content_width
+        )
+
+        surface.blit(
+            DataFiles.get_entity_sprite(self.overlay_selected_entity),
+            layout["icon_rect"],
+        )
+        quantity_rect = layout["quantity_rect"]
+        quantity_header_rule_y = layout["quantity_header_rule_y"]
+        quantity = DataFiles.save_file["inventory"].get(self.overlay_selected_entity, 0)
+        font.render(
+            surface,
+            str(quantity),
+            (quantity_rect.centerx, quantity_header_rule_y + Box.PADDING + font.font_height),
+            Color.BLACK,
+            scale=2,
+            style="center"
+        )
 
         description = DataFiles.item_descriptions.get(
             self.overlay_selected_entity,
@@ -2467,52 +2646,21 @@ class PortMenu(Menu):
         font.render(
             surface,
             description,
-            (content_left, description_top),
+            (content_left, layout["description_top"]),
             Color.BLACK,
             scale=1,
             style="topleft",
             box_width=content_width
         )
 
-    def _draw_decoration_purchase_form(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Render the decoration purchase form."""
-        font = font_registry["big_pixel"]
+    def _get_decoration_purchase_form_layout(self, font: Font, display_name: str) -> dict:
+        """Return the purchase-form layout for the selected item's name height."""
         content_left = self.clipboard_page.left + Box.PADDING
         content_width = self.clipboard_page.width - 2 * Box.PADDING
         content_top = self.clipboard_page.top + Box.HEIGHT / 4 + Box.PADDING
-        # Header.
-        font.render(
-            surface,
-            "decoration purchase form",
-            (content_left, content_top),
-            Color.CLIPBOARD_INK_MUTED,
-            scale=1,
-            style="topleft"
-        )
         header_rule_y = content_top + font.font_height + Box.PADDING
-        pygame.draw.line(
-            surface,
-            Color.CLIPBOARD_RULE,
-            (content_left, header_rule_y),
-            (content_left + content_width, header_rule_y),
-            width=Box.OUTLINE_WIDTH
-        )
-
-        # Table with item name, icon, quantity, and price.
-        display_name = self.overlay_selected_entity.replace("_", " ")
         name_top = header_rule_y + Box.PADDING
-        display_name_scale = 2
-        name_height = font.get_height(display_name, display_name_scale, content_width)
-        font.render(
-            surface,
-            display_name,
-            (content_left, name_top),
-            Color.BLACK,
-            display_name_scale,
-            style="topleft",
-            box_width=content_width
-        )
-
+        name_height = font.get_height(display_name, scale=2, box_width=content_width)
         product_rect = get_rect(
             width=content_width,
             height=Box.HEIGHT,
@@ -2538,10 +2686,55 @@ class PortMenu(Menu):
             left=quantity_rect.right,
             top=product_rect.top
         )
+        description_label_top = product_rect.bottom + Box.PADDING
+        description_rule_y = description_label_top + font.font_height + Box.PADDING
+        return {
+            "content_left": content_left,
+            "content_width": content_width,
+            "content_top": content_top,
+            "header_rule_y": header_rule_y,
+            "name_top": name_top,
+            "name_height": name_height,
+            "product_rect": product_rect,
+            "icon_rect": icon_rect,
+            "quantity_rect": quantity_rect,
+            "price_rect": price_rect,
+            "description_label_top": description_label_top,
+            "description_rule_y": description_rule_y,
+            "description_top": description_rule_y + Box.PADDING,
+        }
 
-        surface.blit(DataFiles.get_entity_sprite(self.overlay_selected_entity), icon_rect)
+    def _draw_decoration_purchase_form_static(
+        self,
+        surface: pygame.Surface,
+        font: Font,
+        layout: dict,
+    ):
+        """Draw the state-independent decoration purchase form artwork."""
+        content_left = layout["content_left"]
+        content_width = layout["content_width"]
+        product_rect = layout["product_rect"]
+        quantity_rect = layout["quantity_rect"]
+        price_rect = layout["price_rect"]
+
+        font.render(
+            surface,
+            "decoration purchase form",
+            (content_left, layout["content_top"]),
+            Color.CLIPBOARD_INK_MUTED,
+            scale=1,
+            style="topleft"
+        )
+        pygame.draw.line(
+            surface,
+            Color.CLIPBOARD_RULE,
+            (content_left, layout["header_rule_y"]),
+            (content_left + content_width, layout["header_rule_y"]),
+            width=Box.OUTLINE_WIDTH
+        )
+
         pygame.draw.rect(surface, Color.CLIPBOARD_RULE, product_rect, width=Box.OUTLINE_WIDTH)
-        for divider_x in [icon_rect.right, quantity_rect.right]:
+        for divider_x in [layout["icon_rect"].right, quantity_rect.right]:
             pygame.draw.line(
                 surface,
                 Color.CLIPBOARD_RULE,
@@ -2550,16 +2743,9 @@ class PortMenu(Menu):
                 width=Box.OUTLINE_WIDTH
             )
 
-        selected_decoration = self.overlay_selected_entity
-        owned_count = DataFiles.save_file["decoration_depot"].get(selected_decoration, 0)
-        for decoration_data in DataFiles.save_file["decorations"]:
-            placed_decoration, _, _ = Decorations.unpack_decoration_data(decoration_data)
-            if placed_decoration == selected_decoration:
-                owned_count += 1
-
-        for field_rect, label, value, footer in [
-            (quantity_rect, "qty", owned_count, "owned"),
-            (price_rect, "price", self.DECORATION_PRICE, "coin"),
+        for field_rect, label, footer in [
+            (quantity_rect, "qty", "owned"),
+            (price_rect, "price", "coin"),
         ]:
             field_header_rule_y = field_rect.top + font.font_height + Box.PADDING
             font.render(
@@ -2579,14 +2765,6 @@ class PortMenu(Menu):
             )
             font.render(
                 surface,
-                str(value),
-                (field_rect.centerx, field_header_rule_y + Box.PADDING + font.font_height),
-                Color.BLACK,
-                scale=2,
-                style="center"
-            )
-            font.render(
-                surface,
                 footer,
                 (field_rect.centerx, field_rect.bottom - Box.PADDING - font.font_height / 2),
                 Color.CLIPBOARD_INK_MUTED,
@@ -2594,30 +2772,125 @@ class PortMenu(Menu):
                 style="center"
             )
 
-        # Description section.
-        description_label_top = product_rect.bottom + Box.PADDING
+        price_header_rule_y = price_rect.top + font.font_height + Box.PADDING
+        font.render(
+            surface,
+            str(self.DECORATION_PRICE),
+            (price_rect.centerx, price_header_rule_y + Box.PADDING + font.font_height),
+            Color.BLACK,
+            scale=2,
+            style="center"
+        )
+
         font.render(
             surface,
             "description",
-            (content_left, description_label_top),
+            (content_left, layout["description_label_top"]),
             Color.CLIPBOARD_INK_MUTED,
             scale=1,
             style="topleft"
         )
-        description_rule_y = description_label_top + font.font_height + Box.PADDING
         pygame.draw.line(
             surface,
             Color.CLIPBOARD_RULE,
-            (content_left, description_rule_y),
-            (content_left + content_width, description_rule_y),
+            (content_left, layout["description_rule_y"]),
+            (content_left + content_width, layout["description_rule_y"]),
             width=Box.OUTLINE_WIDTH
         )
-        description_top = description_rule_y + Box.PADDING
+
+        signature_rect = self.decoration_signature_button.rect
+        font.render(
+            surface,
+            "purchase approval",
+            (signature_rect.left, signature_rect.top - Box.PADDING - font.font_height),
+            Color.CLIPBOARD_INK_MUTED,
+            scale=1,
+            style="topleft"
+        )
+
+    def _ensure_decoration_purchase_form_static_surface(
+        self,
+        surface: pygame.Surface,
+        font: Font,
+        layout: dict,
+    ):
+        """Build the static purchase-form surface when its layout changes."""
+        static_key = (
+            surface.get_size(),
+            tuple(self.clipboard_page),
+            tuple(self.decoration_signature_button.rect),
+            id(font),
+            layout["name_height"],
+            self.DECORATION_PRICE,
+        )
+        if static_key == self._decoration_purchase_form_static_key:
+            return
+
+        self._decoration_purchase_form_static_surface = pygame.Surface(
+            surface.get_size(),
+            pygame.SRCALPHA,
+        )
+        self._draw_decoration_purchase_form_static(
+            self._decoration_purchase_form_static_surface,
+            font,
+            layout,
+        )
+        self._decoration_purchase_form_static_bounds = (
+            self._decoration_purchase_form_static_surface.get_bounding_rect(min_alpha=1)
+        )
+        self._decoration_purchase_form_static_key = static_key
+
+    def _draw_decoration_purchase_form(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the cached purchase form with state-dependent content on top."""
+        font = font_registry["big_pixel"]
+        content_left = self.clipboard_page.left + Box.PADDING
+        content_width = self.clipboard_page.width - 2 * Box.PADDING
+        display_name = self.overlay_selected_entity.replace("_", " ")
+        layout = self._get_decoration_purchase_form_layout(font, display_name)
+        self._ensure_decoration_purchase_form_static_surface(surface, font, layout)
+        surface.blit(
+            self._decoration_purchase_form_static_surface,
+            self._decoration_purchase_form_static_bounds,
+            self._decoration_purchase_form_static_bounds,
+        )
+
+        font.render(
+            surface,
+            display_name,
+            (content_left, layout["name_top"]),
+            Color.BLACK,
+            scale=2,
+            style="topleft",
+            box_width=content_width
+        )
+        surface.blit(
+            DataFiles.get_entity_sprite(self.overlay_selected_entity),
+            layout["icon_rect"],
+        )
+
+        selected_decoration = self.overlay_selected_entity
+        owned_count = DataFiles.save_file["decoration_depot"].get(selected_decoration, 0)
+        for decoration_data in DataFiles.save_file["decorations"]:
+            placed_decoration, _, _ = Decorations.unpack_decoration_data(decoration_data)
+            if placed_decoration == selected_decoration:
+                owned_count += 1
+
+        quantity_rect = layout["quantity_rect"]
+        quantity_header_rule_y = quantity_rect.top + font.font_height + Box.PADDING
+        font.render(
+            surface,
+            str(owned_count),
+            (quantity_rect.centerx, quantity_header_rule_y + Box.PADDING + font.font_height),
+            Color.BLACK,
+            scale=2,
+            style="center"
+        )
+
         description = DataFiles.decoration_store[self.overlay_selected_entity]["description"]
         font.render(
             surface,
             description,
-            (content_left, description_top),
+            (content_left, layout["description_top"]),
             Color.BLACK,
             scale=1,
             style="topleft",
@@ -2626,19 +2899,6 @@ class PortMenu(Menu):
 
         # Signature action button section.
         signature_rect = self.decoration_signature_button.rect
-        approval_label_pos = (
-            signature_rect.left,
-            signature_rect.top - Box.PADDING - font.font_height
-        )
-        font.render(
-            surface,
-            "purchase approval",
-            approval_label_pos,
-            Color.CLIPBOARD_INK_MUTED,
-            scale=1,
-            style="topleft"
-        )
-
         if not self.decoration_signature_button.active:
             stamp_box_color = Color.CLIPBOARD_RULE
         elif self.decoration_signature_button.hovered:
@@ -2721,19 +2981,18 @@ class PortMenu(Menu):
                 stamp_rect.bottom = stamp_pos.y + Box.HEIGHT / 2
                 surface.blit(stamp_sprite, stamp_rect)
 
-    def _draw_clipboard_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Render the clipboard overlay."""
-        if self.overlay_selected_entity is None:
-            return
-        # Clipboard-themed background.
+    def _pre_render_clipboard_background(self):
+        """Pre-render the clipboard backing, pages, and clip."""
+        layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
+        self._clipboard_background_surface = pygame.Surface(layer_size, pygame.SRCALPHA)
         clipboard_clip_rect = get_rect(
             width=Box.WIDTH, height=Box.HEIGHT / 2,
             centerx=self.clipboard_bg.centerx,
             top=self.clipboard_bg.top + Box.PADDING
         )
 
-        pygame.draw.rect(surface, Color.CARGO_BOX_BACK, self.clipboard_bg)
-        pygame.draw.rect(surface, Color.CLIPBOARD_CLIP, clipboard_clip_rect)
+        pygame.draw.rect(self._clipboard_background_surface, Color.CARGO_BOX_BACK, self.clipboard_bg)
+        pygame.draw.rect(self._clipboard_background_surface, Color.CLIPBOARD_CLIP, clipboard_clip_rect)
         misaligned_pages = [
             (-5, pygame.Vector2(-6, 5), (220, 220, 210)),
             (4, pygame.Vector2(7, -3), (233, 233, 224)),
@@ -2741,14 +3000,14 @@ class PortMenu(Menu):
         ]
         for rotated_angle, offset, color in misaligned_pages:
             pygame.draw.polygon(
-                surface,
+                self._clipboard_background_surface,
                 color,
                 Box.get_rotated_rect_polygon(self.clipboard_page, rotated_angle, offset)
             )
-        pygame.draw.rect(surface, Color.WHITE, self.clipboard_page)
+        pygame.draw.rect(self._clipboard_background_surface, Color.WHITE, self.clipboard_page)
         # Clipboard clip prop.
         pygame.draw.lines(
-            surface,
+            self._clipboard_background_surface,
             Color.CLIPBOARD_CLIP_FRONT,
             False,
             [
@@ -2759,6 +3018,20 @@ class PortMenu(Menu):
             ],
             width=4
         )
+        self._clipboard_background_bounds = (
+            self._clipboard_background_surface.get_bounding_rect(min_alpha=1)
+        )
+
+    def _draw_clipboard_overlay(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Render the clipboard overlay."""
+        if self.overlay_selected_entity is None:
+            return
+        surface.blit(
+            self._clipboard_background_surface,
+            self._clipboard_background_bounds,
+            self._clipboard_background_bounds,
+        )
+
         # Clipboard page content.
         if self.current_overlay == self.DEPOT:
             self._draw_depot_stock_record(surface, font_registry)
