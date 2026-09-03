@@ -35,6 +35,7 @@ class MenuManager:
             self.FLEET_SELECTION: FleetSelectionMenu(self),
             self.ENCOUNTER: EncounterMenu(self),
         }
+        self._current_menu: Menu | None = None
         self.current_menu = self.port_menu
 
         self.quest_manager = QuestManager()
@@ -94,6 +95,7 @@ class MenuManager:
         Useful place to collect any logic that should execute everytime this menu is
         entered into.
         """
+        # On-enter menu hooks.
         if menu is self.port_menu:
             self.port_menu.restore_shipgirl_decoration_interactions()
         if menu is self.equipment_menu:
@@ -107,4 +109,9 @@ class MenuManager:
             self.fleet_selection_menu.header_ribbon.text = (
                 f"sector {self.fleet_selection_menu.sortie_index + 1:02d}"
             )
+
+        # BGM hooks.
+        if self._current_menu is None:
+            DataFiles.bgm["lofi_loop"].play(loops=-1, fade_ms=10000)
+
         self._current_menu = menu

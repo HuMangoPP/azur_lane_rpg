@@ -128,7 +128,6 @@ async def main():
         return None
 
     menu_manager = MenuManager()
-    DataFiles.bgm["lofi_loop"].play(loops=-1, fade_ms=10000)
     running = True
     while running:
         dt = clock.tick(FPS) / 1000
