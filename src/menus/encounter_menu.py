@@ -39,10 +39,13 @@ class Cloud:
         self.x = x
         self.y = y
         self.speed = speed
+        self.shadow_rect = self.shadow.get_rect()
+        self.sprite_rect = self.sprite.get_rect()
 
     def set_cloud_sprites(self, cloud_sprites: list[pygame.Surface]):
         """Set a new set of cloud sprites."""
         self.sprite = cloud_sprites[self.index]
+        self.sprite_rect = self.sprite.get_rect()
 
     def update(self, dt: float):
         """Progress the x position of the cloud."""
@@ -50,15 +53,17 @@ class Cloud:
 
     def draw(self, surface: pygame.Surface):
         """Draw this cloud, along with its shadow subtractively beneath it."""
-        shadow_rect = self.shadow.get_rect()
-        shadow_rect.centerx = self.x + self.SHADOW_OFFSET.x
-        shadow_rect.top = self.y + self.SHADOW_OFFSET.y
-        surface.blit(self.shadow, shadow_rect, special_flags=pygame.BLEND_RGB_SUB)
+        self.shadow_rect.centerx = self.x + self.SHADOW_OFFSET.x
+        self.shadow_rect.top = self.y + self.SHADOW_OFFSET.y
+        surface.blit(
+            self.shadow,
+            self.shadow_rect,
+            special_flags=pygame.BLEND_RGB_SUB,
+        )
 
-        rect = self.sprite.get_rect()
-        rect.centerx = self.x
-        rect.top = self.y
-        surface.blit(self.sprite, rect)
+        self.sprite_rect.centerx = self.x
+        self.sprite_rect.top = self.y
+        surface.blit(self.sprite, self.sprite_rect)
 
 
 class SeaFoam:
@@ -121,6 +126,8 @@ class RainDrop:
         self.length = random.uniform(18, 34)
         self.speed = random.uniform(520, 720)
         self.angle = math.radians(135 + random.uniform(-6, 6))
+        self.velocity = get_vec(self.speed, self.angle)
+        self.tail = get_vec(self.length, self.angle)
 
     @property
     def offscreen(self):
@@ -129,11 +136,11 @@ class RainDrop:
 
     def update(self, dt: float):
         """Update the animation of this rain drop."""
-        self.pos += get_vec(self.speed * dt, self.angle)
+        self.pos += self.velocity * dt
 
     def draw(self, surface):
         """Draw this rain drop."""
-        end_pos = self.pos + get_vec(self.length, self.angle)
+        end_pos = self.pos + self.tail
         pygame.draw.line(surface, self.color, self.pos, end_pos, width=1)
 
 
@@ -159,7 +166,9 @@ class Background:
         cloud_sprites: list[pygame.Surface],
         rain_colors: list[ColorType]
     ):
-        self.set_sky_colors(sky_colors)
+        self.sky_colors = tuple(sky_colors)
+        self.sky_surf: pygame.Surface | None = None
+        self.sky_dirty = True
 
         self.rain_colors = rain_colors
         self.raining = False
@@ -171,6 +180,7 @@ class Background:
         self.moon_pos = pygame.Vector2(screen_x(0.36), screen_y(0.12))
 
         self.wave_sprites = wave_sprites
+        self.wave_strips: list[dict[int, pygame.Surface]] = []
         self.sea_foam_sprite = DataFiles.sprites["background"]["sea_foam"]
         self.sea_foams: list[SeaFoam] = []
         num_waves = DataFiles.sprites["background"]["num_waves"]
@@ -193,16 +203,92 @@ class Background:
         self.cloud_spawn_time = 0
         self.clouds: list[Cloud] = []
 
+        self._build_wave_strips()
+        self._build_landmark_layer()
+
     def set_sky_colors(self, sky_colors: list[ColorType]):
         """Set the sky color based on the weather conditions."""
-        sky_surf = pygame.Surface((1, len(sky_colors)))
-        for y, color in enumerate(sky_colors):
-            sky_surf.set_at((0, y), color)
-        self.sky_surf = pygame.transform.smoothscale(sky_surf, (128, 256))
+        sky_colors = tuple(sky_colors)
+        if sky_colors != self.sky_colors:
+            self.sky_colors = sky_colors
+            self.sky_dirty = True
 
     def set_wave_sprites(self, weather: str):
         """Set the wave sprites based on the weather conditions."""
         self.wave_sprites = DataFiles.sprites["background"]["wave_sets"][weather]
+        self._build_wave_strips()
+
+    def _build_wave_strips(self):
+        """Precompose each wave layer's repeated horizontal tiles."""
+        self.wave_strips = []
+        for wave in self.wave_sprites:
+            strip_width = self.NUM_WAVE_REPS * wave.get_width()
+            strip = pygame.Surface((strip_width, wave.get_height()))
+            strip.fill((255, 0, 0))
+            strip.set_colorkey((255, 0, 0))
+            strip.blit(wave, (0, 0))
+            for rep_index in range(self.NUM_WAVE_REPS):
+                strip.blit(
+                    wave,
+                    (rep_index * wave.get_width(), 0),
+                )
+            strip = strip.convert()
+            strip.set_colorkey((255, 0, 0), pygame.RLEACCEL)
+            self.wave_strips.append(strip)
+
+    def _build_landmark_layer(self):
+        """Precompose the fixed landmark sprites into one horizon strip."""
+        landmark_y = self.wave_ys[0] + 4
+        landmark_sprites = [
+            DataFiles.sprites["background"]["left_landmarks"],
+            DataFiles.sprites["background"]["middle_landmarks"],
+            DataFiles.sprites["background"]["right_landmarks"],
+        ]
+        landmark_rects = [sprite.get_rect() for sprite in landmark_sprites]
+        landmark_rects[0].left = screen_x(0)
+        landmark_rects[0].centery = landmark_y
+        landmark_rects[1].centerx = screen_x(0.5)
+        landmark_rects[1].centery = landmark_y
+        landmark_rects[2].right = screen_x(1)
+        landmark_rects[2].centery = landmark_y
+
+        bounds = landmark_rects[0].unionall(landmark_rects[1:])
+        self.landmark_layer = pygame.Surface(bounds.size)
+        self.landmark_layer.fill((255, 0, 0))
+        self.landmark_layer.set_colorkey((255, 0, 0))
+        for sprite, rect in zip(landmark_sprites, landmark_rects):
+            self.landmark_layer.blit(sprite, rect.move(-bounds.left, -bounds.top))
+        self.landmark_layer = self.landmark_layer.convert()
+        self.landmark_layer.set_colorkey((255, 0, 0), pygame.RLEACCEL)
+        self.landmark_layer_pos = bounds.topleft
+
+    def _rebuild_sky(self):
+        """Rebuild the weather-dependent static sky layer when invalidated."""
+        gradient = pygame.Surface((1, len(self.sky_colors)))
+        for y, color in enumerate(self.sky_colors):
+            gradient.set_at((0, y), color)
+        self.sky_surf = pygame.transform.smoothscale(
+            gradient,
+            (round(screen_x(1)), 256),
+        ).convert()
+
+        if self.night_sky_visible:
+            moon_radius = 20
+            pygame.draw.circle(
+                self.sky_surf, self.MOON_COLOR, self.moon_pos, moon_radius
+            )
+            pygame.draw.circle(
+                self.sky_surf,
+                self.MOON_SHADOW_COLOR,
+                self.moon_pos
+                + pygame.Vector2(moon_radius * 0.36, -moon_radius * 0.36),
+                moon_radius,
+            )
+            for star_pos, star_radius, star_color in self.stars:
+                pygame.draw.circle(
+                    self.sky_surf, star_color, star_pos, star_radius
+                )
+        self.sky_dirty = False
 
     @staticmethod
     def wave_vertical_offset(wave_timer: float):
@@ -249,6 +335,7 @@ class Background:
             self._generate_stars()
         else:
             self.stars = []
+        self.sky_dirty = True
 
     def _generate_stars(self):
         """Generate stars randomly in the night sky."""
@@ -358,53 +445,14 @@ class Background:
         If the PlayerFleet or SirenFleet are provided, then render the shipgirls or sirens among
         the wave strips, so that they feel embedded into the theme.
         """
-        # The sky surf is not wider enough to fill the whole screen, so it is repeated
-        # horizontally to completely fill the background.
-        sky_surf = self.sky_surf
-        sky_surf_rect = sky_surf.get_rect()
-        sky_surf_rect.top = 0
-        num_sky_reps = 9
-        sky_rep_offset = (num_sky_reps - 1) / 2
-        for i in range(num_sky_reps):
-            sky_surf_rect.centerx = screen_x(0.5) + sky_surf_rect.width * (i - sky_rep_offset)
-            surface.blit(sky_surf, sky_surf_rect)
-
-        # Draw stars and moon.
-        if self.night_sky_visible:
-            moon_radius = 20
-            pygame.draw.circle(surface, self.MOON_COLOR, self.moon_pos, moon_radius)
-            pygame.draw.circle(
-                surface,
-                self.MOON_SHADOW_COLOR,
-                self.moon_pos + pygame.Vector2(moon_radius * 0.36, -moon_radius * 0.36),
-                moon_radius,
-            )
-            for star_pos, star_radius, star_color in self.stars:
-                pygame.draw.circle(surface, star_color, star_pos, star_radius)
+        if self.sky_dirty:
+            self._rebuild_sky()
+        surface.blit(self.sky_surf, (0, 0))
 
         for cloud in self.clouds:
             cloud.draw(surface)
 
-        # Draw the background landmarks.
-        landmark_y = self.wave_ys[0] + 4
-
-        left_landmarks = DataFiles.sprites["background"]["left_landmarks"]
-        left_landmarks_rect = left_landmarks.get_rect()
-        left_landmarks_rect.left = screen_x(0)
-        left_landmarks_rect.centery = landmark_y
-        surface.blit(left_landmarks, left_landmarks_rect)
-
-        middle_landmarks = DataFiles.sprites["background"]["middle_landmarks"]
-        middle_landmarks_rect = middle_landmarks.get_rect()
-        middle_landmarks_rect.centerx = screen_x(0.5)
-        middle_landmarks_rect.centery = landmark_y
-        surface.blit(middle_landmarks, middle_landmarks_rect)
-        
-        right_landmarks = DataFiles.sprites["background"]["right_landmarks"]
-        right_landmarks_rect = right_landmarks.get_rect()
-        right_landmarks_rect.right = screen_x(1)
-        right_landmarks_rect.centery = landmark_y
-        surface.blit(right_landmarks, right_landmarks_rect)
+        surface.blit(self.landmark_layer, self.landmark_layer_pos)
 
         # Compute the draw indices of the siren and player fleets.
         # The draw indices tell the renderer at which wave index the
@@ -419,47 +467,51 @@ class Background:
         else:
             shipgirl_draw_indices = None
 
+        entities_by_wave: list[list[Shipgirl]] = [[] for _ in self.wave_ys]
+        for draw_indices in (siren_draw_indices, shipgirl_draw_indices):
+            if draw_indices is not None:
+                for draw_index, entity in draw_indices:
+                    entities_by_wave[draw_index].append(entity)
+        sea_foams_by_wave = [[] for _ in self.wave_ys]
+        for sea_foam in self.sea_foams:
+            sea_foams_by_wave[sea_foam.wave_index].append(sea_foam)
+
         num_waves = DataFiles.sprites["background"]["num_waves"]
-        num_wave_reps = self.NUM_WAVE_REPS
-        wave_rep_offset = (num_wave_reps - 1) / 2
         for i, (wave_y, wave_timer) in enumerate(zip(self.wave_ys, self.wave_timers)):
-            # Draw the shipgirl and sirens at this wave index before the wave itself.
-            if siren_draw_indices is not None:
-                for draw_index, siren in siren_draw_indices:
-                    if i == draw_index:
-                        siren.draw(surface, font_registry)
-            if shipgirl_draw_indices is not None:
-                for draw_index, shipgirl in shipgirl_draw_indices:
-                    if i == draw_index:
-                        shipgirl.draw(surface, font_registry)
+        # Draw the shipgirl and sirens at this wave index before the wave itself.
+            for entity in entities_by_wave[i]:
+                entity.draw(surface, font_registry)
 
             # The horizontal motion of the wave is a sine wave.
             # The wave motion is in such a way that it reaches its crest in
             # the middle of its horizontal motion in both directions.
             move_amt = i / num_waves
             wave = self.wave_sprites[i]
-            wave_rect = wave.get_rect()
-            wave_rect.top = (
-                wave_y
-                + self.WAVE_VERTICAL_AMPLITUDE
-                * (move_amt + 1)
-                * self.wave_vertical_offset(wave_timer)
-            )
             centerx = (
                 self.WAVE_HORIZONTAL_AMPLITUDE
                 * (move_amt + 1)
                 * math.sin(wave_timer)
                 + screen_x(0.5)
             )
-            # The wave strips are not wide enough for the whole screen, so we repeat
-            # their rendering to fill the whole horizontal space.
-            # The sea foam is also rendered onto the correct wave rep index.
-            for j in range(num_wave_reps):
-                wave_rect.centerx = centerx + wave_rect.width * (j - wave_rep_offset)
-                surface.blit(wave, wave_rect)
-                for sea_foam in self.sea_foams:
-                    if sea_foam.wave_index == i and sea_foam.wave_rep_index == j:
-                        sea_foam.draw(surface, wave_rect)
+            wave_strip = self.wave_strips[i]
+            wave_strip_rect = wave_strip.get_rect()
+            wave_strip_rect.top = (
+                wave_y
+                + self.WAVE_VERTICAL_AMPLITUDE
+                * (move_amt + 1)
+                * self.wave_vertical_offset(wave_timer)
+            )
+            wave_strip_rect.centerx = centerx
+            surface.blit(wave_strip, wave_strip_rect)
+            for sea_foam in sea_foams_by_wave[i]:
+                wave_rect = wave.get_rect(
+                    left=(
+                        wave_strip_rect.left
+                        + sea_foam.wave_rep_index * wave.get_width()
+                    ),
+                    top=wave_strip_rect.top,
+                )
+                sea_foam.draw(surface, wave_rect)
 
         for rain_drop in self.rain_drops:
             rain_drop.draw(surface)
@@ -2111,7 +2163,6 @@ class EncounterMenu(Menu):
         if self.transition_active and not self.transition_to_port:
             self.draw_transition_wave_wipe(surface)
             return
-
         for shipgirl in self.menu_manager.player_fleet.fleet:
             shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
         for siren in self.menu_manager.siren_fleet.fleet:
@@ -2129,7 +2180,7 @@ class EncounterMenu(Menu):
             drop.draw(surface, font_registry)
 
         # Draw the research exp widget.
-        if self.exp_timer > 0:
+        if True:
             research_target = DataFiles.save_file["research_target"]
             unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
             unique_item_exists = DataFiles.save_file["inventory"].get(unique_item, 0) > 0

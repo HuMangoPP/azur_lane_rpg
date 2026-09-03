@@ -74,6 +74,7 @@ class ShipgirlBattleComponent:
     BATTLESTATION_GLINT_DRIFT = 12
     BATTLESTATION_GLINT_COUNT = 4
     BATTLESTATION_GLINT_MARGIN = 6
+    _battlestation_hulls: dict[bool, tuple[pygame.Surface, pygame.Surface]] = {}
 
     def __init__(self, name: str, is_player: bool):
         self.active = False
@@ -126,6 +127,7 @@ class ShipgirlBattleComponent:
         self.shake_time = 0
 
         self.smokescreen = Smokescreen()
+        self._battlestation_render_cache: dict | None = None
 
     def shake(self):
         """Start a shake effect."""
@@ -490,204 +492,178 @@ class ShipgirlBattleComponent:
         shell_rect.center = shell_pos
         surface.blit(shell_sprite, shell_rect)
 
-    def draw_battlestation(self, surface: pygame.Surface, font_registry: dict[str, Font], rect: pygame.Surface):
-        """Draw the shipgirl's battlestation."""
-        if self.hp <= 0:
-            return
+    def _create_battlestation_render_cache(self) -> dict:
+        """Create the immutable artwork and reusable battlestation surfaces."""
+        # The main idea is to pre-generate surfaces and re-use those surfaces
+        # and rects instead of generating them every frame.
+        allegiance = "shipgirl" if self.is_player else "siren"
+        panel_color = Color.HOLOGRAM_GLOW if self.is_player else Color.SIREN_HOLOGRAM_GLOW
+        rigging = DataFiles.sprites["encounter"][f"{allegiance}_rigging"]
+        glow = DataFiles.sprites["encounter"][f"{allegiance}_battlestation_glow"].copy()
 
-        # Draw the rigging and the battlestation glow, which is a cone opening upwards
-        # with a light falloff like a hologram projection.
+        # Back panel.
         if self.is_player:
-            rigging_sprite = DataFiles.sprites["encounter"]["shipgirl_rigging"]
-            rigging_rect = rigging_sprite.get_rect()
-            rigging_rect.left = rect.left
-            rigging_rect.centery = rect.centery + rigging_rect.height / 3
-            battlestation_glow = DataFiles.sprites["encounter"]["shipgirl_battlestation_glow"]
-            battlestation_glow_rect = battlestation_glow.get_rect()
-            battlestation_glow_rect.centerx = rigging_rect.centerx - Box.WIDTH / 4
-        else:
-            rigging_sprite = DataFiles.sprites["encounter"]["siren_rigging"]
-            rigging_rect = rigging_sprite.get_rect()
-            rigging_rect.right = rect.right
-            rigging_rect.centery = rect.centery + rigging_rect.height / 3
-            battlestation_glow = DataFiles.sprites["encounter"]["siren_battlestation_glow"]
-            battlestation_glow_rect = battlestation_glow.get_rect()
-            battlestation_glow_rect.centerx = rigging_rect.centerx + Box.WIDTH / 4
-        battlestation_glow_rect.bottom = rigging_rect.centery
-        surface.blit(rigging_sprite, rigging_rect)
-        pulse = (math.sin(self.battlestation_effect_time * math.tau / self.BATTLESTATION_PULSE_DURATION) + 1) / 2
-        battlestation_alpha = int(192 + 63 * pulse)
-        battlestation_glow = battlestation_glow.copy()
-        battlestation_glow.set_alpha(battlestation_alpha)
-        pulsing_glow = pygame.Surface(battlestation_glow.get_size())
-        pulsing_glow.blit(battlestation_glow, (0, 0))
-        surface.blit(
-            pulsing_glow,
-            battlestation_glow_rect,
-            special_flags=pygame.BLEND_RGB_ADD,
-        )
-
-        # TODO Consider whether or not this can be pulled into a project-scoped common or even into engine, if it is
-        # useful enough.
-        # Glint particle effects.
-        vertical_spawn_range = (
-            battlestation_glow_rect.height - 2 * self.BATTLESTATION_GLINT_MARGIN
-        )
-        for glint_index in range(self.BATTLESTATION_GLINT_COUNT):
-            glint_time = (
-                self.battlestation_effect_time
-                + glint_index
-                * self.BATTLESTATION_GLINT_CYCLE
-                / self.BATTLESTATION_GLINT_COUNT
-            )
-            glint_age = glint_time % self.BATTLESTATION_GLINT_CYCLE
-            if glint_age >= self.BATTLESTATION_GLINT_LIFETIME:
-                continue
-
-            cycle_index = math.floor(glint_time / self.BATTLESTATION_GLINT_CYCLE)
-            glint_progress = glint_age / self.BATTLESTATION_GLINT_LIFETIME
-            glint_strength = (1 - glint_progress) ** 1.5
-            spawn_y = (
-                self.BATTLESTATION_GLINT_MARGIN
-                + (cycle_index * 19 + glint_index * 31) % vertical_spawn_range
-            )
-            y_ratio = spawn_y / (battlestation_glow_rect.height - 1)
-            cone_width = round(
-                battlestation_glow_rect.width
-                - (battlestation_glow_rect.width - 2) * y_ratio
-            )
-            half_spawn_width = cone_width / 2 - self.BATTLESTATION_GLINT_MARGIN
-            spawn_x = (
-                (cycle_index * 29 + glint_index * 17) % (2 * half_spawn_width)
-                - half_spawn_width
-            )
-            spawn_center = pygame.Vector2(
-                battlestation_glow_rect.centerx + spawn_x,
-                battlestation_glow_rect.top + spawn_y,
-            )
-            glint_center = spawn_center - pygame.Vector2(
-                0,
-                self.BATTLESTATION_GLINT_DRIFT * glint_progress,
-            )
-            if glint_center.y < battlestation_glow_rect.top:
-                continue
-            self._draw_battlestation_glint(
-                surface,
-                glint_center,
-                Color.HOLOGRAM_GLOW if self.is_player else Color.SIREN_HOLOGRAM_GLOW,
-                glint_strength,
-            )
-        if self.is_player:
-            # The player battlestation includes the reload gauge, hp, and exp bar.
             reload_gauge_size = 48
-            battlestation_back = pygame.Surface((battlestation_glow_rect.width, reload_gauge_size + 2 * Box.PADDING))
-            battlestation_panel_color = Color.HOLOGRAM_GLOW
+            size = (glow.get_width(), reload_gauge_size + 2 * Box.PADDING)
         else:
-            # The siren battlestation includes the level, siren name, and hp bar.
             siren_id_size = 24
             hp_bar_size = 16
-            battlestation_back = pygame.Surface((battlestation_glow_rect.width, siren_id_size + hp_bar_size + 3 * Box.PADDING))
-            battlestation_panel_color = Color.SIREN_HOLOGRAM_GLOW
-        battlestation_rect = battlestation_back.get_rect()
-        battlestation_rect.midbottom = battlestation_glow_rect.midtop
-        battlestation_back.fill([c // 3 for c in battlestation_panel_color])
+            size = (glow.get_width(), siren_id_size + hp_bar_size + 3 * Box.PADDING)
+        back = pygame.Surface(size)
+        back.fill([channel // 3 for channel in panel_color])
 
-        # This is the panel for the hp bar.
-        hull_sprite = pygame.transform.flip(
-            DataFiles.sprites["encounter"]["hull"],
-            flip_x=not self.is_player, flip_y=False
-        )
-        hull_rect = hull_sprite.get_rect()
+        # Pre-render embedded panels for different UI elements on the battlestation
+        # onto the back panel.
+        hull_rect = DataFiles.sprites["encounter"]["hull"].get_rect()
         if self.is_player:
-            hull_rect.right = battlestation_rect.width - Box.PADDING
-            hull_rect.bottom = battlestation_rect.height - Box.PADDING
+            hull_rect.right = size[0] - Box.PADDING
+            hull_rect.bottom = size[1] - Box.PADDING
         else:
-            hull_rect.centerx = battlestation_rect.width / 2
-            hull_rect.bottom = battlestation_rect.height - Box.PADDING
+            hull_rect.centerx = size[0] / 2
+            hull_rect.bottom = size[1] - Box.PADDING
         hull_panel_rect = hull_rect.inflate(Box.PADDING, Box.PADDING)
-        pygame.draw.rect(battlestation_back, [c // 2 for c in battlestation_panel_color], hull_panel_rect)
-        pygame.draw.rect(battlestation_back, battlestation_panel_color, hull_panel_rect, width=Box.OUTLINE_WIDTH)
+        pygame.draw.rect(back, [channel // 2 for channel in panel_color], hull_panel_rect)
+        pygame.draw.rect(back, panel_color, hull_panel_rect, width=Box.OUTLINE_WIDTH)
 
+        cache = {
+            "rigging": rigging,
+            "glow": glow,
+            "pulsing_glow": pygame.Surface(glow.get_size()),
+            "back": back,
+            "content": pygame.Surface(size, flags=pygame.SRCALPHA),
+            "static_content": pygame.Surface(size, flags=pygame.SRCALPHA),
+            "pulsing_back": pygame.Surface(size),
+            "pulsing_content": pygame.Surface(size, flags=pygame.SRCALPHA),
+            "hull_rect": hull_rect,
+            "displayed_level": None,
+            "glint": pygame.Surface((
+                2 * self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
+                2 * self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
+            )),
+        }
+        # Pre-generate the hull silhouette surfaces.
+        hull_surfaces = self._battlestation_hulls.get(self.is_player)
+        if hull_surfaces is None:
+            hp_color = (0, 255, 205) if self.is_player else (255, 0, 50)
+            hull_surfaces = (
+                pygame.transform.flip(
+                    DataFiles.recolor_sprite("encounter", "hull", Color.EXP_BAR_BG),
+                    not self.is_player,
+                    False,
+                ),
+                pygame.transform.flip(
+                    DataFiles.recolor_sprite("encounter", "hull", hp_color),
+                    not self.is_player,
+                    False,
+                ),
+            )
+            self._battlestation_hulls[self.is_player] = hull_surfaces
+        cache["hull_back"], cache["hull_fill"] = hull_surfaces
+        # Pre-generate the star and attack icons.
         if self.is_player:
-            # Panel for the exp bar.
-            star_icon = DataFiles.sprites["encounter"]["star"]
-            star_rect = star_icon.get_rect()
-            bar_width = 56
-            bar_height = 8
+            star = DataFiles.sprites["encounter"]["star"]
+            star_rect = star.get_rect()
+            # Pre-render the exp panel onto the back panel.
             bar_background = get_rect(
-                width=bar_width, height=bar_height,
-                right=battlestation_rect.width - Box.PADDING,
-                centery=Box.PADDING + star_rect.height / 2
+                width=56,
+                height=8,
+                right=size[0] - Box.PADDING,
+                centery=Box.PADDING + star_rect.height / 2,
             )
             star_rect.center = bar_background.midleft
             exp_panel_rect = bar_background.union(star_rect).inflate(Box.PADDING, Box.PADDING)
-            pygame.draw.rect(battlestation_back, [c // 2 for c in battlestation_panel_color], exp_panel_rect)
-            pygame.draw.rect(battlestation_back, battlestation_panel_color, exp_panel_rect, width=Box.OUTLINE_WIDTH)
-
-            # Panel for the reload gauge.
+            pygame.draw.rect(back, [channel // 2 for channel in panel_color], exp_panel_rect)
+            pygame.draw.rect(back, panel_color, exp_panel_rect, width=Box.OUTLINE_WIDTH)
+            # Pre-render the reload gauge panel onto the back panel.
             outer_radius = 24
-            center = (
-                pygame.Vector2(outer_radius, outer_radius)
-                + pygame.Vector2(Box.PADDING, Box.PADDING)
-            )
+            center = pygame.Vector2(outer_radius + Box.PADDING, outer_radius + Box.PADDING)
             reload_panel_rect = get_rect(
                 width=2 * outer_radius + Box.PADDING,
                 height=2 * outer_radius + Box.PADDING,
                 centerx=center.x,
                 centery=center.y,
             )
-            pygame.draw.rect(battlestation_back, [c // 2 for c in battlestation_panel_color], reload_panel_rect)
-            pygame.draw.rect(battlestation_back, battlestation_panel_color, reload_panel_rect, width=Box.OUTLINE_WIDTH)
+            pygame.draw.rect(back, [channel // 2 for channel in panel_color], reload_panel_rect)
+            pygame.draw.rect(back, panel_color, reload_panel_rect, width=Box.OUTLINE_WIDTH)
+            if self.hull_type == "CV":
+                attack_icon = DataFiles.sprites["user_interface"]["air_attack"]
+            elif self.hull_type == "SS":
+                attack_icon = DataFiles.sprites["user_interface"]["torp_attack"]
+            else:
+                attack_icon = DataFiles.sprites["user_interface"]["shell_attack"]
+            cache.update({
+                "star": star,
+                "star_rect": star_rect,
+                "bar_background": bar_background,
+                "center": center,
+                "outer_radius": outer_radius,
+                "attack_icon": attack_icon,
+                "attack_icon_rect": attack_icon.get_rect(center=center),
+                "annulus": pygame.Surface((2 * outer_radius, 2 * outer_radius)),
+                "level_up": None,
+            })
         else:
-            # Panel for the siren info i.e. level and name.
+            # Pre-render the siren ID panel onto the back panel.
             siren_info_panel = get_rect(
-                width=battlestation_rect.width - Box.PADDING,
+                width=size[0] - Box.PADDING,
                 height=siren_id_size,
-                centerx=battlestation_rect.width / 2,
+                centerx=size[0] / 2,
                 top=Box.PADDING / 2,
             )
-            pygame.draw.rect(battlestation_back, [c // 2 for c in battlestation_panel_color], siren_info_panel)
-            pygame.draw.rect(battlestation_back, battlestation_panel_color, siren_info_panel, width=Box.OUTLINE_WIDTH)
+            pygame.draw.rect(back, [channel // 2 for channel in panel_color], siren_info_panel)
+            pygame.draw.rect(back, panel_color, siren_info_panel, width=Box.OUTLINE_WIDTH)
+            star = DataFiles.sprites["encounter"]["star"]
+            cache.update({
+                "star": star,
+                "star_rect": star.get_rect(topleft=(Box.PADDING, Box.PADDING)),
+            })
+        return cache
 
-        battlestation_surf = pygame.Surface(battlestation_back.get_size(), flags=pygame.SRCALPHA)
-
-        # Draw the hp bar, which is stylized as the side silhouette of a hull.
-        hp_pct = self.hp / self.stat("max_hp")
-        hull_back = pygame.transform.flip(
-            DataFiles.recolor_sprite("encounter", "hull", Color.EXP_BAR_BG),
-            flip_x=not self.is_player, flip_y=False
+    def _refresh_battlestation_static_content(
+        self, cache: dict, font_registry: dict[str, Font]
+    ):
+        """Render labels and icons only when their displayed level changes."""
+        displayed_level = self.last_level if self.is_player else Stats.level(self.exp)
+        if cache["displayed_level"] == displayed_level:
+            return
+        static_content = cache["static_content"]
+        static_content.fill((0, 0, 0, 0))
+        # Draw star and level text.
+        star = cache["star"]
+        star_rect = cache["star_rect"]
+        static_content.blit(star, star_rect)
+        font_registry["pixel"].render(
+            static_content,
+            str(displayed_level),
+            star_rect.center,
+            Color.WHITE,
+            scale=1,
+            style="center",
+            outline_color=Color.BLACK,
         )
-        battlestation_surf.blit(hull_back, hull_rect)
-
-        hp_bar_color = (0, 255, 205) if self.is_player else (255, 0, 50)
-        hull_fill = pygame.transform.flip(
-            DataFiles.recolor_sprite("encounter", "hull", hp_bar_color),
-            flip_x=not self.is_player, flip_y=False
-        )
-        missing_hp_rect = get_rect(width=hull_rect.width * (1 - hp_pct), height=hull_rect.height, left=0, top=0)
         if self.is_player:
-            missing_hp_rect.right = hull_rect.width
-        pygame.draw.rect(hull_fill, (255, 0, 0), missing_hp_rect)
-        battlestation_surf.blit(hull_fill, hull_rect)
-
-        if not self.is_player:
-            # Draw the level and name for the siren.
-            star_icon = DataFiles.sprites["encounter"]["star"]
-            star_rect = star_icon.get_rect(
-                topleft=(Box.PADDING, Box.PADDING)
-            )
-            battlestation_surf.blit(star_icon, star_rect)
-            font_registry["pixel"].render(
-                battlestation_surf,
-                str(Stats.level(self.exp)),
-                star_rect.center,
-                Color.WHITE,
-                scale=1,
-                style="center",
-                outline_color=Color.BLACK,
-            )
+            # Generate the level up text surf.
+            static_content.blit(cache["attack_icon"], cache["attack_icon_rect"])
+            if cache["level_up"] is None:
+                font = font_registry["big_pixel"]
+                level_up = pygame.Surface((
+                    font.get_width("level up!", scale=1, box_width=0),
+                    font.get_height("level up!", scale=1, box_width=0),
+                ))
+                level_up.set_colorkey((0, 0, 0))
+                font.render(
+                    level_up,
+                    "level up!",
+                    level_up.get_rect().center,
+                    Color.WHITE,
+                    scale=1,
+                    style="center",
+                )
+                cache["level_up"] = level_up
+        else:
+            # Render the siren id.
             font_registry["big_pixel"].render(
-                battlestation_surf,
+                static_content,
                 f"{self.name} [{self.hull_type}]",
                 (star_rect.right + Box.PADDING, star_rect.centery),
                 Color.WHITE,
@@ -695,100 +671,148 @@ class ShipgirlBattleComponent:
                 style="centerleft",
                 outline_color=Color.BLACK,
             )
+        cache["displayed_level"] = displayed_level
 
-            # Use additive rendering for the battlestation panel.
-            battlestation_back.set_alpha(battlestation_alpha)
-            pulsing_battlestation_back = pygame.Surface(battlestation_back.get_size())
-            pulsing_battlestation_back.blit(battlestation_back, (0, 0))
-            surface.blit(
-                pulsing_battlestation_back,
-                battlestation_rect,
-                special_flags=pygame.BLEND_RGB_ADD,
-            )
-            # The battlestation content has an opacity which matches the pulsing.
-            battlestation_surf.set_alpha(battlestation_alpha)
-            pulsing_battlestation_surf = pygame.Surface(battlestation_surf.get_size(), flags=pygame.SRCALPHA)
-            pulsing_battlestation_surf.blit(battlestation_surf, (0, 0))
-            surface.blit(
-                pulsing_battlestation_surf,
-                battlestation_rect,
-            )
+    def draw_battlestation(self, surface: pygame.Surface, font_registry: dict[str, Font], rect: pygame.Surface):
+        """Draw the shipgirl's battlestation from cached static artwork."""
+        if self.hp <= 0:
             return
+        if self._battlestation_render_cache is None:
+            self._battlestation_render_cache = self._create_battlestation_render_cache()
+        cache = self._battlestation_render_cache
+        self._refresh_battlestation_static_content(cache, font_registry)
+        # Draw the rigging sprite.
+        rigging = cache["rigging"]
+        rigging_rect = rigging.get_rect()
+        if self.is_player:
+            rigging_rect.left = rect.left
+        else:
+            rigging_rect.right = rect.right
+        rigging_rect.centery = rect.centery + rigging_rect.height / 3
+        glow = cache["glow"]
+        glow_rect = glow.get_rect()
+        glow_rect.centerx = rigging_rect.centerx + (-Box.WIDTH / 4 if self.is_player else Box.WIDTH / 4)
+        glow_rect.bottom = rigging_rect.centery
+        surface.blit(rigging, rigging_rect)
+        # Draw the conic glow sprite.
+        pulse = (math.sin(self.battlestation_effect_time * math.tau / self.BATTLESTATION_PULSE_DURATION) + 1) / 2
+        battlestation_alpha = int(192 + 63 * pulse)
+        glow.set_alpha(battlestation_alpha)
+        cache["pulsing_glow"].fill((0, 0, 0))
+        cache["pulsing_glow"].blit(glow, (0, 0))
+        surface.blit(cache["pulsing_glow"], glow_rect, special_flags=pygame.BLEND_RGB_ADD)
+        # Glint particles.
+        vertical_spawn_range = glow_rect.height - 2 * self.BATTLESTATION_GLINT_MARGIN
+        for glint_index in range(self.BATTLESTATION_GLINT_COUNT):
+            glint_time = self.battlestation_effect_time + glint_index * self.BATTLESTATION_GLINT_CYCLE / self.BATTLESTATION_GLINT_COUNT
+            glint_age = glint_time % self.BATTLESTATION_GLINT_CYCLE
+            if glint_age >= self.BATTLESTATION_GLINT_LIFETIME:
+                continue
+            cycle_index = math.floor(glint_time / self.BATTLESTATION_GLINT_CYCLE)
+            glint_progress = glint_age / self.BATTLESTATION_GLINT_LIFETIME
+            glint_strength = (1 - glint_progress) ** 1.5
+            spawn_y = self.BATTLESTATION_GLINT_MARGIN + (cycle_index * 19 + glint_index * 31) % vertical_spawn_range
+            y_ratio = spawn_y / (glow_rect.height - 1)
+            cone_width = round(glow_rect.width - (glow_rect.width - 2) * y_ratio)
+            half_spawn_width = cone_width / 2 - self.BATTLESTATION_GLINT_MARGIN
+            spawn_x = (cycle_index * 29 + glint_index * 17) % (2 * half_spawn_width) - half_spawn_width
+            glint_center = pygame.Vector2(
+                glow_rect.centerx + spawn_x,
+                glow_rect.top + spawn_y - self.BATTLESTATION_GLINT_DRIFT * glint_progress,
+            )
+            if glint_center.y >= glow_rect.top:
+                self._draw_battlestation_glint(
+                    surface,
+                    glint_center,
+                    Color.HOLOGRAM_GLOW if self.is_player else Color.SIREN_HOLOGRAM_GLOW,
+                    glint_strength,
+                    cache["glint"],
+                )
 
-        # Draw the exp bar with a sliding animation.
-        exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
-        bar_fill = get_rect(
-            width=bar_width * Stats.level_progress(exp_animation), height=bar_background.height,
-            left=bar_background.left, top=bar_background.top
-        )
-        pygame.draw.rect(battlestation_surf, Color.EXP_BAR_BG, bar_background)
-        pygame.draw.rect(battlestation_surf, Color.EXP_BAR_FILL, bar_fill)
-        battlestation_surf.blit(star_icon, star_rect)
-        font_registry["pixel"].render(
-            battlestation_surf,
-            str(self.last_level),
-            star_rect.center,
-            Color.WHITE,
-            scale=1,
-            style="center",
-            outline_color=Color.BLACK
-        )
+        content = cache["content"]
+        content.fill((0, 0, 0, 0))
+        # Draw the hull HP silhouette.
+        hull_rect = cache["hull_rect"]
+        content.blit(cache["hull_back"], hull_rect)
+        hp_pct = max(0, min(1, self.hp / self.stat("max_hp")))
+        filled_width = hull_rect.width - int(hull_rect.width * (1 - hp_pct))
+        if filled_width > 0:
+            if self.is_player:
+                source_rect = pygame.Rect(0, 0, filled_width, hull_rect.height)
+                fill_pos = hull_rect.topleft
+            else:
+                source_rect = pygame.Rect(hull_rect.width - filled_width, 0, filled_width, hull_rect.height)
+                fill_pos = (hull_rect.right - filled_width, hull_rect.top)
+            content.blit(cache["hull_fill"], fill_pos, area=source_rect)
 
-        if self.level_timer > 0:
+        if self.is_player:
+            # Draw the exp bar.
+            bar_background = cache["bar_background"]
+            exp_animation = self.last_exp + (self.exp - self.last_exp) * self.exp_timer
+            bar_fill = get_rect(
+                width=bar_background.width * Stats.level_progress(exp_animation),
+                height=bar_background.height,
+                left=bar_background.left,
+                top=bar_background.top,
+            )
+            pygame.draw.rect(content, Color.EXP_BAR_BG, bar_background)
+            pygame.draw.rect(content, Color.EXP_BAR_FILL, bar_fill)
+            # Draw the reload gauge.
+            center = cache["center"]
+            outer_radius = cache["outer_radius"]
+            draw_annulus(
+                content, Color.EXP_BAR_BG, center, 13, outer_radius - 1,
+                start_angle=0, stop_angle=360, scratch_surface=cache["annulus"],
+            )
+            gauge_color = (50, 200, 50) if self.target is not None else (200, 50, 50)
+            draw_annulus(
+                content, gauge_color, center, 12, outer_radius, -90,
+                -90 + (1 - self.cooldown_timer) * 360,
+                scratch_surface=cache["annulus"],
+            )
+        # Draw static content.
+        content.blit(cache["static_content"], (0, 0))
+        # Draw level-up text.
+        if self.is_player and self.level_timer > 0:
             t = 1 - self.level_timer
             y = rect.top - rect.height * t
-            font_registry["big_pixel"].render(surface, "level up!", (rect.centerx, y), Color.WHITE, scale=1, style="center")
-
-        # Draw the reload gauge.
-        inner_radius = 12
-        start_angle = -90
-        stop_angle = start_angle + (1 - self.cooldown_timer) * 360
-        gauge_color = (50, 200, 50) if self.target is not None else (200, 50, 50)
-        draw_annulus(battlestation_surf, Color.EXP_BAR_BG, center, inner_radius + 1, outer_radius - 1, start_angle=0, stop_angle=360)
-        draw_annulus(battlestation_surf, gauge_color, center, inner_radius, outer_radius, start_angle, stop_angle)
-        if self.hull_type == "CV":
-            attack_icon = DataFiles.sprites["user_interface"]["air_attack"]
-        elif self.hull_type == "SS":
-            attack_icon = DataFiles.sprites["user_interface"]["torp_attack"]
-        else:
-            attack_icon = DataFiles.sprites["user_interface"]["shell_attack"]
-        attack_icon_rect = attack_icon.get_rect()
-        attack_icon_rect.center = center
-        battlestation_surf.blit(attack_icon, attack_icon_rect)
-
-        # Use additive rendering for the battlestation panel.
-        battlestation_back.set_alpha(battlestation_alpha)
-        pulsing_battlestation_back = pygame.Surface(battlestation_back.get_size())
-        pulsing_battlestation_back.blit(battlestation_back, (0, 0))
-        surface.blit(
-            pulsing_battlestation_back,
-            battlestation_rect,
-            special_flags=pygame.BLEND_RGB_ADD,
-        )
-        # The battlestation content has an opacity which matches the pulsing.
-        battlestation_surf.set_alpha(battlestation_alpha)
-        pulsing_battlestation_surf = pygame.Surface(battlestation_surf.get_size(), flags=pygame.SRCALPHA)
-        pulsing_battlestation_surf.blit(battlestation_surf, (0, 0))
-        surface.blit(
-            pulsing_battlestation_surf,
-            battlestation_rect,
-        )
+            surface.blit(
+                cache["level_up"],
+                cache["level_up"].get_rect(center=(rect.centerx, y)),
+            )
+        # Render back and content with the correct opacities / additive rendering.
+        battlestation_rect = cache["back"].get_rect(midbottom=glow_rect.midtop)
+        cache["back"].set_alpha(battlestation_alpha)
+        cache["pulsing_back"].fill((0, 0, 0))
+        cache["pulsing_back"].blit(cache["back"], (0, 0))
+        surface.blit(cache["pulsing_back"], battlestation_rect, special_flags=pygame.BLEND_RGB_ADD)
+        content.set_alpha(battlestation_alpha)
+        cache["pulsing_content"].fill((0, 0, 0, 0))
+        cache["pulsing_content"].blit(content, (0, 0))
+        surface.blit(cache["pulsing_content"], battlestation_rect)
 
     # TODO Consider whether this is repeated code and all glint drawing helpers are similar.
     def _draw_battlestation_glint(
-        self, surface: pygame.Surface, center: CoordinateType, color: ColorType, strength: float
+        self,
+        surface: pygame.Surface,
+        center: CoordinateType,
+        color: ColorType,
+        strength: float,
+        glint_surface: pygame.Surface | None = None,
     ):
         """Draw the glint particle effects for the battlestation."""
+        # The glint surface is re-used rather than instantiated for every glint every frame.
         glint_length = 1 + round(
             (self.BATTLESTATION_GLINT_MAX_LENGTH - 1) * strength
         )
         glint_color = tuple(round(channel * strength) for channel in color)
-        glint_surface = pygame.Surface(
-            (
+        if glint_surface is None:
+            glint_surface = pygame.Surface((
                 2 * self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
                 2 * self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
-            )
-        )
+            ))
+        else:
+            glint_surface.fill((0, 0, 0))
         glint_surface_center = pygame.Vector2(
             self.BATTLESTATION_GLINT_MAX_LENGTH,
             self.BATTLESTATION_GLINT_MAX_LENGTH,

@@ -153,13 +153,13 @@ async def main():
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
-            # if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-            #     # Dev util that allows me to save and "reload" the game.
-            #     for shipgirl in menu_manager.available_shipgirls:
-            #         DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
-            #     with open("data/save_file.json", "w") as f:
-            #         json.dump(DataFiles.save_file, f, indent=4)
-            #     menu_manager = MenuManager()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                # Dev util that allows me to save and "reload" the game.
+                for shipgirl in menu_manager.available_shipgirls:
+                    DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
+                with open("data/save_file.json", "w") as f:
+                    json.dump(DataFiles.save_file, f, indent=4)
+                menu_manager = MenuManager()
 
             events.append(event)
 
@@ -167,8 +167,7 @@ async def main():
 
         # Clear the previous frame. Each menu can draw its own background over this.
         display.fill(Color.BLACK)
-        with profile(f"draw {menu_manager.current_menu.__class__}"):
-            menu_manager.current_menu.draw(display, font_registry)
+        menu_manager.current_menu.draw(display, font_registry)
         if not menu_manager.encounter_menu.transition_active:
             for quest in menu_manager.quest_manager.started_quests.values():
                 if quest.started and not quest.completed:

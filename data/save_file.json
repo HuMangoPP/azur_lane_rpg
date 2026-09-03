@@ -9,7 +9,7 @@
                 "repair_toolkit",
                 "ap_shell"
             ],
-            "exp": 7288
+            "exp": 8368
         },
         "new_jersey": {
             "equipment": [
@@ -17,7 +17,7 @@
                 "autoloader",
                 "steering_gear"
             ],
-            "exp": 7288
+            "exp": 8368
         },
         "guam": {
             "equipment": [
@@ -25,7 +25,7 @@
                 "steering_gear",
                 "ap_shell"
             ],
-            "exp": 7276
+            "exp": 8356
         },
         "san_diego": {
             "equipment": [
@@ -33,7 +33,7 @@
                 "repair_toolkit",
                 "ap_shell"
             ],
-            "exp": 6916
+            "exp": 7996
         },
         "albacore": {
             "equipment": [
@@ -41,7 +41,7 @@
                 "repair_toolkit",
                 "autoloader"
             ],
-            "exp": 6060
+            "exp": 7140
         },
         "enterprise": {
             "equipment": [
@@ -49,7 +49,7 @@
                 "autoloader",
                 "steering_gear"
             ],
-            "exp": 5158
+            "exp": 6238
         }
     },
     "equipment": {
@@ -84,7 +84,9 @@
         "prank_of_the_day": 0,
         "twenty_battle_stars": 0
     },
-    "specialized_wisdom_cubes": {},
+    "specialized_wisdom_cubes": {
+        "ayanami": 960
+    },
     "decoration_depot": {
         "bed": 0
     },
@@ -98,7 +100,7 @@
             true
         ]
     ],
-    "research_target": null,
+    "research_target": "ayanami",
     "sortie_progress": 24,
     "chapter_progress": 3,
     "quests": {

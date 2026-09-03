@@ -50,7 +50,8 @@ def draw_annulus(
     outer_radius: float,
     start_angle: float,
     stop_angle: float,
-    resolution: float = 10
+    resolution: float = 10,
+    scratch_surface: pygame.Surface | None = None,
 ):
     """Draw an annulus with the given parameters."""
     points = [pygame.Vector2(outer_radius, outer_radius)]
@@ -65,7 +66,10 @@ def draw_annulus(
             vec = get_vec(outer_radius, math.radians(angle))
             points.append(points[0] + vec)
         
-        annulus = pygame.Surface((2 * outer_radius, 2 * outer_radius))
+        annulus_size = (round(2 * outer_radius), round(2 * outer_radius))
+        annulus = scratch_surface
+        if annulus is None or annulus.get_size() != annulus_size:
+            annulus = pygame.Surface(annulus_size)
         annulus.fill((0, 0, 0))
         pygame.draw.polygon(annulus, color, points)
         pygame.draw.circle(annulus, (0, 0, 0), (outer_radius, outer_radius), inner_radius)

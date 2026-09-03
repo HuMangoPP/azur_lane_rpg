@@ -85,9 +85,11 @@ class VFX:
         self.lifetime += (dt + abs(self.delay))
         self.delay = 0
 
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+    def draw(
+        self, surface: pygame.Surface, font_registry: dict[str, Font]
+    ) -> pygame.Rect | None:
         """Draw the vfx."""
-        pass
+        return None
 
 
 class Spark(VFX):
@@ -108,8 +110,12 @@ class Spark(VFX):
         self.size = size
         self.fly_distance = fly_distance
         self.spark_angle = angle
+        self.spark_dir = get_vec(1, self.spark_angle)
+        self.spark_perp = pygame.Vector2(-self.spark_dir.y, self.spark_dir.x)
 
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+    def draw(
+        self, surface: pygame.Surface, font_registry: dict[str, Font]
+    ) -> pygame.Rect | None:
         """Draw the spark."""
         if self.delay > 0:
             return
@@ -117,18 +123,16 @@ class Spark(VFX):
         t = min(1, self.lifetime / self.duration)
         quadratic_ease = 1 - (t - 1) ** 2
         linear_decay = 1 - t
-        spark_dir = get_vec(1, self.spark_angle)
-        spark_perp = pygame.Vector2(-spark_dir.y, spark_dir.x)
         spark_length = self.size[0] * linear_decay
         spark_width = self.size[1] * linear_decay
-        spark_pos = self.pos + spark_dir * self.fly_distance * quadratic_ease
+        spark_pos = self.pos + self.spark_dir * self.fly_distance * quadratic_ease
         spark_polygon = [
-            spark_pos + spark_dir * spark_length,
-            spark_pos + spark_perp * spark_width,
-            spark_pos - spark_dir * spark_length,
-            spark_pos - spark_perp * spark_width
+            spark_pos + self.spark_dir * spark_length,
+            spark_pos + self.spark_perp * spark_width,
+            spark_pos - self.spark_dir * spark_length,
+            spark_pos - self.spark_perp * spark_width
         ]
-        pygame.draw.polygon(surface, self.color, spark_polygon)
+        return pygame.draw.polygon(surface, self.color, spark_polygon)
 
 
 class Ring(VFX):
@@ -146,7 +150,9 @@ class Ring(VFX):
         self.radius = radius
         self.color = color
     
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+    def draw(
+        self, surface: pygame.Surface, font_registry: dict[str, Font]
+    ) -> pygame.Rect | None:
         """Draw the ring."""
         if self.delay > 0:
             return
@@ -156,7 +162,9 @@ class Ring(VFX):
         boom_radius = self.radius * quadratic_ease
         boom_width = 2 + 16 * (1 - quadratic_ease)
         boom_width = int(min(boom_radius, boom_width))
-        pygame.draw.circle(surface, self.color, self.pos, boom_radius, width=boom_width)
+        return pygame.draw.circle(
+            surface, self.color, self.pos, boom_radius, width=boom_width
+        )
 
 
 class Slash(VFX):
@@ -175,7 +183,9 @@ class Slash(VFX):
         self.perpendicular = pygame.Vector2(-self.direction.y, self.direction.x)
         self.color = color
 
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+    def draw(
+        self, surface: pygame.Surface, font_registry: dict[str, Font]
+    ) -> pygame.Rect | None:
         """Draw the slash."""
         if self.delay > 0:
             return
@@ -192,7 +202,7 @@ class Slash(VFX):
             hit_pos - self.direction * hit_length,
             hit_pos - self.perpendicular * hit_width
         ]
-        pygame.draw.polygon(surface, self.color, hit_polygon)
+        return pygame.draw.polygon(surface, self.color, hit_polygon)
 
 
 class Smoke(VFX):
@@ -213,25 +223,38 @@ class Smoke(VFX):
         self.color = color
         self.size = int(size)
         self.drift_distance = drift_distance
+        self.direction = get_vec(1, self.angle)
+        self.smoke_surf = pygame.Surface(
+            (self.size, self.size), flags=pygame.SRCALPHA
+        )
+        self.smoke_rect = self.smoke_surf.get_rect()
+        self.smoke_center = pygame.Vector2(self.smoke_rect.center)
 
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+    def draw(
+        self, surface: pygame.Surface, font_registry: dict[str, Font]
+    ) -> pygame.Rect | None:
         """Draw the smoke."""
         if self.delay > 0:
             return
         
-        smoke_surf = pygame.Surface((self.size, self.size))
-        smoke_surf.set_colorkey((0, 0, 0))
-        rect = smoke_surf.get_rect()
-        pygame.draw.circle(smoke_surf, self.color, rect.center, self.size / 2)
+        self.smoke_surf.fill((0, 0, 0, 0))
+        pygame.draw.circle(
+            self.smoke_surf, self.color, self.smoke_center, self.size / 2
+        )
 
         t = min(1, self.lifetime / self.duration)
-        offset_circle_pos = pygame.Vector2(rect.center) + get_vec(-self.size / 2 + self.size / 2 * t, self.angle)
+        offset_circle_pos = (
+            self.smoke_center
+            + self.direction * (-self.size / 2 + self.size / 2 * t)
+        )
         offset_circle_size = self.size / 1.5 * t
-        pygame.draw.circle(smoke_surf, (0, 0, 0), offset_circle_pos, offset_circle_size)
+        pygame.draw.circle(
+            self.smoke_surf, (0, 0, 0, 0), offset_circle_pos, offset_circle_size
+        )
 
-        smoke_pos = self.pos + get_vec(self.drift_distance * t, self.angle)
-        rect.center = smoke_pos
-        surface.blit(smoke_surf, rect)
+        smoke_pos = self.pos + self.direction * self.drift_distance * t
+        self.smoke_rect.center = smoke_pos
+        return surface.blit(self.smoke_surf, self.smoke_rect)
 
 
 class DamageCounter(VFX):
@@ -256,8 +279,11 @@ class DamageCounter(VFX):
         )
         self.float_distance = 48
         self.font_registry_scale = 3 if crit else 2
+        self.text_surf: pygame.Surface | None = None
 
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+    def draw(
+        self, surface: pygame.Surface, font_registry: dict[str, Font]
+    ) -> pygame.Rect | None:
         """Draw the damage counter."""
         if self.delay > 0:
             return
@@ -268,25 +294,30 @@ class DamageCounter(VFX):
         text_pos = self.pos - pygame.Vector2(0, y_offset)
 
         # TODO Consider implementing alpha capabilities directly into Font instead of using this workaround.
-        outline_padding = 2
-        text_surf = pygame.Surface((
-            font_registry["big_pixel"].get_width(self.text, self.font_registry_scale, 0) + outline_padding,
-            font_registry["big_pixel"].get_height(self.text, self.font_registry_scale, 0) + outline_padding,
-        ))
-        text_surf.set_colorkey((0, 0, 0))
-        font_registry["big_pixel"].render(
-            text_surf,
-            self.text,
-            pygame.Vector2(text_surf.get_rect().center),
-            self.color,
-            self.font_registry_scale,
-            style="center",
-            outline_color=self.outline_color,
-        )
-        text_surf.set_alpha(alpha)
+        if self.text_surf is None:
+            outline_padding = 2
+            self.text_surf = pygame.Surface((
+                font_registry["big_pixel"].get_width(
+                    self.text, self.font_registry_scale, 0
+                ) + outline_padding,
+                font_registry["big_pixel"].get_height(
+                    self.text, self.font_registry_scale, 0
+                ) + outline_padding,
+            ))
+            self.text_surf.set_colorkey((0, 0, 0))
+            font_registry["big_pixel"].render(
+                self.text_surf,
+                self.text,
+                pygame.Vector2(self.text_surf.get_rect().center),
+                self.color,
+                self.font_registry_scale,
+                style="center",
+                outline_color=self.outline_color,
+            )
+        self.text_surf.set_alpha(alpha)
 
-        rect = text_surf.get_rect(center=text_pos)
-        surface.blit(text_surf, rect)
+        rect = self.text_surf.get_rect(center=text_pos)
+        return surface.blit(self.text_surf, rect)
 
 
 # TODO Consider whether or not a trimmed version of this (i.e. only clear, update, and draw APIs)
@@ -296,6 +327,8 @@ class VFXManager:
     def __init__(self):
         self.effects: list[VFX] = []
         self.wave_colors: list[ColorType] | None = None
+        self.overlay: pygame.Surface | None = None
+        self.dirty_rect: pygame.Rect | None = None
 
     def clear(self):
         """Clear the vfx."""
@@ -518,7 +551,26 @@ class VFXManager:
 
     def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the vfx."""
-        overlay = pygame.Surface(surface.get_size(), flags=pygame.SRCALPHA)
+        if self.overlay is None or self.overlay.get_size() != surface.get_size():
+            self.overlay = pygame.Surface(surface.get_size(), flags=pygame.SRCALPHA)
+            self.dirty_rect = None
+        elif self.dirty_rect is not None:
+            self.overlay.fill((0, 0, 0, 0), self.dirty_rect)
+
+        current_dirty_rect = None
         for effect in self.effects:
-            effect.draw(overlay, font_registry)
-        surface.blit(overlay, (0, 0))
+            effect_rect = effect.draw(self.overlay, font_registry)
+            if effect_rect is None or not effect_rect:
+                continue
+            if current_dirty_rect is None:
+                current_dirty_rect = effect_rect.copy()
+            else:
+                current_dirty_rect.union_ip(effect_rect)
+
+        self.dirty_rect = current_dirty_rect
+        if current_dirty_rect is not None:
+            surface.blit(
+                self.overlay,
+                current_dirty_rect,
+                area=current_dirty_rect,
+            )
