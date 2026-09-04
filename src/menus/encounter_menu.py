@@ -1419,10 +1419,11 @@ class EncounterMenu(Menu):
                         if backup_fleet_quest.quest_id in self.menu_manager.quest_manager.started_quests:
                             backup_fleet_quest.swap_attempted = True
 
-                    # The sirens should not be able to target the shipgirl that was just swapped out.
+                    # A siren attack that is en route is switched to attack the new target only for
+                    # this attack, then the siren will recompute the target once this attack finishes.
                     for siren in self.menu_manager.siren_fleet.fleet:
                         if siren.battle_component.target == self.selected_shipgirl:
-                            siren.battle_component.target = None
+                            siren.battle_component.target = backup_shipgirl
 
                     self.selected_shipgirl = None
                     self.selected_shipgirl_index = None

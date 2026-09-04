@@ -111,7 +111,7 @@ class ShipgirlBattleComponent:
         self.cooldown_timer = 1
         self.attack_animation = False
         self.attack_timer = 0
-        self.target: Shipgirl | DummyTarget = None
+        self.target: Shipgirl | DummyTarget | None = None
         self.evasion_gauge = 0
         self.ignite_timer = 0
         self.ignite_ticks = 0
@@ -244,6 +244,9 @@ class ShipgirlBattleComponent:
                 if random.randint(0, 99) < ignite_chance:
                     target.battle_component.ignite(ignite_damage, ignite_ticks)
             target.battle_component.shake()
+            # If target dies to this attack, disable its attack state.
+            # There is a bug where shipgirls will sometimes still be in an attacking state
+            # despite being sunk, which prevents them from swapping out.
             if target.battle_component.hp <= 0:
                 target.battle_component.target = None
                 target.battle_component.attack_animation = False
@@ -385,7 +388,7 @@ class ShipgirlBattleComponent:
                     for shipgirl in fleet.shipgirls:
                         if shipgirl is None:
                             continue
-                        if shipgirl.battle_component.hp < 0:
+                        if shipgirl.battle_component.hp <= 0:
                             continue
 
                         hit = self._deal_damage(shipgirl, vfx_manager)
@@ -403,19 +406,29 @@ class ShipgirlBattleComponent:
                     DataFiles.sfx["boom3"].play()
             return
 
-        # Allow sirens to change new targets when the shipgirl they were targeting is sunk.
-        if (
-            self.target_pref != "all"
-            and self.target is not None
-            and self.target.battle_component.hp <= 0
-        ):
-            self.target = None
-
         # Automatically attack the target when off-cooldown.
         reload_speed = self.stat("reload") / 1000
         self.cooldown_timer = max(0, self.cooldown_timer - reload_speed * dt)
         if self.target is not None and self.cooldown_timer <= 0:
             self.attack_animation = True
+            return
+
+        # For shipgirl's, if the target was sunk, release the target.
+        if (
+            self.is_player
+            and self.target is not None
+            and self.target.battle_component.hp <= 0
+        ):
+            self.target = None
+
+        # For sirens, allow it to recompute its target, so that it aligns with player expectations.
+        # The only time the siren will not attack the expected target is if the attack was already en route
+        # and the target was swapped out.
+        if (
+            not self.is_player
+            and self.target_pref != "all"
+        ):
+            self.target = None
 
     def _draw_attack(self, surface: pygame.Surface, rect: pygame.Rect, vfx_manager: VFXManager):
         """Helper to draw the attack based on the hull type."""
