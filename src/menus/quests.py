@@ -577,7 +577,13 @@ class Quest:
         ]
 
     def _draw_panel(
-        self, surface: pygame.Surface, rect: pygame.Rect, accent: ColorType, effect_time: float, intensity: float = 1
+        self,
+        surface: pygame.Surface,
+        rect: pygame.Rect,
+        accent: ColorType,
+        effect_time: float,
+        intensity: float = 1,
+        seed: int = 0,
     ):
         """Draw the panel."""
         # TODO Pulse constants should be global, as many pulses have this exact timing.
@@ -606,6 +612,7 @@ class Quest:
             effect_time,
             glint_count,
             intensity,
+            seed
         )
 
     @staticmethod
@@ -616,6 +623,7 @@ class Quest:
         effect_time: float,
         count: int,
         intensity: float,
+        seed: int
     ):
         """Draw glint particle effects."""
         cycle = 1.35
@@ -625,7 +633,7 @@ class Quest:
         surface.set_clip(rect)
 
         for glint_index in range(count):
-            glint_time = effect_time + glint_index * cycle / count
+            glint_time = effect_time + glint_index * cycle / count + seed * 3.14
             age = glint_time % cycle
             if age >= lifetime:
                 continue
@@ -682,7 +690,7 @@ class Quest:
         intensity: float = 1,
     ):
         """Draw the main text panel."""
-        self._draw_panel(surface, overlay, accent, effect_time, intensity)
+        self._draw_panel(surface, overlay, accent, effect_time, intensity, seed=0)
 
         tb_sprite = DataFiles.sprites["user_interface"]["TB"]
         tb_rect = tb_sprite.get_rect(
@@ -733,6 +741,7 @@ class Quest:
             accent,
             effect_time,
             intensity,
+            seed=5
         )
         header_x_margin = 14
         font_registry["big_pixel"].render(

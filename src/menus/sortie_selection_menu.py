@@ -17,8 +17,19 @@ from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.base_menu import Menu
 
 
-def anchor():
+def anchor() -> pygame.Vector2:
+    """Get the camera anchor."""
     return pygame.Vector2(screen_x(1), screen_y(1)) - SortieNode.center
+
+
+def sector_name_formatter(chapter_index: int, sortie_index: int) -> str:
+    """Get the sector name formatted as {chapter}-{sortie}."""
+    chapter_first_sortie_index = next(
+        index for index, sortie_data in enumerate(DataFiles.sortie_data)
+        if sortie_data["chapter"] == chapter_index
+    )
+    in_chapter_index = sortie_index - chapter_first_sortie_index
+    return f"sector {chapter_index + 1}-{in_chapter_index + 1}"
 
 
 class SortieNode:
@@ -254,6 +265,7 @@ class SortieNode:
                     for channel in outline
                 )
                 glint_surface = self._glint_surface
+                glint_surface.fill((0, 0, 0))
                 glint_surface_center = pygame.Vector2(
                     self.SELECTION_GLINT_MAX_LENGTH,
                     self.SELECTION_GLINT_MAX_LENGTH,
@@ -383,7 +395,7 @@ class Fog:
         small_cloud_indices = [4, 5, 6, 7, 8, 9]
         self.cloud_indices = [random.choice(small_cloud_indices) for _ in self.centroids]
         self.cloud_sprites: dict[int, pygame.Surface] = {
-            cloud_index: DataFiles.sprites["background"][f"cloud{cloud_index}"].copy()
+            cloud_index: DataFiles.recolor_sprite("background", f"cloud{cloud_index}", (192, 192, 192))
             for cloud_index in small_cloud_indices
         }
         self.cloud_shadow_sprites: dict[int, pygame.Surface] = {
@@ -994,6 +1006,8 @@ class SortieOrderCard:
             active=False,
         )
 
+        self.formatted_sector_name = "sector 0-0"
+
         self._cache_rect = pygame.Rect((0, 0), self.rect.size)
         self._cache_page_rect = self.page_rect.copy()
         self._cache_page_rect.centerx = self._cache_rect.centerx
@@ -1067,6 +1081,10 @@ class SortieOrderCard:
         self.authorization_pos = pygame.Vector2(self.button.rect.center)
         self.layout()
         self.button.active = authorize_immediately
+
+        self.formatted_sector_name = sector_name_formatter(
+            self.node.chapter, self.node.index
+        )
 
     def clear(self):
         """Clear the order card state."""
@@ -1200,7 +1218,7 @@ class SortieOrderCard:
         sector_text_scale = 2
         font.render(
             surface,
-            f"sector {self.node.index + 1:02d}",
+            self.formatted_sector_name,
             (left, sector_text_y),
             Color.DOSSIER_INK,
             sector_text_scale
@@ -1488,6 +1506,12 @@ class SortieSelectionMenu(Menu):
             self.menu_manager.encounter_menu.current_encounter = 0
             self.menu_manager.player_fleet.clear_fleet()
             self.menu_manager.siren_fleet.clear_fleet()
+
+            self.menu_manager.fleet_selection_menu.generate_path()
+
+            self.menu_manager.fleet_selection_menu.header_ribbon.text = sector_name_formatter(
+                self.selected_sortie_node.chapter, self.selected_sortie_node.index
+            )
 
             self.selected_sortie_node.hovered = False
             self.selected_sortie_node = None
@@ -1905,6 +1929,9 @@ class SortieSelectionMenu(Menu):
         for chapter_progress_annotation in self.chapter_progress_annotations:
             chapter_progress_annotation.draw(surface, font_registry)
 
+        for fog in self.fogs:
+            fog.draw(surface)
+
         # Draw the current objective indicator.
         current_sortie_node = next(
             (
@@ -1918,9 +1945,6 @@ class SortieSelectionMenu(Menu):
             current_objective_rect = current_objective.get_rect()
             current_objective_rect.midbottom = current_sortie_node.get_bounding_rect().midtop
             surface.blit(current_objective, current_objective_rect)
-
-        for fog in self.fogs:
-            fog.draw(surface)
 
         self.exit_sortie_selection_menu_button.draw(surface, font_registry)
 

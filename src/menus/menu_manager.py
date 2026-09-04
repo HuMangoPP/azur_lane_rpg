@@ -102,13 +102,6 @@ class MenuManager:
             self.equipment_menu.selected_shipgirl = None
             self.equipment_menu.shipgirl_x = None
             self.equipment_menu.selection_activation_time = 0
-        if menu is self.fleet_selection_menu:
-            if self.fleet_selection_menu.sortie_index < 0:
-                return
-            self.fleet_selection_menu.generate_path()
-            self.fleet_selection_menu.header_ribbon.text = (
-                f"sector {self.fleet_selection_menu.sortie_index + 1:02d}"
-            )
 
         # BGM hooks.
         if self._current_menu is None:

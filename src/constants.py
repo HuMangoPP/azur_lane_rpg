@@ -251,13 +251,19 @@ class DataFiles:
     def recolor_sprite(cls, sprite_group: str, sprite_key: str, color: ColorType) -> pygame.Surface:
         """Recolor the white pixels of the sprite to the target color."""
         sprite = cls.sprites[sprite_group][sprite_key]
-        sprite.set_colorkey((255, 255, 255))
+
+        # Loaded sprites are shared and may already be RLE-encoded. Changing the
+        # colorkey on that cached surface makes later recolors depend on its RLE
+        # state (and also leaves the sprite modified for every other caller).
+        # Work on a non-RLE copy so recoloring is repeatable and side-effect free.
+        recolor_mask = sprite.convert()
+        recolor_mask.set_colorkey(None)
+        recolor_mask.set_colorkey((255, 255, 255))
         colored_sprite = pygame.Surface(sprite.get_size())
         colored_sprite.fill(color)
-        colored_sprite.blit(sprite, (0, 0))
+        colored_sprite.blit(recolor_mask, (0, 0))
         colored_sprite = colored_sprite.convert()
         colored_sprite.set_colorkey((255, 0, 0), pygame.RLEACCEL)
-        sprite.set_colorkey((255, 0, 0), pygame.RLEACCEL)
         return colored_sprite
 
     @classmethod

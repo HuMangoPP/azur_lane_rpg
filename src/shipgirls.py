@@ -497,8 +497,15 @@ class ShipgirlBattleComponent:
         # The main idea is to pre-generate surfaces and re-use those surfaces
         # and rects instead of generating them every frame.
         allegiance = "shipgirl" if self.is_player else "siren"
+        rigging_name = (
+            "runway" if self.hull_type == "CV"
+            else (
+                "torpedo" if self.hull_type == "SS"
+                else "gun"
+            )
+        )
         panel_color = Color.HOLOGRAM_GLOW if self.is_player else Color.SIREN_HOLOGRAM_GLOW
-        rigging = DataFiles.sprites["encounter"][f"{allegiance}_rigging"]
+        rigging = DataFiles.sprites["encounter"][f"{allegiance}_{rigging_name}"]
         glow = DataFiles.sprites["encounter"][f"{allegiance}_battlestation_glow"].copy()
 
         # Back panel.

@@ -158,6 +158,7 @@ async def main():
                     DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
                 with open("data/save_file.json", "w") as f:
                     json.dump(DataFiles.save_file, f, indent=4)
+                DataFiles.bgm["lofi_loop"].stop()
                 menu_manager = MenuManager()
 
             events.append(event)

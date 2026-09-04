@@ -77,11 +77,16 @@ class EquipmentMenu(Menu):
         self._blueprint_render_key: tuple | None = None
 
         # Warehouse-themed equipment depot component.
-        num_equipment_per_row = 7
+        num_equipment_per_row = 6
         num_equipment_rows = 2
+        equipment_depot_content_width = (
+            num_equipment_per_row * Box.WIDTH
+            + (num_equipment_per_row - 1) * Box.PADDING
+            + Box.WIDTH
+        )
         equipment_depot_content_height = num_equipment_rows * (Box.HEIGHT + Box.PADDING) + Box.PADDING
         self.equipment_depot = get_rect(
-            width=num_equipment_per_row * (Box.WIDTH + Box.PADDING) + Box.PADDING,
+            width=equipment_depot_content_width,
             height=equipment_depot_content_height,
             right=self.blueprint_page.right + Box.WIDTH / 2,
             top=Box.BOTTOM_OF_SCREEN - equipment_depot_content_height
@@ -89,7 +94,7 @@ class EquipmentMenu(Menu):
         self.equippable_rects = [
             get_rect(
                 width=Box.WIDTH, height=Box.HEIGHT,
-                left=self.equipment_depot.left + Box.PADDING + (i % num_equipment_per_row) * (Box.WIDTH + Box.PADDING),
+                left=self.equipment_depot.left + Box.WIDTH / 2 + (i % num_equipment_per_row) * (Box.WIDTH + Box.PADDING),
                 top=self.equipment_depot.top + Box.PADDING + (i // num_equipment_per_row) * (Box.HEIGHT + Box.PADDING) 
             )
             for i in range(num_equipment_per_row * num_equipment_rows)
@@ -1265,36 +1270,6 @@ class EquipmentMenu(Menu):
         big_top_rope_rect.top = depot_decoration_top
         surface.blit(big_top_rope_sprite, big_top_rope_rect)
 
-        rope_hook_sprite = DataFiles.sprites["props"]["short_rope_hook"]
-        rope_hook_rect = rope_hook_sprite.get_rect()
-        rope_hook_rect.left = self.equipment_depot.left + Box.WIDTH / 2
-        rope_hook_rect.top = depot_decoration_top
-        surface.blit(rope_hook_sprite, rope_hook_rect)
-
-        sign_rect = get_rect(
-            width=Box.WIDTH,
-            height=Box.HEIGHT,
-            centerx=rope_hook_rect.centerx,
-            bottom=rope_hook_rect.bottom
-        )
-        font = font_registry["big_pixel"]
-        font.render(
-            surface,
-            "depot",
-            (sign_rect.centerx, sign_rect.centery - 1.25 * font.font_height),
-            Color.BLACK,
-            scale=1,
-            style="center"
-        )
-        font.render(
-            surface,
-            str(self._get_equipment_page() + 1),
-            (sign_rect.centerx, sign_rect.centery + font.font_height / 2),
-            Color.BLACK,
-            scale=2,
-            style="center"
-        )
-
         corner_rope_sprite = DataFiles.sprites["props"]["corner_rope"]
         corner_rope_rect = corner_rope_sprite.get_rect()
         corner_rope_rect.right = self.equipment_depot.right + Box.WIDTH / 8
@@ -1346,6 +1321,36 @@ class EquipmentMenu(Menu):
         ]:
             cargo_box_rect.center = cargo_box_pos
             surface.blit(cargo_box_sprite, cargo_box_rect)
+
+        rope_hook_sprite = DataFiles.sprites["props"]["short_rope_hook"]
+        rope_hook_rect = rope_hook_sprite.get_rect()
+        rope_hook_rect.centerx = self.equipment_depot.left + Box.WIDTH / 4
+        rope_hook_rect.top = depot_decoration_top
+        surface.blit(rope_hook_sprite, rope_hook_rect)
+
+        sign_rect = get_rect(
+            width=Box.WIDTH,
+            height=Box.HEIGHT,
+            centerx=rope_hook_rect.centerx,
+            bottom=rope_hook_rect.bottom
+        )
+        font = font_registry["big_pixel"]
+        font.render(
+            surface,
+            "depot",
+            (sign_rect.centerx, sign_rect.centery - 1.25 * font.font_height),
+            Color.BLACK,
+            scale=1,
+            style="center"
+        )
+        font.render(
+            surface,
+            str(self._get_equipment_page() + 1),
+            (sign_rect.centerx, sign_rect.centery + font.font_height / 2),
+            Color.BLACK,
+            scale=2,
+            style="center"
+        )
 
         # Draw the depot pagination controls.
         self._refresh_equipment_page_buttons()

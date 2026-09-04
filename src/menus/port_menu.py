@@ -814,6 +814,8 @@ class PortMenu(Menu):
         self.decoration_signature_button.active = False
 
         if self.current_overlay == self.SHIPYARD:
+            if self.shipgirl_construction_pre_render_task is not None:
+                return
             if self._can_construct_selected_shipgirl():
                 self.shipyard_sticky_note_button.active = True
                 self.shipyard_sticky_note_button.text = "construct?"

@@ -417,7 +417,10 @@ def first_sortie_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surfac
     elif menu_manager.current_menu == menu_manager.encounter_menu:
         if menu_manager.encounter_menu.transition_active:
             return
-        if not menu_manager.encounter_menu.encounter_started:
+        if (
+            menu_manager.encounter_menu.current_encounter == 0
+            and not menu_manager.encounter_menu.encounter_started
+        ):
             # Tell the player to drag all shipgirls to the entity siren.
             rect = menu_manager.siren_fleet.front[0].rect
             rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
@@ -670,7 +673,7 @@ craft_weapon_pre_quest_dialogue = [
     "The gear lab is now available for equipment production.",
     "Once you have the materials, open the gear lab and craft a twin 120mm gun for {DD_shipgirl}.",
 ]
-craft_weapon_quest_line = "Craft the twin 120mm gun in the gear lab."
+craft_weapon_quest_line = "Recover materials and craft the twin 120mm gun in the gear lab."
 craft_weapon_post_quest_dialogue = [
     "Crafting complete.",
     "The twin 120mm gun has been added to the equipment inventory.",
@@ -738,7 +741,7 @@ craft_weapon_quest = Quest(
 
 equip_weapon_pre_quest_dialogue = [
     "The new weapon must be assigned to a shipgirl before it can be used in battle.",
-    "Open {DD_shipgirl}'s equipment screen from the dock and equip the twin 120mm gun.",
+    "Visit {DD_shipgirl} in the equipment workshop and equip the twin 120mm gun.",
 ]
 equip_weapon_quest_line = "Equip {DD_shipgirl} with the twin 120mm gun."
 equip_weapon_post_quest_dialogue = [
@@ -783,7 +786,7 @@ def equip_weapon_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surfac
             # equipment or the unequip button.
             rect = menu_manager.equipment_menu.equippable_rects[0]
             rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
-            draw_tb(surface, font_registry, tutorial_text, rect.bottomleft, False, True)
+            draw_tb(surface, font_registry, tutorial_text, rect.bottomright, False, False)
         else:
             # Point towards the weapon slot.
             rect = menu_manager.equipment_menu.equipped_rects[0]
@@ -853,7 +856,7 @@ buy_decoration_quest_line = "Purchase a bed from the decoration store."
 buy_decoration_post_quest_dialogue = [
     "Purchase complete.",
     "The bed has been added to your decoration depot.",
-    "It can now be placed by entering the port's edit mode.",
+    "You can now use it to decorate your port.",
 ]
 
 def buy_decoration_completion_criteria(menu_manager: MenuManager) -> bool:
@@ -905,11 +908,13 @@ buy_decoration_quest = Quest(
 
 decorate_port_pre_quest_dialogue = [
     "The new bed is ready to be placed.",
-    "In edit mode, decorations can be positioned, flipped horizontally, or returned to the depot.",
+    "Decorations can be placed down wherever you want.",
+    "If you don't like the way it looks, try flipping it.",
+    "If you'd rather place it somewhere else, you can pack it up back to your depot to place again."
     "Some decorations also support interactions with shipgirls.",
-    "Practice each editing function with the bed, then assign a shipgirl to rest on it.",
+    "Place down the bed in your port, then have a shipgirl rest on it.",
 ]
-decorate_port_quest_line = "Arrange a bed in the port and assign a shipgirl to rest on it."
+decorate_port_quest_line = "Arrange a bed in the port and have a shipgirl rest on it."
 decorate_port_post_quest_dialogue = [
     "Decoration setup complete.",
     "The bed is placed and its interaction point is functioning correctly.",
@@ -1360,7 +1365,7 @@ def backup_fleet_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surfac
             draw_tb(
                 surface,
                 font_registry,
-                "drag from this primary shipgirl...",
+                "drag from any primary shipgirl...",
                 primary_shipgirl.rect.topright,
                 True,
                 False,
@@ -1368,7 +1373,7 @@ def backup_fleet_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surfac
             draw_tb(
                 surface,
                 font_registry,
-                "...to this backup shipgirl to swap them",
+                "...to any backup shipgirl to swap them",
                 backup_shipgirl.rect.bottomright,
                 False,
                 False,
@@ -1379,7 +1384,7 @@ def backup_fleet_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surfac
                 draw_tb(
                     surface,
                     font_registry,
-                    "start the encounter by assigning a target to this shipgirl",
+                    "start the encounter by assigning a target to any shipgirl",
                     primary_shipgirl.rect.topright,
                     True,
                     False,

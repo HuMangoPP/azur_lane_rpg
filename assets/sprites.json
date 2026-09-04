@@ -208,8 +208,18 @@
 		"interact": { "left": 320, "top": 256, "width": 64, "height": 64 },
 		"close": { "left": 320, "top": 192, "width": 64, "height": 64 },
 
-		"closed_reward_cache": { "left": 256, "top": 320, "width": 64, "height": 64 },
-		"open_reward_cache": { "left": 320, "top": 320, "width": 64, "height": 64 },
+		"closed_reward_cache": {
+			"left": 256,
+			"top": 320,
+			"width": 64,
+			"height": 64
+		},
+		"open_reward_cache": {
+			"left": 320,
+			"top": 320,
+			"width": 64,
+			"height": 64
+		},
 
 		"hull_type": { "left": 0, "top": 320, "width": 32, "height": 32 },
 		"medal": { "left": 32, "top": 320, "width": 32, "height": 32 },
@@ -334,10 +344,30 @@
 		"star": { "left": 32, "top": 0, "width": 16, "height": 16 },
 
 		"hull": { "left": 64, "top": 0, "width": 64, "height": 16 },
-		"shipgirl_rigging": { "left": 0, "top": 64, "width": 64, "height": 48 },
-		"siren_rigging": { "left": 64, "top": 16, "width": 64, "height": 48 },
+		"shipgirl_gun": { "left": 0, "top": 64, "width": 64, "height": 48 },
+		"shipgirl_runway": { "left": 64, "top": 64, "width": 64, "height": 48 },
+		"shipgirl_torpedo": {
+			"left": 0,
+			"top": 112,
+			"width": 64,
+			"height": 48
+		},
+		"siren_gun": { "left": 64, "top": 16, "width": 64, "height": 48 },
+		"siren_runway": { "left": 128, "top": 64, "width": 64, "height": 48 },
+		"siren_torpedo": {
+			"left": 64,
+			"top": 112,
+			"width": 64,
+			"height": 48
+		},
 
-		"smoke": { "left": 128, "top": 0, "width": 64, "height": 64, "opacity": 128 }
+		"smoke": {
+			"left": 128,
+			"top": 0,
+			"width": 64,
+			"height": 64,
+			"opacity": 128
+		}
 	},
 	"background": {
 		"wave": { "left": 0, "top": 0, "width": 256, "height": 128 },
