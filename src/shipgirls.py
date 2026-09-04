@@ -525,15 +525,19 @@ class ShipgirlBattleComponent:
         pygame.draw.rect(back, [channel // 2 for channel in panel_color], hull_panel_rect)
         pygame.draw.rect(back, panel_color, hull_panel_rect, width=Box.OUTLINE_WIDTH)
 
+        content_surf = pygame.Surface(size)
+        content_surf.set_colorkey((255, 0, 0))
+        static_content_surf = pygame.Surface(size)
+        static_content_surf.set_colorkey((255, 0, 0))
+        pulsing_back_surf = pygame.Surface(size)
         cache = {
             "rigging": rigging,
             "glow": glow,
             "pulsing_glow": pygame.Surface(glow.get_size()),
             "back": back,
-            "content": pygame.Surface(size, flags=pygame.SRCALPHA),
-            "static_content": pygame.Surface(size, flags=pygame.SRCALPHA),
-            "pulsing_back": pygame.Surface(size),
-            "pulsing_content": pygame.Surface(size, flags=pygame.SRCALPHA),
+            "content": content_surf,
+            "static_content": static_content_surf,
+            "pulsing_back": pulsing_back_surf,
             "hull_rect": hull_rect,
             "displayed_level": None,
             "glint": pygame.Surface((
@@ -627,7 +631,7 @@ class ShipgirlBattleComponent:
         if cache["displayed_level"] == displayed_level:
             return
         static_content = cache["static_content"]
-        static_content.fill((0, 0, 0, 0))
+        static_content.fill((255, 0, 0))
         # Draw star and level text.
         star = cache["star"]
         star_rect = cache["star_rect"]
@@ -730,7 +734,7 @@ class ShipgirlBattleComponent:
                 )
 
         content = cache["content"]
-        content.fill((0, 0, 0, 0))
+        content.fill((255, 0, 0))
         # Draw the hull HP silhouette.
         hull_rect = cache["hull_rect"]
         content.blit(cache["hull_back"], hull_rect)
@@ -787,9 +791,7 @@ class ShipgirlBattleComponent:
         cache["pulsing_back"].blit(cache["back"], (0, 0))
         surface.blit(cache["pulsing_back"], battlestation_rect, special_flags=pygame.BLEND_RGB_ADD)
         content.set_alpha(battlestation_alpha)
-        cache["pulsing_content"].fill((0, 0, 0, 0))
-        cache["pulsing_content"].blit(content, (0, 0))
-        surface.blit(cache["pulsing_content"], battlestation_rect)
+        surface.blit(content, battlestation_rect)
 
     # TODO Consider whether this is repeated code and all glint drawing helpers are similar.
     def _draw_battlestation_glint(

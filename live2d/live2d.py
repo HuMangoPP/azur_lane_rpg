@@ -632,11 +632,10 @@ class PreRenderLive2D:
         live2d.t = animation_t
         live2d._update_offset_and_rotation()
 
-        frame = pygame.Surface(
-            (2 * LAYER_SIZE, 2 * LAYER_SIZE),
-            pygame.SRCALPHA,
-        )
+        frame = pygame.Surface((2 * LAYER_SIZE, 2 * LAYER_SIZE))
+        frame.fill((255, 0, 0))
         live2d.draw(frame, LAYER_SIZE, LAYER_SIZE, False)
+        frame.set_colorkey((255, 0, 0), pygame.RLEACCEL)
         return frame
 
     def refresh_animations(self):

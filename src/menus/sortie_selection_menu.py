@@ -10,6 +10,7 @@ import math
 import random
 import pygame
 
+from engine.profiler import profile
 from engine.util import get_rect, get_vec, pixel_to_hex, hex_to_pixel, hex_corners, get_cluster_edges, draw_dashed_rect
 from engine.button import RectangularButton
 
@@ -322,18 +323,20 @@ class ChapterRegion:
             self.polygon,
         )
         # Draw hatching within region polygon.
-        hatch_surface = pygame.Surface(self.size, pygame.SRCALPHA)
+        hatch_surface = pygame.Surface(self.size)
+        hatch_surface.set_colorkey((0, 0, 0))
+        hatch_surface.set_alpha(self.HATCH_ALPHA)
         width, height = self.size
         for x in range(-height, width + height, self.HATCH_SPACING):
             pygame.draw.line(
                 hatch_surface,
-                (*outline_color, self.HATCH_ALPHA),
+                outline_color,
                 (x, height),
                 (x + height, 0),
                 width=Box.OUTLINE_WIDTH
             )
-        region_mask = pygame.Surface(self.size, pygame.SRCALPHA)
-        pygame.draw.polygon(region_mask, (255, 255, 255, 255), self.polygon)
+        region_mask = pygame.Surface(self.size)
+        pygame.draw.polygon(region_mask, (255, 255, 255), self.polygon)
         hatch_surface.blit(region_mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
         styled_surface.blit(hatch_surface, (0, 0))
         # Draw region polygon outline.
@@ -684,13 +687,9 @@ class ChapterProgressAnnotation:
             math.ceil(font.get_width(text, self.TEXT_SCALE, 0)),
             math.ceil(font.get_height(text, self.TEXT_SCALE, 0)),
         )
-        text_surface = pygame.Surface(
-            (
-                text_size[0] + 2 * self.TEXT_SURFACE_PADDING,
-                text_size[1] + 2 * self.TEXT_SURFACE_PADDING,
-            ),
-            pygame.SRCALPHA,
-        )
+        text_surface = pygame.Surface((text_size[0] + 2 * self.TEXT_SURFACE_PADDING, text_size[1] + 2 * self.TEXT_SURFACE_PADDING))
+        text_surface.fill((255, 0, 0))
+        text_surface.set_colorkey((255, 0, 0))
         font.render(
             text_surface,
             text,
@@ -774,7 +773,13 @@ class Background:
     def __init__(self):
         num_waves = 36
         wave_index_offset = 8
-        self.wave_indices = random.choices(list(range(DataFiles.sprites["sortie_selection"]["num_wave_sprites"])), k=num_waves)
+        wave_sprites = [
+            DataFiles.sprites["sortie_selection"][f"wave{wave_index}"]
+            for wave_index in range(
+                DataFiles.sprites["sortie_selection"]["num_wave_sprites"]
+            )
+        ]
+        self.wave_sprites = random.choices(wave_sprites, k=num_waves)
         wave_height = DataFiles.sprites["sortie_selection"]["wave"].get_height() / 2
         self.wave_ys: list[float] = [wave_height * (i - num_waves + wave_index_offset) for i in range(num_waves)]
         self.wave_timers = [math.radians(random.randint(0, 359)) for _ in range(num_waves)]
@@ -786,18 +791,32 @@ class Background:
     def draw(self, surface: pygame.Surface):
         """Draw the background waves."""
         num_wave_reps = 10
-        for wave_index, wave_y, wave_timer in  zip(self.wave_indices, self.wave_ys, self.wave_timers):
-            wave_sprite = DataFiles.sprites["sortie_selection"][f"wave{wave_index}"]
+        vertical_movement = 4
+        horizontal_movement = 32
+        camera_anchor = anchor()
+        screen_right = screen_x(1)
+        screen_bottom = screen_y(1)
+        for wave_sprite, wave_y, wave_timer in zip(
+            self.wave_sprites,
+            self.wave_ys,
+            self.wave_timers,
+        ):
             wave_rect = wave_sprite.get_rect()
-            vertical_movement = 4
-            wave_rect.top = wave_y + vertical_movement * math.sin(2 * wave_timer) + anchor().y
-            if wave_rect.bottom < 0 or wave_rect.top > screen_y(1):
+            wave_rect.top = (
+                wave_y
+                + vertical_movement * math.sin(2 * wave_timer)
+                + camera_anchor.y
+            )
+            if wave_rect.bottom < 0 or wave_rect.top > screen_bottom:
                 continue
-            horizontal_movement = 32
-            centerx = horizontal_movement * math.sin(wave_timer) + anchor().x - screen_x(0.5)
+            centerx = (
+                horizontal_movement * math.sin(wave_timer)
+                + camera_anchor.x
+                - screen_x(0.5)
+            )
             for i in range(num_wave_reps):
                 wave_rect.centerx = centerx + wave_rect.width * i
-                if wave_rect.right < 0 or wave_rect.left > screen_x(1):
+                if wave_rect.right < 0 or wave_rect.left > screen_right:
                     continue
                 surface.blit(wave_sprite, wave_rect)
 
@@ -1493,6 +1512,7 @@ class SortieSelectionMenu(Menu):
             self.sortie_order_card.button.active = self.selected_sortie_node is not None
 
     def update(self, dt: float, events: list[pygame.Event]):
+        """Update the sortie selection menu."""
         self.selection_effect_time += dt
         for event in events:
             if self.sortie_order_card.authorizing:
@@ -1563,6 +1583,7 @@ class SortieSelectionMenu(Menu):
             fog.update(dt)
 
     def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the sortie selection menu."""
         self.background.draw(surface)
 
         for chapter_region in self.chapter_regions:

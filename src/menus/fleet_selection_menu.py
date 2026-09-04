@@ -40,13 +40,9 @@ def draw_rotated_handwritten_text(
         math.ceil(font.get_width(text, scale, 0)),
         math.ceil(font.get_height(text, scale, 0)),
     )
-    text_surface = pygame.Surface(
-        (
-            text_size[0] + 2 * padding,
-            text_size[1] + 2 * padding,
-        ),
-        pygame.SRCALPHA,
-    )
+    text_surface = pygame.Surface((text_size[0] + 2 * padding, text_size[1] + 2 * padding))
+    text_surface.fill((255, 0, 0))
+    text_surface.set_colorkey((255, 0, 0))
     font.render(
         text_surface,
         text,
@@ -613,7 +609,9 @@ class FleetSelectionMenu(Menu):
     def _build_tray_surface(self):
         """Pre-render the tray surface."""
         tray_size = self.tray_overlay.size
-        tray_surface = pygame.Surface(tray_size, flags=pygame.SRCALPHA)
+        tray_surface = pygame.Surface(tray_size)
+        tray_surface.fill((255, 0, 0))
+        tray_surface.set_colorkey((255, 0, 0))
         tray_polygon = self._get_tray_polygon(tray_size)
         pygame.draw.polygon(tray_surface, self.TRAY_FRAME_COLOR, tray_polygon)
 
@@ -1254,13 +1252,15 @@ class FleetSelectionMenu(Menu):
         if cached_shadow is not None and cached_shadow.get_size() == marker.get_size():
             return cached_shadow
 
-        marker_shadow = pygame.Surface(marker.get_size(), flags=pygame.SRCALPHA)
+        marker_shadow = pygame.Surface(marker.get_size())
+        marker_shadow.set_colorkey((0, 0, 0))
         marker_mask = pygame.mask.from_surface(marker)
         marker_mask.to_surface(
             marker_shadow,
-            setcolor=(*self.TRAY_CAST_SHADOW, 144),
-            unsetcolor=(0, 0, 0, 0),
+            setcolor=self.TRAY_CAST_SHADOW,
+            unsetcolor=(0, 0, 0),
         )
+        marker_shadow.set_alpha(144)
         self.tray_marker_shadow_cache[marker_key] = marker_shadow
         return marker_shadow
 
@@ -1357,8 +1357,9 @@ class FleetSelectionMenu(Menu):
             )
             if marker_hovered:
                 # Draw a highlight into the tray bay.
-                highlight = pygame.Surface(rect.size, flags=pygame.SRCALPHA)
-                highlight.fill((*self.TRAY_BAY_HIGHLIGHT, 72))
+                highlight = pygame.Surface(rect.size)
+                highlight.fill(self.TRAY_BAY_HIGHLIGHT)
+                highlight.set_alpha(27)
                 surface.blit(highlight, rect)
             if marker_available and not marker_dragged:
                 # Draw a tray marker, if it is available in its bay and is not

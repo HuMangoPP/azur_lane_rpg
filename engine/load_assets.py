@@ -27,7 +27,12 @@ def load_sprites(
             crop = pygame.Rect(load_info["left"], load_info["top"], load_info["width"], load_info["height"])
             sprite = pygame.transform.scale_by(sprite_atlas.subsurface(crop), load_info.get("scale", 1))
             sprite = pygame.transform.rotate(sprite, load_info.get("rotation", 0))
-            sprite.set_alpha(load_info.get("opacity", 255))
+            opacity = load_info.get("opacity", 255)
+            sprite.set_alpha(opacity)
+            # Combining RLE with partial per-surface alpha changes blend rounding.
+            # Keep those few sprites on the pixel-identical, non-RLE path.
+            colorkey_flags = pygame.RLEACCEL if opacity == 255 else 0
+            sprite.set_colorkey(default_colorkey, colorkey_flags)
             group_sprites[sprite_name] = sprite
         sprites[sprite_group] = group_sprites
 

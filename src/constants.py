@@ -255,8 +255,9 @@ class DataFiles:
         colored_sprite = pygame.Surface(sprite.get_size())
         colored_sprite.fill(color)
         colored_sprite.blit(sprite, (0, 0))
-        colored_sprite.set_colorkey((255, 0, 0))
-        sprite.set_colorkey((255, 0, 0))
+        colored_sprite = colored_sprite.convert()
+        colored_sprite.set_colorkey((255, 0, 0), pygame.RLEACCEL)
+        sprite.set_colorkey((255, 0, 0), pygame.RLEACCEL)
         return colored_sprite
 
     @classmethod
@@ -339,8 +340,9 @@ for weather, palette in background_wave_palettes.items():
         higher_wave.fill(wave_color)
         wave.set_colorkey((255, 255, 255))
         higher_wave.blit(wave, (0, 0))
-        wave.set_colorkey((255, 0, 0))
-        higher_wave.set_colorkey((255, 0, 0))
+        wave.set_colorkey((255, 0, 0), pygame.RLEACCEL)
+        higher_wave = higher_wave.convert()
+        higher_wave.set_colorkey((255, 0, 0), pygame.RLEACCEL)
         wave_set.append(higher_wave)
     DataFiles.sprites["background"]["wave_sets"][weather] = wave_set
 
@@ -385,7 +387,8 @@ for wave_index in range(num_waves):
     higher_wave = pygame.Surface((wave.get_width(), 2 * wave.get_height()))
     higher_wave.fill(wave_color)
     higher_wave.blit(wave, (0,0))
-    higher_wave.set_colorkey((255, 0, 0))
+    higher_wave = higher_wave.convert()
+    higher_wave.set_colorkey((255, 0, 0), pygame.RLEACCEL)
     DataFiles.sprites["sortie_selection"][f"wave{wave_index}"] = higher_wave
 
 # Generate a lightbulb light sprite for the lightbulb prop..
@@ -797,6 +800,8 @@ class Decorations:
             )
             y += 1
 
+        skewed_wallpaper = skewed_wallpaper.convert()
+        skewed_wallpaper.set_colorkey((255, 0, 0), pygame.RLEACCEL)
         cls.wallpaper_surf = skewed_wallpaper
         cls.wallpaper_rect = cls.wallpaper_surf.get_rect()
         cls.wallpaper_rect.left = cls.floor_rect.left
@@ -815,7 +820,8 @@ class Decorations:
         floor_width = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_WIDTH
         floor_height = (cls.FLOOR_TILES_WIDE + cls.FLOOR_TILES_TALL) * cls.ISO_HALF_TILE_HEIGHT
 
-        cls.floor_surf = pygame.Surface((floor_width, floor_height), pygame.SRCALPHA)
+        cls.floor_surf = pygame.Surface((floor_width, floor_height))
+        cls.floor_surf.fill((255, 0, 0))
         x_offset = (cls.FLOOR_TILES_TALL - 1) * cls.ISO_HALF_TILE_WIDTH
         for i in range(cls.FLOOR_TILES_WIDE):
             for j in range(cls.FLOOR_TILES_TALL):
@@ -826,7 +832,8 @@ class Decorations:
                 else:
                     tile = DataFiles.sprites["decorations"]["tile_light"]
                 cls.floor_surf.blit(tile, (x,y))
-        
+
+        cls.floor_surf.set_colorkey((255, 0, 0), pygame.RLEACCEL)
         cls.floor_rect = cls.floor_surf.get_rect()
         cls.floor_rect.center = (screen_x(0.5), screen_y(0.55))
 

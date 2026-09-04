@@ -214,22 +214,19 @@ class QuestManager:
                 min(255, round(channel * strength))
                 for channel in color
             )
-            glint = pygame.Surface(
-                (2 * glint_max_length + 1, 2 * glint_max_length + 1),
-                pygame.SRCALPHA,
-            )
+            glint = pygame.Surface((2 * glint_max_length + 1, 2 * glint_max_length + 1))
             glint_center = pygame.Vector2(glint_max_length, glint_max_length)
             pygame.draw.line(
                 glint,
-                (*glint_color, 255),
-                glint_center-pygame.Vector2(length, 0),
-                glint_center+pygame.Vector2(length, 0),
+                glint_color,
+                glint_center - pygame.Vector2(length, 0),
+                glint_center + pygame.Vector2(length, 0),
             )
             pygame.draw.line(
                 glint,
-                (*glint_color, 255),
-                glint_center-pygame.Vector2(0, length),
-                glint_center+pygame.Vector2(0, length),
+                glint_color,
+                glint_center - pygame.Vector2(0, length),
+                glint_center + pygame.Vector2(0, length),
             )
             surface.blit(
                 glint,
@@ -651,20 +648,17 @@ class Quest:
 
             length = 1 + round((max_length - 1) * strength)
             glint_color = tuple(round(channel * strength) for channel in color)
-            glint = pygame.Surface(
-                (2 * max_length + 1, 2 * max_length + 1),
-                pygame.SRCALPHA,
-            )
+            glint = pygame.Surface((2 * max_length + 1, 2 * max_length + 1))
             glint_center = pygame.Vector2(max_length, max_length)
             pygame.draw.line(
                 glint,
-                (*glint_color, 255),
+                glint_color,
                 glint_center-pygame.Vector2(length, 0),
                 glint_center+pygame.Vector2(length, 0),
             )
             pygame.draw.line(
                 glint,
-                (*glint_color, 255),
+                glint_color,
                 glint_center-pygame.Vector2(0, length),
                 glint_center+pygame.Vector2(0, length),
             )
@@ -759,8 +753,9 @@ class Quest:
                 if reward.startswith("placeholder")
                 else reward
             )
-            tile = pygame.Surface(rect.size, pygame.SRCALPHA)
-            tile.fill((*Color.QUEST_NOTIFICATION_HEADER, 225))
+            tile = pygame.Surface(rect.size)
+            tile.fill(Color.QUEST_NOTIFICATION_HEADER)
+            tile.set_alpha(225)
             surface.blit(tile, rect)
             reward_sprite = DataFiles.get_entity_sprite(sprite_key)
             surface.blit(
@@ -776,8 +771,9 @@ class Quest:
                 right=rect.right - quantity_rect_padding,
                 bottom=rect.bottom - quantity_rect_padding,
             )
-            quantity_panel = pygame.Surface(quantity_rect.size, pygame.SRCALPHA)
-            quantity_panel.fill((*Color.QUEST_NOTIFICATION_PANEL, 235))
+            quantity_panel = pygame.Surface(quantity_rect.size)
+            quantity_panel.fill(Color.QUEST_NOTIFICATION_PANEL)
+            quantity_panel.set_alpha(235)
             surface.blit(quantity_panel, quantity_rect)
             pygame.draw.rect(surface, accent, quantity_rect, width=1)
             font_registry["pixel"].render(
