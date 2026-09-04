@@ -111,6 +111,8 @@ class FleetPathAnnotation:
             -text_direction.y,
             text_direction.x,
         ))
+        self._cached_surface: pygame.Surface | None = None
+        self._cached_surface_rect: pygame.Rect | None = None
 
     @classmethod
     def _draw_dashed_curve(cls, surface: pygame.Surface, points: list[pygame.Vector2]):
@@ -148,8 +150,8 @@ class FleetPathAnnotation:
                         cls.DASH_LENGTH if drawing_dash else cls.DASH_GAP
                     )
 
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the fleet path annotation."""
+    def _render(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Render the fleet path annotation onto its cached surface."""
         self._draw_dashed_curve(surface, self.curve_points)
 
         arrow_direction = (
@@ -177,6 +179,20 @@ class FleetPathAnnotation:
             self.text_angle,
             scale=self.TEXT_SCALE,
             padding=self.TEXT_SURFACE_PADDING,
+        )
+
+    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the fleet path annotation from a lazily populated cache."""
+        if self._cached_surface is None:
+            self._cached_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+            self._render(self._cached_surface, font_registry)
+            self._cached_surface_rect = self._cached_surface.get_bounding_rect(min_alpha=1)
+
+
+        surface.blit(
+            self._cached_surface,
+            self._cached_surface_rect,
+            self._cached_surface_rect
         )
 
 
