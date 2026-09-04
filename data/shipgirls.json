@@ -12,7 +12,7 @@
 		"class": "atlanta"
 	},
 	"guam": {
-		"unique_item": "battle_mech",
+		"unique_item": "modernized_jaeger",
 		"faction": "USS",
 		"hull_type": "CA",
 		"class": "alaska"
@@ -42,7 +42,7 @@
 		"class": "fubuki"
 	},
 	"shimanto": {
-		"unique_item": "white_dragon",
+		"unique_item": "the_white_dragon",
 		"faction": "IJN",
 		"hull_type": "CL",
 		"class": "shimanto"
@@ -54,19 +54,19 @@
 		"class": "unzen"
 	},
 	"musashi": {
-		"unique_item": "raiden_shogun",
+		"unique_item": "the_raiden_shogun",
 		"faction": "IJN",
 		"hull_type": "BB",
 		"class": "yamato"
 	},
 	"shinano": {
-		"unique_item": "constellation",
+		"unique_item": "the_starry_night",
 		"faction": "IJN",
 		"hull_type": "CV",
 		"class": "yamato"
 	},
 	"i-404": {
-		"unique_item": "koi_fish",
+		"unique_item": "nishikigoi",
 		"faction": "IJN",
 		"hull_type": "SS",
 		"class": "i-400"
@@ -84,25 +84,25 @@
 		"class": "plymouth"
 	},
 	"drake": {
-		"unique_item": "privateers_heroism",
+		"unique_item": "privateer's_heroism",
 		"faction": "HMS",
 		"hull_type": "CA",
 		"class": "drake"
 	},
 	"lion": {
-		"unique_item": "lions_aegis",
+		"unique_item": "lion's_aegis",
 		"faction": "HMS",
 		"hull_type": "BB",
 		"class": "lion"
 	},
 	"implacable": {
-		"unique_item": "devils_cross",
+		"unique_item": "devil's_cross",
 		"faction": "HMS",
 		"hull_type": "CV",
 		"class": "implacable"
 	},
 	"trafalgar": {
-		"unique_item": "knights_bacinet",
+		"unique_item": "knight's_bacinet",
 		"faction": "HMS",
 		"hull_type": "SS",
 		"class": "battle"
@@ -114,13 +114,13 @@
 		"class": "type 1936a"
 	},
 	"emden": {
-		"unique_item": "twin_dragons",
+		"unique_item": "the_twin_dragons",
 		"faction": "KMS",
 		"hull_type": "CL",
 		"class": "dresden"
 	},
 	"hindenburg": {
-		"unique_item": "the_devil",
+		"unique_item": "devil's_horns",
 		"faction": "KMS",
 		"hull_type": "CA",
 		"class": "hindenburg"

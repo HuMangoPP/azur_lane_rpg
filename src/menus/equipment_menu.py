@@ -1256,6 +1256,8 @@ class EquipmentMenu(Menu):
                 surface.blit(DataFiles.sprites["user_interface"]["unequip_item"], rect)
             else:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+            pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, rect, width=Box.OUTLINE_WIDTH)
+
         # Equipment depot props.
         depot_decoration_top = self.equipment_depot.top - Box.WIDTH / 8
         top_rope_sprite = DataFiles.sprites["props"]["top_rope"]

@@ -600,8 +600,9 @@ intel_center_quest = Quest(
 research_shipgirl_pre_quest_dialogue = [
     "Operational projections call for a larger fleet as deployments extend into more dangerous territory.",
     "Each shipgirl has a unique item that is required for construction.",
-    "To obtain one, begin a research project and collect combat data during sorties.",
-    "Once sufficient data has been collected, the project will synthesize the unique item.",
+    "To obtain a shipgirl's unique item, you must start a research project.",
+    "A research project can be started by specializing a wisdom cube to store that shipgirl's memories.",
+    "Conduct sorties to collect combat data, and once sufficient data has been collected, the project will synthesize the unique item.",
     "The shipgirl can then be constructed if the remaining material requirements are met.",
     "Open the shipyard and begin research on {CA_shipgirl}.",
 ]
@@ -910,14 +911,14 @@ decorate_port_pre_quest_dialogue = [
     "The new bed is ready to be placed.",
     "Decorations can be placed down wherever you want.",
     "If you don't like the way it looks, try flipping it.",
-    "If you'd rather place it somewhere else, you can pack it up back to your depot to place again."
+    "If you'd rather place it somewhere else, you can remove it from your port and try placing it again."
     "Some decorations also support interactions with shipgirls.",
     "Place down the bed in your port, then have a shipgirl rest on it.",
 ]
 decorate_port_quest_line = "Arrange a bed in the port and have a shipgirl rest on it."
 decorate_port_post_quest_dialogue = [
     "Decoration setup complete.",
-    "The bed is placed and its interaction point is functioning correctly.",
+    "The bed is placed and your shipgirls now have a place to rest.",
     "You can return to edit mode at any time to revise the port layout.",
     "Additional furnishings are available from the decoration store.",
 ]

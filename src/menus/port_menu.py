@@ -165,7 +165,7 @@ class PortMenu(Menu):
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
             DataFiles.sfx["waves"].play(loops=-1)
 
-            close_shipgirl_dialogue_options()
+            self._close_shipgirl_dialogue_options()
 
         self.open_select_sortie_menu_button = RectangularButton(
             get_rect(width=2 * Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, bottom=Box.BOTTOM_OF_SCREEN),
@@ -203,7 +203,7 @@ class PortMenu(Menu):
                             self.overlay_selected_filter = i
                             break
                 
-                close_shipgirl_dialogue_options()
+                self._close_shipgirl_dialogue_options()
 
             return RectangularButton(
                 get_rect(
@@ -522,7 +522,7 @@ class PortMenu(Menu):
                 self.overlay_page_prev_button.active = False
                 self.overlay_page_next_button.active = False
 
-            close_shipgirl_dialogue_options()
+            self._close_shipgirl_dialogue_options()
 
         self.toggle_decoration_mode_button = RectangularButton(
             rect=get_rect(width=Box.WIDTH, height=Box.HEIGHT, right=Box.RIGHT_OF_SCREEN, top=Box.TOP_OF_SCREEN),
@@ -567,16 +567,7 @@ class PortMenu(Menu):
             self.menu_manager.current_menu = self.menu_manager.equipment_menu
             self.menu_manager.equipment_menu.selected_shipgirl = self.hovered_shipgirl
 
-            close_shipgirl_dialogue_options()
-
-        # Shipgirl dialogue options.
-        def close_shipgirl_dialogue_options():
-            """Close the dialogue options for the currently hovered shipgirl."""
-            if self.hovered_shipgirl is not None:
-                self.hovered_shipgirl.pick_new_wander_target()
-            self.hovered_shipgirl = None
-            for option in self.shipgirl_dialogue_options:
-                option.active = False
+            self._close_shipgirl_dialogue_options()
 
         shipgirl_dialogue_option_data = [
             (open_equipment_menu, "equip"),
@@ -601,6 +592,14 @@ class PortMenu(Menu):
 
         # Update the encountered sirens from the save file.
         self.update_encountered_sirens()
+
+    def _close_shipgirl_dialogue_options(self):
+        """Close the dialogue options for the currently hovered shipgirl."""
+        if self.hovered_shipgirl is not None:
+            self.hovered_shipgirl.pick_new_wander_target()
+        self.hovered_shipgirl = None
+        for option in self.shipgirl_dialogue_options:
+            option.active = False
 
     def update_encountered_sirens(self):
         """Update the encountered sirens list.
@@ -1039,11 +1038,10 @@ class PortMenu(Menu):
                     self.open_decoration_store_overlay_button,
                     self.toggle_decoration_mode_button,
                 ]
-                click = (
-                    click
-                    or self.menu_manager.quest_manager.select_quest(event.pos)
-                    or any(button.click(event.pos) for button in buttons)
-                )
+                click = click or any(button.click(event.pos) for button in buttons)
+
+                if not click and self.menu_manager.quest_manager.select_quest(event.pos):
+                    self._close_shipgirl_dialogue_options()
 
                 for choose_faction_button in self.choose_faction_buttons:
                     click = click or choose_faction_button.click(event.pos)
@@ -2378,7 +2376,7 @@ class PortMenu(Menu):
             image_rect = image.get_rect()
             image_rect.center = rect.center
             surface.blit(image, image_rect)
-            pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, image_rect, width=2*Box.OUTLINE_WIDTH)
+            pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, image_rect, width=Box.OUTLINE_WIDTH)
 
         surface.blit(
             self.warehouse_prop_layer_1,

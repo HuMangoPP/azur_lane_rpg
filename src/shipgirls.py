@@ -385,6 +385,8 @@ class ShipgirlBattleComponent:
                     for shipgirl in fleet.shipgirls:
                         if shipgirl is None:
                             continue
+                        if shipgirl.battle_component.hp < 0:
+                            continue
 
                         hit = self._deal_damage(shipgirl, vfx_manager)
                         play_shell_impact, play_splash_impact = self._spawn_impact_effects(hit, rect, shipgirl, vfx_manager)
@@ -634,7 +636,7 @@ class ShipgirlBattleComponent:
         self, cache: dict, font_registry: dict[str, Font]
     ):
         """Render labels and icons only when their displayed level changes."""
-        displayed_level = self.last_level if self.is_player else Stats.level(self.exp)
+        displayed_level = (self.last_level if self.is_player else Stats.level(self.exp)) + 1
         if cache["displayed_level"] == displayed_level:
             return
         static_content = cache["static_content"]
@@ -849,12 +851,14 @@ class ShipgirlBattleComponent:
         
         Effects like attack and attack effects, smokescreen effects, target indicators.
         """
+        if self.hp < 0:
+            return
+        if self.evasion_gauge >= 1:
+            self.smokescreen.draw(surface, rect)
         if not self.active:
             return
         if self.attack_timer > 0:
             self._draw_attack(surface, rect, vfx_manager)
-        if self.evasion_gauge >= 1:
-            self.smokescreen.draw(surface, rect)
         if not self.is_player:
             return
 

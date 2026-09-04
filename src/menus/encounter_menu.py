@@ -864,7 +864,7 @@ class EncounterMenu(Menu):
         self._apply_time_weather_style()
 
         self._exp_panel_rect = get_rect(
-            width=384,
+            width=480,
             height=88,
             centerx=screen_x(0.5),
             centery=screen_y(0.5),
@@ -1512,6 +1512,7 @@ class EncounterMenu(Menu):
                 if specialized_wisdom_cubes[research_target] >= exp_req:
                     unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
                     if DataFiles.save_file["inventory"].get(unique_item, 0) == 0:
+                        DataFiles.sfx["scale"].play()
                         self._add_sortie_drop(
                             unique_item,
                             (-100, -100),
@@ -2175,6 +2176,104 @@ class EncounterMenu(Menu):
                 width=1,
             )
 
+    def _draw_research_exp(self, surface: pygame.Surface, font_registry: dict[str, Font]):
+        """Draw the research exp widget."""
+        research_target = DataFiles.save_file["research_target"]
+        if research_target is None:
+            return
+        
+        unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
+        unique_item_exists = DataFiles.save_file["inventory"].get(unique_item, 0) > 0
+        exp_req = Stats.exp_requirement(self.menu_manager.available_shipgirls)
+        research_progress = (
+            DataFiles.save_file["specialized_wisdom_cubes"][research_target]
+            + self.research_exp * self.exp_timer
+        )
+
+        panel_margin = 8
+        icon = DataFiles.get_entity_sprite(unique_item)
+        big_pixel_font = font_registry["big_pixel"]
+        content_left = self._exp_rail_rect.right + panel_margin
+
+        accent = Color.QUEST_NOTIFICATION_COMPLETE
+        pulse = (math.sin(pygame.time.get_ticks() / 1000 * math.tau / 2.4) + 1) / 2
+        self._exp_panel_surf.fill((0, 0, 0, 0))
+        panel_cut_size = 7
+        panel_polygon = [
+            (panel_cut_size, self._exp_panel_rect.height),
+            (0, self._exp_panel_rect.height - panel_cut_size),
+            (0, 0),
+            (self._exp_panel_rect.width - panel_cut_size, 0),
+            (self._exp_panel_rect.width, panel_cut_size),
+            (self._exp_panel_rect.width, self._exp_panel_rect.height),
+        ]
+        pygame.draw.polygon(
+            self._exp_panel_surf,
+            (*Color.QUEST_NOTIFICATION_PANEL, 225),
+            panel_polygon,
+        )
+        pygame.draw.lines(
+            self._exp_panel_surf,
+            (*accent, round(145 + 85 * pulse)),
+            False,
+            panel_polygon[:-1],
+            width=1,
+        )
+        surface.blit(self._exp_panel_surf, self._exp_panel_rect)
+
+        shipgirl_name_y = self._exp_panel_rect.top + 1.5 * panel_margin
+        shipgirl_name_scale = 2
+        big_pixel_font.render(
+            surface,
+            unique_item.replace("_", " "),
+            (content_left, shipgirl_name_y),
+            accent,
+            scale=shipgirl_name_scale
+        )
+        banner_text_y = shipgirl_name_y + shipgirl_name_scale * big_pixel_font.font_height + panel_margin
+        research_state_text = (
+            "shipgirl research in progress" if (research_progress < exp_req and not unique_item_exists)
+            else "shipgirl research complete"
+        )
+        big_pixel_font.render(
+            surface,
+            research_state_text,
+            (content_left, banner_text_y),
+            accent,
+            scale=1,
+        )
+        bar_width = self._exp_panel_rect.right - 2 * panel_margin - content_left
+        bar_height = 16
+        bar_background = get_rect(
+            width=bar_width, height=bar_height,
+            left=content_left,
+            top=banner_text_y + big_pixel_font.font_height + panel_margin,
+        )
+        bar_fill_width = bar_width * (
+            min(1, research_progress / exp_req) if (research_progress < exp_req and not unique_item_exists)
+            else 1
+        )
+        bar_fill = get_rect(
+            width=bar_fill_width,
+            height=bar_height, left=bar_background.left, top=bar_background.top
+        )
+        bar_backplate = bar_background.inflate(4, 4)
+        pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, bar_backplate)
+        pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_MUTED, bar_backplate, width=1)
+        pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
+        pygame.draw.rect(surface, accent, bar_fill)
+
+        self._exp_rail_glow.fill((*accent, round(35 + 35 * pulse)))
+        surface.blit(
+            self._exp_rail_glow,
+            self._exp_rail_rect,
+            special_flags=pygame.BLEND_RGBA_ADD,
+        )
+
+        pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, self._exp_icon_frame)
+        pygame.draw.rect(surface, accent, self._exp_icon_frame, width=Box.OUTLINE_WIDTH)
+        surface.blit(icon, icon.get_rect(center=self._exp_icon_frame.center))
+
     def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the encounter menu."""
         self.background.draw(
@@ -2207,99 +2306,8 @@ class EncounterMenu(Menu):
             drop.draw(surface, font_registry)
 
         # Draw the research exp widget.
-        if self.exp_timer > 0:
-            research_target = DataFiles.save_file["research_target"]
-            unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
-            unique_item_exists = DataFiles.save_file["inventory"].get(unique_item, 0) > 0
-            exp_req = Stats.exp_requirement(self.menu_manager.available_shipgirls)
-            research_progress = (
-                DataFiles.save_file["specialized_wisdom_cubes"][research_target]
-                + self.research_exp * self.exp_timer
-            )
-
-            panel_margin = 8
-            icon = DataFiles.get_entity_sprite(unique_item)
-            big_pixel_font = font_registry["big_pixel"]
-            content_left = self._exp_rail_rect.right + panel_margin
-
-            accent = Color.QUEST_NOTIFICATION_COMPLETE
-            pulse = (math.sin(pygame.time.get_ticks() / 1000 * math.tau / 2.4) + 1) / 2
-            self._exp_panel_surf.fill((0, 0, 0, 0))
-            panel_cut_size = 7
-            panel_polygon = [
-                (panel_cut_size, self._exp_panel_rect.height),
-                (0, self._exp_panel_rect.height - panel_cut_size),
-                (0, 0),
-                (self._exp_panel_rect.width - panel_cut_size, 0),
-                (self._exp_panel_rect.width, panel_cut_size),
-                (self._exp_panel_rect.width, self._exp_panel_rect.height),
-            ]
-            pygame.draw.polygon(
-                self._exp_panel_surf,
-                (*Color.QUEST_NOTIFICATION_PANEL, 225),
-                panel_polygon,
-            )
-            pygame.draw.lines(
-                self._exp_panel_surf,
-                (*accent, round(145 + 85 * pulse)),
-                False,
-                panel_polygon[:-1],
-                width=1,
-            )
-            surface.blit(self._exp_panel_surf, self._exp_panel_rect)
-
-            shipgirl_name_y = self._exp_panel_rect.top + 1.5 * panel_margin
-            shipgirl_name_scale = 2
-            big_pixel_font.render(
-                surface,
-                unique_item.replace("_", " "),
-                (content_left, shipgirl_name_y),
-                accent,
-                scale=shipgirl_name_scale
-            )
-            banner_text_y = shipgirl_name_y + shipgirl_name_scale * big_pixel_font.font_height + panel_margin
-            research_state_text = (
-                "shipgirl research in progress" if (research_progress < exp_req and not unique_item_exists)
-                else "shipgirl research complete"
-            )
-            big_pixel_font.render(
-                surface,
-                research_state_text,
-                (content_left, banner_text_y),
-                accent,
-                scale=1,
-            )
-            bar_width = self._exp_panel_rect.right - 2 * panel_margin - content_left
-            bar_height = 16
-            bar_background = get_rect(
-                width=bar_width, height=bar_height,
-                left=content_left,
-                top=banner_text_y + big_pixel_font.font_height + panel_margin,
-            )
-            bar_fill_width = bar_width * (
-                min(1, research_progress / exp_req) if (research_progress < exp_req and not unique_item_exists)
-                else 1
-            )
-            bar_fill = get_rect(
-                width=bar_fill_width,
-                height=bar_height, left=bar_background.left, top=bar_background.top
-            )
-            bar_backplate = bar_background.inflate(4, 4)
-            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, bar_backplate)
-            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_MUTED, bar_backplate, width=1)
-            pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
-            pygame.draw.rect(surface, accent, bar_fill)
-
-            self._exp_rail_glow.fill((*accent, round(35 + 35 * pulse)))
-            surface.blit(
-                self._exp_rail_glow,
-                self._exp_rail_rect,
-                special_flags=pygame.BLEND_RGBA_ADD,
-            )
-
-            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, self._exp_icon_frame)
-            pygame.draw.rect(surface, accent, self._exp_icon_frame, width=Box.OUTLINE_WIDTH)
-            surface.blit(icon, icon.get_rect(center=self._exp_icon_frame.center))
+        if self.next_encounter_button.active:
+            self._draw_research_exp(surface, font_registry)
 
         if self.return_to_port_button.active:
             self._draw_dossier_overlay(surface, font_registry)
