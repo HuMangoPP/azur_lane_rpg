@@ -90,6 +90,8 @@ class PortWallpaper:
             for x in anchor_columns:
                 self.surface.blit(anchor, (x, y))
 
+        self.surface = self.surface.convert()
+
     def draw(self, surface: pygame.Surface):
         """Draw the cached wallpaper across the complete logical display."""
         surface.blit(self.surface, (0, 0))
@@ -1661,8 +1663,8 @@ class PortMenu(Menu):
     def _pre_render_dossier_layers(self):
         """Pre-render the static dossier page stack, sticky tabs, and props."""
         layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
-        self._dossier_page_stack_layer = pygame.Surface(layer_size, pygame.SRCALPHA)
-        self._dossier_props_layer = pygame.Surface(layer_size, pygame.SRCALPHA)
+        self._dossier_page_stack_layer = pygame.Surface(layer_size, pygame.SRCALPHA).convert_alpha()
+        self._dossier_props_layer = pygame.Surface(layer_size, pygame.SRCALPHA).convert_alpha()
 
         misaligned_pages = [
             (-5, pygame.Vector2(-8, 6), (224, 218, 201)),
@@ -2195,7 +2197,7 @@ class PortMenu(Menu):
     def _pre_render_blueprint_tools(self):
         """Pre-render the props around the blueprint."""
         layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
-        self._blueprint_tools_layer = pygame.Surface(layer_size, pygame.SRCALPHA)
+        self._blueprint_tools_layer = pygame.Surface(layer_size, pygame.SRCALPHA).convert_alpha()
 
         pencil_sprite = DataFiles.sprites["props"]["pencil"]
         pencil_rect = pencil_sprite.get_rect()
@@ -2225,7 +2227,7 @@ class PortMenu(Menu):
     def _rebuild_blueprint_surface(self, document: dict, font_registry: dict[str, Font]):
         """Rebuild the blueprint overlay content after a cache-miss."""
         layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
-        self._blueprint_content_layer = pygame.Surface(layer_size, pygame.SRCALPHA)
+        self._blueprint_content_layer = pygame.Surface(layer_size, pygame.SRCALPHA).convert_alpha()
 
         self._blueprint_content_layer.blit(
             self._blueprint_page_surface,
@@ -2294,8 +2296,8 @@ class PortMenu(Menu):
     def _pre_render_warehouse_prop_layers(self):
         """Pre-render the static warehouse props around the animated forklift."""
         layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
-        self.warehouse_prop_layer_1 = pygame.Surface(layer_size, pygame.SRCALPHA)
-        self.warehouse_prop_layer_2 = pygame.Surface(layer_size, pygame.SRCALPHA)
+        self.warehouse_prop_layer_1 = pygame.Surface(layer_size, pygame.SRCALPHA).convert_alpha()
+        self.warehouse_prop_layer_2 = pygame.Surface(layer_size, pygame.SRCALPHA).convert_alpha()
 
         cargo_box_sprite = DataFiles.sprites["props"]["cargo_box"]
         cargo_box_rect = cargo_box_sprite.get_rect()
@@ -2588,7 +2590,7 @@ class PortMenu(Menu):
         self._depot_stock_record_static_surface = pygame.Surface(
             surface.get_size(),
             pygame.SRCALPHA,
-        )
+        ).convert_alpha()
         self._draw_depot_stock_record_static(
             self._depot_stock_record_static_surface,
             font,
@@ -2829,7 +2831,7 @@ class PortMenu(Menu):
         self._decoration_purchase_form_static_surface = pygame.Surface(
             surface.get_size(),
             pygame.SRCALPHA,
-        )
+        ).convert_alpha()
         self._draw_decoration_purchase_form_static(
             self._decoration_purchase_form_static_surface,
             font,
@@ -2984,7 +2986,7 @@ class PortMenu(Menu):
     def _pre_render_clipboard_background(self):
         """Pre-render the clipboard backing, pages, and clip."""
         layer_size = (int(TEMP_SCREEN_SIZE.x), int(TEMP_SCREEN_SIZE.y))
-        self._clipboard_background_surface = pygame.Surface(layer_size, pygame.SRCALPHA)
+        self._clipboard_background_surface = pygame.Surface(layer_size, pygame.SRCALPHA).convert_alpha()
         clipboard_clip_rect = get_rect(
             width=Box.WIDTH, height=Box.HEIGHT / 2,
             centerx=self.clipboard_bg.centerx,

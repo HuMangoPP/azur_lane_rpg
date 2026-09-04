@@ -231,6 +231,11 @@ class EquipmentMenu(Menu):
         self.blueprint_effect_time = 0
         self.selection_activation_time = 0
 
+        glint_max_length = 5
+        self._glint_surface = pygame.Surface(
+            (2 * glint_max_length + 1, 2 * glint_max_length + 1)
+        ).convert()
+
     def _get_stat_delta(self, shipgirl: Shipgirl, stat: str) -> float:
         """Compute the change in the stat.
         
@@ -511,7 +516,7 @@ class EquipmentMenu(Menu):
 
         beacon_base = DataFiles.sprites["user_interface"]["blueprint_slot_glow"].copy()
         beacon_base.set_alpha(int(128 + 127 * pulse))
-        beacon = pygame.Surface(beacon_base.get_size())
+        beacon = pygame.Surface(beacon_base.get_size()).convert()
         beacon.blit(beacon_base)
         beacon_rect = beacon.get_rect()
         beacon_rect.bottomleft = rect.topleft
@@ -588,9 +593,8 @@ class EquipmentMenu(Menu):
                 round(channel * glint_strength * activation_ease)
                 for channel in Color.BLUEPRINT_SLOT_BORDER_GLOW
             )
-            glint_surface = pygame.Surface(
-                (2 * glint_max_length + 1, 2 * glint_max_length + 1)
-            )
+            glint_surface = self._glint_surface
+            glint_surface.fill((0, 0, 0))
             glint_surface_center = pygame.Vector2(glint_max_length, glint_max_length)
             pygame.draw.line(
                 glint_surface,
@@ -715,8 +719,8 @@ class EquipmentMenu(Menu):
             return
 
         self._blueprint_static_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-        self._blueprint_composite_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-        self._blueprint_foreground_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        self._blueprint_composite_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA).convert_alpha()
+        self._blueprint_foreground_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA).convert_alpha()
         self._draw_blueprint_static_backdrop(self._blueprint_static_surface)
         self._draw_blueprint_foreground(self._blueprint_foreground_surface)
 
@@ -1101,7 +1105,7 @@ class EquipmentMenu(Menu):
             return
 
         self._dossier_static_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-        self._dossier_composite_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        self._dossier_composite_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA).convert_alpha()
         self._prepare_dossier_props()
         self._draw_dossier_static_backdrop(self._dossier_static_surface, font_registry)
 

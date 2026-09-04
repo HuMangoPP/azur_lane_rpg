@@ -863,6 +863,33 @@ class EncounterMenu(Menu):
         )
         self._apply_time_weather_style()
 
+        self._exp_panel_rect = get_rect(
+            width=384,
+            height=88,
+            centerx=screen_x(0.5),
+            centery=screen_y(0.5),
+        )
+        self._exp_panel_surf = pygame.Surface(self._exp_panel_rect.size, pygame.SRCALPHA).convert_alpha()
+
+        panel_margin = 8
+        icon_padding = 4
+        self._exp_icon_frame = get_rect(
+            width=Box.WIDTH + 2 * icon_padding,
+            height=Box.HEIGHT + 2 * icon_padding,
+            left=self._exp_panel_rect.left + panel_margin,
+            centery=self._exp_panel_rect.centery,
+        )
+        self._exp_rail_rect = get_rect(
+            width=3,
+            height=self._exp_panel_rect.height - 2 * panel_margin,
+            left=self._exp_icon_frame.right + panel_margin,
+            centery=self._exp_panel_rect.centery,
+        )
+        self._exp_rail_glow = pygame.Surface(self._exp_rail_rect.size, pygame.SRCALPHA).convert_alpha()
+
+        outer_radius = 24
+        self._annulus_surf = pygame.Surface((2 * outer_radius, 2 * outer_radius)).convert()
+
     @property
     def transition_active(self):
         """Check if the transition is active."""
@@ -2180,7 +2207,7 @@ class EncounterMenu(Menu):
             drop.draw(surface, font_registry)
 
         # Draw the research exp widget.
-        if True:
+        if self.exp_timer > 0:
             research_target = DataFiles.save_file["research_target"]
             unique_item = DataFiles.shipgirl_data[research_target]["unique_item"]
             unique_item_exists = DataFiles.save_file["inventory"].get(unique_item, 0) > 0
@@ -2190,57 +2217,38 @@ class EncounterMenu(Menu):
                 + self.research_exp * self.exp_timer
             )
 
-            panel_rect = get_rect(
-                width=384,
-                height=88,
-                centerx=screen_x(0.5),
-                centery=screen_y(0.5),
-            )
             panel_margin = 8
-            icon_padding = 4
             icon = DataFiles.get_entity_sprite(unique_item)
-            icon_frame = get_rect(
-                width=icon.get_width() + 2 * icon_padding,
-                height=icon.get_height() + 2 * icon_padding,
-                left=panel_rect.left + panel_margin,
-                centery=panel_rect.centery,
-            )
-            rail_rect = get_rect(
-                width=3,
-                height=panel_rect.height - 2 * panel_margin,
-                left=icon_frame.right + panel_margin,
-                centery=panel_rect.centery,
-            )
             big_pixel_font = font_registry["big_pixel"]
-            content_left = rail_rect.right + panel_margin
+            content_left = self._exp_rail_rect.right + panel_margin
 
             accent = Color.QUEST_NOTIFICATION_COMPLETE
             pulse = (math.sin(pygame.time.get_ticks() / 1000 * math.tau / 2.4) + 1) / 2
-            panel = pygame.Surface(panel_rect.size, pygame.SRCALPHA)
+            self._exp_panel_surf.fill((0, 0, 0, 0))
             panel_cut_size = 7
             panel_polygon = [
-                (panel_cut_size, panel_rect.height),
-                (0, panel_rect.height - panel_cut_size),
+                (panel_cut_size, self._exp_panel_rect.height),
+                (0, self._exp_panel_rect.height - panel_cut_size),
                 (0, 0),
-                (panel_rect.width - panel_cut_size, 0),
-                (panel_rect.width, panel_cut_size),
-                (panel_rect.width, panel_rect.height),
+                (self._exp_panel_rect.width - panel_cut_size, 0),
+                (self._exp_panel_rect.width, panel_cut_size),
+                (self._exp_panel_rect.width, self._exp_panel_rect.height),
             ]
             pygame.draw.polygon(
-                panel,
+                self._exp_panel_surf,
                 (*Color.QUEST_NOTIFICATION_PANEL, 225),
                 panel_polygon,
             )
             pygame.draw.lines(
-                panel,
+                self._exp_panel_surf,
                 (*accent, round(145 + 85 * pulse)),
                 False,
                 panel_polygon[:-1],
                 width=1,
             )
-            surface.blit(panel, panel_rect)
+            surface.blit(self._exp_panel_surf, self._exp_panel_rect)
 
-            shipgirl_name_y = panel_rect.top + 1.5 * panel_margin
+            shipgirl_name_y = self._exp_panel_rect.top + 1.5 * panel_margin
             shipgirl_name_scale = 2
             big_pixel_font.render(
                 surface,
@@ -2261,7 +2269,7 @@ class EncounterMenu(Menu):
                 accent,
                 scale=1,
             )
-            bar_width = panel_rect.right - 2 * panel_margin - content_left
+            bar_width = self._exp_panel_rect.right - 2 * panel_margin - content_left
             bar_height = 16
             bar_background = get_rect(
                 width=bar_width, height=bar_height,
@@ -2282,17 +2290,16 @@ class EncounterMenu(Menu):
             pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
             pygame.draw.rect(surface, accent, bar_fill)
 
-            rail_glow = pygame.Surface(rail_rect.size, pygame.SRCALPHA)
-            rail_glow.fill((*accent, round(35 + 35 * pulse)))
+            self._exp_rail_glow.fill((*accent, round(35 + 35 * pulse)))
             surface.blit(
-                rail_glow,
-                rail_rect,
+                self._exp_rail_glow,
+                self._exp_rail_rect,
                 special_flags=pygame.BLEND_RGBA_ADD,
             )
 
-            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, icon_frame)
-            pygame.draw.rect(surface, accent, icon_frame, width=Box.OUTLINE_WIDTH)
-            surface.blit(icon, icon.get_rect(center=icon_frame.center))
+            pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, self._exp_icon_frame)
+            pygame.draw.rect(surface, accent, self._exp_icon_frame, width=Box.OUTLINE_WIDTH)
+            surface.blit(icon, icon.get_rect(center=self._exp_icon_frame.center))
 
         if self.return_to_port_button.active:
             self._draw_dossier_overlay(surface, font_registry)
@@ -2323,16 +2330,15 @@ class EncounterMenu(Menu):
                     
                     inner_radius = 12
                     outer_radius = 24
-                    annulus = pygame.Surface((2 * outer_radius, 2 * outer_radius))
-                    annulus.fill((0, 0, 0))
-                    pygame.draw.circle(annulus, color, (outer_radius, outer_radius), outer_radius)
-                    pygame.draw.circle(annulus, (0, 0, 0), (outer_radius, outer_radius), inner_radius)
-                    annulus.set_colorkey((0, 0, 0))
-                    annulus_rect = annulus.get_rect()
+                    self._annulus_surf.fill((0, 0, 0))
+                    pygame.draw.circle(self._annulus_surf, color, (outer_radius, outer_radius), outer_radius)
+                    pygame.draw.circle(self._annulus_surf, (0, 0, 0), (outer_radius, outer_radius), inner_radius)
+                    self._annulus_surf.set_colorkey((0, 0, 0))
+                    annulus_rect = self._annulus_surf.get_rect()
 
                     drawpos = pygame.Vector2(mpos) + pygame.Vector2(48)
                     annulus_rect.center = drawpos
-                    surface.blit(annulus, annulus_rect)
+                    surface.blit(self._annulus_surf, annulus_rect)
 
                     # Different hull tpyes have different attack icons.
                     if self.selected_shipgirl.battle_component.hull_type == "CV":
