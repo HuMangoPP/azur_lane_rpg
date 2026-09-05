@@ -7,7 +7,6 @@ if TYPE_CHECKING:
     from src.menus.menu_manager import MenuManager
 
 import math
-import functools
 import pygame
 
 from engine.util import get_rect, draw_dashed_rect
@@ -3274,12 +3273,12 @@ class PortMenu(Menu):
         # ordered separately.
         renderables.extend(
             shipgirl for shipgirl in self.menu_manager.available_shipgirls
-            if shipgirl.interacting_decoration is None
+            if (
+                shipgirl.interacting_decoration is None
+                and shipgirl != self.dragged_shipgirl
+            )
         )
-        renderables = sorted(
-            renderables,
-            key=functools.cmp_to_key(Decorations.compare_decoration_render_order)
-        )
+        renderables = Decorations.sort_renderables_by_depth(renderables)
         for renderable in renderables:
             if Decorations.is_shipgirl_renderable(renderable):
                 renderable.draw(surface, font_registry)
@@ -3294,6 +3293,8 @@ class PortMenu(Menu):
             interacting_shipgirl = interacting_shipgirls_by_decoration.get(tuple(tilepos_anchor))
             if interacting_shipgirl is not None:
                 interacting_shipgirl.draw(surface, font_registry)
+        if self.dragged_shipgirl is not None:
+            self.dragged_shipgirl.draw(surface, font_registry)
 
         for choose_faction_button in self.choose_faction_buttons:
             choose_faction_button.draw(surface, font_registry)

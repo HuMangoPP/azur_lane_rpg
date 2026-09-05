@@ -986,7 +986,10 @@ class Shipgirl:
         ) / 2 - 1
         iso_x = max(-1, min(iso_x, Decorations.FLOOR_TILES_WIDE - 1))
         iso_y = max(-1, min(iso_y, Decorations.FLOOR_TILES_TALL - 1))
-        self.pos = Decorations.get_isometric_floor_pos((iso_x, iso_y))
+        self.pos = (
+            Decorations.get_isometric_floor_pos((iso_x, iso_y))
+            + pygame.Vector2(0, self.rect.height * 3 / 8)
+        )
         self.rect.centerx = self.pos.x
         self.rect.bottom = self.pos.y + self.rect.height / 8
 

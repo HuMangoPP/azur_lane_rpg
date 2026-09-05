@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 
 import json
 import colorsys
+import heapq
 import math
 import pygame
 
@@ -641,28 +642,22 @@ class Decorations:
         )
 
     @classmethod
-    def compare_decoration_render_order(
+    def get_render_order_precedence(
         cls,
         renderable_a: Shipgirl | tuple[str, CoordinateType, bool],
         renderable_b: Shipgirl | tuple[str, CoordinateType, bool],
     ) -> int:
-        """Compare two renderables.
-        
-        If A is behind B but B is not behind A, then return a negative number.
-        If B is behind A but A is not behind B, then return a positive number.
+        """Return the required relative order for a decoration-related pair.
 
+        A negative value means A must be rendered before B, a positive value
+        means B must be rendered before A, and zero means there is no hard
+        ordering constraint between them.
         """
-        # If both renderables are shipgirls, then order based on y-value.
         a_is_shipgirl = cls.is_shipgirl_renderable(renderable_a)
         b_is_shipgirl = cls.is_shipgirl_renderable(renderable_b)
         if a_is_shipgirl and b_is_shipgirl:
-            if renderable_a.rect.centery > renderable_b.rect.centery:
-                return 1
-            else:
-                return -1
+            return 0
 
-        # Check if A is behind B and vice-versa.
-        # Early return if one is clearly behind the other.
         a_behind_b = cls.renderable_is_behind(renderable_a, renderable_b)
         b_behind_a = cls.renderable_is_behind(renderable_b, renderable_a)
         if a_behind_b and not b_behind_a:
@@ -670,15 +665,20 @@ class Decorations:
         if b_behind_a and not a_behind_b:
             return 1
 
-        # Since the decoration footprints are all rectangular, the comparison
-        # only reaches this part of the code if exactly one of the renderables is
-        # a shipgirl and the other is a decoration.
-        # This means that the shipgirl is on a tile occupied by the decoration.
-        # Render the shipgirl above if the shipgirl is occuping a tile on the
-        # bottomleft and right edges of the decoration footprint.
+        # Decorations with diagonally offset footprints may be incomparable.
+        # Their fallback order is handled by get_render_order_priority.
+        if not a_is_shipgirl and not b_is_shipgirl:
+            return 0
+
+        # A mutual relationship is only meaningful for a mixed pair when the
+        # shipgirl is actually standing within the decoration's footprint.
+        # Render the shipgirl above on the bottom-left and bottom-right edges.
         if a_is_shipgirl:
             shipgirl_anchor = cls.get_shipgirl_standing_tilepos(renderable_a)
-            _, decoration_anchor, _ = cls.unpack_decoration_data(renderable_b)
+            decoration, decoration_anchor, flipped = cls.unpack_decoration_data(renderable_b)
+            decoration_tiles = cls.get_decoration_tiles(decoration, flipped, decoration_anchor)
+            if shipgirl_anchor not in decoration_tiles:
+                return 0
             if (
                 shipgirl_anchor[0] == decoration_anchor[0]
                 or shipgirl_anchor[1] == decoration_anchor[1]
@@ -687,13 +687,110 @@ class Decorations:
             return -1
         else:
             shipgirl_anchor = cls.get_shipgirl_standing_tilepos(renderable_b)
-            _, decoration_anchor, _ = cls.unpack_decoration_data(renderable_a)
+            decoration, decoration_anchor, flipped = cls.unpack_decoration_data(renderable_a)
+            decoration_tiles = cls.get_decoration_tiles(decoration, flipped, decoration_anchor)
+            if shipgirl_anchor not in decoration_tiles:
+                return 0
             if (
                 shipgirl_anchor[0] == decoration_anchor[0]
                 or shipgirl_anchor[1] == decoration_anchor[1]
             ):
                 return -1
             return 1
+
+    @classmethod
+    def get_render_order_priority(
+        cls,
+        renderable: Shipgirl | tuple[str, CoordinateType, bool],
+        original_index: int,
+    ) -> tuple[float, float, int, int]:
+        """Return a stable depth key for renderables without a hard constraint."""
+        is_shipgirl = cls.is_shipgirl_renderable(renderable)
+        if is_shipgirl:
+            floor_position = pygame.Vector2(
+                renderable.rect.centerx,
+                renderable.rect.bottom - renderable.rect.height / 8,
+            )
+        else:
+            render_order_tiles = cls.get_render_order_tiles(renderable)
+            rear_tile = (
+                min(tile[0] for tile in render_order_tiles),
+                min(tile[1] for tile in render_order_tiles),
+            )
+            floor_position = cls.get_isometric_floor_pos(rear_tile)
+
+        return (
+            floor_position.y,
+            floor_position.x,
+            1 if is_shipgirl else 0,
+            original_index,
+        )
+
+    @classmethod
+    def sort_renderables_by_depth(
+        cls,
+        renderables: list[Shipgirl | tuple[str, CoordinateType, bool]],
+    ) -> list[Shipgirl | tuple[str, CoordinateType, bool]]:
+        """Order renderables while prioritizing decoration occlusion constraints.
+
+        Shipgirl-to-shipgirl depth is a soft priority rather than a graph edge.
+        This prevents their y-order from forming an impossible cycle with a
+        decoration that must be rendered between them.
+        """
+        renderables = list(renderables)
+        successors = [set() for _ in renderables]
+        indegrees = [0 for _ in renderables]
+
+        for index_a, renderable_a in enumerate(renderables):
+            for index_b in range(index_a + 1, len(renderables)):
+                precedence = cls.get_render_order_precedence(
+                    renderable_a,
+                    renderables[index_b],
+                )
+                if precedence < 0:
+                    behind_index, front_index = index_a, index_b
+                elif precedence > 0:
+                    behind_index, front_index = index_b, index_a
+                else:
+                    continue
+
+                successors[behind_index].add(front_index)
+                indegrees[front_index] += 1
+
+        priorities = [
+            cls.get_render_order_priority(renderable, index)
+            for index, renderable in enumerate(renderables)
+        ]
+        remaining = set(range(len(renderables)))
+        ready = [
+            (priorities[index], index)
+            for index, indegree in enumerate(indegrees)
+            if indegree == 0
+        ]
+        heapq.heapify(ready)
+        render_order = []
+
+        while remaining:
+            if ready:
+                _, renderable_index = heapq.heappop(ready)
+                if renderable_index not in remaining:
+                    continue
+            else:
+                # Malformed or future footprint rules may introduce a cycle.
+                # Break it deterministically instead of producing unstable
+                # comparison-sort results or failing to render the scene.
+                renderable_index = min(remaining, key=priorities.__getitem__)
+
+            remaining.remove(renderable_index)
+            render_order.append(renderables[renderable_index])
+            for successor in successors[renderable_index]:
+                if successor not in remaining:
+                    continue
+                indegrees[successor] -= 1
+                if indegrees[successor] == 0:
+                    heapq.heappush(ready, (priorities[successor], successor))
+
+        return render_order
 
     @classmethod
     def get_isometric_tilepos(cls, screen_pos: CoordinateType) -> CoordinateType:
