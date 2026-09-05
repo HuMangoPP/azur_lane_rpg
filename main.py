@@ -10,9 +10,7 @@ import pygame
 
 pygame.mixer.pre_init(44100, -16, 2, 4096)
 pygame.init()
-SCREEN_SIZE = pygame.Vector2(1920, 1080)
-# SCREEN_SIZE = pygame.Vector2(960, 540)
-screen = pygame.display.set_mode(SCREEN_SIZE)
+screen = pygame.display.set_mode()
 
 pygame.mixer.init()
 
@@ -28,8 +26,8 @@ display = pygame.Surface(TEMP_SCREEN_SIZE)
 
 # Monkeypatch pygame.mouse.get_pos() to map from true screen space to temp surface space.
 mouse_scale = (
-    TEMP_SCREEN_SIZE.x / SCREEN_SIZE.x,
-    TEMP_SCREEN_SIZE.y / SCREEN_SIZE.y,
+    TEMP_SCREEN_SIZE.x / screen.get_width(),
+    TEMP_SCREEN_SIZE.y / screen.get_height(),
 )
 
 get_physical_mouse_pos = pygame.mouse.get_pos
@@ -130,10 +128,9 @@ def _write_to_save_file(menu_manager: MenuManager):
     for shipgirl in menu_manager.available_shipgirls:
         DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
 
-    # save_file = input("Save file? ")
-    # if save_file == "y":
     with open("data/save_file.json", "w") as f:
         json.dump(DataFiles.save_file, f, indent=4)
+    print("Successfully wrote save file.")
 
 
 async def main():
@@ -199,6 +196,8 @@ async def main():
             screen.blit(pygame.transform.scale(display, screen.get_size()))
             pygame.display.flip()
             await asyncio.sleep(0)
+    except Exception as e:
+        print(f"Game crashed due to exception {e}")
     finally:
         DataFiles.bgm["lofi_loop"].stop()
         pygame.quit()
