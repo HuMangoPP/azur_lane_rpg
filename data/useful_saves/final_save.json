@@ -44,7 +44,7 @@
 		"wisdom_cube": 3,
 		"huggy_pillow": 0,
 		"dragon_cannon": 0,
-		"decoration_coin": 17,
+		"decoration_coin": 12,
 		"battle_mech": 0,
 		"CA_blueprint": 0,
 		"metals": 0,
@@ -62,7 +62,14 @@
 	"decoration_depot": {
 		"bed": 0
 	},
-	"decorations": [["bed", [1, 1], true]],
+	"decorations": [
+		["bed", [13, 1], false],
+		["bed", [11, 1], false],
+		["bed", [9, 1], false],
+		["bed", [7, 1], false],
+		["bed", [5, 1], false],
+		["bed", [3, 1], false]
+	],
 	"research_target": null,
 	"sortie_progress": 24,
 	"chapter_progress": 3,

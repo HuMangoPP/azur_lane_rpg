@@ -15,10 +15,7 @@ To play this game on the web or download the windows version, visit the [itch.io
 To play on other platforms, you must run the game manually.
 
 1. Follow the [Python installation instructions](https://www.python.org/downloads/) to install Python on your device.
-2. Clone the release branch of this repo:
-```bash
-git clone -b "release-1.0" --single-branch "https://github.com/HuMangoPP/azur_lane_rpg.git"
-```
+2. Download the `release-1.0` branch of this project.
 3. (Recommended) Create a virtual environment:
 ```bash
 python -m venv env
@@ -29,11 +26,11 @@ pip install -r requirements/prod.txt
 ```
 5. Run the game:
 ```bash
-python3 main.py
+python main.py
 ```
 
 ## Notes
 
 * If you have just constructed a new shipgirl or are entering a new encounter, the game will need to load new live2d assets, which can some time. The game is (probably) not frozen and is unlikely to crash.
 
-* If you encounter any bugs, feel free to raise an issue or leave a comment.
+* If you encounter any bugs or want to leave suggestions, feel free to raise an issue or leave a comment.
