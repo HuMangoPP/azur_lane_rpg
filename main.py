@@ -141,67 +141,69 @@ async def main():
         pygame.quit()
         return None
 
+    
     menu_manager = MenuManager()
-    running = True
-    while running:
-        dt = clock.tick(FPS) / 1000
-        fps = int(clock.get_fps())
+    try:
+        running = True
+        while running:
+            dt = clock.tick(FPS) / 1000
+            fps = int(clock.get_fps())
 
-        events = []
-        for event in pygame.event.get():
-            # Convert event mouse positions from screen space to temporary
-            # display space as well.
-            if hasattr(event, "pos"):
-                event.pos = (
-                    event.pos[0] * mouse_scale[0],
-                    event.pos[1] * mouse_scale[1],
-                )
-            if hasattr(event, "rel"):
-                event.rel = (
-                    event.rel[0] * mouse_scale[0],
-                    event.rel[1] * mouse_scale[1],
-                )
+            events = []
+            for event in pygame.event.get():
+                # Convert event mouse positions from screen space to temporary
+                # display space as well.
+                if hasattr(event, "pos"):
+                    event.pos = (
+                        event.pos[0] * mouse_scale[0],
+                        event.pos[1] * mouse_scale[1],
+                    )
+                if hasattr(event, "rel"):
+                    event.rel = (
+                        event.rel[0] * mouse_scale[0],
+                        event.rel[1] * mouse_scale[1],
+                    )
 
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                # Dev util that allows saves the game and "reloads" it.
-                _write_to_save_file(menu_manager)
-                DataFiles.bgm["lofi_loop"].stop()
-                menu_manager = MenuManager()
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    running = False
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                    # Dev util that allows saves the game and "reloads" it.
+                    _write_to_save_file(menu_manager)
+                    DataFiles.bgm["lofi_loop"].stop()
+                    menu_manager = MenuManager()
 
-            events.append(event)
+                events.append(event)
 
-        menu_manager.current_menu.update(dt, events)
+            menu_manager.current_menu.update(dt, events)
 
-        # Clear the previous frame. Each menu can draw its own background over this.
-        display.fill(Color.BLACK)
-        menu_manager.current_menu.draw(display, font_registry)
-        if not menu_manager.encounter_menu.transition_active:
-            for quest in menu_manager.quest_manager.started_quests.values():
-                if quest.started and not quest.completed:
-                    quest.tutorial_draw(menu_manager, display, font_registry)
+            # Clear the previous frame. Each menu can draw its own background over this.
+            display.fill(Color.BLACK)
+            menu_manager.current_menu.draw(display, font_registry)
+            if not menu_manager.encounter_menu.transition_active:
+                for quest in menu_manager.quest_manager.started_quests.values():
+                    if quest.started and not quest.completed:
+                        quest.tutorial_draw(menu_manager, display, font_registry)
 
-        fps_margin = 32
-        font_registry["big_pixel"].render(
-            display,
-            str(fps),
-            (fps_margin, TEMP_SCREEN_SIZE[1] - fps_margin),
-            Color.WHITE,
-            scale=2,
-            style="center",
-            outline_color=Color.BLACK
-        )
-        screen.blit(pygame.transform.scale(display, screen.get_size()))
-        pygame.display.flip()
-        await asyncio.sleep(0)
+            fps_margin = 32
+            font_registry["big_pixel"].render(
+                display,
+                str(fps),
+                (fps_margin, TEMP_SCREEN_SIZE[1] - fps_margin),
+                Color.WHITE,
+                scale=2,
+                style="center",
+                outline_color=Color.BLACK
+            )
+            screen.blit(pygame.transform.scale(display, screen.get_size()))
+            pygame.display.flip()
+            await asyncio.sleep(0)
+    finally:
+        DataFiles.bgm["lofi_loop"].stop()
+        pygame.quit()
 
-    DataFiles.bgm["lofi_loop"].stop()
-    pygame.quit()
-
-    _write_to_save_file(menu_manager)
+        _write_to_save_file(menu_manager)
 
 
 asyncio.run(main())
