@@ -3,13 +3,16 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from engine.types import CoordinateType, ColorType
 
-import os
 import pygame
+
+from engine.paths import resource_path
 
 
 class Font:
     def __init__(self, font_name: str, charset: str):
-        self.font = pygame.image.load(os.path.join("engine", f"{font_name}.png")).convert_alpha()
+        self.font = pygame.image.load(
+            resource_path("engine", f"{font_name}.png")
+        ).convert_alpha()
         self.chars = list(charset)
         self.font_width = self.font.get_width() // len(self.chars)
         self.font_height = self.font.get_height()

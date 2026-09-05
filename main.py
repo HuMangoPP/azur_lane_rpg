@@ -8,9 +8,11 @@ import json
 import os
 import pygame
 
+from engine.paths import SAVE_FILE_PATH, resource_path
+
 pygame.mixer.pre_init(44100, -16, 2, 4096)
 pygame.init()
-pygame.display.set_icon(pygame.image.load("assets/tb_icon.png"))
+pygame.display.set_icon(pygame.image.load(resource_path("assets", "tb_icon.png")))
 pygame.display.set_caption("Azur Lane RPG")
 screen = pygame.display.set_mode()
 
@@ -50,7 +52,7 @@ pygame.mouse.get_pos = _get_scaled_mouse_pos
 
 clock = pygame.Clock()
 
-with open("engine/fonts.json") as f:
+with resource_path("engine", "fonts.json").open() as f:
     fonts = json.load(f)
     font_registry = {
         font: Font(font, charset)
@@ -130,7 +132,7 @@ def _write_to_save_file(menu_manager: MenuManager):
     for shipgirl in menu_manager.available_shipgirls:
         DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
 
-    with open("data/save_file.json", "w") as f:
+    with SAVE_FILE_PATH.open("w") as f:
         json.dump(DataFiles.save_file, f, indent=4)
     print("Successfully wrote save file.")
 

@@ -9,7 +9,12 @@ import math
 import os
 import time
 from copy import deepcopy
+from pathlib import Path
 import pygame
+
+from engine.paths import resource_path
+
+PathLike = str | os.PathLike[str]
 
 LAYER_SIZE = 96
 PRE_RENDER_FPS = 24
@@ -39,8 +44,8 @@ PART_NAMES = [
 ]
 FACIAL_EXPRESSION_PART_NAMES = ["neutral", "dizzy", "focused", "sleepy"]
 
-SHARED_MODEL_FILE = os.path.join(os.path.dirname(__file__), "shared_model.json")
-SHARED_ANIMATIONS_FILE = os.path.join(os.path.dirname(__file__), "shared_animations.json")
+SHARED_MODEL_FILE = resource_path("live2d", "shared_model.json")
+SHARED_ANIMATIONS_FILE = resource_path("live2d", "shared_animations.json")
 KEYFRAME_DURATION_KEY = "keyframe_duration"
 KEYFRAMES_KEY = "keyframes"
 NO_LOOP_KEY = "no_loop"
@@ -48,15 +53,15 @@ NEXT_ANIMATION_KEY = "next_animation"
 FACIAL_EXPRESSION_KEY = "facial_expression"
 
 
-def get_live2d_model_file(name: str) -> str | None:
+def get_live2d_model_file(name: str) -> Path | None:
     """Resolve an entity name to its Live2D model, falling back to TB."""
     model_name = name.split(":")[0]
-    model_file = os.path.join("live2d", f"{model_name}.json")
-    if os.path.exists(model_file):
+    model_file = resource_path("live2d", f"{model_name}.json")
+    if model_file.exists():
         return model_file
 
-    fallback_model_file = os.path.join("live2d", "TB.json")
-    if os.path.exists(fallback_model_file):
+    fallback_model_file = resource_path("live2d", "TB.json")
+    if fallback_model_file.exists():
         return fallback_model_file
     return None
 
@@ -223,24 +228,27 @@ class Cache:
 
     def _load_shared_model_parts(self):
         """Load the parts data of the shared model."""
-        if not os.path.exists(SHARED_MODEL_FILE):
-            self.shared_model_parts = {}
-            return
+        if not SHARED_MODEL_FILE.is_file():
+            raise FileNotFoundError(
+                f"Required shared Live2D model file not found: {SHARED_MODEL_FILE}"
+            )
 
-        with open(SHARED_MODEL_FILE) as f:
+        with SHARED_MODEL_FILE.open() as f:
             shared_model = json.load(f)
         self.shared_model_parts = _model_parts(shared_model) or shared_model
 
     def load_shared_animations(self):
         """Load the shared animations."""
-        if not os.path.exists(SHARED_ANIMATIONS_FILE):
-            self.shared_animations = {}
-            return
+        if not SHARED_ANIMATIONS_FILE.is_file():
+            raise FileNotFoundError(
+                "Required shared Live2D animations file not found: "
+                f"{SHARED_ANIMATIONS_FILE}"
+            )
         
-        with open(SHARED_ANIMATIONS_FILE) as f:
+        with SHARED_ANIMATIONS_FILE.open() as f:
             self.shared_animations = json.load(f)
 
-    def get_model_dict(self, model_file: str) -> dict:
+    def get_model_dict(self, model_file: PathLike) -> dict:
         """Get the specific model dict.
         
         If the model has already been loaded, then retrieve it from
@@ -255,7 +263,9 @@ class Cache:
 
         # Load the part sprites from the model spritesheet.
         parts = {}
-        spritesheet = pygame.image.load(model_dict["spritesheet"]).convert()
+        spritesheet = pygame.image.load(
+            resource_path(model_dict["spritesheet"])
+        ).convert()
         spritesheet.set_colorkey(model_dict["colorkey"])
         num_layers_in_row = spritesheet.get_width() // LAYER_SIZE
         for i, part in enumerate(PART_NAMES):
@@ -331,7 +341,8 @@ class Live2D:
 
     KEYFRAME_DURATION = 0.3
 
-    def __init__(self, model_file: str):
+    def __init__(self, model_file: PathLike):
+        model_file = Path(model_file).resolve()
         self.t = 0
 
         self.animation = self.IDLE_ANIMATION
@@ -547,13 +558,13 @@ class PreRenderCache:
         ] = {}
 
     @staticmethod
-    def _cache_key(model_file: str) -> str:
+    def _cache_key(model_file: PathLike) -> str:
         """Normalize a model path so equivalent paths share a cache entry."""
         return os.path.normcase(os.path.abspath(os.path.normpath(model_file)))
 
     def get(
         self,
-        model_file: str,
+        model_file: PathLike,
     ) -> tuple[
         Live2D,
         dict[str, tuple[pygame.Surface, ...]],
@@ -564,7 +575,7 @@ class PreRenderCache:
 
     def store(
         self,
-        model_file: str,
+        model_file: PathLike,
         live2d: Live2D,
         animation_frames: dict[str, tuple[pygame.Surface, ...]],
         terminal_frames: dict[str, pygame.Surface],
@@ -578,7 +589,7 @@ class PreRenderCache:
 
     def create_pre_render_task(
         self,
-        model_files: Iterable[str | None],
+        model_files: Iterable[PathLike | None],
     ) -> PreRenderTask:
         """Create an incremental task for the supplied uncached models."""
         return PreRenderTask(self, model_files)
@@ -604,7 +615,7 @@ class PreRenderLive2D:
 
     KEYFRAME_DURATION = Live2D.KEYFRAME_DURATION
 
-    def __init__(self, model_file: str):
+    def __init__(self, model_file: PathLike):
         cached_model = self.cache.get(model_file)
         if cached_model is None:
             pre_render_task = self.cache.create_pre_render_task([model_file])
@@ -733,7 +744,7 @@ class PreRenderTask:
     def __init__(
         self,
         cache: PreRenderCache,
-        model_files: Iterable[str | None],
+        model_files: Iterable[PathLike | None],
     ):
         self.cache = cache
 
@@ -750,7 +761,7 @@ class PreRenderTask:
 
         self.total_models = len(self.model_files)
         self.completed_models = 0
-        self.current_model_file: str | None = None
+        self.current_model_file: PathLike | None = None
         self.current_frame = 0
         self.current_total_frames = 0
         self.finished = self.total_models == 0

@@ -12,6 +12,7 @@ import pygame
 
 from engine.util import get_vec
 from engine.load_assets import load_sprites, load_sound
+from engine.paths import SAVE_FILE_PATH, resource_path
 
 TEMP_SCREEN_SIZE = pygame.Vector2(960, 540)
 FPS = 0
@@ -216,31 +217,31 @@ class Stats:
 
 # TODO Consider whether this serves to be split up into multiple objects.
 class DataFiles:
-    with open("data/save_file.json") as f:
+    with SAVE_FILE_PATH.open() as f:
         save_file = json.load(f)
 
-    with open("data/sorties.json") as f:
+    with resource_path("data", "sorties.json").open() as f:
         sortie_data: list[dict] = json.load(f)
 
-    with open("data/shipgirls.json") as f:
+    with resource_path("data", "shipgirls.json").open() as f:
         shipgirl_data: dict[str, dict[str, str]] = json.load(f)
 
-    with open("data/stats.json") as f:
+    with resource_path("data", "stats.json").open() as f:
         stats_data: dict[str, dict[str, CoordinateType]] = json.load(f)
 
-    with open("data/sirens.json") as f:
+    with resource_path("data", "sirens.json").open() as f:
         siren_data: dict[str, dict] = json.load(f)
 
-    with open("data/equipment.json") as f:
+    with resource_path("data", "equipment.json").open() as f:
         equipment_data: dict[str, dict] = json.load(f)
 
-    with open("data/decoration_store.json") as f:
+    with resource_path("data", "decoration_store.json").open() as f:
         decoration_store: dict[str, dict] = json.load(f)
     
-    with open("data/item_descriptions.json") as f:
+    with resource_path("data", "item_descriptions.json").open() as f:
         item_descriptions: dict[str, str] = json.load(f)
     
-    with open("data/sortie_selection_details.json") as f:
+    with resource_path("data", "sortie_selection_details.json").open() as f:
         sortie_selection_details: dict[str, dict] = json.load(f)
 
     sprites: dict[str, dict[str, pygame.Surface | dict[str, pygame.Surface]]] = load_sprites()
