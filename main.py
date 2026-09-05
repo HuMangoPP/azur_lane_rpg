@@ -10,6 +10,8 @@ import pygame
 
 pygame.mixer.pre_init(44100, -16, 2, 4096)
 pygame.init()
+pygame.display.set_icon(pygame.image.load("assets/tb_icon.png"))
+pygame.display.set_caption("Azur Lane RPG")
 screen = pygame.display.set_mode()
 
 pygame.mixer.init()
