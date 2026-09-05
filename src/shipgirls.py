@@ -864,7 +864,7 @@ class ShipgirlBattleComponent:
         
         Effects like attack and attack effects, smokescreen effects, target indicators.
         """
-        if self.hp < 0:
+        if self.hp <= 0:
             return
         if self.evasion_gauge >= 1:
             self.smokescreen.draw(surface, rect)

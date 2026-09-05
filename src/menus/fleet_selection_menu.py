@@ -286,6 +286,7 @@ class FleetSelectionMenu(Menu):
             "start_sortie",
             self.LAUNCH_MARKER_MUTED_INK,
         )
+        self.clicked_start = False
 
         def exit_fleet_selection_menu():
             self.menu_manager.current_menu = self.menu_manager.sortie_selection_menu
@@ -865,11 +866,10 @@ class FleetSelectionMenu(Menu):
 
                 # Prevent mouse interactions if the player dropped a shipgirl onto a button.
                 if not was_dragging_shipgirl:
-                    click = (
-                        click
-                        or self.start_sortie_button.click(event.pos)
-                        or self.exit_fleet_selection_menu_button.click(event.pos)
-                    )
+                    click = click or self.exit_fleet_selection_menu_button.click(event.pos)
+                    if not click and self.start_sortie_button.click(event.pos):
+                        click = True
+                        self.clicked_start = True
 
                 if click:
                     DataFiles.sfx["click"].play()
@@ -904,7 +904,8 @@ class FleetSelectionMenu(Menu):
         """Draw the start sortie button hex marker and its effects based on the button state."""
         center = pygame.Vector2(self.start_sortie_button.rect.center)
         hovered = (
-            self.start_sortie_button.active
+            not self.clicked_start
+            and self.start_sortie_button.active
             and self.start_sortie_button.hovered
             and self.mouse_start_drag is None
         )

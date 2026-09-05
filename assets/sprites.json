@@ -55,7 +55,7 @@
 
 		"huggy_pillow": { "left": 0, "top": 384, "width": 64, "height": 64 },
 		"star_blaster": { "left": 64, "top": 384, "width": 64, "height": 64 },
-		"battle_mech": { "left": 128, "top": 384, "width": 64, "height": 64 },
+		"modernized_jaeger": { "left": 128, "top": 384, "width": 64, "height": 64 },
 		"dragon_cannon": { "left": 192, "top": 384, "width": 64, "height": 64 },
 		"prank_of_the_day": {
 			"left": 256,
@@ -78,16 +78,16 @@
 		"shinano": { "left": 320, "top": 448, "width": 64, "height": 64 },
 
 		"demon_blade": { "left": 0, "top": 512, "width": 64, "height": 64 },
-		"white_dragon": { "left": 64, "top": 512, "width": 64, "height": 64 },
+		"the_white_dragon": { "left": 64, "top": 512, "width": 64, "height": 64 },
 		"butterfly_wings": {
 			"left": 128,
 			"top": 512,
 			"width": 64,
 			"height": 64
 		},
-		"raiden_shogun": { "left": 192, "top": 512, "width": 64, "height": 64 },
-		"koi_fish": { "left": 256, "top": 512, "width": 64, "height": 64 },
-		"constellation": { "left": 320, "top": 512, "width": 64, "height": 64 },
+		"the_raiden_shogun": { "left": 192, "top": 512, "width": 64, "height": 64 },
+		"nishikigoi": { "left": 256, "top": 512, "width": 64, "height": 64 },
+		"the_starry_night": { "left": 320, "top": 512, "width": 64, "height": 64 },
 
 		"z23": { "left": 0, "top": 576, "width": 64, "height": 64 },
 		"emden": { "left": 64, "top": 576, "width": 64, "height": 64 },
@@ -97,8 +97,8 @@
 		"fritz_rumey": { "left": 320, "top": 576, "width": 64, "height": 64 },
 
 		"raubtier": { "left": 0, "top": 640, "width": 64, "height": 64 },
-		"twin_dragons": { "left": 64, "top": 640, "width": 64, "height": 64 },
-		"the_devil": { "left": 128, "top": 640, "width": 64, "height": 64 },
+		"the_twin_dragons": { "left": 64, "top": 640, "width": 64, "height": 64 },
+		"devil's_horns": { "left": 128, "top": 640, "width": 64, "height": 64 },
 		"flagship_banner": {
 			"left": 192,
 			"top": 640,
@@ -132,20 +132,20 @@
 			"height": 64
 		},
 		"dove_feather": { "left": 64, "top": 768, "width": 64, "height": 64 },
-		"privateers_heroism": {
+		"privateer's_heroism": {
 			"left": 128,
 			"top": 768,
 			"width": 64,
 			"height": 64
 		},
-		"lions_aegis": { "left": 192, "top": 768, "width": 64, "height": 64 },
-		"knights_bacinet": {
+		"lion's_aegis": { "left": 192, "top": 768, "width": 64, "height": 64 },
+		"knight's_bacinet": {
 			"left": 256,
 			"top": 768,
 			"width": 64,
 			"height": 64
 		},
-		"devils_cross": { "left": 320, "top": 768, "width": 64, "height": 64 }
+		"devil's_cross": { "left": 320, "top": 768, "width": 64, "height": 64 }
 	},
 	"user_interface": {
 		"TB_point_up": { "left": 0, "top": 0, "width": 64, "height": 64 },
@@ -214,7 +214,7 @@
 			"width": 64,
 			"height": 64
 		},
-		"open_reward_cache": {
+		"opened_reward_cache": {
 			"left": 320,
 			"top": 320,
 			"width": 64,

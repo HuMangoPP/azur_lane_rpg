@@ -666,6 +666,9 @@ class EncounterMenu(Menu):
         )
 
         def open_reward_cache():
+            if self.open_reward_cache_button.background_img == DataFiles.sprites["user_interface"]["opened_reward_cache"]:
+                return
+            self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["opened_reward_cache"]
             rewards = DataFiles.sortie_data[self.current_sortie]["rewards"]
             for reward, amount in rewards.items():
                 self._add_sortie_drop(
@@ -1108,6 +1111,7 @@ class EncounterMenu(Menu):
             for shipgirl in self.transition_shipgirls:
                 shipgirl.rect.centerx += distance
             self._update_transition_shipgirl_animation(dt)
+            self.menu_manager.siren_fleet.animate(dt)
             if not self.transition_shipgirls or all(
                 shipgirl.rect.left >= screen_x(1)
                 for shipgirl in self.transition_shipgirls
@@ -1265,7 +1269,7 @@ class EncounterMenu(Menu):
                 # Do not allow the player to claim rewards again.
                 self.return_to_port_button.active = False
                 self.opened_reward_report_timer = self.OPENED_REWARD_REPORT_DELAY
-                self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["open_reward_cache"]
+                self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["opened_reward_cache"]
             else:
                 self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["closed_reward_cache"]
 
@@ -1419,11 +1423,12 @@ class EncounterMenu(Menu):
                         if backup_fleet_quest.quest_id in self.menu_manager.quest_manager.started_quests:
                             backup_fleet_quest.swap_attempted = True
 
-                    # A siren attack that is en route is switched to attack the new target only for
-                    # this attack, then the siren will recompute the target once this attack finishes.
-                    for siren in self.menu_manager.siren_fleet.fleet:
-                        if siren.battle_component.target == self.selected_shipgirl:
-                            siren.battle_component.target = backup_shipgirl
+                        # A siren attack that is en route is switched to attack the new target only for
+                        # this attack, then the siren will recompute the target once this attack finishes.
+                        for siren in self.menu_manager.siren_fleet.fleet:
+                            if siren.battle_component.target == self.selected_shipgirl:
+                                siren.battle_component.target = backup_shipgirl
+                        break
 
                     self.selected_shipgirl = None
                     self.selected_shipgirl_index = None
@@ -1436,12 +1441,11 @@ class EncounterMenu(Menu):
                     or self.report_page_next_button.click(event.pos)
                     or self.return_to_port_button.click(event.pos)
                     or self.retreat_button.click(event.pos)
+                    or self.open_reward_cache_button.click(event.pos)
                 )
 
                 if click:
                     DataFiles.sfx["click"].play()
-                elif self.open_reward_cache_button.click(event.pos):
-                    self.open_reward_cache_button.background_img = DataFiles.sprites["user_interface"]["open_reward_cache"]
 
             # Dev controls.
             if event.type == pygame.KEYDOWN:
@@ -2283,6 +2287,10 @@ class EncounterMenu(Menu):
             player_fleet=self.menu_manager.player_fleet,
             siren_fleet=self.menu_manager.siren_fleet,
         )
+        for shipgirl in self.menu_manager.player_fleet.fleet:
+            shipgirl.battle_component.draw_effects(surface, shipgirl.rect, self.vfx_manager)
+        for siren in self.menu_manager.siren_fleet.fleet:
+            siren.battle_component.draw_effects(surface, siren.rect, self.vfx_manager)
         self.vfx_manager.draw(surface, font_registry)
 
         self.open_reward_cache_button.draw(surface, font_registry)
@@ -2294,10 +2302,6 @@ class EncounterMenu(Menu):
             shipgirl.battle_component.draw_battlestation(surface, font_registry, shipgirl.rect)
         for siren in self.menu_manager.siren_fleet.fleet:
             siren.battle_component.draw_battlestation(surface, font_registry, siren.rect)
-        for shipgirl in self.menu_manager.player_fleet.fleet:
-            shipgirl.battle_component.draw_effects(surface, shipgirl.rect, self.vfx_manager)
-        for siren in self.menu_manager.siren_fleet.fleet:
-            siren.battle_component.draw_effects(surface, siren.rect, self.vfx_manager)
 
         self.next_encounter_button.draw(surface, font_registry)
         self.retreat_button.draw(surface, font_registry)

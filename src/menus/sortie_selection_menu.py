@@ -1507,8 +1507,8 @@ class SortieSelectionMenu(Menu):
             self.menu_manager.player_fleet.clear_fleet()
             self.menu_manager.siren_fleet.clear_fleet()
 
+            self.menu_manager.fleet_selection_menu.clicked_start = False
             self.menu_manager.fleet_selection_menu.generate_path()
-
             self.menu_manager.fleet_selection_menu.header_ribbon.text = sector_name_formatter(
                 self.selected_sortie_node.chapter, self.selected_sortie_node.index
             )

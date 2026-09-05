@@ -656,7 +656,7 @@ class PortMenu(Menu):
         for shipgirl in self.menu_manager.available_shipgirls:
             shipgirl.pos += actual_delta
             shipgirl.wander_target += actual_delta
-            shipgirl.rect.center = shipgirl.pos
+            shipgirl.rect.center += actual_delta
 
         self._position_shipgirl_dialogue_options()
         return True
@@ -1041,6 +1041,7 @@ class PortMenu(Menu):
                 click = click or any(button.click(event.pos) for button in buttons)
 
                 if not click and self.menu_manager.quest_manager.select_quest(event.pos):
+                    click = True
                     self._close_shipgirl_dialogue_options()
 
                 for choose_faction_button in self.choose_faction_buttons:
@@ -1822,7 +1823,10 @@ class PortMenu(Menu):
             hull_type = selected_shipgirl["hull_type"]
             inventory = DataFiles.save_file["inventory"]
             specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
-            research_exp = specialized_wisdom_cubes.get(self.overlay_selected_entity, 0)
+            research_exp = (
+                DataFiles.save_file["shipgirls"].get(self.overlay_selected_entity, {}).get("exp", None)
+                or specialized_wisdom_cubes.get(self.overlay_selected_entity, 0)
+            )
             wisdom_cube_count = (
                 1
                 if self.overlay_selected_entity in specialized_wisdom_cubes
