@@ -1447,12 +1447,6 @@ class EncounterMenu(Menu):
                 if click:
                     DataFiles.sfx["click"].play()
 
-            # Dev controls.
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_f:
-                    self.fast_forward = not self.fast_forward
-                if event.key == pygame.K_d:
-                    self.slow_down = not self.slow_down
         if self.fast_forward:
             dt = dt * 2
         if self.slow_down:

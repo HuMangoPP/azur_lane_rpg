@@ -169,11 +169,6 @@ async def main():
                     running = False
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     running = False
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                    # Dev util that allows saves the game and "reloads" it.
-                    _write_to_save_file(menu_manager)
-                    DataFiles.bgm["lofi_loop"].stop()
-                    menu_manager = MenuManager()
 
                 events.append(event)
 
