@@ -57,6 +57,7 @@ with open("engine/fonts.json") as f:
         for font, charset in fonts.items()
     }
 
+
 async def _pre_render_startup_models() -> bool:
     """Pre-render saved shipgirls while displaying a loading screen."""
     model_files = (
@@ -122,6 +123,19 @@ async def _pre_render_startup_models() -> bool:
 
     return True
 
+
+def _write_to_save_file(menu_manager: MenuManager):
+    # TODO Make the exp saved directly to the save file, which prevents needing this block of code
+    # and also could potentially eliminate the need for the exp attribute in the battle component.
+    for shipgirl in menu_manager.available_shipgirls:
+        DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
+
+    # save_file = input("Save file? ")
+    # if save_file == "y":
+    with open("data/save_file.json", "w") as f:
+        json.dump(DataFiles.save_file, f, indent=4)
+
+
 async def main():
     if not await _pre_render_startup_models():
         pygame.quit()
@@ -153,11 +167,8 @@ async def main():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                # Dev util that allows me to save and "reload" the game.
-                for shipgirl in menu_manager.available_shipgirls:
-                    DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
-                with open("data/save_file.json", "w") as f:
-                    json.dump(DataFiles.save_file, f, indent=4)
+                # Dev util that allows saves the game and "reloads" it.
+                _write_to_save_file(menu_manager)
                 DataFiles.bgm["lofi_loop"].stop()
                 menu_manager = MenuManager()
 
@@ -190,15 +201,7 @@ async def main():
     DataFiles.bgm["lofi_loop"].stop()
     pygame.quit()
 
-    # TODO Make the exp saved directly to the save file, which prevents needing this block of code
-    # and also could potentially eliminate the need for the exp attribute in the battle component.
-    for shipgirl in menu_manager.available_shipgirls:
-        DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
-
-    # save_file = input("Save file? ")
-    # if save_file == "y":
-    with open("data/save_file.json", "w") as f:
-        json.dump(DataFiles.save_file, f, indent=4)
+    _write_to_save_file(menu_manager)
 
 
 asyncio.run(main())
