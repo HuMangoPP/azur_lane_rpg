@@ -3,6 +3,14 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from engine.types import CoordinateType
 
+import ctypes
+import sys
+
+if sys.platform == "win32":
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+        "manguino.azurlanerpg.1"
+    )
+
 import asyncio
 import json
 import os
