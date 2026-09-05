@@ -183,14 +183,14 @@ async def main():
                     if quest.started and not quest.completed:
                         quest.tutorial_draw(menu_manager, display, font_registry)
 
-            fps_margin = 32
-            font_registry["big_pixel"].render(
+            fps_margin = 4
+            font_registry["pixel"].render(
                 display,
-                str(fps),
-                (fps_margin, TEMP_SCREEN_SIZE[1] - fps_margin),
+                f"fps: {fps}",
+                (fps_margin, TEMP_SCREEN_SIZE[1] - 2 * fps_margin),
                 Color.WHITE,
-                scale=2,
-                style="center",
+                scale=1,
+                style="centerleft",
                 outline_color=Color.BLACK
             )
             screen.blit(pygame.transform.scale(display, screen.get_size()))
