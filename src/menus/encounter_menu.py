@@ -888,7 +888,6 @@ class EncounterMenu(Menu):
             left=self._exp_icon_frame.right + panel_margin,
             centery=self._exp_panel_rect.centery,
         )
-        self._exp_rail_glow = pygame.Surface(self._exp_rail_rect.size, pygame.SRCALPHA).convert_alpha()
 
         outer_radius = 24
         self._annulus_surf = pygame.Surface((2 * outer_radius, 2 * outer_radius)).convert()
@@ -2268,12 +2267,7 @@ class EncounterMenu(Menu):
         pygame.draw.rect(surface, Color.EXP_BAR_BG, bar_background)
         pygame.draw.rect(surface, accent, bar_fill)
 
-        self._exp_rail_glow.fill((*accent, round(35 + 35 * pulse)))
-        surface.blit(
-            self._exp_rail_glow,
-            self._exp_rail_rect,
-            special_flags=pygame.BLEND_RGBA_ADD,
-        )
+        pygame.draw.rect(surface, accent, self._exp_rail_rect)
 
         pygame.draw.rect(surface, Color.QUEST_NOTIFICATION_HEADER, self._exp_icon_frame)
         pygame.draw.rect(surface, accent, self._exp_icon_frame, width=Box.OUTLINE_WIDTH)

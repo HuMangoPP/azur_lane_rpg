@@ -326,9 +326,7 @@ class QuestManager:
             left=rect.left + rail_margin,
             centery=rect.centery,
         )
-        glow = pygame.Surface(rail_glow.size, pygame.SRCALPHA)
-        glow.fill((*accent, round(28 + 35 * pulse)))
-        surface.blit(glow, rail_glow, special_flags=pygame.BLEND_RGBA_ADD)
+        pygame.draw.rect(surface, accent, rail_glow)
 
         text_x_margin = rail_margin + Box.PADDING
         header_text_y = Box.PADDING

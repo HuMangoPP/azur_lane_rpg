@@ -118,14 +118,7 @@ def draw_tb(surface: pygame.Surface, font_registry: dict[str, Font], text: str |
             left=text_rect.left + rail_margins,
             centery=text_rect.centery,
         )
-        rail_glow = pygame.Surface(rail_rect.size)
-        rail_glow.fill(accent)
-        rail_glow.set_alpha(60)
-        surface.blit(
-            rail_glow,
-            rail_rect,
-            special_flags=pygame.BLEND_RGBA_ADD,
-        )
+        pygame.draw.rect(surface, accent, rail_rect)
         font_registry["big_pixel"].render(
             surface,
             text,
