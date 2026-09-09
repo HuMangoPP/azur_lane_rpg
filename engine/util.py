@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from engine.types import CoordinateType, ColorType
 
 import math
@@ -239,3 +240,46 @@ def draw_dashed_rect(
         dash_bottom = min(y + dash_length, bottom)
         pygame.draw.line(surface, color, (rect.left, y), (rect.left, dash_bottom), width)
         pygame.draw.line(surface, color, (right, y), (right, dash_bottom), width)
+
+
+def draw_dashed_path(
+    surface: pygame.Surface,
+    color: ColorType,
+    points: Iterable[CoordinateType],
+    dash_length: float,
+    gap_length: float,
+    width: int,
+) -> None:
+    """Draw a dashed line along an ordered sequence of path points."""
+    path_points = [pygame.Vector2(point) for point in points]
+    drawing_dash = True
+    distance_until_toggle = dash_length
+    floating_point_tolerance = 0.001
+
+    for segment_start, segment_end in zip(path_points, path_points[1:]):
+        direction = segment_end - segment_start
+        segment_length = direction.length()
+        if segment_length <= floating_point_tolerance:
+            continue
+        direction /= segment_length
+        position = segment_start
+        distance_remaining = segment_length
+
+        while distance_remaining > floating_point_tolerance:
+            step = min(distance_remaining, distance_until_toggle)
+            next_position = position + direction * step
+            if drawing_dash:
+                pygame.draw.line(
+                    surface,
+                    color,
+                    position,
+                    next_position,
+                    width=width,
+                )
+            position = next_position
+            distance_remaining -= step
+            distance_until_toggle -= step
+
+            if distance_until_toggle <= floating_point_tolerance:
+                drawing_dash = not drawing_dash
+                distance_until_toggle = dash_length if drawing_dash else gap_length

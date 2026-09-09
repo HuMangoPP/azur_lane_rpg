@@ -11,6 +11,7 @@ import random
 import pygame
 
 from engine.util import (
+    draw_dashed_path,
     draw_dashed_rect,
     draw_glint,
     get_cluster_edges,
@@ -771,43 +772,6 @@ class ChapterProgressAnnotation:
         )
         surface.blit(self.cached_text_surface, rotated_text_rect)
 
-    @classmethod
-    def _draw_dashed_curve(cls, surface: pygame.Surface, points: list[pygame.Vector2]):
-        """Draw a curve using a dashed line."""
-        drawing_dash = True
-        distance_until_toggle = cls.DASH_LENGTH
-
-        for segment_start, segment_end in zip(points, points[1:]):
-            direction = segment_end - segment_start
-            segment_length = direction.length()
-            if segment_length == 0:
-                continue
-            direction /= segment_length
-            position = segment_start
-            distance_remaining = segment_length
-
-            while distance_remaining > 0:
-                step = min(distance_remaining, distance_until_toggle)
-                next_position = position + direction * step
-                if drawing_dash:
-                    pygame.draw.line(
-                        surface,
-                        Color.WHITE,
-                        position,
-                        next_position,
-                        width=cls.LINE_WIDTH,
-                    )
-                position = next_position
-                distance_remaining -= step
-                distance_until_toggle -= step
-
-                floating_point_tolerance = 0.001
-                if distance_until_toggle <= floating_point_tolerance:
-                    drawing_dash = not drawing_dash
-                    distance_until_toggle = (
-                        cls.DASH_LENGTH if drawing_dash else cls.DASH_GAP
-                    )
-
     def _create_curve_surface(self) -> tuple[pygame.Surface, pygame.Vector2]:
         """Pre-render the static dashed curve and arrowhead."""
         arrow_direction = (self.curve_points[-1] - self.curve_points[-2]).normalize()
@@ -831,7 +795,14 @@ class ChapterProgressAnnotation:
             point - surface_position
             for point in self.curve_points
         ]
-        self._draw_dashed_curve(curve_surface, local_curve_points)
+        draw_dashed_path(
+            curve_surface,
+            Color.WHITE,
+            local_curve_points,
+            self.DASH_LENGTH,
+            self.DASH_GAP,
+            self.LINE_WIDTH,
+        )
 
         arrow_tip = local_curve_points[-1]
         for arrow_side in arrow_sides:
@@ -1469,6 +1440,7 @@ class SortieOrderCard:
 
 class SortieSelectionMenu(Menu):
     PATH_DASH_LENGTH = 8
+    PATH_DASH_GAP = 9
     PATH_DASH_WIDTH = 3
     CAMERA_PAN_DURATION = 0.25
     CAMERA_MIN = pygame.Vector2(screen_x(0.5), -305)
@@ -1603,7 +1575,7 @@ class SortieSelectionMenu(Menu):
             relpos = checkpoints[1] - checkpoints[0]
             angle = math.atan2(relpos.y, relpos.x)
             pos = checkpoints[0]
-            path = [(pos, angle)]
+            path = [pos]
             for checkpoint in checkpoints[1:]:
                 to_target = checkpoint - pos
 
@@ -1618,8 +1590,8 @@ class SortieSelectionMenu(Menu):
                 to_target_tolerance = 5
                 while to_target.length() > to_target_tolerance:
                     pos = pos + get_vec(step, angle)
+                    path.append(pos)
                     if record_every_counter == 0:
-                        path.append((pos, angle))
                         record_every_counter = record_every
                     else:
                         record_every_counter -= 1
@@ -1640,44 +1612,33 @@ class SortieSelectionMenu(Menu):
                         angle = math.atan2(to_target.y, to_target.x)
             # Record the final point if not already recorded.
             if record_every_counter < record_every:
-                pos = pos + get_vec(record_every_counter, angle)
-                path.append((pos, angle))
+                for _ in range(record_every_counter):
+                    pos = pos + get_vec(step, angle)
+                    path.append(pos)
             self.paths[int(chapter)] = path
 
     @classmethod
     def _create_path_surface(
         cls,
-        path: list[tuple[pygame.Vector2, float]],
+        path: list[pygame.Vector2],
     ) -> tuple[pygame.Surface, pygame.Vector2]:
         """Pre-render one chapter path in world space."""
-        dash_polygons = []
-        for point, angle in path:
-            dash_offset = get_vec(cls.PATH_DASH_LENGTH / 2, angle)
-            dash_width_offset = get_vec(
-                cls.PATH_DASH_WIDTH / 2,
-                angle + math.radians(90),
-            )
-            dash_polygons.append([
-                point + dash_offset + dash_width_offset,
-                point - dash_offset + dash_width_offset,
-                point - dash_offset - dash_width_offset,
-                point + dash_offset - dash_width_offset,
-            ])
-
-        points = [point for polygon in dash_polygons for point in polygon]
-        left = math.floor(min(point.x for point in points)) - 1
-        top = math.floor(min(point.y for point in points)) - 1
-        right = math.ceil(max(point.x for point in points)) + 1
-        bottom = math.ceil(max(point.y for point in points)) + 1
+        padding = math.ceil(cls.PATH_DASH_WIDTH / 2) + 1
+        left = math.floor(min(point.x for point in path)) - padding
+        top = math.floor(min(point.y for point in path)) - padding
+        right = math.ceil(max(point.x for point in path)) + padding
+        bottom = math.ceil(max(point.y for point in path)) + padding
         surface_position = pygame.Vector2(left, top)
         path_surface = pygame.Surface((right - left + 1, bottom - top + 1)).convert()
         path_surface.fill((255, 0, 0))
-        for polygon in dash_polygons:
-            pygame.draw.polygon(
-                path_surface,
-                Color.WHITE,
-                [point - surface_position for point in polygon],
-            )
+        draw_dashed_path(
+            path_surface,
+            Color.WHITE,
+            [point - surface_position for point in path],
+            cls.PATH_DASH_LENGTH,
+            cls.PATH_DASH_GAP,
+            cls.PATH_DASH_WIDTH,
+        )
         path_surface.set_colorkey((255, 0, 0), pygame.RLEACCEL)
         return path_surface, surface_position
 

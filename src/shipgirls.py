@@ -10,7 +10,7 @@ import math
 import random
 import pygame
 
-from engine.util import draw_annulus, draw_glint, get_rect, get_vec
+from engine.util import draw_annulus, draw_dashed_path, draw_glint, get_rect, get_vec
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y, Decorations
 from src.vfx import shell_path, SHELL_SCALE
@@ -855,45 +855,42 @@ class ShipgirlBattleComponent:
                 else Color.MUTED_TARGET_INDICATOR
             )
             dash_length = 8
+            gap_length = 8
             dash_width = 2
             if self.hull_type in ["DD", "CL", "CA", "BB"]:
                 # Target line is from center to center.
                 start_pos = pygame.Vector2(rect.center)
-                curr_pos = start_pos
                 end_pos = pygame.Vector2(self.target.rect.center)
             else:
                 # Target line is from midbottom to midbottom.
                 start_pos = pygame.Vector2(rect.centerx, rect.bottom - rect.height / 5)
-                curr_pos = start_pos
                 target_rect = self.target.rect
                 end_pos = pygame.Vector2(target_rect.centerx, target_rect.bottom - target_rect.height / 5)
             distance = (end_pos - start_pos).length()
-            # Draw the dashed target line.
-            for dash_start in range(0, round(distance), 2 * dash_length):
-                start_t = dash_start / distance
-                end_t = min((dash_start + dash_length) / distance, 1)
-                if self.hull_type in ["DD", "CL", "CA", "BB"]:
-                    # Target line is parabolic for these hull types.
-                    curr_pos = shell_path(start_pos, end_pos, start_t)
-                    dash_end_pos = shell_path(start_pos, end_pos, end_t)
-                else:
-                    # Target line is straight for these hull types.
-                    curr_pos = start_pos.lerp(end_pos, start_t)
-                    dash_end_pos = start_pos.lerp(end_pos, end_t)
-                parallel = (dash_end_pos - curr_pos).normalize()
-                perpendicular = pygame.Vector2(parallel.y, -parallel.x)
-                # TODO Consider whether dash drawing helpers are repeated code.
-                polygon = [
-                    curr_pos + dash_width / 2 * perpendicular,
-                    dash_end_pos + dash_width / 2 * perpendicular,
-                    dash_end_pos - dash_width / 2 * perpendicular,
-                    curr_pos - dash_width / 2 * perpendicular,
-                ]
-                pygame.draw.polygon(
-                    surface,
-                    target_color,
-                    polygon,
+            if self.hull_type in ["DD", "CL", "CA", "BB"] and distance > 0:
+                # Sample the parabolic shell path finely enough that each chord
+                # is no longer than one dash.
+                relpos = end_pos - start_pos
+                parabola_height = distance * distance * SHELL_SCALE
+                max_path_speed = max(
+                    (relpos + pygame.Vector2(0, -parabola_height)).length(),
+                    (relpos + pygame.Vector2(0, parabola_height)).length(),
                 )
+                num_segments = max(1, math.ceil(max_path_speed / dash_length))
+                path_points = [
+                    shell_path(start_pos, end_pos, segment / num_segments)
+                    for segment in range(num_segments + 1)
+                ]
+            else:
+                path_points = [start_pos, end_pos]
+            draw_dashed_path(
+                surface,
+                target_color,
+                path_points,
+                dash_length,
+                gap_length,
+                dash_width,
+            )
 
             # Draw the reticle.
             reticle_size = 24

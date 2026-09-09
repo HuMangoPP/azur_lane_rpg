@@ -10,7 +10,7 @@ import math
 import pygame
 import random
 
-from engine.util import draw_dashed_rect, draw_glint, get_rect, get_vec
+from engine.util import draw_dashed_path, draw_dashed_rect, draw_glint, get_rect, get_vec
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -114,45 +114,16 @@ class FleetPathAnnotation:
         self._cached_surface: pygame.Surface | None = None
         self._cached_surface_rect: pygame.Rect | None = None
 
-    @classmethod
-    def _draw_dashed_curve(cls, surface: pygame.Surface, points: list[pygame.Vector2]):
-        """Draw a dashed curve."""
-        drawing_dash = True
-        distance_until_toggle = cls.DASH_LENGTH
-
-        for segment_start, segment_end in zip(points, points[1:]):
-            direction = segment_end - segment_start
-            segment_length = direction.length()
-            if segment_length == 0:
-                continue
-            direction /= segment_length
-            position = segment_start
-            distance_remaining = segment_length
-
-            while distance_remaining > 0:
-                step = min(distance_remaining, distance_until_toggle)
-                next_position = position + direction * step
-                if drawing_dash:
-                    pygame.draw.line(
-                        surface,
-                        Color.WHITE,
-                        position,
-                        next_position,
-                        width=cls.LINE_WIDTH,
-                    )
-                position = next_position
-                distance_remaining -= step
-                distance_until_toggle -= step
-
-                if distance_until_toggle <= 0.001:
-                    drawing_dash = not drawing_dash
-                    distance_until_toggle = (
-                        cls.DASH_LENGTH if drawing_dash else cls.DASH_GAP
-                    )
-
     def _render(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Render the fleet path annotation onto its cached surface."""
-        self._draw_dashed_curve(surface, self.curve_points)
+        draw_dashed_path(
+            surface,
+            Color.WHITE,
+            self.curve_points,
+            self.DASH_LENGTH,
+            self.DASH_GAP,
+            self.LINE_WIDTH,
+        )
 
         arrow_direction = (
             self.curve_points[-1] - self.curve_points[-2]
@@ -199,6 +170,7 @@ class FleetPathAnnotation:
 class FleetSelectionMenu(Menu):
     Y_ALIGN = screen_y(0.4)
     PATH_DASH_LENGTH = 16
+    PATH_DASH_GAP = 15
     PATH_DASH_WIDTH = 4
     LAUNCH_MARKER_RADIUS = 32
     LAUNCH_MARKER_HIT_SIZE = 80
@@ -352,7 +324,7 @@ class FleetSelectionMenu(Menu):
         self.header_ribbon = FleetNameRibbon((screen_x(0.5), Box.TOP_OF_SCREEN), "", scale=1.0)
 
         # State for the right-side encounter sailign path
-        self.path: list[tuple[pygame.Vector2, float]] = []
+        self.path: list[pygame.Vector2] = []
         self.path_hexes: list[pygame.Vector2] = []
         self.path_annotations: list[FleetPathAnnotation] = []
         self.empty_loop_position: pygame.Vector2 | None = None
@@ -415,7 +387,7 @@ class FleetSelectionMenu(Menu):
         pos = pygame.Vector2(screen_x(0.5), self.Y_ALIGN)
         draw_hex = False
         candidate_hexes = []
-        self.path = [(pos, angle)]
+        self.path = [pos]
         for checkpoint in checkpoints:
             to_target = checkpoint - pos
             checkpoint_turn_amount = turn_amount
@@ -437,11 +409,11 @@ class FleetSelectionMenu(Menu):
             to_target_tolerance = 5
             while to_target.length() > to_target_tolerance:
                 pos = pos + get_vec(step, angle)
+                self.path.append(pos)
                 if record_every_counter == 0:
                     if draw_hex:
                         candidate_hexes.append(pos)
                         draw_hex = False
-                    self.path.append((pos, angle))
                     record_every_counter = record_every
                 else:
                     record_every_counter -= 1
@@ -466,8 +438,9 @@ class FleetSelectionMenu(Menu):
                 ):
                     angle = math.atan2(to_target.y, to_target.x)
         if record_every_counter < record_every:
-            pos = pos + get_vec(record_every_counter, angle)
-            self.path.append((pos, angle))
+            for _ in range(record_every_counter):
+                pos = pos + get_vec(step, angle)
+                self.path.append(pos)
         if len(candidate_hexes) < num_encounters + extra_loops:
             candidate_hexes.append(pos)
         # Pick a subset of loops and place hexes, representing
@@ -484,7 +457,7 @@ class FleetSelectionMenu(Menu):
         self.path_hexes = encounter_loop_hexes + [candidate_hexes[-1]]
 
         # The sortie button is placed at the start of the path.
-        self.start_sortie_button.rect.center = self.path[0][0]
+        self.start_sortie_button.rect.center = self.path[0]
 
         self._generate_path_annotations()
         self._generate_sortie_props()
@@ -1367,23 +1340,14 @@ class FleetSelectionMenu(Menu):
             surface.blit(prop, prop.get_rect(center=position))
 
         # Draw dashed path.
-        for point, angle in self.path:
-            dash_offset = get_vec(self.PATH_DASH_LENGTH / 2, angle)
-            dash_width_offset = get_vec(
-                self.PATH_DASH_WIDTH / 2,
-                angle + math.radians(90),
-            )
-            dash_polygon = [
-                point + dash_offset + dash_width_offset,
-                point - dash_offset + dash_width_offset,
-                point - dash_offset - dash_width_offset,
-                point + dash_offset - dash_width_offset,
-            ]
-            pygame.draw.polygon(
-                surface,
-                Color.WHITE,
-                dash_polygon,
-            )
+        draw_dashed_path(
+            surface,
+            Color.WHITE,
+            self.path,
+            self.PATH_DASH_LENGTH,
+            self.PATH_DASH_GAP,
+            self.PATH_DASH_WIDTH,
+        )
 
         self._draw_path_hexes(surface)
         self._draw_launch_marker(surface)
