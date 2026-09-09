@@ -9,7 +9,7 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, get_vec, draw_dashed_rect
+from engine.util import draw_dashed_rect, draw_glint, get_rect, get_vec
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x, screen_y
@@ -593,30 +593,14 @@ class EquipmentMenu(Menu):
             center = spawn_center - pygame.Vector2(0, glint_drift * glint_progress)
             if center.y < visible_beacon_rect.top:
                 continue
-            glint_length = 1 + round((glint_max_length - 1) * glint_strength)
-            glint_color = tuple(
-                round(channel * glint_strength * activation_ease)
-                for channel in Color.BLUEPRINT_SLOT_BORDER_GLOW
-            )
-            glint_surface = self._glint_surface
-            glint_surface.fill((0, 0, 0))
-            glint_surface_center = pygame.Vector2(glint_max_length, glint_max_length)
-            pygame.draw.line(
-                glint_surface,
-                glint_color,
-                glint_surface_center - pygame.Vector2(glint_length, 0),
-                glint_surface_center + pygame.Vector2(glint_length, 0),
-            )
-            pygame.draw.line(
-                glint_surface,
-                glint_color,
-                glint_surface_center - pygame.Vector2(0, glint_length),
-                glint_surface_center + pygame.Vector2(0, glint_length),
-            )
-            surface.blit(
-                glint_surface,
-                glint_surface.get_rect(center=center),
-                special_flags=pygame.BLEND_RGB_ADD,
+            draw_glint(
+                surface,
+                center,
+                Color.BLUEPRINT_SLOT_BORDER_GLOW,
+                glint_strength,
+                max_length=glint_max_length,
+                intensity=glint_strength * activation_ease,
+                scratch_surface=self._glint_surface,
             )
 
     def _draw_blueprint_slots(self, surface: pygame.Surface, font_registry: dict[str, Font]):

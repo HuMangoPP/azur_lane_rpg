@@ -10,7 +10,16 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, get_vec, pixel_to_hex, hex_to_pixel, hex_corners, get_cluster_edges, draw_dashed_rect
+from engine.util import (
+    draw_dashed_rect,
+    draw_glint,
+    get_cluster_edges,
+    get_rect,
+    get_vec,
+    hex_corners,
+    hex_to_pixel,
+    pixel_to_hex,
+)
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -257,35 +266,13 @@ class SortieNode:
                     0,
                     self.SELECTION_GLINT_DRIFT * glint_progress,
                 )
-                glint_length = 1 + round(
-                    (self.SELECTION_GLINT_MAX_LENGTH - 1) * glint_strength
-                )
-                glint_color = tuple(
-                    round(channel * glint_strength)
-                    for channel in outline
-                )
-                glint_surface = self._glint_surface
-                glint_surface.fill((0, 0, 0))
-                glint_surface_center = pygame.Vector2(
-                    self.SELECTION_GLINT_MAX_LENGTH,
-                    self.SELECTION_GLINT_MAX_LENGTH,
-                )
-                pygame.draw.line(
-                    glint_surface,
-                    glint_color,
-                    glint_surface_center - pygame.Vector2(glint_length, 0),
-                    glint_surface_center + pygame.Vector2(glint_length, 0),
-                )
-                pygame.draw.line(
-                    glint_surface,
-                    glint_color,
-                    glint_surface_center - pygame.Vector2(0, glint_length),
-                    glint_surface_center + pygame.Vector2(0, glint_length),
-                )
-                surface.blit(
-                    glint_surface,
-                    glint_surface.get_rect(center=center),
-                    special_flags=pygame.BLEND_RGB_ADD,
+                draw_glint(
+                    surface,
+                    center,
+                    outline,
+                    glint_strength,
+                    max_length=self.SELECTION_GLINT_MAX_LENGTH,
+                    scratch_surface=self._glint_surface,
                 )
 
     def get_bounding_rect(self):

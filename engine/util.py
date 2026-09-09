@@ -7,6 +7,52 @@ import math
 import pygame
 
 
+def draw_glint(
+    surface: pygame.Surface,
+    center: CoordinateType,
+    color: ColorType,
+    strength: float,
+    max_length: int = 5,
+    intensity: float | None = None,
+    scratch_surface: pygame.Surface | None = None,
+    blend_flags: int = pygame.BLEND_RGB_ADD,
+) -> None:
+    """Draw an additive, cross-shaped glint centered at the given position."""
+    length_strength = max(0, min(1, strength))
+    glint_length = 1 + round((max_length - 1) * length_strength)
+    color_strength = strength if intensity is None else intensity
+    glint_color = tuple(
+        max(0, min(255, round(channel * color_strength)))
+        for channel in color
+    )
+
+    glint_size = 2 * max_length + 1
+    glint_surface = scratch_surface
+    if glint_surface is None or glint_surface.get_size() != (glint_size, glint_size):
+        glint_surface = pygame.Surface((glint_size, glint_size))
+    else:
+        glint_surface.fill((0, 0, 0))
+
+    glint_surface_center = pygame.Vector2(max_length, max_length)
+    pygame.draw.line(
+        glint_surface,
+        glint_color,
+        glint_surface_center - pygame.Vector2(glint_length, 0),
+        glint_surface_center + pygame.Vector2(glint_length, 0),
+    )
+    pygame.draw.line(
+        glint_surface,
+        glint_color,
+        glint_surface_center - pygame.Vector2(0, glint_length),
+        glint_surface_center + pygame.Vector2(0, glint_length),
+    )
+    surface.blit(
+        glint_surface,
+        glint_surface.get_rect(center=center),
+        special_flags=blend_flags,
+    )
+
+
 def get_rect(
     width: float,
     height: float,

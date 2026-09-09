@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 import math
 import pygame
 
-from engine.util import get_rect
+from engine.util import draw_glint, get_rect
 
 from src.constants import DataFiles, Box, Color, screen_x, screen_y
 
@@ -209,29 +209,14 @@ class QuestManager:
             if center.y < rect.top + 2:
                 continue
 
-            length = 1 + round((glint_max_length - 1) * min(1, strength))
-            glint_color = tuple(
-                min(255, round(channel * strength))
-                for channel in color
-            )
-            glint = pygame.Surface((2 * glint_max_length + 1, 2 * glint_max_length + 1))
-            glint_center = pygame.Vector2(glint_max_length, glint_max_length)
-            pygame.draw.line(
-                glint,
-                glint_color,
-                glint_center - pygame.Vector2(length, 0),
-                glint_center + pygame.Vector2(length, 0),
-            )
-            pygame.draw.line(
-                glint,
-                glint_color,
-                glint_center - pygame.Vector2(0, length),
-                glint_center + pygame.Vector2(0, length),
-            )
-            surface.blit(
-                glint,
-                glint.get_rect(center=center),
-                special_flags=pygame.BLEND_RGBA_ADD,
+            draw_glint(
+                surface,
+                center,
+                color,
+                min(1, strength),
+                max_length=glint_max_length,
+                intensity=strength,
+                blend_flags=pygame.BLEND_RGB_ADD,
             )
         surface.set_clip(previous_clip)
 
@@ -654,26 +639,13 @@ class Quest:
                     + (cycle_index * 23 + glint_index * 37) % (rect.height - 24),
                 )
 
-            length = 1 + round((max_length - 1) * strength)
-            glint_color = tuple(round(channel * strength) for channel in color)
-            glint = pygame.Surface((2 * max_length + 1, 2 * max_length + 1))
-            glint_center = pygame.Vector2(max_length, max_length)
-            pygame.draw.line(
-                glint,
-                glint_color,
-                glint_center-pygame.Vector2(length, 0),
-                glint_center+pygame.Vector2(length, 0),
-            )
-            pygame.draw.line(
-                glint,
-                glint_color,
-                glint_center-pygame.Vector2(0, length),
-                glint_center+pygame.Vector2(0, length),
-            )
-            surface.blit(
-                glint,
-                glint.get_rect(center=center),
-                special_flags=pygame.BLEND_RGBA_ADD,
+            draw_glint(
+                surface,
+                center,
+                color,
+                strength,
+                max_length=max_length,
+                blend_flags=pygame.BLEND_RGB_ADD,
             )
         surface.set_clip(previous_clip)
 

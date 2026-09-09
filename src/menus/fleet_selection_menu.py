@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from engine.types import CoordinateType, ColorType
+    from engine.types import CoordinateType
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
     from src.shipgirls import Shipgirl
@@ -10,7 +10,7 @@ import math
 import pygame
 import random
 
-from engine.util import get_rect, get_vec, draw_dashed_rect
+from engine.util import draw_dashed_rect, draw_glint, get_rect, get_vec
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -1002,11 +1002,12 @@ class FleetSelectionMenu(Menu):
                     0,
                     self.SELECTION_GLINT_DRIFT * glint_progress,
                 )
-                self._draw_selection_glint(
+                draw_glint(
                     surface,
                     glint_center,
                     Color.UNCLEARED_ZONE_OUTLINE,
                     glint_strength,
+                    max_length=self.SELECTION_GLINT_MAX_LENGTH,
                 )
 
     def _get_pulsing_selection_glow(self, glow_sprite: pygame.Surface):
@@ -1017,42 +1018,6 @@ class FleetSelectionMenu(Menu):
         glow = pygame.Surface(glow_base.get_size())
         glow.blit(glow_base)
         return glow
-
-    def _draw_selection_glint(
-        self, surface: pygame.Surface, center: CoordinateType, color: ColorType, strength: float
-    ):
-        """Helper to render glint particles."""
-        glint_length = 1 + round(
-            (self.SELECTION_GLINT_MAX_LENGTH - 1) * strength
-        )
-        glint_color = tuple(round(channel*strength) for channel in color)
-        glint_surface = pygame.Surface(
-            (
-                2 * self.SELECTION_GLINT_MAX_LENGTH + 1,
-                2 * self.SELECTION_GLINT_MAX_LENGTH + 1,
-            )
-        )
-        glint_surface_center = pygame.Vector2(
-            self.SELECTION_GLINT_MAX_LENGTH,
-            self.SELECTION_GLINT_MAX_LENGTH,
-        )
-        pygame.draw.line(
-            glint_surface,
-            glint_color,
-            glint_surface_center - pygame.Vector2(glint_length, 0),
-            glint_surface_center + pygame.Vector2(glint_length, 0),
-        )
-        pygame.draw.line(
-            glint_surface,
-            glint_color,
-            glint_surface_center - pygame.Vector2(0, glint_length),
-            glint_surface_center + pygame.Vector2(0, glint_length),
-        )
-        surface.blit(
-            glint_surface,
-            glint_surface.get_rect(center=center),
-            special_flags=pygame.BLEND_RGB_ADD,
-        )
 
     def _draw_path_hexes(self, surface: pygame.Surface):
         """Helper to render path hexes."""
@@ -1142,11 +1107,12 @@ class FleetSelectionMenu(Menu):
                     0,
                     self.SELECTION_GLINT_DRIFT * glint_progress,
                 )
-                self._draw_selection_glint(
+                draw_glint(
                     surface,
                     center,
                     Color.LOCKED_ZONE_OUTLINE,
                     glint_strength,
+                    max_length=self.SELECTION_GLINT_MAX_LENGTH,
                 )
 
     def _draw_marker_selection_effect(self, surface: pygame.Surface, marker_rect: pygame.Rect):
@@ -1195,11 +1161,12 @@ class FleetSelectionMenu(Menu):
             )
             if center.y < glow_rect.top:
                 continue
-            self._draw_selection_glint(
+            draw_glint(
                 surface,
                 center,
                 Color.HOLOGRAM_GLOW,
                 glint_strength,
+                max_length=self.SELECTION_GLINT_MAX_LENGTH,
             )
 
     def _get_marker_projection_layers(self, surface: pygame.Surface) -> tuple[pygame.Surface, pygame.Surface]:

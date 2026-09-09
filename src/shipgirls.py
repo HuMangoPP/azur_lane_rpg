@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from engine.types import CoordinateType, ColorType
+    from engine.types import CoordinateType
     from engine.font import Font
     from src.menus.menu_manager import MenuManager
     from src.vfx import VFXManager
@@ -10,7 +10,7 @@ import math
 import random
 import pygame
 
-from engine.util import get_rect, get_vec, draw_annulus
+from engine.util import draw_annulus, draw_glint, get_rect, get_vec
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y, Decorations
 from src.vfx import shell_path, SHELL_SCALE
@@ -747,12 +747,13 @@ class ShipgirlBattleComponent:
                 glow_rect.top + spawn_y - self.BATTLESTATION_GLINT_DRIFT * glint_progress,
             )
             if glint_center.y >= glow_rect.top:
-                self._draw_battlestation_glint(
+                draw_glint(
                     surface,
                     glint_center,
                     Color.HOLOGRAM_GLOW if self.is_player else Color.SIREN_HOLOGRAM_GLOW,
                     glint_strength,
-                    cache["glint"],
+                    max_length=self.BATTLESTATION_GLINT_MAX_LENGTH,
+                    scratch_surface=cache["glint"],
                 )
 
         content = cache["content"]
@@ -814,50 +815,6 @@ class ShipgirlBattleComponent:
         surface.blit(cache["pulsing_back"], battlestation_rect, special_flags=pygame.BLEND_RGB_ADD)
         content.set_alpha(battlestation_alpha)
         surface.blit(content, battlestation_rect)
-
-    # TODO Consider whether this is repeated code and all glint drawing helpers are similar.
-    def _draw_battlestation_glint(
-        self,
-        surface: pygame.Surface,
-        center: CoordinateType,
-        color: ColorType,
-        strength: float,
-        glint_surface: pygame.Surface | None = None,
-    ):
-        """Draw the glint particle effects for the battlestation."""
-        # The glint surface is re-used rather than instantiated for every glint every frame.
-        glint_length = 1 + round(
-            (self.BATTLESTATION_GLINT_MAX_LENGTH - 1) * strength
-        )
-        glint_color = tuple(round(channel * strength) for channel in color)
-        if glint_surface is None:
-            glint_surface = pygame.Surface((
-                2 * self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
-                2 * self.BATTLESTATION_GLINT_MAX_LENGTH + 1,
-            ))
-        else:
-            glint_surface.fill((0, 0, 0))
-        glint_surface_center = pygame.Vector2(
-            self.BATTLESTATION_GLINT_MAX_LENGTH,
-            self.BATTLESTATION_GLINT_MAX_LENGTH,
-        )
-        pygame.draw.line(
-            glint_surface,
-            glint_color,
-            glint_surface_center - pygame.Vector2(glint_length, 0),
-            glint_surface_center + pygame.Vector2(glint_length, 0),
-        )
-        pygame.draw.line(
-            glint_surface,
-            glint_color,
-            glint_surface_center - pygame.Vector2(0, glint_length),
-            glint_surface_center + pygame.Vector2(0, glint_length),
-        )
-        surface.blit(
-            glint_surface,
-            glint_surface.get_rect(center=center),
-            special_flags=pygame.BLEND_RGB_ADD,
-        )
 
     def draw_effects(self, surface: pygame.Surface, rect: pygame.Rect, vfx_manager: VFXManager):
         """Draw battle component effects.
