@@ -100,7 +100,8 @@ class ShipgirlBattleComponent:
         }
         self.hull_type: str = info["hull_type"]
         self.equipment: tuple[str | None, str | None, str | None] = info["equipment"]
-        self.exp: float = info["exp"]
+        if not self.is_player:
+            self._exp: float = info["exp"]
         if self.is_player:
             self.target_pref = None
         else:
@@ -146,6 +147,21 @@ class ShipgirlBattleComponent:
                 for equipment in self.equipment
             )
         )
+
+    @property
+    def exp(self) -> float:
+        """Get the shipgirl's current experience."""
+        if self.is_player:
+            return DataFiles.save_file["shipgirls"][self.name]["exp"]
+        return self._exp
+
+    @exp.setter
+    def exp(self, value: float) -> None:
+        """Set the shipgirl's current experience."""
+        if self.is_player:
+            DataFiles.save_file["shipgirls"][self.name]["exp"] = value
+        else:
+            self._exp = value
 
     def gain_exp(self, amount: float):
         """Add exp."""

@@ -126,12 +126,7 @@ async def _pre_render_startup_models() -> bool:
     return True
 
 
-def _write_to_save_file(menu_manager: MenuManager):
-    # TODO Make the exp saved directly to the save file, which prevents needing this block of code
-    # and also could potentially eliminate the need for the exp attribute in the battle component.
-    for shipgirl in menu_manager.available_shipgirls:
-        DataFiles.save_file["shipgirls"][shipgirl.name]["exp"] = shipgirl.battle_component.exp
-
+def _write_to_save_file():
     with SAVE_FILE_PATH.open("w") as f:
         json.dump(DataFiles.save_file, f, indent=4)
     print("Successfully wrote save file.")
@@ -171,7 +166,7 @@ async def main():
                     running = False
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                     # Dev util that allows saves the game and "reloads" it.
-                    _write_to_save_file(menu_manager)
+                    _write_to_save_file()
                     DataFiles.bgm["lofi_loop"].stop()
                     menu_manager = MenuManager()
 
@@ -206,7 +201,7 @@ async def main():
         DataFiles.bgm["lofi_loop"].stop()
         pygame.quit()
 
-        _write_to_save_file(menu_manager)
+        _write_to_save_file()
 
 
 asyncio.run(main())
