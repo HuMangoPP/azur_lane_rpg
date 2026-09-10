@@ -1919,15 +1919,29 @@ class EncounterMenu(Menu):
             (self.dossier_page.right - Box.PADDING, header_y + horizontal_rule_down_shift),
         )
 
-        # Based on the current page, render either the rewards collected report
-        # or the defeated sirens report
+        # Configure the report contents based on the current page.
         if self.report_page == 0:
-            self._draw_sortie_rewards(surface, font_registry)
+            heading = "recovered materials"
+            empty_message = "no materials recovered"
+            records = self.sortie_rewards
+            card_width = Box.WIDTH
+            draw_card_contents = self._draw_reward_report_record
         else:
-            self._draw_defeated_sirens(
-                surface,
-                font_registry,
-            )
+            heading = "enemy sirens sunk"
+            empty_message = "no confirmed siren vessels sunk"
+            records = self.defeated_sirens
+            card_width = self.SIREN_CARD_WIDTH
+            draw_card_contents = self._draw_siren_report_record
+
+        self._draw_report_records(
+            surface,
+            font_registry,
+            heading,
+            empty_message,
+            records,
+            card_width,
+            draw_card_contents,
+        )
 
         # Draw page counter.
         font_registry["big_pixel"].render(
@@ -1994,111 +2008,34 @@ class EncounterMenu(Menu):
             box_width=note_rect.width,
         )
 
-    def _draw_sortie_rewards(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Helper to draw the sortie rewards page of the report."""
+    def _draw_report_records(
+        self,
+        surface: pygame.Surface,
+        font_registry: dict[str, Font],
+        heading: str,
+        empty_message: str,
+        records: dict,
+        card_width: int,
+        draw_card_contents: Callable,
+    ) -> None:
+        """Draw a report page containing a grid of record cards."""
         # Page header.
         font = font_registry["big_pixel"]
         section_left = self.dossier_page.left + Box.PADDING
         section_top = self.dossier_page.top + self.REWARDS_SECTION_TOP
         font.render(
             surface,
-            "recovered materials",
+            heading,
             (section_left, section_top),
             Color.DOSSIER_RULE,
             scale=1,
         )
 
         cards_top = section_top + font.font_height + Box.PADDING
-        if not self.sortie_rewards:
-            # Render a default no materials recovered text when empty.
+        if not records:
             font.render(
                 surface,
-                "no materials recovered",
-                (self.dossier_page.centerx, cards_top + Box.HEIGHT / 2),
-                Color.DOSSIER_RULE,
-                scale=2,
-                style="center",
-            )
-            return cards_top + Box.HEIGHT
-
-        # Draw the reward cards.
-        cards_per_row = max(
-            1,
-            (self.dossier_page.width - Box.PADDING)
-            // (Box.WIDTH + Box.PADDING),
-        )
-        for index, (reward, amount) in enumerate(self.sortie_rewards.items()):
-            reward_rect = get_rect(
-                width=Box.WIDTH,
-                height=Box.HEIGHT,
-                left=(
-                    section_left
-                    + (index % cards_per_row) * (Box.WIDTH + Box.PADDING)
-                ),
-                top=(
-                    cards_top
-                    + (index // cards_per_row) * (Box.HEIGHT + Box.PADDING)
-                ),
-            )
-            pygame.draw.rect(
-                surface,
-                Color.DOSSIER_CARD_SHADOW,
-                reward_rect.move(2, 2),
-            )
-            pygame.draw.rect(surface, Color.DOSSIER_CARD, reward_rect)
-            reward_sprite = DataFiles.get_entity_sprite(reward)
-            surface.blit(
-                reward_sprite,
-                reward_sprite.get_rect(center=reward_rect.center),
-            )
-            quantity_height = 14
-            quantity_rect = get_rect(
-                width=reward_rect.width, height=quantity_height,
-                left=reward_rect.left, bottom=reward_rect.bottom
-            )
-            pygame.draw.rect(surface, Color.DOSSIER_CARD, quantity_rect)
-            pygame.draw.line(
-                surface,
-                Color.DOSSIER_RULE,
-                quantity_rect.topleft,
-                quantity_rect.topright,
-            )
-            font.render(
-                surface,
-                f"qty {amount:02d}",
-                quantity_rect.center,
-                Color.DOSSIER_INK,
-                scale=1,
-                style="center",
-            )
-            pygame.draw.rect(
-                surface,
-                Color.DOSSIER_INK,
-                reward_rect,
-                width=1,
-            )
-
-    def _draw_defeated_sirens(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Helper to draw the defeated sirens page in the report."""
-        # TODO Consider writing a generic which can render this and the above.
-        # Page header.
-        section_top = self.dossier_page.top + self.REWARDS_SECTION_TOP
-        font = font_registry["big_pixel"]
-        section_left = self.dossier_page.left + Box.PADDING
-        font.render(
-            surface,
-            "enemy sirens sunk",
-            (section_left, section_top),
-            Color.DOSSIER_RULE,
-            scale=1,
-        )
-
-        cards_top = section_top + font.font_height + Box.PADDING
-        if not self.defeated_sirens:
-            # No sirens were defeated, so render a default empty message.
-            font.render(
-                surface,
-                "no confirmed siren vessels sunk",
+                empty_message,
                 (self.dossier_page.centerx, cards_top + Box.HEIGHT / 2),
                 Color.DOSSIER_RULE,
                 scale=2,
@@ -2106,12 +2043,13 @@ class EncounterMenu(Menu):
             )
             return
 
-        # Draw the siren cards.
-        card_width = self.SIREN_CARD_WIDTH
-        cards_per_row = self.SIREN_CARDS_PER_ROW
-        for index, ((siren_name, siren_level), amount) in enumerate(
-            self.defeated_sirens.items()
-        ):
+        # Draw the report record cards.
+        cards_per_row = max(
+            1,
+            (self.dossier_page.width - Box.PADDING)
+            // (card_width + Box.PADDING),
+        )
+        for index, (record, amount) in enumerate(records.items()):
             card_rect = get_rect(
                 width=card_width,
                 height=Box.HEIGHT,
@@ -2130,55 +2068,101 @@ class EncounterMenu(Menu):
                 card_rect.move(2, 2),
             )
             pygame.draw.rect(surface, Color.DOSSIER_CARD, card_rect)
-
-            portrait_rect = get_rect(
-                width=Box.WIDTH,
-                height=Box.HEIGHT,
-                left=card_rect.left,
-                top=card_rect.top,
-            )
-            siren_sprite = DataFiles.get_entity_sprite(siren_name)
-            surface.blit(
-                siren_sprite,
-                siren_sprite.get_rect(center=portrait_rect.center),
-            )
-            pygame.draw.line(
-                surface,
-                Color.DOSSIER_RULE,
-                portrait_rect.topright,
-                portrait_rect.bottomright,
-            )
-
-            text_left = portrait_rect.right + Box.PADDING
-            siren_record_text_height = 16
-            siren_name_text_y = card_rect.top + Box.PADDING
-            font.render(
-                surface,
-                siren_name.replace("_", " "),
-                (text_left, siren_name_text_y),
-                Color.DOSSIER_INK,
-                scale=1,
-            )
-            font.render(
-                surface,
-                f"level {siren_level:02d}",
-                (text_left, siren_name_text_y + siren_record_text_height),
-                Color.DOSSIER_RULE,
-                scale=1,
-            )
-            font.render(
-                surface,
-                f"qty {amount:02d}",
-                (text_left, siren_name_text_y + 2 * siren_record_text_height),
-                Color.DOSSIER_INK,
-                scale=1,
-            )
+            draw_card_contents(surface, font, card_rect, record, amount)
             pygame.draw.rect(
                 surface,
                 Color.DOSSIER_INK,
                 card_rect,
                 width=1,
             )
+
+    def _draw_reward_report_record(
+        self,
+        surface: pygame.Surface,
+        font: Font,
+        card_rect: pygame.Rect,
+        reward: str,
+        amount: int,
+    ) -> None:
+        """Draw the contents of a reward report card."""
+        reward_sprite = DataFiles.get_entity_sprite(reward)
+        surface.blit(
+            reward_sprite,
+            reward_sprite.get_rect(center=card_rect.center),
+        )
+        quantity_height = 14
+        quantity_rect = get_rect(
+            width=card_rect.width, height=quantity_height,
+            left=card_rect.left, bottom=card_rect.bottom
+        )
+        pygame.draw.rect(surface, Color.DOSSIER_CARD, quantity_rect)
+        pygame.draw.line(
+            surface,
+            Color.DOSSIER_RULE,
+            quantity_rect.topleft,
+            quantity_rect.topright,
+        )
+        font.render(
+            surface,
+            f"qty {amount:02d}",
+            quantity_rect.center,
+            Color.DOSSIER_INK,
+            scale=1,
+            style="center",
+        )
+
+    def _draw_siren_report_record(
+        self,
+        surface: pygame.Surface,
+        font: Font,
+        card_rect: pygame.Rect,
+        siren_record: tuple[str, int],
+        amount: int,
+    ) -> None:
+        """Draw the contents of a defeated-siren report card."""
+        siren_name, siren_level = siren_record
+        portrait_rect = get_rect(
+            width=Box.WIDTH,
+            height=Box.HEIGHT,
+            left=card_rect.left,
+            top=card_rect.top,
+        )
+        siren_sprite = DataFiles.get_entity_sprite(siren_name)
+        surface.blit(
+            siren_sprite,
+            siren_sprite.get_rect(center=portrait_rect.center),
+        )
+        pygame.draw.line(
+            surface,
+            Color.DOSSIER_RULE,
+            portrait_rect.topright,
+            portrait_rect.bottomright,
+        )
+
+        text_left = portrait_rect.right + Box.PADDING
+        siren_record_text_height = 16
+        siren_name_text_y = card_rect.top + Box.PADDING
+        font.render(
+            surface,
+            siren_name.replace("_", " "),
+            (text_left, siren_name_text_y),
+            Color.DOSSIER_INK,
+            scale=1,
+        )
+        font.render(
+            surface,
+            f"level {siren_level:02d}",
+            (text_left, siren_name_text_y + siren_record_text_height),
+            Color.DOSSIER_RULE,
+            scale=1,
+        )
+        font.render(
+            surface,
+            f"qty {amount:02d}",
+            (text_left, siren_name_text_y + 2 * siren_record_text_height),
+            Color.DOSSIER_INK,
+            scale=1,
+        )
 
     def _draw_research_exp(self, surface: pygame.Surface, font_registry: dict[str, Font]):
         """Draw the research exp widget."""
