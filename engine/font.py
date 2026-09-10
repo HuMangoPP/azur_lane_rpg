@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 import pygame
 
 from engine.paths import resource_path
+from engine.load_assets import recolor_sprite
 
 
 class Font:
@@ -73,20 +74,6 @@ class Font:
         lines = self._get_lines(text, scale, box_width)
         return len(lines) * char_height + (len(lines) - 1) * self.padding
 
-    # TODO Is this a useful enough util to move into a common space?
-    @staticmethod
-    def _recolor_text(text_surf: pygame.Surface, color: ColorType) -> pygame.Surface:
-        """Recolor the text to the desired color.
-        
-        The text surface always has white text on a black background. The colorkey
-        of the text surface is white.
-        """
-        colored_text_surf = pygame.Surface(text_surf.get_size())
-        colored_text_surf.fill(color)
-        colored_text_surf.blit(text_surf)
-        colored_text_surf.set_colorkey((0, 0, 0))
-        return colored_text_surf
-
     def render(
         self,
         surface: pygame.Surface,
@@ -128,8 +115,7 @@ class Font:
                 x += char_width
             y += (char_height + self.padding)
     
-        text_surf.set_colorkey((255, 255, 255))
-        colored_text_surf = self._recolor_text(text_surf, color)
+        colored_text_surf = recolor_sprite(text_surf, color, (0, 0, 0))
         # Align the text surface based on styling.
         if style == "center":
             text_rect = colored_text_surf.get_rect()
@@ -142,7 +128,7 @@ class Font:
             text_rect.topleft = xy
         # Render the outline by rendering offset text surfs in all directions.
         if outline_color is not None:
-            outline_text_surf = self._recolor_text(text_surf, outline_color)
+            outline_text_surf = recolor_sprite(text_surf, outline_color, (0, 0, 0))
             for offset in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
                 outline_rect = outline_text_surf.get_rect()
                 outline_rect.topleft = pygame.Vector2(text_rect.topleft) + offset

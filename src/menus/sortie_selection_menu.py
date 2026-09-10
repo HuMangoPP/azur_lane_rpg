@@ -10,7 +10,9 @@ import math
 import random
 import pygame
 
+from engine.load_assets import recolor_sprite
 from engine.util import (
+    create_circular_curve,
     draw_dashed_path,
     draw_dashed_rect,
     draw_glint,
@@ -383,7 +385,7 @@ class Fog:
         small_cloud_indices = [4, 5, 6, 7, 8, 9]
         self.cloud_indices = [random.choice(small_cloud_indices) for _ in self.centroids]
         self.cloud_sprites: dict[int, pygame.Surface] = {
-            cloud_index: DataFiles.recolor_sprite("background", f"cloud{cloud_index}", (192, 192, 192))
+            cloud_index: recolor_sprite(DataFiles.sprites["background"][f"cloud{cloud_index}"], (192, 192, 192), (255, 0, 0))
             for cloud_index in small_cloud_indices
         }
         self.cloud_shadow_sprites: dict[int, pygame.Surface] = {
@@ -603,7 +605,6 @@ class ChapterProgressAnnotation:
     TEXT_OFFSET = 24
     TEXT_SURFACE_PADDING = 2
     MIN_WIDTH = 160
-    CURVE_SAMPLE_SPACING = 6
     DASH_LENGTH = 9
     DASH_GAP = 6
     LINE_WIDTH = 2
@@ -635,7 +636,7 @@ class ChapterProgressAnnotation:
         midpoint_offset = pygame.Vector2(0, 32)
         mid_point = start_point.lerp(end_point, 0.5) + midpoint_offset
 
-        self.curve_points = self.create_circular_curve(start_point, mid_point, end_point)
+        self.curve_points = create_circular_curve(start_point, mid_point, end_point)
         # The text is placed at the center of the curve.
         # The text is also rotated so that it is tangent to the curve
         # at that midpoint.
@@ -658,62 +659,6 @@ class ChapterProgressAnnotation:
         self.curve_surface, self.curve_surface_position = self._create_curve_surface()
         self.cached_text: str | None = None
         self.cached_text_surface: pygame.Surface | None = None
-
-    # TODO Consider whether this is useful enough to move to engine.
-    @classmethod
-    def create_circular_curve(
-        cls, start_point: pygame.Vector2, mid_point: pygame.Vector2, end_point: pygame.Vector2
-    ) -> list[pygame.Vector2]:
-        """Compute a circular point given the start, mid, and end points.
-        """
-        start_x, start_y = start_point
-        mid_x, mid_y = mid_point
-        end_x, end_y = end_point
-        determinant = 2 * (
-            start_x * (mid_y - end_y)
-            + mid_x * (end_y - start_y)
-            + end_x * (start_y - mid_y)
-        )
-        floating_point_tolerance = 0.001
-        if abs(determinant) < floating_point_tolerance:
-            return [start_point, mid_point, end_point]
-
-        start_length_squared = start_point.length_squared()
-        mid_length_squared = mid_point.length_squared()
-        end_length_squared = end_point.length_squared()
-        center = pygame.Vector2(
-            (
-                start_length_squared * (mid_y - end_y)
-                + mid_length_squared * (end_y - start_y)
-                + end_length_squared * (start_y - mid_y)
-            ) / determinant,
-            (
-                start_length_squared * (end_x - mid_x)
-                + mid_length_squared * (start_x - end_x)
-                + end_length_squared * (mid_x - start_x)
-            ) / determinant,
-        )
-        radius = center.distance_to(start_point)
-
-        start_angle = math.atan2(start_y - center.y, start_x - center.x)
-        mid_angle = math.atan2(mid_y - center.y, mid_x - center.x)
-        end_angle = math.atan2(end_y - center.y, end_x - center.x)
-        counterclockwise_span = (end_angle - start_angle) % math.tau
-        counterclockwise_mid_span = (mid_angle - start_angle) % math.tau
-        if counterclockwise_mid_span <= counterclockwise_span:
-            angle_span = counterclockwise_span
-        else:
-            angle_span = -((start_angle - end_angle) % math.tau)
-
-        arc_length = radius * abs(angle_span)
-        num_segments = max(2, math.ceil(arc_length / cls.CURVE_SAMPLE_SPACING))
-        return [
-            center + get_vec(
-                radius,
-                start_angle + angle_span * segment / num_segments,
-            )
-            for segment in range(num_segments + 1)
-        ]
 
     def _get_text(self) -> str | None:
         """Get the text content of the annotation based on clear state."""

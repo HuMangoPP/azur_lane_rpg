@@ -11,7 +11,7 @@ import math
 import pygame
 
 from engine.util import get_vec
-from engine.load_assets import load_sprites, load_sound
+from engine.load_assets import load_sprites, load_sound, recolor_sprite
 from engine.paths import SAVE_FILE_PATH, resource_path
 
 TEMP_SCREEN_SIZE = pygame.Vector2(960, 540)
@@ -248,7 +248,6 @@ class DataFiles:
     sfx = load_sound(master_file="sfx.json", file_ext="wav")
     bgm = load_sound(master_file="bgm.json", file_ext="ogg")
 
-    # TODO Consider whether this is a useful enough util to move to the engine.
     @classmethod
     def recolor_sprite(cls, sprite_group: str, sprite_key: str, color: ColorType) -> pygame.Surface:
         """Recolor the white pixels of the sprite to the target color."""
@@ -340,7 +339,7 @@ for weather, palette in background_wave_palettes.items():
             int(dark + (light - dark) * t)
             for dark, light in zip(palette["darkest"], palette["lightest"])
         )
-        # DataFiles.recolor_sprite not used here because the wave sprite also needs
+        # recolor_sprite() not used here because the wave sprite also needs
         # to get taller, and so this approach is actually more efficient than generating
         # the colored sprite then having to manipulate that and make the sprite taller.
         wave = DataFiles.sprites["background"]["wave"]
@@ -357,7 +356,7 @@ for weather, palette in background_wave_palettes.items():
 # Generate shadows for each cloud.
 DataFiles.sprites["background"]["num_clouds"] = 10
 for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
-    cloud_shadow = DataFiles.recolor_sprite("background", f"cloud{cloud_index}", (100, 100, 100))
+    cloud_shadow = recolor_sprite(DataFiles.sprites["background"][f"cloud{cloud_index}"], (100, 100, 100), (255, 0, 0))
     cloud_shadow_black_bg = pygame.Surface(cloud_shadow.get_size())
     cloud_shadow_black_bg.fill((0, 0, 0))
     cloud_shadow_black_bg.blit(cloud_shadow, (0, 0))
@@ -374,7 +373,7 @@ DataFiles.sprites["background"]["cloud_sets"] = {}
 for weather, cloud_color in background_cloud_colors.items():
     cloud_set = []
     for cloud_index in range(DataFiles.sprites["background"]["num_clouds"]):
-        colored_cloud = DataFiles.recolor_sprite("background", f"cloud{cloud_index}", cloud_color)
+        colored_cloud = recolor_sprite(DataFiles.sprites["background"][f"cloud{cloud_index}"], cloud_color, (255, 0, 0))
         cloud_set.append(colored_cloud)
     DataFiles.sprites["background"]["cloud_sets"][weather] = cloud_set
 
@@ -390,7 +389,7 @@ for wave_index in range(num_waves):
     value = 1.0 - t * 0.1
 
     r, g, b = colorsys.hsv_to_rgb(base_hue, saturation, value)
-    # Sprite gets taller, so DataFiles.recolor_sprite not used.
+    # Sprite gets taller, so recolor_sprite() not used.
     wave_color = (int(r * 255), int(g * 255), int(b * 255))
     higher_wave = pygame.Surface((wave.get_width(), 2 * wave.get_height()))
     higher_wave.fill(wave_color)
@@ -499,10 +498,10 @@ def create_port_wallpaper_sprite(sprite_key: str, palette: dict[str, ColorType])
         )
 
     anchor = pygame.transform.scale_by(
-        DataFiles.recolor_sprite(
-            "user_interface",
-            "start_sortie",
+        recolor_sprite(
+            DataFiles.sprites["user_interface"]["start_sortie"],
             palette["anchor"],
+            (255, 0, 0)
         ),
         0.5,
     )

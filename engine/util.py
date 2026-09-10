@@ -283,3 +283,61 @@ def draw_dashed_path(
             if distance_until_toggle <= floating_point_tolerance:
                 drawing_dash = not drawing_dash
                 distance_until_toggle = dash_length if drawing_dash else gap_length
+
+
+def create_circular_curve(
+    start_point: pygame.Vector2,
+    mid_point: pygame.Vector2,
+    end_point: pygame.Vector2,
+    curve_sample_spacing: int = 6,
+) -> list[pygame.Vector2]:
+    """Compute a circular point given the start, mid, and end points.
+    """
+    start_x, start_y = start_point
+    mid_x, mid_y = mid_point
+    end_x, end_y = end_point
+    determinant = 2 * (
+        start_x * (mid_y - end_y)
+        + mid_x * (end_y - start_y)
+        + end_x * (start_y - mid_y)
+    )
+    floating_point_tolerance = 0.001
+    if abs(determinant) < floating_point_tolerance:
+        return [start_point, mid_point, end_point]
+
+    start_length_squared = start_point.length_squared()
+    mid_length_squared = mid_point.length_squared()
+    end_length_squared = end_point.length_squared()
+    center = pygame.Vector2(
+        (
+            start_length_squared * (mid_y - end_y)
+            + mid_length_squared * (end_y - start_y)
+            + end_length_squared * (start_y - mid_y)
+        ) / determinant,
+        (
+            start_length_squared * (end_x - mid_x)
+            + mid_length_squared * (start_x - end_x)
+            + end_length_squared * (mid_x - start_x)
+        ) / determinant,
+    )
+    radius = center.distance_to(start_point)
+
+    start_angle = math.atan2(start_y - center.y, start_x - center.x)
+    mid_angle = math.atan2(mid_y - center.y, mid_x - center.x)
+    end_angle = math.atan2(end_y - center.y, end_x - center.x)
+    counterclockwise_span = (end_angle - start_angle) % math.tau
+    counterclockwise_mid_span = (mid_angle - start_angle) % math.tau
+    if counterclockwise_mid_span <= counterclockwise_span:
+        angle_span = counterclockwise_span
+    else:
+        angle_span = -((start_angle - end_angle) % math.tau)
+
+    arc_length = radius * abs(angle_span)
+    num_segments = max(2, math.ceil(arc_length / curve_sample_spacing))
+    return [
+        center + get_vec(
+            radius,
+            start_angle + angle_span * segment / num_segments,
+        )
+        for segment in range(num_segments + 1)
+    ]

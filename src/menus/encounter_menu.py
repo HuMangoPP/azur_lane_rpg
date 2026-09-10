@@ -11,6 +11,7 @@ import math
 import random
 import pygame
 
+from engine.load_assets import recolor_sprite
 from engine.util import get_rect, get_vec
 from engine.button import RectangularButton
 
@@ -386,7 +387,7 @@ class Background:
         if self.cloud_timer > self.cloud_spawn_time:
             move_right = bool(random.randint(0, 1))
             self.clouds.append(Cloud(
-                index=random.randint(1, DataFiles.sprites["background"]["num_clouds"])-1,
+                index=random.randint(1, DataFiles.sprites["background"]["num_clouds"]) - 1,
                 x=0 if move_right else screen_x(1),
                 y=random.uniform(-64, 64),
                 speed=random.uniform(32, 64) * (1 if move_right else -1),
@@ -1987,7 +1988,7 @@ class EncounterMenu(Menu):
         )
 
         # Draw the home icon and return to port text to signify what this sticky note does.
-        home_icon = DataFiles.recolor_sprite("user_interface", "port", Color.STICKY_NOTE_HANDWRITING)
+        home_icon = recolor_sprite(DataFiles.sprites["user_interface"]["port"], Color.STICKY_NOTE_HANDWRITING, (255, 0, 0))
         home_icon_rect = home_icon.get_rect(
             center=(
                 note_rect.centerx,

@@ -10,6 +10,7 @@ import math
 import random
 import pygame
 
+from engine.load_assets import recolor_sprite
 from engine.util import draw_annulus, draw_dashed_path, draw_glint, get_rect, get_vec
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y, Decorations
@@ -589,12 +590,12 @@ class ShipgirlBattleComponent:
             hp_color = (0, 255, 205) if self.is_player else (255, 0, 50)
             hull_surfaces = (
                 pygame.transform.flip(
-                    DataFiles.recolor_sprite("encounter", "hull", Color.EXP_BAR_BG),
+                    recolor_sprite(DataFiles.sprites["encounter"]["hull"], Color.EXP_BAR_BG, (255, 0, 0)),
                     not self.is_player,
                     False,
                 ),
                 pygame.transform.flip(
-                    DataFiles.recolor_sprite("encounter", "hull", hp_color),
+                    recolor_sprite(DataFiles.sprites["encounter"]["hull"], hp_color, (255, 0, 0)),
                     not self.is_player,
                     False,
                 ),

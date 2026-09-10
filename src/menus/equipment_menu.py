@@ -9,6 +9,7 @@ import math
 import random
 import pygame
 
+from engine.load_assets import recolor_sprite
 from engine.util import draw_dashed_rect, draw_glint, get_rect, get_vec
 from engine.button import RectangularButton
 
@@ -937,7 +938,7 @@ class EquipmentMenu(Menu):
         pixel_font = font_registry["pixel"]
         for stat, row_rect in self.stat_row_rects.items():
             icon_rect = self.stat_rects[stat]
-            stat_icon = DataFiles.recolor_sprite("user_interface", stat, Color.DOSSIER_INK)
+            stat_icon = recolor_sprite(DataFiles.sprites["user_interface"][stat], Color.DOSSIER_INK, (255, 0, 0))
             surface.blit(stat_icon, icon_rect)
             pixel_font.render(
                 surface,

@@ -275,7 +275,8 @@ class DamageCounter(VFX):
         y_offset = self.float_distance * (1 - (t - 1) ** 2)
         text_pos = self.pos - pygame.Vector2(0, y_offset)
 
-        # TODO Consider implementing alpha capabilities directly into Font instead of using this workaround.
+        # TODO Optimization can be done here to pre-render the text surface and just
+        # update its alpha and render it to the display surf.
         if self.text_surf is None:
             outline_padding = 2
             self.text_surf = pygame.Surface((

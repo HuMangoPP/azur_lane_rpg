@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 import math
 import pygame
 
+from engine.load_assets import recolor_sprite
 from engine.util import get_rect, draw_dashed_rect
 from engine.button import RectangularButton, AnnularSectorButton
 
@@ -69,7 +70,7 @@ class PortWallpaper:
             )
 
         anchor = pygame.transform.scale_by(
-            DataFiles.recolor_sprite("user_interface", "start_sortie", self.ANCHOR_COLOR),
+            recolor_sprite(DataFiles.sprites["user_interface"]["start_sortie"], self.ANCHOR_COLOR, (255, 0, 0)),
             self.ANCHOR_SCALE
         )
 

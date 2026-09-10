@@ -10,7 +10,15 @@ import math
 import pygame
 import random
 
-from engine.util import draw_dashed_path, draw_dashed_rect, draw_glint, get_rect, get_vec
+from engine.load_assets import recolor_sprite
+from engine.util import (
+    create_circular_curve,
+    draw_dashed_path,
+    draw_dashed_rect,
+    draw_glint,
+    get_rect,
+    get_vec,
+)
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
@@ -18,7 +26,6 @@ from src.menus.quests_data import first_sortie_quest
 from src.menus.base_menu import Menu
 from src.menus.sortie_selection_menu import (
     Background,
-    ChapterProgressAnnotation,
     NameRibbon,
 )
 from live2d.live2d import Live2D
@@ -83,7 +90,7 @@ class FleetPathAnnotation:
     ):
         self.text = text
         mid_point = start_point.lerp(end_point, 0.5) + pygame.Vector2(0, bend)
-        self.curve_points = ChapterProgressAnnotation.create_circular_curve(
+        self.curve_points = create_circular_curve(
             start_point,
             mid_point,
             end_point,
@@ -253,10 +260,10 @@ class FleetSelectionMenu(Menu):
             active=False,
         )
         self.start_sortie_anchor = DataFiles.sprites["user_interface"]["start_sortie"]
-        self.muted_start_sortie_anchor = DataFiles.recolor_sprite(
-            "user_interface",
-            "start_sortie",
+        self.muted_start_sortie_anchor = recolor_sprite(
+            DataFiles.sprites["user_interface"]["start_sortie"],
             self.LAUNCH_MARKER_MUTED_INK,
+            (255, 0, 0)
         )
         self.clicked_start = False
 

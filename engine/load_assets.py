@@ -14,6 +14,11 @@ def load_sprites(
     master_sprite_file: str = "sprites.json",
     default_colorkey: ColorType = (255, 0, 0)
 ) -> dict[str, dict[str, pygame.Surface]]:
+    """
+    Load sprites from a master file.
+
+    Sprites are divided into sprite groups for organizational purposes.
+    """
     with resource_path(directory, master_sprite_file).open() as f:
         master_sprite_dict = json.load(f)
 
@@ -40,9 +45,33 @@ def load_sprites(
     return sprites
 
 
+def recolor_sprite(sprite: pygame.Surface, color: ColorType, colorkey: ColorType) -> pygame.Surface:
+    """
+    Recolor a sprite.
+
+    Assumes that the color to be recolored from the original sprite is white.
+    """
+    # Loaded sprites are shared and may already be RLE-encoded. Changing the
+    # colorkey on that cached surface makes later recolors depend on its RLE
+    # state (and also leaves the sprite modified for every other caller).
+    # Work on a non-RLE copy so recoloring is repeatable and side-effect free.
+    recolor_mask = sprite.convert()
+    recolor_mask.set_colorkey(None)
+    recolor_mask.set_colorkey((255, 255, 255))
+    colored_sprite = pygame.Surface(sprite.get_size())
+    colored_sprite.fill(color)
+    colored_sprite.blit(recolor_mask, (0, 0))
+    colored_sprite = colored_sprite.convert()
+    colored_sprite.set_colorkey(colorkey, pygame.RLEACCEL)
+    return colored_sprite
+
+
 def load_sound(
     directory: str = "assets", master_file: str = "sfx.json", file_ext: str = "wav"
 ) -> dict[str, pygame.mixer.Sound]:
+    """
+    Load Sound objects from a master file.
+    """
     with resource_path(directory, master_file).open() as f:
         master_dict = json.load(f)
     sounds = {}
