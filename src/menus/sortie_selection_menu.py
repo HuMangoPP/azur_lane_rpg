@@ -18,6 +18,7 @@ from engine.util import (
     draw_glint,
     get_cluster_edges,
     get_rect,
+    get_rotated_rect_polygon,
     get_vec,
     hex_corners,
     hex_to_pixel,
@@ -1060,7 +1061,7 @@ class SortieOrderCard:
             pygame.draw.polygon(
                 surface,
                 color,
-                Box.get_rotated_rect_polygon(page_rect, angle, offset),
+                get_rotated_rect_polygon(page_rect, angle, offset),
             )
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, page_rect)
 

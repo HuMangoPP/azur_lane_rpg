@@ -12,7 +12,7 @@ import random
 import pygame
 
 from engine.load_assets import recolor_sprite
-from engine.util import get_rect, get_vec
+from engine.util import get_rect, get_rotated_rect_polygon, get_vec
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
@@ -1883,7 +1883,7 @@ class EncounterMenu(Menu):
             pygame.draw.polygon(
                 surface,
                 color,
-                Box.get_rotated_rect_polygon(
+                get_rotated_rect_polygon(
                     self.dossier_page,
                     angle,
                     offset,
@@ -1975,7 +1975,7 @@ class EncounterMenu(Menu):
             pygame.draw.polygon(
                 surface,
                 color,
-                Box.get_rotated_rect_polygon(
+                get_rotated_rect_polygon(
                     note_rect,
                     angle,
                     offset,

@@ -341,3 +341,16 @@ def create_circular_curve(
         )
         for segment in range(num_segments + 1)
     ]
+
+
+def get_rotated_rect_polygon(rect: pygame.Rect, rotated_angle: float, offset: CoordinateType = (0, 0)):
+    """Compute a rotated rect polygon."""
+    rect_center = pygame.Vector2(rect.center) + pygame.Vector2(offset)
+    rect_horizontal = get_vec(rect.width / 2, math.radians(rotated_angle))
+    rect_vertical = get_vec(rect.height / 2, math.radians(90 + rotated_angle))
+    return [
+        rect_center + rect_horizontal + rect_vertical,
+        rect_center - rect_horizontal + rect_vertical,
+        rect_center - rect_horizontal - rect_vertical,
+        rect_center + rect_horizontal - rect_vertical,
+    ]

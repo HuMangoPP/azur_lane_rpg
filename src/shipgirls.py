@@ -518,9 +518,7 @@ class ShipgirlBattleComponent:
         distance = relpos.length()
         scale = distance * SHELL_SCALE
         shell_pos = shell_path(start_pos, target_pos, t)
-        # TODO If the shell_path helper is pulled out, this calculation can be placed there as well.
-        # Even though it is not re-used, it would be nice to centralize this derivative calculation
-        # so the two remain in sync.
+
         shell_incline = math.degrees(math.atan(relpos.x / abs(relpos.x) * scale * (2 * t - 1)))
         shell_angle = math.degrees(math.atan2(relpos.y, relpos.x))
         render_angle = shell_angle + shell_incline

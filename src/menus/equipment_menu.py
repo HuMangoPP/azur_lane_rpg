@@ -10,10 +10,10 @@ import random
 import pygame
 
 from engine.load_assets import recolor_sprite
-from engine.util import draw_dashed_rect, draw_glint, get_rect, get_vec
+from engine.util import draw_dashed_rect, draw_glint, get_rect, get_rotated_rect_polygon, get_vec
 from engine.button import RectangularButton
 
-from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x, screen_y
+from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x
 from engine.menu import Menu
 from live2d.live2d import Live2D
 
@@ -415,7 +415,7 @@ class EquipmentMenu(Menu):
             pygame.draw.polygon(
                 surface,
                 color,
-                Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset),
+                get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset),
             )
         pygame.draw.rect(surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
 
@@ -1013,7 +1013,7 @@ class EquipmentMenu(Menu):
             pygame.draw.polygon(
                 surface,
                 color,
-                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset),
+                get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset),
             )
         pygame.draw.rect(surface, Color.DOSSIER_PAGE, self.dossier_page)
 

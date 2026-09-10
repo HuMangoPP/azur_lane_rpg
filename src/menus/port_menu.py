@@ -10,7 +10,7 @@ import math
 import pygame
 
 from engine.load_assets import recolor_sprite
-from engine.util import get_rect, draw_dashed_rect
+from engine.util import get_rect, get_rotated_rect_polygon, draw_dashed_rect
 from engine.button import RectangularButton, AnnularSectorButton
 
 from src.constants import (
@@ -1676,7 +1676,7 @@ class PortMenu(Menu):
             pygame.draw.polygon(
                 self._dossier_page_stack_layer,
                 color,
-                Box.get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
+                get_rotated_rect_polygon(self.dossier_page, rotated_angle, offset)
             )
         # Sticky tab props on the left-edge of the dossier.
         sticky_tabs = [
@@ -1783,7 +1783,7 @@ class PortMenu(Menu):
             pygame.draw.polygon(
                 surface,
                 color,
-                Box.get_rotated_rect_polygon(self.sticky_note_page, rotated_angle, offset)
+                get_rotated_rect_polygon(self.sticky_note_page, rotated_angle, offset)
             )
         pygame.draw.rect(surface, Color.STICKY_NOTE, self.sticky_note_page)
         action_button.draw(surface, font_registry)
@@ -1939,7 +1939,7 @@ class PortMenu(Menu):
             pygame.draw.polygon(
                 self._blueprint_page_surface,
                 color,
-                Box.get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset),
+                get_rotated_rect_polygon(self.blueprint_page, rotated_angle, offset),
             )
         pygame.draw.rect(self._blueprint_page_surface, Color.BLUEPRINT_PAGE, self.blueprint_page)
 
@@ -3008,7 +3008,7 @@ class PortMenu(Menu):
             pygame.draw.polygon(
                 self._clipboard_background_surface,
                 color,
-                Box.get_rotated_rect_polygon(self.clipboard_page, rotated_angle, offset)
+                get_rotated_rect_polygon(self.clipboard_page, rotated_angle, offset)
             )
         pygame.draw.rect(self._clipboard_background_surface, Color.WHITE, self.clipboard_page)
         # Clipboard clip prop.
