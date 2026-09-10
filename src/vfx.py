@@ -8,6 +8,7 @@ import math
 import random
 import pygame
 
+from engine.vfx import VFX, BaseVFXManager, Spark, Ring, Slash, Smoke
 from engine.util import get_vec
 from src.constants import Equipment
 
@@ -36,209 +37,12 @@ AIRCRAFT_LAUNCH_SMOKE_COLORS = [
     (198, 204, 208),
     (170, 178, 184),
 ]
-TORPEDO_WAKE_COLORS = [
-    (230, 246, 255),
-    (191, 224, 255),
-    (158, 208, 255),
-    (107, 183, 255),
-]
-TORPEDO_LAUNCH_COLORS = [
-    (245, 252, 255),
-    (78, 192, 255),
-    (18, 96, 190),
-]
 DAMAGE_COUNTER_COLORS = {
     Equipment.NORMAL_SHELL: ((255, 246, 126), (90, 65, 16)),
     Equipment.HE_SHELL: ((255, 94, 124), (88, 8, 31)),
     Equipment.AP_SHELL: ((105, 255, 255), (0, 76, 90)),
     Equipment.TORPEDO: ((158, 208, 255), (18, 60, 102)),
 }
-
-SHELL_SCALE = 1 / 1000
-
-# TODO Not useful enough for common, but there is likely a better place for this function.
-def shell_path(start_pos: pygame.Vector2, target_pos: pygame.Vector2, t: float) -> pygame.Vector2:
-    """Compute a parabolic shell path from start to target, parametrized by t."""
-    relpos = target_pos - start_pos
-    distance = relpos.length()
-    scale = distance * SHELL_SCALE
-    shell_y = scale * distance * t * (t - 1)
-    return start_pos + relpos * t + pygame.Vector2(0, shell_y)
-
-
-class VFX:
-    def __init__(self, duration: float, delay: float):
-        self.lifetime = 0
-        self.duration = duration
-        self.delay = delay
-    
-    @property
-    def expired(self) -> bool:
-        """Check if the vfx is expired."""
-        return self.lifetime >= self.duration
-
-    def update(self, dt: float):
-        """Update the vfx."""
-        if self.delay > 0:
-            self.delay -= dt
-            return
-        self.lifetime += (dt + abs(self.delay))
-        self.delay = 0
-
-    def draw( self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the vfx."""
-
-
-class Spark(VFX):
-    def __init__(
-        self,
-        pos: CoordinateType,
-        angle: float,
-        color: ColorType,
-        duration: float = 0.3,
-        delay: float = 0,
-        fly_distance: float = 64,
-        size: CoordinateType = (12, 4)
-    ):
-        super().__init__(duration, delay)
-
-        self.pos = pygame.Vector2(pos)
-        self.color = color
-        self.size = size
-        self.fly_distance = fly_distance
-        self.spark_angle = angle
-        self.spark_dir = get_vec(1, self.spark_angle)
-        self.spark_perp = pygame.Vector2(-self.spark_dir.y, self.spark_dir.x)
-
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the spark."""
-        if self.delay > 0:
-            return
-        
-        t = min(1, self.lifetime / self.duration)
-        quadratic_ease = 1 - (t - 1) ** 2
-        linear_decay = 1 - t
-        spark_length = self.size[0] * linear_decay
-        spark_width = self.size[1] * linear_decay
-        spark_pos = self.pos + self.spark_dir * self.fly_distance * quadratic_ease
-        spark_polygon = [
-            spark_pos + self.spark_dir * spark_length,
-            spark_pos + self.spark_perp * spark_width,
-            spark_pos - self.spark_dir * spark_length,
-            spark_pos - self.spark_perp * spark_width
-        ]
-        pygame.draw.polygon(surface, self.color, spark_polygon)
-
-
-class Ring(VFX):
-    def __init__(
-        self,
-        pos: CoordinateType,
-        color: ColorType,
-        duration: float = 0.3,
-        delay: float = 0,
-        radius: float = 64
-    ):
-        super().__init__(duration, delay)
-
-        self.pos = pygame.Vector2(pos)
-        self.radius = radius
-        self.color = color
-    
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the ring."""
-        if self.delay > 0:
-            return
-        
-        t = min(1, self.lifetime / self.duration)
-        quadratic_ease = 1 - (t - 1) ** 2
-        boom_radius = self.radius * quadratic_ease
-        boom_width = 2 + 16 * (1 - quadratic_ease)
-        boom_width = int(min(boom_radius, boom_width))
-        pygame.draw.circle(surface, self.color, self.pos, boom_radius, width=boom_width)
-
-
-class Slash(VFX):
-    def __init__(
-        self,
-        pos: CoordinateType,
-        angle: float,
-        color: ColorType,
-        delay: float = 0,
-        duration: float = 0.2
-    ):
-        super().__init__(duration, delay)
-
-        self.pos = pygame.Vector2(pos)
-        self.direction = get_vec(1, angle)
-        self.perpendicular = pygame.Vector2(-self.direction.y, self.direction.x)
-        self.color = color
-
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the slash."""
-        if self.delay > 0:
-            return
-        
-        t = min(1, self.lifetime / self.duration)
-        linear_decay = 1 - t
-        steep_rise = 2 * t - 1
-        hit_pos = self.pos + 100 * steep_rise * self.direction
-        hit_length = 100 + 50 * linear_decay
-        hit_width = 5 + 2 * linear_decay
-        hit_polygon = [
-            hit_pos + self.direction * hit_length,
-            hit_pos + self.perpendicular * hit_width,
-            hit_pos - self.direction * hit_length,
-            hit_pos - self.perpendicular * hit_width
-        ]
-        pygame.draw.polygon(surface, self.color, hit_polygon)
-
-
-class Smoke(VFX):
-    def __init__(
-        self,
-        pos: CoordinateType,
-        angle: float,
-        color: ColorType,
-        duration: float = 0.3,
-        delay: float = 0,
-        size: float = 50,
-        drift_distance: float = 70
-    ):
-        super().__init__(duration, delay)
-
-        self.pos = pygame.Vector2(pos)
-        self.angle = angle
-        self.color = color
-        self.size = int(size)
-        self.drift_distance = drift_distance
-        self.direction = get_vec(1, self.angle)
-        self.smoke_surf = pygame.Surface((self.size, self.size))
-        self.smoke_surf.set_colorkey((255, 0, 0))
-        self.smoke_rect = self.smoke_surf.get_rect()
-        self.smoke_center = pygame.Vector2(self.smoke_rect.center)
-
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the smoke."""
-        if self.delay > 0:
-            return
-        
-        self.smoke_surf.fill((255, 0, 0))
-        pygame.draw.circle(
-            self.smoke_surf, self.color, self.smoke_center, self.size / 2
-        )
-
-        t = min(1, self.lifetime / self.duration)
-        offset_circle_pos = (
-            self.smoke_center
-            + self.direction * (-self.size / 2 + self.size / 2 * t)
-        )
-        offset_circle_size = self.size / 1.5 * t
-        pygame.draw.circle(self.smoke_surf, (255, 0, 0), offset_circle_pos, offset_circle_size)
-
-        smoke_pos = self.pos + self.direction * self.drift_distance * t
-        self.smoke_rect.center = smoke_pos
-        return surface.blit(self.smoke_surf, self.smoke_rect)
 
 
 class DamageCounter(VFX):
@@ -275,8 +79,6 @@ class DamageCounter(VFX):
         y_offset = self.float_distance * (1 - (t - 1) ** 2)
         text_pos = self.pos - pygame.Vector2(0, y_offset)
 
-        # TODO Optimization can be done here to pre-render the text surface and just
-        # update its alpha and render it to the display surf.
         if self.text_surf is None:
             outline_padding = 2
             self.text_surf = pygame.Surface((
@@ -303,17 +105,10 @@ class DamageCounter(VFX):
         surface.blit(self.text_surf, rect)
 
 
-# TODO Consider whether or not a trimmed version of this (i.e. only clear, update, and draw APIs)
-# and the VFX classes deserved to be in the engine.
-# Then the project specific vfx.py module can extend VFXManager with the project-specific particle spawning APIs.
-class VFXManager:
+class VFXManager(BaseVFXManager):
     def __init__(self):
-        self.effects: list[VFX] = []
+        super().__init__()
         self.wave_colors: list[ColorType] | None = None
-
-    def clear(self):
-        """Clear the vfx."""
-        self.effects = []
 
     def spawn_muzzle_flash(self, pos: CoordinateType, shell_render_angle: float, shell_type: str):
         """Spawn a muzzle flash vfx group."""
@@ -455,7 +250,10 @@ class VFXManager:
         if random.random() > spark_chance:
             return
 
-        wake_colors = wake_colors or TORPEDO_WAKE_COLORS
+        wake_colors = wake_colors or self.wave_colors
+        if wake_colors is None:
+            return
+
         backward_dir = get_vec(1, torpedo_angle + math.pi)
         wake_dir = (backward_dir + pygame.Vector2(0, upward_bias)).normalize()
         wake_angle = math.atan2(wake_dir.y, wake_dir.x)
@@ -523,14 +321,3 @@ class VFXManager:
     def spawn_miss_counter(self, pos: CoordinateType):
         """Spawn a miss counter."""
         self.effects.append(DamageCounter(pos, "miss", Equipment.TORPEDO))
-
-    def update(self, dt: float):
-        """Update the vfx."""
-        for effect in self.effects:
-            effect.update(dt)
-        self.effects = [effect for effect in self.effects if not effect.expired]
-
-    def draw(self, surface: pygame.Surface, font_registry: dict[str, Font]):
-        """Draw the vfx."""
-        for effect in self.effects:
-            effect.draw(surface, font_registry)

@@ -14,13 +14,23 @@ from engine.load_assets import recolor_sprite
 from engine.util import draw_annulus, draw_dashed_path, draw_glint, get_rect, get_vec
 
 from src.constants import DataFiles, Color, Equipment, Box, Stats, screen_x, screen_y, Decorations
-from src.vfx import shell_path, SHELL_SCALE
 from live2d.live2d import (
     Live2D,
     PreRenderLive2D,
     LAYER_SIZE,
     get_live2d_model_file,
 )
+
+
+SHELL_SCALE = 1 / 1000
+
+def shell_path(start_pos: pygame.Vector2, target_pos: pygame.Vector2, t: float) -> pygame.Vector2:
+    """Compute a parabolic shell path from start to target, parametrized by t."""
+    relpos = target_pos - start_pos
+    distance = relpos.length()
+    scale = distance * SHELL_SCALE
+    shell_y = scale * distance * t * (t - 1)
+    return start_pos + relpos * t + pygame.Vector2(0, shell_y)
 
 
 class Smokescreen:
