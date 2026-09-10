@@ -16,7 +16,7 @@ from engine.util import get_rect, get_vec
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, Stats, screen_x, screen_y
-from src.menus.base_menu import Menu
+from engine.menu import Menu
 from src.menus.fleet_selection_menu import FleetNameRibbon
 from src.menus.quests_data import (
     assign_quest,

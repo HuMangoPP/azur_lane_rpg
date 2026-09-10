@@ -25,7 +25,7 @@ from src.constants import (
     Decorations,
 )
 from src.shipgirls import Shipgirl, LAYER_SIZE
-from src.menus.base_menu import Menu
+from engine.menu import Menu
 from live2d.live2d import (
     Live2D,
     PreRenderLive2D,

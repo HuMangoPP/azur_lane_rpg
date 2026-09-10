@@ -23,7 +23,7 @@ from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Box, screen_x, screen_y
 from src.menus.quests_data import first_sortie_quest
-from src.menus.base_menu import Menu
+from engine.menu import Menu
 from src.menus.sortie_selection_menu import (
     Background,
     NameRibbon,

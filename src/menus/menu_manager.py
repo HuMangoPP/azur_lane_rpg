@@ -1,7 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from src.menus.base_menu import Menu
+    from engine.menu import Menu
+
+from engine.menu import BaseMenuManager
 
 from src.constants import DataFiles
 from src.shipgirls import Shipgirl, PlayerFleet, SirenFleet
@@ -15,7 +17,7 @@ from src.menus.quests import QuestManager
 from src.menus.quests_data import quests
 
 
-class MenuManager:
+class MenuManager(BaseMenuManager):
     PORT = "port"
     EQUIPMENT = "equipment"
     SORTIE_SELECTION = "sortie_select"
@@ -23,18 +25,19 @@ class MenuManager:
     ENCOUNTER = "encounter"
 
     def __init__(self):
+        super().__init__()
+
         self.player_fleet = PlayerFleet()
         self.siren_fleet = SirenFleet()
 
         self.available_shipgirls = [Shipgirl(shipgirl_name, True) for shipgirl_name in DataFiles.save_file["shipgirls"]]
 
-        self.menu_register: dict[str, Menu] = {
-            self.PORT: PortMenu(self),
-            self.EQUIPMENT: EquipmentMenu(self),
-            self.SORTIE_SELECTION: SortieSelectionMenu(self),
-            self.FLEET_SELECTION: FleetSelectionMenu(self),
-            self.ENCOUNTER: EncounterMenu(self),
-        }
+        self._register_menu(self.PORT, PortMenu(self))
+        self._register_menu(self.EQUIPMENT, EquipmentMenu(self))
+        self._register_menu(self.SORTIE_SELECTION, SortieSelectionMenu(self))
+        self._register_menu(self.FLEET_SELECTION, FleetSelectionMenu(self))
+        self._register_menu(self.ENCOUNTER, EncounterMenu(self))
+
         self._current_menu: Menu | None = None
         self.current_menu = self.port_menu
 

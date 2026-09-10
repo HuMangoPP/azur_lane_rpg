@@ -14,7 +14,7 @@ from engine.util import draw_dashed_rect, draw_glint, get_rect, get_vec
 from engine.button import RectangularButton
 
 from src.constants import DataFiles, Color, Equipment, Stats, Box, screen_x, screen_y
-from src.menus.base_menu import Menu
+from engine.menu import Menu
 from live2d.live2d import Live2D
 
 

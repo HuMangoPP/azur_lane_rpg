@@ -14,8 +14,7 @@ def load_sprites(
     master_sprite_file: str = "sprites.json",
     default_colorkey: ColorType = (255, 0, 0)
 ) -> dict[str, dict[str, pygame.Surface]]:
-    """
-    Load sprites from a master file.
+    """Load sprites from a master file.
 
     Sprites are divided into sprite groups for organizational purposes.
     """
@@ -46,8 +45,7 @@ def load_sprites(
 
 
 def recolor_sprite(sprite: pygame.Surface, color: ColorType, colorkey: ColorType) -> pygame.Surface:
-    """
-    Recolor a sprite.
+    """Recolor a sprite.
 
     Assumes that the color to be recolored from the original sprite is white.
     """
@@ -69,9 +67,7 @@ def recolor_sprite(sprite: pygame.Surface, color: ColorType, colorkey: ColorType
 def load_sound(
     directory: str = "assets", master_file: str = "sfx.json", file_ext: str = "wav"
 ) -> dict[str, pygame.mixer.Sound]:
-    """
-    Load Sound objects from a master file.
-    """
+    """Load Sound objects from a master file."""
     with resource_path(directory, master_file).open() as f:
         master_dict = json.load(f)
     sounds = {}
