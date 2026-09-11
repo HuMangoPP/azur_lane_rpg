@@ -154,12 +154,56 @@
 		"firepower": 12,
 		"reload": 8
 	},
+	"type_96_torp": {
+		"type": "weapon",
+		"craft_reqs": {
+			"SS_blueprint": 2,
+			"electronics": 2,
+			"plastics": 2
+		},
+		"equippable_by": "SS",
+		"firepower": 12,
+		"reload": 8
+	},
+	"mark_28_torp": {
+		"type": "weapon",
+		"craft_reqs": {
+			"SS_blueprint": 2,
+			"electronics": 2,
+			"plastics": 2
+		},
+		"equippable_by": "SS",
+		"firepower": 12,
+		"reload": 8
+	},
 	"hellcat": {
 		"type": "weapon",
 		"craft_reqs": {
 			"CV_blueprint": 1,
 			"metals": 1,
 			"gunpowder": 1
+		},
+		"equippable_by": "CV",
+		"firepower": 15,
+		"reload": 5
+	},
+	"tenrai": {
+		"type": "weapon",
+		"craft_reqs": {
+			"CV_blueprint": 2,
+			"metals": 2,
+			"gunpowder": 2
+		},
+		"equippable_by": "CV",
+		"firepower": 15,
+		"reload": 5
+	},
+	"wyvern": {
+		"type": "weapon",
+		"craft_reqs": {
+			"CV_blueprint": 2,
+			"metals": 2,
+			"gunpowder": 2
 		},
 		"equippable_by": "CV",
 		"firepower": 15,

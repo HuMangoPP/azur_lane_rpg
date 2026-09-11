@@ -15,6 +15,10 @@
 		"tri_234": { "left": 448, "top": 512, "width": 64, "height": 64 },
 		"quad_305": { "left": 384, "top": 576, "width": 64, "height": 64 },
 		"twin_457": { "left": 448, "top": 576, "width": 64, "height": 64 },
+		"tenrai": { "left": 384, "top": 640, "width": 64, "height": 64 },
+		"wyvern": { "left": 448, "top": 640, "width": 64, "height": 64 },
+		"type_96_torp": { "left": 384, "top": 704, "width": 64, "height": 64 },
+		"mark_28_torp": { "left": 448, "top": 704, "width": 64, "height": 64 },
 
 		"ap_shell": { "left": 0, "top": 64, "width": 64, "height": 64 },
 		"autoloader": { "left": 64, "top": 64, "width": 64, "height": 64 },
