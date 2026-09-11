@@ -11,6 +11,30 @@
 		"reload": 40,
 		"shell_type": "normal"
 	},
+	"twin_100": {
+		"type": "weapon",
+		"craft_reqs": {
+			"DD_blueprint": 2,
+			"gunpowder": 2,
+			"metals": 2
+		},
+		"equippable_by": "DD",
+		"firepower": 2,
+		"reload": 40,
+		"shell_type": "HE"
+	},
+	"twin_127": {
+		"type": "weapon",
+		"craft_reqs": {
+			"DD_blueprint": 2,
+			"gunpowder": 2,
+			"metals": 2
+		},
+		"equippable_by": "DD",
+		"firepower": 2,
+		"reload": 40,
+		"shell_type": "AP"
+	},
 	"twin_150": {
 		"type": "weapon",
 		"craft_reqs": {
@@ -22,6 +46,30 @@
 		"firepower": 4,
 		"reload": 30,
 		"shell_type": "normal"
+	},
+	"tri_155": {
+		"type": "weapon",
+		"craft_reqs": {
+			"CL_blueprint": 2,
+			"gunpowder": 2,
+			"plastics": 2
+		},
+		"equippable_by": "CL",
+		"firepower": 4,
+		"reload": 30,
+		"shell_type": "HE"
+	},
+	"quad_152": {
+		"type": "weapon",
+		"craft_reqs": {
+			"CL_blueprint": 2,
+			"gunpowder": 2,
+			"plastics": 2
+		},
+		"equippable_by": "CL",
+		"firepower": 4,
+		"reload": 30,
+		"shell_type": "AP"
 	},
 	"twin_203": {
 		"type": "weapon",
@@ -35,6 +83,30 @@
 		"reload": 20,
 		"shell_type": "normal"
 	},
+	"tri_203": {
+		"type": "weapon",
+		"craft_reqs": {
+			"CA_blueprint": 2,
+			"electronics": 2,
+			"metals": 2
+		},
+		"equippable_by": "CA",
+		"firepower": 8,
+		"reload": 20,
+		"shell_type": "HE"
+	},
+	"tri_234": {
+		"type": "weapon",
+		"craft_reqs": {
+			"CA_blueprint": 2,
+			"electronics": 2,
+			"metals": 2
+		},
+		"equippable_by": "CA",
+		"firepower": 8,
+		"reload": 20,
+		"shell_type": "AP"
+	},
 	"tri_406": {
 		"type": "weapon",
 		"craft_reqs": {
@@ -46,6 +118,30 @@
 		"firepower": 10,
 		"reload": 10,
 		"shell_type": "normal"
+	},
+	"quad_305": {
+		"type": "weapon",
+		"craft_reqs": {
+			"BB_blueprint": 2,
+			"electronics": 2,
+			"plastics": 2
+		},
+		"equippable_by": "BB",
+		"firepower": 10,
+		"reload": 10,
+		"shell_type": "HE"
+	},
+	"twin_457": {
+		"type": "weapon",
+		"craft_reqs": {
+			"BB_blueprint": 2,
+			"electronics": 2,
+			"plastics": 2
+		},
+		"equippable_by": "BB",
+		"firepower": 10,
+		"reload": 10,
+		"shell_type": "AP"
 	},
 	"g7e_torp": {
 		"type": "weapon",
