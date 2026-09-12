@@ -212,10 +212,10 @@
 	"steering_gear": {
 		"type": "aux",
 		"craft_reqs": {
-			"electronics": 1,
-			"plastics": 1
+			"electronics": 2,
+			"plastics": 2
 		},
-		"evasion": 50
+		"evasion": 96
 	},
 	"camoflauge": {
 		"type": "aux",
@@ -223,7 +223,7 @@
 			"electronics": 1,
 			"plastics": 1
 		},
-		"evasion": 50
+		"evasion": 72
 	},
 	"repair_toolkit": {
 		"type": "aux",
@@ -231,23 +231,15 @@
 			"metals": 1,
 			"plastics": 1
 		},
-		"max_hp": 48
+		"max_hp": 16
 	},
 	"maintenance_crane": {
 		"type": "aux",
 		"craft_reqs": {
-			"metals": 1,
-			"plastics": 1
+			"metals": 2,
+			"plastics": 2
 		},
-		"max_hp": 48
-	},
-	"armor_plating": {
-		"type": "aux",
-		"craft_reqs": {
-			"metals": 1,
-			"plastics": 1
-		},
-		"max_hp": 48
+		"max_hp": 24
 	},
 	"autoloader": {
 		"type": "aux",
@@ -255,23 +247,23 @@
 			"metals": 1,
 			"electronics": 1
 		},
-		"reload": 35
+		"reload": 20
 	},
 	"fire_control_table": {
 		"type": "aux",
 		"craft_reqs": {
-			"metals": 1,
-			"electronics": 1
+			"metals": 2,
+			"electronics": 2
 		},
-		"reload": 35
+		"reload": 40
 	},
 	"ap_shell": {
 		"type": "aux",
 		"craft_reqs": {
-			"metals": 1,
-			"gunpowder": 1
+			"metals": 2,
+			"gunpowder": 2
 		},
-		"firepower": 6
+		"firepower": 3
 	},
 	"fire_control_radar": {
 		"type": "aux",
@@ -279,6 +271,6 @@
 			"metals": 1,
 			"gunpowder": 1
 		},
-		"firepower": 6
+		"firepower": 1
 	}
 }
