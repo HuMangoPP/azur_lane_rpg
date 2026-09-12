@@ -19,8 +19,8 @@
 			"metals": 2
 		},
 		"equippable_by": "DD",
-		"firepower": 2,
-		"reload": 40,
+		"firepower": 4,
+		"reload": 43,
 		"shell_type": "HE"
 	},
 	"twin_127": {
@@ -31,8 +31,8 @@
 			"metals": 2
 		},
 		"equippable_by": "DD",
-		"firepower": 2,
-		"reload": 40,
+		"firepower": 4,
+		"reload": 43,
 		"shell_type": "AP"
 	},
 	"twin_150": {
@@ -55,8 +55,8 @@
 			"plastics": 2
 		},
 		"equippable_by": "CL",
-		"firepower": 4,
-		"reload": 30,
+		"firepower": 5,
+		"reload": 25,
 		"shell_type": "HE"
 	},
 	"quad_152": {
@@ -67,8 +67,8 @@
 			"plastics": 2
 		},
 		"equippable_by": "CL",
-		"firepower": 4,
-		"reload": 30,
+		"firepower": 5,
+		"reload": 25,
 		"shell_type": "AP"
 	},
 	"twin_203": {
@@ -91,8 +91,8 @@
 			"metals": 2
 		},
 		"equippable_by": "CA",
-		"firepower": 8,
-		"reload": 20,
+		"firepower": 7,
+		"reload": 18,
 		"shell_type": "HE"
 	},
 	"tri_234": {
@@ -103,8 +103,8 @@
 			"metals": 2
 		},
 		"equippable_by": "CA",
-		"firepower": 8,
-		"reload": 20,
+		"firepower": 7,
+		"reload": 18,
 		"shell_type": "AP"
 	},
 	"tri_406": {
@@ -128,7 +128,7 @@
 		},
 		"equippable_by": "BB",
 		"firepower": 10,
-		"reload": 10,
+		"reload": 17,
 		"shell_type": "HE"
 	},
 	"twin_457": {
@@ -140,7 +140,7 @@
 		},
 		"equippable_by": "BB",
 		"firepower": 10,
-		"reload": 10,
+		"reload": 17,
 		"shell_type": "AP"
 	},
 	"g7e_torp": {
@@ -162,8 +162,8 @@
 			"plastics": 2
 		},
 		"equippable_by": "SS",
-		"firepower": 12,
-		"reload": 8
+		"firepower": 15,
+		"reload": 15
 	},
 	"mark_28_torp": {
 		"type": "weapon",
@@ -173,8 +173,8 @@
 			"plastics": 2
 		},
 		"equippable_by": "SS",
-		"firepower": 12,
-		"reload": 8
+		"firepower": 15,
+		"reload": 15
 	},
 	"hellcat": {
 		"type": "weapon",
@@ -195,8 +195,8 @@
 			"gunpowder": 2
 		},
 		"equippable_by": "CV",
-		"firepower": 15,
-		"reload": 5
+		"firepower": 19,
+		"reload": 8
 	},
 	"wyvern": {
 		"type": "weapon",
@@ -206,8 +206,8 @@
 			"gunpowder": 2
 		},
 		"equippable_by": "CV",
-		"firepower": 15,
-		"reload": 5
+		"firepower": 19,
+		"reload": 8
 	},
 	"steering_gear": {
 		"type": "aux",

@@ -53,12 +53,12 @@ if __name__ == "__main__":
         equipment_data = json.load(f)
 
     equipment = [
-        "twin_120",
-        "twin_150",
-        "twin_203",
-        "tri_406",
-        "g7e_torp",
-        "hellcat"
+        "twin_100",
+        "tri_155",
+        "tri_203",
+        "quad_305",
+        "type_96_torp",
+        "tenrai"
     ]
     
     print("Shipgirl weapon DPS calculation:")
