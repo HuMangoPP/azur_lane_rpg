@@ -20,14 +20,14 @@
 	"BB": {
 		"max_hp": [104, 14],
 		"evasion": [30, 3],
-		"firepower": [8, 4],
+		"firepower": [10, 5],
 		"reload": [100, 10]
 	},
 	"CV": {
 		"max_hp": [96, 13],
 		"evasion": [50, 5],
-		"firepower": [14, 7],
-		"reload": [60, 6]
+		"firepower": [15, 7],
+		"reload": [70, 7]
 	},
 	"SS": {
 		"max_hp": [64, 8],

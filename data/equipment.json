@@ -7,7 +7,7 @@
 			"metals": 1
 		},
 		"equippable_by": "DD",
-		"firepower": 2,
+		"firepower": 3,
 		"reload": 40,
 		"shell_type": "normal"
 	},
@@ -44,7 +44,7 @@
 		},
 		"equippable_by": "CL",
 		"firepower": 4,
-		"reload": 30,
+		"reload": 20,
 		"shell_type": "normal"
 	},
 	"tri_155": {
@@ -79,7 +79,7 @@
 			"metals": 1
 		},
 		"equippable_by": "CA",
-		"firepower": 8,
+		"firepower": 5,
 		"reload": 20,
 		"shell_type": "normal"
 	},
@@ -115,8 +115,8 @@
 			"plastics": 1
 		},
 		"equippable_by": "BB",
-		"firepower": 10,
-		"reload": 10,
+		"firepower": 8,
+		"reload": 15,
 		"shell_type": "normal"
 	},
 	"quad_305": {
@@ -151,7 +151,7 @@
 			"plastics": 1
 		},
 		"equippable_by": "SS",
-		"firepower": 12,
+		"firepower": 10,
 		"reload": 8
 	},
 	"type_96_torp": {
@@ -184,7 +184,7 @@
 			"gunpowder": 1
 		},
 		"equippable_by": "CV",
-		"firepower": 15,
+		"firepower": 12,
 		"reload": 5
 	},
 	"tenrai": {

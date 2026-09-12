@@ -46,3 +46,27 @@ if __name__ == "__main__":
         num_evades = [math.floor(num_hit * eva / 1000) for num_hit, eva in zip(num_hits, evas)]
         print(f"{hull_type}: {[hp + dmg * num_evade for hp, dmg, num_evade in zip(hps, dmgs, num_evades)]}")
 
+    with open("data/stats.json") as f:
+        stats = json.load(f)
+
+    with open("data/equipment.json") as f:
+        equipment_data = json.load(f)
+
+    equipment = [
+        "twin_120",
+        "twin_150",
+        "twin_203",
+        "tri_406",
+        "g7e_torp",
+        "hellcat"
+    ]
+    
+    print("Shipgirl weapon DPS calculation:")
+    for equip in equipment:
+        equip_data = equipment_data[equip]
+        shipgirl_stats = stats[equip_data["equippable_by"]]
+        fps = stat_values(shipgirl_stats, "firepower")
+        fps = [fp + equip_data["firepower"] for fp in fps]
+        rlds = stat_values(shipgirl_stats, "reload")
+        rlds = [rld + equip_data["reload"] for rld in rlds]
+        print(f"{equip}: {[fp * rld / 1000 for fp, rld in zip(fps, rlds)]}")
