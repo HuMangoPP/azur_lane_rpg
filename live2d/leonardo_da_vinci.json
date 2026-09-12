@@ -1,0 +1,25 @@
+{
+	"spritesheet": "live2d/leonardo_da_vinci.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [47, 24]
+		},
+		"right_bangs": {
+			"pivot": [57, 26]
+		},
+		"right_hair": {
+			"pivot": [66, 22]
+		},
+		"left_bangs": {
+			"pivot": [31, 25]
+		},
+		"left_hair": {
+			"pivot": [28, 23]
+		},
+		"back_torso": {
+			"pivot": [46, 54]
+		}
+	},
+	"animations": {}
+}

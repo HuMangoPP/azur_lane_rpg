@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/duca_degli_abruzzi.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [44, 19]
+		},
+		"right_bangs": {
+			"pivot": [57, 25]
+		},
+		"right_hair": {
+			"pivot": [66, 24]
+		},
+		"left_bangs": {
+			"pivot": [31, 25]
+		},
+		"left_hair": {
+			"pivot": [27, 24]
+		},
+		"back_torso": {
+			"pivot": [45, 53]
+		},
+		"back_hair": {
+			"pivot": [45, 23]
+		}
+	},
+	"animations": {}
+}

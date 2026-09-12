@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/littorio.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [45, 21]
+		},
+		"right_bangs": {
+			"pivot": [52, 27]
+		},
+		"right_hair": {
+			"pivot": [67, 26]
+		},
+		"left_bangs": {
+			"pivot": [28, 26]
+		},
+		"left_hair": {
+			"pivot": [27, 27]
+		},
+		"back_torso": {
+			"pivot": [46, 53]
+		},
+		"back_hair": {
+			"pivot": [47, 25]
+		}
+	},
+	"animations": {}
+}

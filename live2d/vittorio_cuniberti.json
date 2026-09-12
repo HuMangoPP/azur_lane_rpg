@@ -1,0 +1,25 @@
+{
+	"spritesheet": "live2d/vittorio_cuniberti.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [46, 24]
+		},
+		"right_bangs": {
+			"pivot": [59, 27]
+		},
+		"right_hair": {
+			"pivot": [67, 25]
+		},
+		"left_bangs": {
+			"pivot": [31, 28]
+		},
+		"left_hair": {
+			"pivot": [25, 28]
+		},
+		"back_hair": {
+			"pivot": [45, 26]
+		}
+	},
+	"animations": {}
+}

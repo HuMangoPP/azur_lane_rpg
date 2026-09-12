@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/napoli.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [45, 20]
+		},
+		"right_bangs": {
+			"pivot": [58, 23]
+		},
+		"right_hair": {
+			"pivot": [66, 27]
+		},
+		"left_bangs": {
+			"pivot": [31, 24]
+		},
+		"left_hair": {
+			"pivot": [28, 25]
+		},
+		"back_torso": {
+			"pivot": [46, 56]
+		},
+		"back_hair": {
+			"pivot": [45, 24]
+		}
+	},
+	"animations": {}
+}
