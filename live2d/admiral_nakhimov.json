@@ -1,0 +1,127 @@
+{
+	"spritesheet": "live2d/admiral_nakhimov.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [44, 23]
+		},
+		"right_bangs": {
+			"pivot": [58, 24]
+		},
+		"right_hair": {
+			"pivot": [67, 27]
+		},
+		"left_bangs": {
+			"pivot": [32, 24]
+		},
+		"left_hair": {
+			"pivot": [27, 29]
+		},
+		"back_torso": {
+			"pivot": [48, 67]
+		},
+		"back_hair": {
+			"pivot": [46, 29]
+		}
+	},
+	"animations": {
+		"idle": {
+			"keyframes": {
+				"0": {
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"1": {
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": -5
+					}
+				},
+				"2": {
+					"copy": "0"
+				}
+			}
+		},
+		"bounce": {
+			"keyframes": {
+				"0": {
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"1": {
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": -5
+					}
+				},
+				"2": {
+					"copy": "0"
+				},
+				"3": {
+					"copy": "1"
+				},
+				"4": {
+					"copy": "0"
+				},
+				"5": {
+					"copy": "1"
+				},
+				"6": {
+					"copy": "0"
+				}
+			}
+		},
+		"walk": {
+			"keyframes": {
+				"0": {
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": 10
+					}
+				},
+				"4": {
+					"copy": "0"
+				}
+			}
+		},
+		"sail": {
+			"keyframes": {
+				"2": {
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"6": {
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"10": {
+					"copy": "2"
+				}
+			}
+		},
+		"sink": {
+			"keyframes": {
+				"4": {
+					"back_torso": {
+						"offset": [0, 0],
+						"rotation": -60
+					}
+				}
+			}
+		}
+	}
+}

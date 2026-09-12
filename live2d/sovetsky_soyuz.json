@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/sovetsky_soyuz.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [45, 23]
+		},
+		"right_bangs": {
+			"pivot": [55, 26]
+		},
+		"right_hair": {
+			"pivot": [66, 24]
+		},
+		"left_bangs": {
+			"pivot": [35, 26]
+		},
+		"left_hair": {
+			"pivot": [28, 25]
+		},
+		"back_torso": {
+			"pivot": [48, 68]
+		},
+		"back_hair": {
+			"pivot": [46, 27]
+		}
+	},
+	"animations": {}
+}

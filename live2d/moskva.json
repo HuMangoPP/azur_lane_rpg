@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/moskva.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [46, 22]
+		},
+		"right_bangs": {
+			"pivot": [58, 25]
+		},
+		"right_hair": {
+			"pivot": [68, 29]
+		},
+		"left_bangs": {
+			"pivot": [32, 23]
+		},
+		"left_hair": {
+			"pivot": [27, 28]
+		},
+		"back_torso": {
+			"pivot": [46, 55]
+		},
+		"back_hair": {
+			"pivot": [46, 32]
+		}
+	},
+	"animations": {}
+}

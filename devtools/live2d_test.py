@@ -18,19 +18,34 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((200,200))
     clock = pygame.time.Clock()
 
-    index = 0
     if args.shipgirl == "all":
         l2ds = [
             Live2D(f"live2d/{filename[:-4]}.json")
             for filename in os.listdir("live2d/")
             if filename.endswith(".png")
         ]
-        for l2d in l2ds:
-            l2d.set_animation(args.animation_key)
     else:
         l2ds = [Live2D(f"live2d/{args.shipgirl}.json")]
-        l2ds[0].set_animation(args.animation_key)
-    l2d = l2ds[index]
+    shipgirl_index = 0
+    l2d = l2ds[shipgirl_index]
+
+    if args.animation_key == "all":
+        animation_keys = [
+            Live2D.IDLE_ANIMATION,
+            Live2D.BOUNCE_ANIMATION,
+            Live2D.DRAG_ANIMATION,
+            Live2D.WALK_ANIMATION,
+            Live2D.SAIL_ANIMATION,
+            Live2D.ATTACK_ANIMATION,
+            Live2D.SINK_ANIMATION,
+            Live2D.SLEEP_ANIMATION,
+            Live2D.SIT_ANIMATION,
+        ]
+    else:
+        animation_keys = [args.animation_key]
+    animation_key_index = 0
+    animation_key = animation_keys[animation_key_index]
+    l2d.set_animation(animation_key)
 
     running = True
     while running:
@@ -45,20 +60,33 @@ if __name__ == "__main__":
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                l2d.set_animation(args.animation_key)
+                l2d.set_animation(animation_key)
                 l2d.t = 0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
+
                 if event.key == pygame.K_r:
                     l2d.t = 0
+
                 if event.key == pygame.K_LEFT:
-                    index = (index - 1) % len(l2ds)
-                    l2d = l2ds[index]
+                    shipgirl_index = (shipgirl_index - 1) % len(l2ds)
+                    l2d = l2ds[shipgirl_index]
+                    l2d.set_animation(animation_key)
                 if event.key == pygame.K_RIGHT:
-                    index = (index + 1) % len(l2ds)
-                    l2d = l2ds[index]
-            
+                    shipgirl_index = (shipgirl_index + 1) % len(l2ds)
+                    l2d = l2ds[shipgirl_index]
+                    l2d.set_animation(animation_key)
+
+                if event.key == pygame.K_UP:
+                    animation_key_index = (animation_key_index - 1) % len(animation_keys)
+                    animation_key = animation_keys[animation_key_index]
+                    l2d.set_animation(animation_key)
+                if event.key == pygame.K_DOWN:
+                    animation_key_index = (animation_key_index + 1) % len(animation_keys)
+                    animation_key = animation_keys[animation_key_index]
+                    l2d.set_animation(animation_key)
+
         l2d.update(dt)
 
         screen.fill((255,0,0))
