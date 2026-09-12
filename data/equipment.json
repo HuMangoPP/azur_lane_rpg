@@ -217,7 +217,31 @@
 		},
 		"evasion": 50
 	},
+	"camoflauge": {
+		"type": "aux",
+		"craft_reqs": {
+			"electronics": 1,
+			"plastics": 1
+		},
+		"evasion": 50
+	},
 	"repair_toolkit": {
+		"type": "aux",
+		"craft_reqs": {
+			"metals": 1,
+			"plastics": 1
+		},
+		"max_hp": 48
+	},
+	"maintenance_crane": {
+		"type": "aux",
+		"craft_reqs": {
+			"metals": 1,
+			"plastics": 1
+		},
+		"max_hp": 48
+	},
+	"armor_plating": {
 		"type": "aux",
 		"craft_reqs": {
 			"metals": 1,
@@ -233,7 +257,23 @@
 		},
 		"reload": 35
 	},
+	"fire_control_table": {
+		"type": "aux",
+		"craft_reqs": {
+			"metals": 1,
+			"electronics": 1
+		},
+		"reload": 35
+	},
 	"ap_shell": {
+		"type": "aux",
+		"craft_reqs": {
+			"metals": 1,
+			"gunpowder": 1
+		},
+		"firepower": 6
+	},
+	"fire_control_radar": {
 		"type": "aux",
 		"craft_reqs": {
 			"metals": 1,

@@ -25,6 +25,28 @@
 		"repair_toolkit": { "left": 128, "top": 64, "width": 64, "height": 64 },
 		"steering_gear": { "left": 192, "top": 64, "width": 64, "height": 64 },
 
+		"maintenance_crane": {
+			"left": 512,
+			"top": 256,
+			"width": 64,
+			"height": 64
+		},
+		"armor_plating": { "left": 512, "top": 320, "width": 64, "height": 64 },
+		"fire_control_radar": {
+			"left": 512,
+			"top": 384,
+			"width": 64,
+			"height": 64
+		},
+		"fire_control_table": {
+			"left": 512,
+			"top": 448,
+			"width": 64,
+			"height": 64
+		},
+		"camoflauge": { "left": 512, "top": 512, "width": 64, "height": 64 },
+		"gyroscope": { "left": 512, "top": 576, "width": 64, "height": 64 },
+
 		"decoration_coin": { "left": 384, "top": 0, "width": 64, "height": 64 },
 		"bed": { "left": 256, "top": 64, "width": 64, "height": 64 },
 		"table": { "left": 320, "top": 64, "width": 64, "height": 64 },
