@@ -1,10 +1,10 @@
 {
 	"explorer": {
 		"hull_type": "DD",
-		"max_hp": [60, 8],
-		"evasion": [140, 14],
-		"reload": [160, 16],
-		"firepower": [2, 1],
+		"max_hp": [48, 8],
+		"evasion": [120, 12],
+		"reload": [170, 17],
+		"firepower": [3, 1],
 		"target_pref": "front",
 		"reward_exp": [4, 1],
 		"drops": {
@@ -15,9 +15,9 @@
 	},
 	"tracer": {
 		"hull_type": "CL",
-		"max_hp": [68, 9],
-		"evasion": [120, 12],
-		"reload": [140, 14],
+		"max_hp": [52, 9],
+		"evasion": [100, 10],
+		"reload": [130, 13],
 		"firepower": [4, 2],
 		"target_pref": "front",
 		"reward_exp": [8, 2],
@@ -29,10 +29,10 @@
 	},
 	"oceana": {
 		"hull_type": "CA",
-		"max_hp": [78, 10],
+		"max_hp": [60, 10],
 		"evasion": [80, 8],
-		"reload": [100, 10],
-		"firepower": [8, 4],
+		"reload": [90, 9],
+		"firepower": [6, 3],
 		"target_pref": "highest_hp",
 		"reward_exp": [12, 3],
 		"drops": {
@@ -43,10 +43,10 @@
 	},
 	"breaker": {
 		"hull_type": "BB",
-		"max_hp": [92, 12],
+		"max_hp": [72, 12],
 		"evasion": [60, 6],
 		"reload": [80, 8],
-		"firepower": [10, 5],
+		"firepower": [7, 4],
 		"target_pref": "all",
 		"reward_exp": [20, 5],
 		"drops": {
@@ -57,10 +57,10 @@
 	},
 	"strategist": {
 		"hull_type": "CV",
-		"max_hp": [152, 24],
+		"max_hp": [68, 11],
 		"evasion": [70, 7],
 		"reload": [60, 6],
-		"firepower": [15, 7],
+		"firepower": [9, 5],
 		"target_pref": "all",
 		"reward_exp": [24, 6],
 		"drops": {
@@ -71,10 +71,10 @@
 	},
 	"lurker": {
 		"hull_type": "SS",
-		"max_hp": [56, 8],
-		"evasion": [180, 18],
-		"reload": [70, 7],
-		"firepower": [12, 6],
+		"max_hp": [40, 8],
+		"evasion": [150, 15],
+		"reload": [50, 5],
+		"firepower": [10, 6],
 		"target_pref": "front",
 		"reward_exp": [16, 4],
 		"drops": {
@@ -85,7 +85,7 @@
 	},
 	"tester": {
 		"hull_type": "BB",
-		"max_hp": [300, 50],
+		"max_hp": [250, 50],
 		"evasion": [35, 5],
 		"reload": [100, 10],
 		"firepower": [10, 5],
