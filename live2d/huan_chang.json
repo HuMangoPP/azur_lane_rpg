@@ -1,0 +1,25 @@
+{
+	"spritesheet": "live2d/huan_chang.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"right_bangs": {
+			"pivot": [45, 28]
+		},
+		"right_hair": {
+			"pivot": [68, 26]
+		},
+		"left_bangs": {
+			"pivot": [42, 27]
+		},
+		"left_hair": {
+			"pivot": [28, 29]
+		},
+		"back_torso": {
+			"pivot": [47, 64]
+		},
+		"back_hair": {
+			"pivot": [52, 45]
+		}
+	},
+	"animations": {}
+}

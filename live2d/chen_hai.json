@@ -1,0 +1,22 @@
+{
+	"spritesheet": "live2d/chen_hai.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [43, 24]
+		},
+		"right_bangs": {
+			"pivot": [61, 27]
+		},
+		"right_hair": {
+			"pivot": [65, 37]
+		},
+		"left_bangs": {
+			"pivot": [30, 28]
+		},
+		"back_hair": {
+			"pivot": [59, 49]
+		}
+	},
+	"animations": {}
+}

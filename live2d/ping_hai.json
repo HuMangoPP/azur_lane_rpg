@@ -1,0 +1,25 @@
+{
+	"spritesheet": "live2d/ping_hai.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [43, 25]
+		},
+		"right_bangs": {
+			"pivot": [59, 26]
+		},
+		"right_hair": {
+			"pivot": [66, 29]
+		},
+		"left_bangs": {
+			"pivot": [31, 26]
+		},
+		"left_hair": {
+			"pivot": [28, 28]
+		},
+		"back_torso": {
+			"pivot": [45, 54]
+		}
+	},
+	"animations": {}
+}

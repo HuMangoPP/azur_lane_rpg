@@ -1,0 +1,25 @@
+{
+	"spritesheet": "live2d/ning_hai.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [44, 22]
+		},
+		"right_bangs": {
+			"pivot": [58, 24]
+		},
+		"right_hair": {
+			"pivot": [66, 28]
+		},
+		"left_bangs": {
+			"pivot": [33, 23]
+		},
+		"left_hair": {
+			"pivot": [27, 27]
+		},
+		"back_torso": {
+			"pivot": [45, 54]
+		}
+	},
+	"animations": {}
+}

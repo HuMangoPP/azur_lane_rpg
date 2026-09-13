@@ -1,0 +1,25 @@
+{
+	"spritesheet": "live2d/yat_sen.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [44, 24]
+		},
+		"right_bangs": {
+			"pivot": [59, 26]
+		},
+		"right_hair": {
+			"pivot": [68, 28]
+		},
+		"left_bangs": {
+			"pivot": [30, 26]
+		},
+		"left_hair": {
+			"pivot": [28, 27]
+		},
+		"back_hair": {
+			"pivot": [44, 28]
+		}
+	},
+	"animations": {}
+}
