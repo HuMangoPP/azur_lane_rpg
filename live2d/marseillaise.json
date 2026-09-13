@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/marseillaise.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [43, 22]
+		},
+		"right_bangs": {
+			"pivot": [55, 22]
+		},
+		"right_hair": {
+			"pivot": [67, 29]
+		},
+		"left_bangs": {
+			"pivot": [32, 25]
+		},
+		"left_hair": {
+			"pivot": [26, 29]
+		},
+		"back_torso": {
+			"pivot": [46, 54]
+		},
+		"back_hair": {
+			"pivot": [46, 25]
+		}
+	},
+	"animations": {}
+}

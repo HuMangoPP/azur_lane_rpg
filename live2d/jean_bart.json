@@ -1,0 +1,25 @@
+{
+	"spritesheet": "live2d/jean_bart.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [43, 23]
+		},
+		"right_bangs": {
+			"pivot": [58, 24]
+		},
+		"right_hair": {
+			"pivot": [65, 23]
+		},
+		"left_bangs": {
+			"pivot": [31, 27]
+		},
+		"left_hair": {
+			"pivot": [30, 22]
+		},
+		"back_hair": {
+			"pivot": [52, 14]
+		}
+	},
+	"animations": {}
+}
