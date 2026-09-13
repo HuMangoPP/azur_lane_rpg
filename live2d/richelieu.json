@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/richelieu.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [43, 25]
+		},
+		"right_bangs": {
+			"pivot": [59, 24]
+		},
+		"right_hair": {
+			"pivot": [68, 30]
+		},
+		"left_bangs": {
+			"pivot": [32, 27]
+		},
+		"left_hair": {
+			"pivot": [27, 31]
+		},
+		"back_torso": {
+			"pivot": [46, 63]
+		},
+		"back_hair": {
+			"pivot": [47, 31]
+		}
+	},
+	"animations": {}
+}

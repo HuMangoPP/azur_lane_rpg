@@ -1,0 +1,245 @@
+{
+	"spritesheet": "live2d/surcouf.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [43, 22]
+		},
+		"right_bangs": {
+			"pivot": [59, 26]
+		},
+		"right_hair": {
+			"pivot": [67, 19]
+		},
+		"left_bangs": {
+			"pivot": [31, 26]
+		},
+		"left_hair": {
+			"pivot": [28, 27]
+		},
+		"back_hair": {
+			"pivot": [47, 28]
+		}
+	},
+	"animations": {
+		"idle": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"1": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"copy": "0"
+				}
+			}
+		},
+		"bounce": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"1": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"copy": "0"
+				},
+				"3": {
+					"copy": "1"
+				},
+				"4": {
+					"copy": "0"
+				},
+				"5": {
+					"copy": "1"
+				},
+				"6": {
+					"copy": "0"
+				}
+			}
+		},
+		"drag": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"4": {
+					"copy": "0"
+				}
+			}
+		},
+		"walk": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": -2
+					}
+				},
+				"2": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 8
+					}
+				},
+				"4": {
+					"copy": "0"
+				}
+			}
+		},
+		"sail": {
+			"keyframes": {
+				"0": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"4": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"6": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"8": {
+					"back_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"10": {
+					"copy": "2"
+				},
+				"12": {
+					"copy": "0"
+				}
+			}
+		},
+		"attack": {
+			"keyframes": {
+				"0": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"2": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"3": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": -15
+					}
+				},
+				"5": {
+					"copy": "0"
+				}
+			}
+		},
+		"sink": {
+			"keyframes": {
+				"1": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 10
+					}
+				},
+				"2": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"3": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"4": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": -15
+					}
+				}
+			}
+		},
+		"sleep": {
+			"keyframes": {
+				"0": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 0
+					}
+				},
+				"1": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": -10
+					}
+				},
+				"2": {
+					"copy": "0"
+				}
+			}
+		},
+		"sit": {
+			"keyframes": {
+				"0": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": 5
+					}
+				},
+				"1": {
+					"right_hair": {
+						"offset": [0, 0],
+						"rotation": -5
+					}
+				},
+				"2": {
+					"copy": "0"
+				}
+			}
+		}
+	}
+}

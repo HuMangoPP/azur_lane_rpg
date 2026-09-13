@@ -1,0 +1,25 @@
+{
+	"spritesheet": "live2d/le_triomphant.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [44, 22]
+		},
+		"right_bangs": {
+			"pivot": [57, 25]
+		},
+		"right_hair": {
+			"pivot": [67, 26]
+		},
+		"left_bangs": {
+			"pivot": [34, 28]
+		},
+		"left_hair": {
+			"pivot": [29, 27]
+		},
+		"back_torso": {
+			"pivot": [46, 54]
+		}
+	},
+	"animations": {}
+}

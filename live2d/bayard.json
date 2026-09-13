@@ -1,0 +1,28 @@
+{
+	"spritesheet": "live2d/bayard.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"bangs": {
+			"pivot": [42, 24]
+		},
+		"right_bangs": {
+			"pivot": [58, 25]
+		},
+		"right_hair": {
+			"pivot": [68, 30]
+		},
+		"left_bangs": {
+			"pivot": [31, 25]
+		},
+		"left_hair": {
+			"pivot": [26, 30]
+		},
+		"back_torso": {
+			"pivot": [46, 64]
+		},
+		"back_hair": {
+			"pivot": [46, 29]
+		}
+	},
+	"animations": {}
+}

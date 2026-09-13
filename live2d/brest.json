@@ -1,0 +1,25 @@
+{
+	"spritesheet": "live2d/brest.png",
+	"colorkey": [255, 0, 0],
+	"parts": {
+		"right_bangs": {
+			"pivot": [45, 28]
+		},
+		"right_hair": {
+			"pivot": [68, 31]
+		},
+		"left_bangs": {
+			"pivot": [45, 28]
+		},
+		"left_hair": {
+			"pivot": [28, 30]
+		},
+		"back_torso": {
+			"pivot": [46, 65]
+		},
+		"back_hair": {
+			"pivot": [45, 24]
+		}
+	},
+	"animations": {}
+}
