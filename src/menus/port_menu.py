@@ -126,7 +126,7 @@ class PortMenu(Menu):
         self.background = PortWallpaper()
 
         # Choose faction buttons.
-        factions = ["USS", "HMS", "IJN", "KMS"]
+        factions = ["USS", "HMS", "IJN", "KMS", "PRAN", "SN", "FFNF", "MNF", "RN"]
         def choose_faction_factory(faction):
             def choose_faction():
                 DataFiles.save_file["unlocked_factions"].append(faction)
@@ -136,17 +136,12 @@ class PortMenu(Menu):
         
         self.choose_faction_buttons: list[AnnularSectorButton] = []
         choose_faction_center = pygame.Vector2(screen_x(0.5), screen_y(0.5))
-        choose_faction_angles = [
-            math.radians(-135),
-            math.radians(-45),
-            math.radians(45),
-            math.radians(135),
-        ]
-        for faction, angle in zip(factions, choose_faction_angles):
+        choose_faction_angle_width = math.tau / len(factions)
+        for faction_index, faction in enumerate(factions):
             choose_faction_button = AnnularSectorButton(
                 inner_radius=Box.WIDTH,
                 outer_radius=Box.WIDTH * 2.5,
-                angle_width=math.radians(90),
+                angle_width=choose_faction_angle_width,
                 callback=choose_faction_factory(faction),
                 active=False,
                 background_styling={
@@ -157,7 +152,11 @@ class PortMenu(Menu):
                 hover_styling={"opacity": 200},
             )
             choose_faction_button.center = choose_faction_center
-            choose_faction_button.angle = angle
+            choose_faction_button.angle = (
+                -math.pi
+                + choose_faction_angle_width / 2
+                + faction_index * choose_faction_angle_width
+            )
             self.choose_faction_buttons.append(choose_faction_button)
 
         # Open SelectSortieMenu button.
