@@ -23,17 +23,17 @@
 		"hull_type": "BB",
 		"class": "iowa"
 	},
-	"enterprise": {
-		"unique_item": "twenty_battle_stars",
-		"faction": "USS",
-		"hull_type": "CV",
-		"class": "yorktown"
-	},
 	"albacore": {
 		"unique_item": "prank_of_the_day",
 		"faction": "USS",
 		"hull_type": "SS",
 		"class": "gato"
+	},
+	"enterprise": {
+		"unique_item": "twenty_battle_stars",
+		"faction": "USS",
+		"hull_type": "CV",
+		"class": "yorktown"
 	},
 	"ayanami": {
 		"unique_item": "demon_blade",
@@ -59,17 +59,17 @@
 		"hull_type": "BB",
 		"class": "yamato"
 	},
-	"shinano": {
-		"unique_item": "the_starry_night",
-		"faction": "IJN",
-		"hull_type": "CV",
-		"class": "yamato"
-	},
 	"i-404": {
 		"unique_item": "nishikigoi",
 		"faction": "IJN",
 		"hull_type": "SS",
 		"class": "i-400"
+	},
+	"shinano": {
+		"unique_item": "the_starry_night",
+		"faction": "IJN",
+		"hull_type": "CV",
+		"class": "yamato"
 	},
 	"javelin": {
 		"unique_item": "full_burst_javelin",
@@ -95,17 +95,17 @@
 		"hull_type": "BB",
 		"class": "lion"
 	},
-	"implacable": {
-		"unique_item": "devil's_cross",
-		"faction": "HMS",
-		"hull_type": "CV",
-		"class": "implacable"
-	},
 	"trafalgar": {
 		"unique_item": "knight's_bacinet",
 		"faction": "HMS",
 		"hull_type": "SS",
 		"class": "battle"
+	},
+	"implacable": {
+		"unique_item": "devil's_cross",
+		"faction": "HMS",
+		"hull_type": "CV",
+		"class": "implacable"
 	},
 	"z23": {
 		"unique_item": "raubtier",
@@ -131,16 +131,196 @@
 		"hull_type": "BB",
 		"class": "bismarck"
 	},
+	"u-556": {
+		"unique_item": "certificate_of_sponsorship",
+		"faction": "KMS",
+		"hull_type": "SS",
+		"class": "type_vii"
+	},
 	"fritz_rumey": {
 		"unique_item": "the_juggernaut",
 		"faction": "KMS",
 		"hull_type": "CV",
 		"class": "fritz_rumey"
 	},
-	"u-556": {
-		"unique_item": "certificate_of_sponsorship",
-		"faction": "KMS",
+	"ping_hai": {
+		"unique_item": "ping_hai",
+		"faction": "PRAN",
+		"hull_type": "DD",
+		"class": "ning_hai"
+	},
+	"yat_sen": {
+		"unique_item": "yat_sen",
+		"faction": "PRAN",
+		"hull_type": "CL",
+		"class": "yat_sen"
+	},
+	"chang_wu": {
+		"unique_item": "chang_wu",
+		"faction": "PRAN",
+		"hull_type": "CA",
+		"class": "chang_wu"
+	},
+	"huan_chang": {
+		"unique_item": "huan_chang",
+		"faction": "PRAN",
+		"hull_type": "BB",
+		"class": "huan_chang"
+	},
+	"ning_hai": {
+		"unique_item": "ning_hai",
+		"faction": "PRAN",
 		"hull_type": "SS",
-		"class": "type_vii"
+		"class": "ning_hai"
+	},
+	"chen_hai": {
+		"unique_item": "chen_hai",
+		"faction": "PRAN",
+		"hull_type": "CV",
+		"class": "chen_hai"
+	},
+	"kiev": {
+		"unique_item": "kiev",
+		"faction": "SN",
+		"hull_type": "DD",
+		"class": "kiev"
+	},
+	"chapayev": {
+		"unique_item": "chapayev",
+		"faction": "SN",
+		"hull_type": "CL",
+		"class": "chapayev"
+	},
+	"moskva": {
+		"unique_item": "moskva",
+		"faction": "SN",
+		"hull_type": "CA",
+		"class": "moskva"
+	},
+	"sovetsky_soyuz": {
+		"unique_item": "sovetsky_soyuz",
+		"faction": "SN",
+		"hull_type": "BB",
+		"class": "sovetsky_soyuz"
+	},
+	"ognevoy": {
+		"unique_item": "ognevoy",
+		"faction": "SN",
+		"hull_type": "SS",
+		"class": "ognevoy"
+	},
+	"admiral_nakhimov": {
+		"unique_item": "admiral_nakhimov",
+		"faction": "SN",
+		"hull_type": "CV",
+		"class": "admiral_nakhimov"
+	},
+	"le_triomphant": {
+		"unique_item": "le_triomphant",
+		"faction": "FFNF",
+		"hull_type": "DD",
+		"class": "le_fantasque"
+	},
+	"bayard": {
+		"unique_item": "bayard",
+		"faction": "FFNF",
+		"hull_type": "CL",
+		"class": "bayard"
+	},
+	"brest": {
+		"unique_item": "brest",
+		"faction": "FFNF",
+		"hull_type": "CA",
+		"class": "brest"
+	},
+	"richelieu": {
+		"unique_item": "richelieu",
+		"faction": "FFNF",
+		"hull_type": "BB",
+		"class": "richelieu"
+	},
+	"surcouf": {
+		"unique_item": "surcouf",
+		"faction": "FFNF",
+		"hull_type": "SS",
+		"class": "surcouf"
+	},
+	"arromanches": {
+		"unique_item": "arromanches",
+		"faction": "FFNF",
+		"hull_type": "CV",
+		"class": "arromanches"
+	},
+	"mogador": {
+		"unique_item": "mogador",
+		"faction": "MNF",
+		"hull_type": "DD",
+		"class": "mogador"
+	},
+	"marseillaise": {
+		"unique_item": "marseillaise",
+		"faction": "MNF",
+		"hull_type": "CL",
+		"class": "la_galissonniere"
+	},
+	"algerie": {
+		"unique_item": "algerie",
+		"faction": "MNF",
+		"hull_type": "CA",
+		"class": "algerie"
+	},
+	"jean_bart": {
+		"unique_item": "jean_bart",
+		"faction": "MNF",
+		"hull_type": "BB",
+		"class": "richelieu"
+	},
+	"le_malin": {
+		"unique_item": "le_malin",
+		"faction": "MNF",
+		"hull_type": "SS",
+		"class": "le_fantasque"
+	},
+	"joffre": {
+		"unique_item": "joffre",
+		"faction": "MNF",
+		"hull_type": "CV",
+		"class": "joffre"
+	},
+	"vittorio_cuniberti": {
+		"unique_item": "vittorio_cuniberti",
+		"faction": "RN",
+		"hull_type": "DD",
+		"class": "vittorio_cuniberti"
+	},
+	"duca_degli_abruzzi": {
+		"unique_item": "duca_degli_abruzzi",
+		"faction": "RN",
+		"hull_type": "CL",
+		"class": "duca_degli_abruzzi"
+	},
+	"napoli": {
+		"unique_item": "napoli",
+		"faction": "RN",
+		"hull_type": "CA",
+		"class": "napoli"
+	},
+	"littorio": {
+		"unique_item": "littorio",
+		"faction": "RN",
+		"hull_type": "BB",
+		"class": "vittorio_veneto"
+	},
+	"leonardo_da_vinci": {
+		"unique_item": "leonardo_da_vinci",
+		"faction": "RN",
+		"hull_type": "SS",
+		"class": "marconi"
+	},
+	"aquila": {
+		"unique_item": "aquila",
+		"faction": "RN",
+		"hull_type": "CV",
+		"class": "aquila"
 	}
 }

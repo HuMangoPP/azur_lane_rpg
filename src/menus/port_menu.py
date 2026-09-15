@@ -226,7 +226,7 @@ class PortMenu(Menu):
         # Intel center, shipyard, gear lab filters.
         self.overlay_selected_filter = 0
         self.intel_center_filters = ["DD", "CL", "CA", "BB", "SS", "CV"]
-        self.shipyard_filters = ["USS", "HMS", "IJN", "KMS"]
+        self.shipyard_filters = ["USS", "HMS", "IJN", "KMS", "PRAN", "SN", "FFNF", "MNF", "RN"]
         self.gear_lab_filters = ["DD", "CL", "CA", "BB", "SS", "CV", "AUX"]
 
         # Dossier-themed left panel.
