@@ -254,11 +254,12 @@ class DataFiles:
 
     @classmethod
     def get_entity_sprite(cls, sprite_key: str) -> pygame.Surface:
-        """Get sprites from the entity sprite group and fall back to placeholder if it does not exist."""
-        if sprite_key in cls.sprites["entity"]:
-            return cls.sprites["entity"][sprite_key]
-        else:
-            return cls.sprites["entity"]["placeholder"]
+        """Get a sprite from an entity group, falling back to the item placeholder."""
+        for sprite_group, sprites in cls.sprites.items():
+            if sprite_group.startswith("entity_") and sprite_key in sprites:
+                return sprites[sprite_key]
+
+        return cls.sprites["entity_item"]["placeholder"]
         
     @classmethod
     def get_faction_shipgirls(cls) -> dict[str, str]:

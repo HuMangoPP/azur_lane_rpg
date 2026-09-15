@@ -726,17 +726,11 @@ class Quest:
             self.reward_rects,
             self.rewards.items(),
         ):
-            # If the sprite starts with placeholder, use the placeholder sprite by default.
-            sprite_key = (
-                "placeholder"
-                if reward.startswith("placeholder")
-                else reward
-            )
             tile = pygame.Surface(rect.size)
             tile.fill(Color.QUEST_NOTIFICATION_HEADER)
             tile.set_alpha(225)
             surface.blit(tile, rect)
-            reward_sprite = DataFiles.get_entity_sprite(sprite_key)
+            reward_sprite = DataFiles.get_entity_sprite(reward)
             surface.blit(
                 reward_sprite,
                 reward_sprite.get_rect(center=rect.center),

@@ -1,5 +1,5 @@
 {
-	"entity": {
+	"entity_equipment": {
 		"twin_120": { "left": 0, "top": 0, "width": 64, "height": 64 },
 		"twin_150": { "left": 64, "top": 0, "width": 64, "height": 64 },
 		"twin_203": { "left": 128, "top": 0, "width": 64, "height": 64 },
@@ -7,205 +7,215 @@
 		"g7e_torp": { "left": 256, "top": 0, "width": 64, "height": 64 },
 		"hellcat": { "left": 320, "top": 0, "width": 64, "height": 64 },
 
-		"twin_100": { "left": 384, "top": 384, "width": 64, "height": 64 },
-		"twin_127": { "left": 448, "top": 384, "width": 64, "height": 64 },
-		"tri_155": { "left": 384, "top": 448, "width": 64, "height": 64 },
-		"quad_152": { "left": 448, "top": 448, "width": 64, "height": 64 },
-		"tri_203": { "left": 384, "top": 512, "width": 64, "height": 64 },
-		"tri_234": { "left": 448, "top": 512, "width": 64, "height": 64 },
-		"quad_305": { "left": 384, "top": 576, "width": 64, "height": 64 },
-		"twin_457": { "left": 448, "top": 576, "width": 64, "height": 64 },
-		"tenrai": { "left": 384, "top": 640, "width": 64, "height": 64 },
-		"wyvern": { "left": 448, "top": 640, "width": 64, "height": 64 },
-		"type_96_torp": { "left": 384, "top": 704, "width": 64, "height": 64 },
-		"mark_28_torp": { "left": 448, "top": 704, "width": 64, "height": 64 },
-
 		"ap_shell": { "left": 0, "top": 64, "width": 64, "height": 64 },
 		"autoloader": { "left": 64, "top": 64, "width": 64, "height": 64 },
 		"repair_toolkit": { "left": 128, "top": 64, "width": 64, "height": 64 },
 		"steering_gear": { "left": 192, "top": 64, "width": 64, "height": 64 },
 
+		"twin_100": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"tri_155": { "left": 64, "top": 128, "width": 64, "height": 64 },
+		"tri_203": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"quad_305": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"tenrai": { "left": 256, "top": 128, "width": 64, "height": 64 },
+		"type_96_torp": { "left": 320, "top": 128, "width": 64, "height": 64 },
+
+		"twin_127": { "left": 0, "top": 192, "width": 64, "height": 64 },
+		"quad_152": { "left": 64, "top": 192, "width": 64, "height": 64 },
+		"tri_234": { "left": 128, "top": 192, "width": 64, "height": 64 },
+		"twin_457": { "left": 192, "top": 192, "width": 64, "height": 64 },
+		"wyvern": { "left": 256, "top": 192, "width": 64, "height": 64 },
+		"mark_28_torp": { "left": 320, "top": 192, "width": 64, "height": 64 },
+
 		"maintenance_crane": {
-			"left": 512,
+			"left": 0,
 			"top": 256,
 			"width": 64,
 			"height": 64
 		},
-		"armor_plating": { "left": 512, "top": 320, "width": 64, "height": 64 },
+		"armor_plating": { "left": 64, "top": 256, "width": 64, "height": 64 },
 		"fire_control_radar": {
-			"left": 512,
-			"top": 384,
+			"left": 128,
+			"top": 256,
 			"width": 64,
 			"height": 64
 		},
 		"fire_control_table": {
-			"left": 512,
-			"top": 448,
+			"left": 192,
+			"top": 256,
 			"width": 64,
 			"height": 64
 		},
-		"camoflauge": { "left": 512, "top": 512, "width": 64, "height": 64 },
-		"gyroscope": { "left": 512, "top": 576, "width": 64, "height": 64 },
+		"camoflauge": { "left": 256, "top": 256, "width": 64, "height": 64 },
+		"gyroscope": { "left": 320, "top": 256, "width": 64, "height": 64 }
+	},
+	"entity_item": {
+		"DD_blueprint": { "left": 0, "top": 0, "width": 64, "height": 64 },
+		"CL_blueprint": { "left": 64, "top": 0, "width": 64, "height": 64 },
+		"CA_blueprint": { "left": 128, "top": 0, "width": 64, "height": 64 },
+		"BB_blueprint": { "left": 192, "top": 0, "width": 64, "height": 64 },
+		"SS_blueprint": { "left": 256, "top": 0, "width": 64, "height": 64 },
+		"CV_blueprint": { "left": 320, "top": 0, "width": 64, "height": 64 },
 
-		"decoration_coin": { "left": 384, "top": 0, "width": 64, "height": 64 },
-		"bed": { "left": 256, "top": 64, "width": 64, "height": 64 },
-		"table": { "left": 320, "top": 64, "width": 64, "height": 64 },
-		"chair": { "left": 384, "top": 64, "width": 64, "height": 64 },
-		"couch_double": { "left": 448, "top": 0, "width": 64, "height": 64 },
-		"nightstand": { "left": 448, "top": 64, "width": 64, "height": 64 },
-		"shelf": { "left": 384, "top": 128, "width": 64, "height": 64 },
-		"tv": { "left": 448, "top": 128, "width": 64, "height": 64 },
-		"desk": { "left": 384, "top": 192, "width": 64, "height": 64 },
-		"couch_single": { "left": 448, "top": 192, "width": 64, "height": 64 },
+		"electronics": { "left": 0, "top": 64, "width": 64, "height": 64 },
+		"gunpowder": { "left": 64, "top": 64, "width": 64, "height": 64 },
+		"metals": { "left": 128, "top": 64, "width": 64, "height": 64 },
+		"plastics": { "left": 192, "top": 64, "width": 64, "height": 64 },
+		"wisdom_cube": { "left": 256, "top": 64, "width": 64, "height": 64 },
+		"decoration_coin": {
+			"left": 320,
+			"top": 64,
+			"width": 64,
+			"height": 64
+		},
 
-		"DD_blueprint": { "left": 0, "top": 128, "width": 64, "height": 64 },
-		"CL_blueprint": { "left": 64, "top": 128, "width": 64, "height": 64 },
-		"CA_blueprint": { "left": 128, "top": 128, "width": 64, "height": 64 },
-		"BB_blueprint": { "left": 192, "top": 128, "width": 64, "height": 64 },
-		"SS_blueprint": { "left": 256, "top": 128, "width": 64, "height": 64 },
-		"CV_blueprint": { "left": 320, "top": 128, "width": 64, "height": 64 },
+		"bed": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"table": { "left": 64, "top": 128, "width": 64, "height": 64 },
+		"chair": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"nightstand": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"shelf": { "left": 256, "top": 128, "width": 64, "height": 64 },
+		"tv": { "left": 320, "top": 128, "width": 64, "height": 64 },
 
-		"electronics": { "left": 0, "top": 192, "width": 64, "height": 64 },
-		"gunpowder": { "left": 64, "top": 192, "width": 64, "height": 64 },
-		"metals": { "left": 128, "top": 192, "width": 64, "height": 64 },
-		"plastics": { "left": 192, "top": 192, "width": 64, "height": 64 },
-		"wisdom_cube": { "left": 256, "top": 192, "width": 64, "height": 64 },
+		"desk": { "left": 0, "top": 192, "width": 64, "height": 64 },
+		"couch_single": { "left": 64, "top": 192, "width": 64, "height": 64 },
+		"couch_double": { "left": 128, "top": 192, "width": 64, "height": 64 },
 
-		"explorer": { "left": 0, "top": 256, "width": 64, "height": 64 },
-		"tracer": { "left": 64, "top": 256, "width": 64, "height": 64 },
-		"oceana": { "left": 128, "top": 256, "width": 64, "height": 64 },
-		"breaker": { "left": 192, "top": 256, "width": 64, "height": 64 },
-		"lurker": { "left": 256, "top": 256, "width": 64, "height": 64 },
-		"strategist": { "left": 320, "top": 256, "width": 64, "height": 64 },
-		"tester": { "left": 384, "top": 256, "width": 64, "height": 64 },
+		"placeholder": { "left": 192, "top": 192, "width": 64, "height": 64 }
+	},
+	"entity_siren": {
+		"explorer": { "left": 0, "top": 0, "width": 64, "height": 64 },
+		"tracer": { "left": 64, "top": 0, "width": 64, "height": 64 },
+		"oceana": { "left": 128, "top": 0, "width": 64, "height": 64 },
+		"breaker": { "left": 192, "top": 0, "width": 64, "height": 64 },
+		"lurker": { "left": 256, "top": 0, "width": 64, "height": 64 },
+		"strategist": { "left": 320, "top": 0, "width": 64, "height": 64 },
+		"tester": { "left": 384, "top": 0, "width": 64, "height": 64 }
+	},
+	"entity_shipgirl": {
+		"laffey": { "left": 0, "top": 0, "width": 64, "height": 64 },
+		"san_diego": { "left": 64, "top": 0, "width": 64, "height": 64 },
+		"guam": { "left": 128, "top": 0, "width": 64, "height": 64 },
+		"new_jersey": { "left": 192, "top": 0, "width": 64, "height": 64 },
+		"albacore": { "left": 256, "top": 0, "width": 64, "height": 64 },
+		"enterprise": { "left": 320, "top": 0, "width": 64, "height": 64 },
 
-		"placeholder": { "left": 384, "top": 320, "width": 64, "height": 64 },
-
-		"laffey": { "left": 0, "top": 320, "width": 64, "height": 64 },
-		"san_diego": { "left": 64, "top": 320, "width": 64, "height": 64 },
-		"guam": { "left": 128, "top": 320, "width": 64, "height": 64 },
-		"new_jersey": { "left": 192, "top": 320, "width": 64, "height": 64 },
-		"albacore": { "left": 256, "top": 320, "width": 64, "height": 64 },
-		"enterprise": { "left": 320, "top": 320, "width": 64, "height": 64 },
-
-		"huggy_pillow": { "left": 0, "top": 384, "width": 64, "height": 64 },
-		"star_blaster": { "left": 64, "top": 384, "width": 64, "height": 64 },
+		"huggy_pillow": { "left": 0, "top": 64, "width": 64, "height": 64 },
+		"star_blaster": { "left": 64, "top": 64, "width": 64, "height": 64 },
 		"modernized_jaeger": {
 			"left": 128,
-			"top": 384,
+			"top": 64,
 			"width": 64,
 			"height": 64
 		},
-		"dragon_cannon": { "left": 192, "top": 384, "width": 64, "height": 64 },
+		"dragon_cannon": { "left": 192, "top": 64, "width": 64, "height": 64 },
 		"prank_of_the_day": {
 			"left": 256,
-			"top": 384,
+			"top": 64,
 			"width": 64,
 			"height": 64
 		},
 		"twenty_battle_stars": {
 			"left": 320,
-			"top": 384,
+			"top": 64,
 			"width": 64,
 			"height": 64
 		},
 
-		"ayanami": { "left": 0, "top": 448, "width": 64, "height": 64 },
-		"shimanto": { "left": 64, "top": 448, "width": 64, "height": 64 },
-		"unzen": { "left": 128, "top": 448, "width": 64, "height": 64 },
-		"musashi": { "left": 192, "top": 448, "width": 64, "height": 64 },
-		"i-404": { "left": 256, "top": 448, "width": 64, "height": 64 },
-		"shinano": { "left": 320, "top": 448, "width": 64, "height": 64 },
+		"ayanami": { "left": 0, "top": 128, "width": 64, "height": 64 },
+		"shimanto": { "left": 64, "top": 128, "width": 64, "height": 64 },
+		"unzen": { "left": 128, "top": 128, "width": 64, "height": 64 },
+		"musashi": { "left": 192, "top": 128, "width": 64, "height": 64 },
+		"i-404": { "left": 256, "top": 128, "width": 64, "height": 64 },
+		"shinano": { "left": 320, "top": 128, "width": 64, "height": 64 },
 
-		"demon_blade": { "left": 0, "top": 512, "width": 64, "height": 64 },
+		"demon_blade": { "left": 0, "top": 192, "width": 64, "height": 64 },
 		"the_white_dragon": {
 			"left": 64,
-			"top": 512,
+			"top": 192,
 			"width": 64,
 			"height": 64
 		},
 		"butterfly_wings": {
 			"left": 128,
-			"top": 512,
+			"top": 192,
 			"width": 64,
 			"height": 64
 		},
 		"the_raiden_shogun": {
 			"left": 192,
-			"top": 512,
+			"top": 192,
 			"width": 64,
 			"height": 64
 		},
-		"nishikigoi": { "left": 256, "top": 512, "width": 64, "height": 64 },
+		"nishikigoi": { "left": 256, "top": 192, "width": 64, "height": 64 },
 		"the_starry_night": {
 			"left": 320,
-			"top": 512,
+			"top": 192,
 			"width": 64,
 			"height": 64
 		},
 
-		"z23": { "left": 0, "top": 576, "width": 64, "height": 64 },
-		"emden": { "left": 64, "top": 576, "width": 64, "height": 64 },
-		"hindenburg": { "left": 128, "top": 576, "width": 64, "height": 64 },
-		"bismarck": { "left": 192, "top": 576, "width": 64, "height": 64 },
-		"u-556": { "left": 256, "top": 576, "width": 64, "height": 64 },
-		"fritz_rumey": { "left": 320, "top": 576, "width": 64, "height": 64 },
+		"z23": { "left": 0, "top": 256, "width": 64, "height": 64 },
+		"emden": { "left": 64, "top": 256, "width": 64, "height": 64 },
+		"hindenburg": { "left": 128, "top": 256, "width": 64, "height": 64 },
+		"bismarck": { "left": 192, "top": 256, "width": 64, "height": 64 },
+		"u-556": { "left": 256, "top": 256, "width": 64, "height": 64 },
+		"fritz_rumey": { "left": 320, "top": 256, "width": 64, "height": 64 },
 
-		"raubtier": { "left": 0, "top": 640, "width": 64, "height": 64 },
+		"raubtier": { "left": 0, "top": 320, "width": 64, "height": 64 },
 		"the_twin_dragons": {
 			"left": 64,
-			"top": 640,
+			"top": 320,
 			"width": 64,
 			"height": 64
 		},
-		"devil's_horns": { "left": 128, "top": 640, "width": 64, "height": 64 },
+		"devil's_horns": { "left": 128, "top": 320, "width": 64, "height": 64 },
 		"flagship_banner": {
 			"left": 192,
-			"top": 640,
+			"top": 320,
 			"width": 64,
 			"height": 64
 		},
 		"certificate_of_sponsorship": {
 			"left": 256,
-			"top": 640,
+			"top": 320,
 			"width": 64,
 			"height": 64
 		},
 		"the_juggernaut": {
 			"left": 320,
-			"top": 640,
+			"top": 320,
 			"width": 64,
 			"height": 64
 		},
 
-		"javelin": { "left": 0, "top": 704, "width": 64, "height": 64 },
-		"plymouth": { "left": 64, "top": 704, "width": 64, "height": 64 },
-		"drake": { "left": 128, "top": 704, "width": 64, "height": 64 },
-		"lion": { "left": 192, "top": 704, "width": 64, "height": 64 },
-		"trafalgar": { "left": 256, "top": 704, "width": 64, "height": 64 },
-		"implacable": { "left": 320, "top": 704, "width": 64, "height": 64 },
+		"javelin": { "left": 0, "top": 384, "width": 64, "height": 64 },
+		"plymouth": { "left": 64, "top": 384, "width": 64, "height": 64 },
+		"drake": { "left": 128, "top": 384, "width": 64, "height": 64 },
+		"lion": { "left": 192, "top": 384, "width": 64, "height": 64 },
+		"trafalgar": { "left": 256, "top": 384, "width": 64, "height": 64 },
+		"implacable": { "left": 320, "top": 384, "width": 64, "height": 64 },
 
 		"full_burst_javelin": {
 			"left": 0,
-			"top": 768,
+			"top": 448,
 			"width": 64,
 			"height": 64
 		},
-		"dove_feather": { "left": 64, "top": 768, "width": 64, "height": 64 },
+		"dove_feather": { "left": 64, "top": 448, "width": 64, "height": 64 },
 		"privateer's_heroism": {
 			"left": 128,
-			"top": 768,
+			"top": 448,
 			"width": 64,
 			"height": 64
 		},
-		"lion's_aegis": { "left": 192, "top": 768, "width": 64, "height": 64 },
+		"lion's_aegis": { "left": 192, "top": 448, "width": 64, "height": 64 },
 		"knight's_bacinet": {
 			"left": 256,
-			"top": 768,
+			"top": 448,
 			"width": 64,
 			"height": 64
 		},
-		"devil's_cross": { "left": 320, "top": 768, "width": 64, "height": 64 }
+		"devil's_cross": { "left": 320, "top": 448, "width": 64, "height": 64 }
 	},
 	"user_interface": {
 		"TB_point_up": { "left": 0, "top": 0, "width": 64, "height": 64 },
