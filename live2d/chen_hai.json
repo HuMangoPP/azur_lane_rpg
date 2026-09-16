@@ -12,10 +12,13 @@
 			"pivot": [65, 37]
 		},
 		"left_bangs": {
-			"pivot": [30, 28]
+			"pivot": [29, 27]
 		},
 		"back_hair": {
 			"pivot": [59, 49]
+		},
+		"back_torso": {
+			"pivot": [46, 57]
 		}
 	},
 	"animations": {}
