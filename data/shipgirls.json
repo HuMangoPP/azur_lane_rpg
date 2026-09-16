@@ -144,181 +144,181 @@
 		"class": "fritz_rumey"
 	},
 	"ping_hai": {
-		"unique_item": "ping_hai",
+		"unique_item": "baobao",
 		"faction": "PRAN",
 		"hull_type": "DD",
 		"class": "ning_hai"
 	},
 	"yat_sen": {
-		"unique_item": "yat_sen",
+		"unique_item": "plum-petal_poetry",
 		"faction": "PRAN",
 		"hull_type": "CL",
 		"class": "yat_sen"
 	},
 	"chang_wu": {
-		"unique_item": "chang_wu",
+		"unique_item": "jadecarver's_instrument",
 		"faction": "PRAN",
 		"hull_type": "CA",
 		"class": "chang_wu"
 	},
 	"huan_chang": {
-		"unique_item": "huan_chang",
+		"unique_item": "huan_chang's_fishing_rod",
 		"faction": "PRAN",
 		"hull_type": "BB",
 		"class": "huan_chang"
 	},
 	"ning_hai": {
-		"unique_item": "ning_hai",
+		"unique_item": "da_bao",
 		"faction": "PRAN",
 		"hull_type": "SS",
 		"class": "ning_hai"
 	},
 	"chen_hai": {
-		"unique_item": "chen_hai",
+		"unique_item": "peacock's_embrace",
 		"faction": "PRAN",
 		"hull_type": "CV",
 		"class": "chen_hai"
 	},
 	"kiev": {
-		"unique_item": "kiev",
+		"unique_item": "the_best_wolf_companion",
 		"faction": "SN",
 		"hull_type": "DD",
 		"class": "kiev"
 	},
 	"chapayev": {
-		"unique_item": "chapayev",
+		"unique_item": "the_white_cavalier's_reins",
 		"faction": "SN",
 		"hull_type": "CL",
 		"class": "chapayev"
 	},
 	"moskva": {
-		"unique_item": "moskva",
+		"unique_item": "frost-shredding_blade",
 		"faction": "SN",
 		"hull_type": "CA",
 		"class": "moskva"
 	},
 	"sovetsky_soyuz": {
-		"unique_item": "sovetsky_soyuz",
+		"unique_item": "sceptre_of_sublimation",
 		"faction": "SN",
 		"hull_type": "BB",
 		"class": "sovetsky_soyuz"
 	},
 	"ognevoy": {
-		"unique_item": "ognevoy",
+		"unique_item": "crystalline_hearts",
 		"faction": "SN",
 		"hull_type": "SS",
 		"class": "ognevoy"
 	},
 	"admiral_nakhimov": {
-		"unique_item": "admiral_nakhimov",
+		"unique_item": "feline_behavioral_emulation_module",
 		"faction": "SN",
 		"hull_type": "CV",
 		"class": "admiral_nakhimov"
 	},
 	"le_triomphant": {
-		"unique_item": "le_triomphant",
+		"unique_item": "knight_princess's_gauntlets",
 		"faction": "FFNF",
 		"hull_type": "DD",
 		"class": "le_fantasque"
 	},
 	"bayard": {
-		"unique_item": "bayard",
+		"unique_item": "blade_of_iris_aspirations",
 		"faction": "FFNF",
 		"hull_type": "CL",
 		"class": "bayard"
 	},
 	"brest": {
-		"unique_item": "brest",
+		"unique_item": "the_seraph",
 		"faction": "FFNF",
 		"hull_type": "CA",
 		"class": "brest"
 	},
 	"richelieu": {
-		"unique_item": "richelieu",
+		"unique_item": "iris's_holy_flame",
 		"faction": "FFNF",
 		"hull_type": "BB",
 		"class": "richelieu"
 	},
 	"surcouf": {
-		"unique_item": "surcouf",
+		"unique_item": "surcouf's_sunday",
 		"faction": "FFNF",
 		"hull_type": "SS",
 		"class": "surcouf"
 	},
 	"arromanches": {
-		"unique_item": "arromanches",
+		"unique_item": "marteau_of_the_demon_king",
 		"faction": "FFNF",
 		"hull_type": "CV",
 		"class": "arromanches"
 	},
 	"mogador": {
-		"unique_item": "mogador",
+		"unique_item": "cleaver_of_all_sins",
 		"faction": "MNF",
 		"hull_type": "DD",
 		"class": "mogador"
 	},
 	"marseillaise": {
-		"unique_item": "marseillaise",
+		"unique_item": "the_justicar",
 		"faction": "MNF",
 		"hull_type": "CL",
 		"class": "la_galissonniere"
 	},
 	"algerie": {
-		"unique_item": "algerie",
+		"unique_item": "bludgeon_of_faith",
 		"faction": "MNF",
 		"hull_type": "CA",
 		"class": "algerie"
 	},
 	"jean_bart": {
-		"unique_item": "jean_bart",
+		"unique_item": "templar_knight's_battle_standard",
 		"faction": "MNF",
 		"hull_type": "BB",
 		"class": "richelieu"
 	},
 	"le_malin": {
-		"unique_item": "le_malin",
+		"unique_item": "poisonous_elegance",
 		"faction": "MNF",
 		"hull_type": "SS",
 		"class": "le_fantasque"
 	},
 	"joffre": {
-		"unique_item": "joffre",
+		"unique_item": "black_plumes_of_judgement",
 		"faction": "MNF",
 		"hull_type": "CV",
 		"class": "joffre"
 	},
 	"vittorio_cuniberti": {
-		"unique_item": "vittorio_cuniberti",
+		"unique_item": "wand_of_the_starry_night",
 		"faction": "RN",
 		"hull_type": "DD",
 		"class": "vittorio_cuniberti"
 	},
 	"duca_degli_abruzzi": {
-		"unique_item": "duca_degli_abruzzi",
+		"unique_item": "pursuer's_proof",
 		"faction": "RN",
 		"hull_type": "CL",
 		"class": "duca_degli_abruzzi"
 	},
 	"napoli": {
-		"unique_item": "napoli",
+		"unique_item": "siren's_requiem",
 		"faction": "RN",
 		"hull_type": "CA",
 		"class": "napoli"
 	},
 	"littorio": {
-		"unique_item": "littorio",
+		"unique_item": "incanto",
 		"faction": "RN",
 		"hull_type": "BB",
 		"class": "vittorio_veneto"
 	},
 	"leonardo_da_vinci": {
-		"unique_item": "leonardo_da_vinci",
+		"unique_item": "goggles",
 		"faction": "RN",
 		"hull_type": "SS",
 		"class": "marconi"
 	},
 	"aquila": {
-		"unique_item": "aquila",
+		"unique_item": "the_aquilifer",
 		"faction": "RN",
 		"hull_type": "CV",
 		"class": "aquila"
