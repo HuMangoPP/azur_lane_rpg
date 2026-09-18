@@ -156,7 +156,7 @@
 		"class": "yat_sen"
 	},
 	"chang_wu": {
-		"unique_item": "jadecarver's_instrument",
+		"unique_item": "the_jadecarver",
 		"faction": "PRAN",
 		"hull_type": "CA",
 		"class": "chang_wu"
@@ -312,7 +312,7 @@
 		"class": "vittorio_veneto"
 	},
 	"leonardo_da_vinci": {
-		"unique_item": "goggles",
+		"unique_item": "inventor's_goggles",
 		"faction": "RN",
 		"hull_type": "SS",
 		"class": "marconi"
