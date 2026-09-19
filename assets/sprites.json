@@ -760,6 +760,7 @@
 	},
 	"fleet_selection": {
 		"blank": { "left": 384, "top": 0, "width": 64, "height": 64 },
+
 		"laffey": { "left": 0, "top": 0, "width": 64, "height": 64 },
 		"san_diego": { "left": 64, "top": 0, "width": 64, "height": 64 },
 		"guam": { "left": 128, "top": 0, "width": 64, "height": 64 },
@@ -786,7 +787,42 @@
 		"drake": { "left": 128, "top": 192, "width": 64, "height": 64 },
 		"lion": { "left": 192, "top": 192, "width": 64, "height": 64 },
 		"trafalgar": { "left": 256, "top": 192, "width": 64, "height": 64 },
-		"implacable": { "left": 320, "top": 192, "width": 64, "height": 64 }
+		"implacable": { "left": 320, "top": 192, "width": 64, "height": 64 },
+
+		"ognevoy": { "left": 0, "top": 256, "width": 64, "height": 64 },
+		"kiev": { "left": 64, "top": 256, "width": 64, "height": 64 },
+		"chapayev": { "left": 128, "top": 256, "width": 64, "height": 64 },
+		"moskva": { "left": 192, "top": 256, "width": 64, "height": 64 },
+		"admiral_nakhimov": { "left": 256, "top": 256, "width": 64, "height": 64 },
+		"sovetsky_soyuz": { "left": 320, "top": 256, "width": 64, "height": 64 },
+
+		"ning_hai": { "left": 0, "top": 320, "width": 64, "height": 64 },
+		"ping_hai": { "left": 64, "top": 320, "width": 64, "height": 64 },
+		"yat_sen": { "left": 128, "top": 320, "width": 64, "height": 64 },
+		"chang_wu": { "left": 192, "top": 320, "width": 64, "height": 64 },
+		"chen_hai": { "left": 256, "top": 320, "width": 64, "height": 64 },
+		"huan_chang": { "left": 320, "top": 320, "width": 64, "height": 64 },
+
+		"surcouf": { "left": 0, "top": 384, "width": 64, "height": 64 },
+		"le_triomphant": { "left": 64, "top": 384, "width": 64, "height": 64 },
+		"bayard": { "left": 128, "top": 384, "width": 64, "height": 64 },
+		"brest": { "left": 192, "top": 384, "width": 64, "height": 64 },
+		"arromanches": { "left": 256, "top": 384, "width": 64, "height": 64 },
+		"richelieu": { "left": 320, "top": 384, "width": 64, "height": 64 },
+
+		"le_malin": { "left": 0, "top": 448, "width": 64, "height": 64 },
+		"mogador": { "left": 64, "top": 448, "width": 64, "height": 64 },
+		"marseillaise": { "left": 128, "top": 448, "width": 64, "height": 64 },
+		"algerie": { "left": 192, "top": 448, "width": 64, "height": 64 },
+		"joffre": { "left": 256, "top": 448, "width": 64, "height": 64 },
+		"jean_bart": { "left": 320, "top": 448, "width": 64, "height": 64 },
+
+		"leonardo_da_vinci": { "left": 0, "top": 512, "width": 64, "height": 64 },
+		"vittorio_cuniberti": { "left": 64, "top": 512, "width": 64, "height": 64 },
+		"duca_degli_abruzzi": { "left": 128, "top": 512, "width": 64, "height": 64 },
+		"napoli": { "left": 192, "top": 512, "width": 64, "height": 64 },
+		"aquila": { "left": 256, "top": 512, "width": 64, "height": 64 },
+		"littorio": { "left": 320, "top": 512, "width": 64, "height": 64 }
 	},
 	"equipment_menu": {
 		"side_schematic": { "left": 0, "top": 0, "width": 448, "height": 128 },
