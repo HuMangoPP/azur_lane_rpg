@@ -165,6 +165,11 @@ async def main():
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     running = False
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                    with open("data/sorties.json") as f:
+                        DataFiles.sortie_data = json.load(f)
+
+                    with open("data/sortie_selection_details.json") as f:
+                        DataFiles.sortie_selection_details = json.load(f)
                     # Dev util that allows saves the game and "reloads" it.
                     _write_to_save_file()
                     DataFiles.bgm["lofi_loop"].stop()
