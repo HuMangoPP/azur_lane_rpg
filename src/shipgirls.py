@@ -1079,11 +1079,6 @@ class PlayerFleet:
         """Get whether or not the shipgirl is in the primary or backup fleet."""
         return shipgirl in self.fleet
 
-    def clear_fleet(self):
-        """Clear the primary and backup fleets."""
-        self.shipgirls = [None, None, None]
-        self.backups = [None, None, None]
-
     def begin_sortie(self):
         """Reset the battle components on sortie start."""
         for shipgirl in self.fleet:
@@ -1173,11 +1168,6 @@ class SirenFleet:
     def fleet(self) -> list[Shipgirl]:
         """Get the full front + back fleet."""
         return self.front + self.back
-
-    def clear_fleet(self):
-        """Clear the fleet."""
-        self.front = []
-        self.back = []
 
     def begin_encounter(self):
         """Activate siren battle components and align sirens to slot rects on encounter start."""
