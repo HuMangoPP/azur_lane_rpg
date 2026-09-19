@@ -193,14 +193,7 @@ class PortMenu(Menu):
                 self.overlay_pages.setdefault(overlay_enum, 0)
 
                 if overlay_enum == self.SHIPYARD:
-                    if DataFiles.save_file["research_target"] is not None:
-                        self.overlay_selected_entity = DataFiles.save_file["research_target"]
-                        self._refresh_overlay_action_buttons()
-                    
-                    for i, faction in enumerate(self.shipyard_filters):
-                        if DataFiles.save_file["unlocked_factions"][0] == faction:
-                            self.overlay_selected_filter = i
-                            break
+                    self._open_shipyard_filter()
                 
                 self._close_shipgirl_dialogue_options()
 
@@ -225,8 +218,8 @@ class PortMenu(Menu):
 
         # Intel center, shipyard, gear lab filters.
         self.overlay_selected_filter = 0
+        self.dossier_tab_page = 0
         self.intel_center_filters = ["DD", "CL", "CA", "BB", "SS", "CV"]
-        self.shipyard_filters = ["USS", "HMS", "IJN", "KMS", "PRAN", "SN", "FFNF", "MNF", "RN"]
         self.gear_lab_filters = ["DD", "CL", "CA", "BB", "SS", "CV", "AUX"]
 
         # Dossier-themed left panel.
@@ -850,6 +843,86 @@ class PortMenu(Menu):
             return self.DECORATION_DEPOT
         return self.current_overlay
 
+    @property
+    def shipyard_filters(self) -> list[str]:
+        """Show unlocked factions in the order they were unlocked."""
+        return DataFiles.save_file["unlocked_factions"]
+
+    def _get_dossier_tab_pages(self, filters: list[str]) -> list[list[tuple[str, int | None]]]:
+        """Map each visible tab slot to a filter or a navigation control."""
+        if len(filters) <= len(self.dossier_tabs):
+            return [[(faction, i) for i, faction in enumerate(filters)]]
+
+        pages = [[(faction, i) for i, faction in enumerate(filters[:6])] + [("next", None)]]
+        start = 6
+        while len(filters) - start > 6:
+            pages.append(
+                [("prev", None)]
+                + [(faction, i) for i, faction in enumerate(filters[start:start + 5], start)]
+                + [("next", None)]
+            )
+            start += 5
+        pages.append(
+            [("prev", None)]
+            + [(faction, i) for i, faction in enumerate(filters[start:], start)]
+        )
+        return pages
+
+    def _get_visible_dossier_tabs(self) -> list[tuple[str, int | None, pygame.Rect]]:
+        """Get the set of visible dossier tabs on screen based on the overlay_selected_filter index."""
+        filters = getattr(self, f"{self.current_overlay}_filters")
+        pages = self._get_dossier_tab_pages(filters)
+        self.dossier_tab_page = next(
+            (
+                page_index for page_index, page in enumerate(pages)
+                if any(index == self.overlay_selected_filter for _, index in page)
+            ),
+            0,
+        )
+        return [
+            (name, filter_index, rect)
+            for (name, filter_index), rect in zip(pages[self.dossier_tab_page], self.dossier_tabs)
+        ]
+
+    def _open_shipyard_filter(self):
+        """Open on the research target when it is available in an unlocked faction."""
+        filters = self.shipyard_filters
+        target = DataFiles.save_file["research_target"]
+        target_info = DataFiles.shipgirl_data.get(target)
+        target_faction = target_info["faction"] if target_info is not None else None
+
+        self.overlay_selected_filter = filters.index(target_faction) if target_faction in filters else 0
+        self.overlay_selected_entity = None
+        self.overlay_pages[self.SHIPYARD] = 0
+        entities = self._get_overlay_entities() if filters else []
+        if target in entities:
+            self.overlay_selected_entity = target
+            self.overlay_pages[self.SHIPYARD] = entities.index(target) // len(self.dossier_icons)
+        else:
+            self.overlay_selected_filter = 0
+
+        pages = self._get_dossier_tab_pages(filters)
+        self.dossier_tab_page = next(
+            (
+                page_index for page_index, page in enumerate(pages)
+                if any(index == self.overlay_selected_filter for _, index in page)
+            ),
+            0,
+        )
+        self._refresh_overlay_action_buttons()
+
+    def _change_dossier_tab_page(self, delta: int):
+        filters = getattr(self, f"{self.current_overlay}_filters")
+        pages = self._get_dossier_tab_pages(filters)
+        self.dossier_tab_page = min(max(0, self.dossier_tab_page + delta), len(pages) - 1)
+        self.overlay_selected_filter = next(
+            index for _, index in pages[self.dossier_tab_page] if index is not None
+        )
+        self.overlay_pages[self.current_overlay] = 0
+        self.overlay_selected_entity = None
+        self._refresh_overlay_page_buttons()
+        self._refresh_overlay_action_buttons()
+
     def _get_overlay_entities(self) -> list[str]:
         """Get the names of entities based on the current overlay and overlay filters."""
         if self.is_decorating:
@@ -870,6 +943,8 @@ class PortMenu(Menu):
                 )
             ]
         if self.current_overlay == self.SHIPYARD:
+            if not self.shipyard_filters or self.overlay_selected_filter >= len(self.shipyard_filters):
+                return []
             return [
                 shipgirl for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
                 if shipgirl not in DataFiles.save_file["shipgirls"]
@@ -1101,9 +1176,10 @@ class PortMenu(Menu):
             left_overlay = self.dossier_bg
 
             # Check collision with filters, as they extend slightly beyond the left overlay.
-            entity_filters = getattr(self, f"{self.current_overlay}_filters")
-            filter_rects = [filter_rect for _, filter_rect in zip(entity_filters, self.dossier_tabs)]
-            if filter_rects[0].unionall(filter_rects[1:]).collidepoint(mouseup_event.pos):
+            if any(
+                rect.collidepoint(mouseup_event.pos)
+                for _, _, rect in self._get_visible_dossier_tabs()
+            ):
                 return False
             right_overlay = self.blueprint_page
             # Check collision with action button, as it extends slightly beyond the right overlay.
@@ -1130,6 +1206,7 @@ class PortMenu(Menu):
         self.overlay_page_prev_button.active = False
         self.overlay_page_next_button.active = False
         self.overlay_selected_filter = 0
+        self.dossier_tab_page = 0
         return True
 
     def _select_filter(self, mouseup_event: pygame.Event):
@@ -1137,13 +1214,19 @@ class PortMenu(Menu):
         if self.current_overlay in [self.DEPOT, self.DECORATION_STORE]:
             return
         
-        entity_filters = getattr(self, f"{self.current_overlay}_filters")
-        for i, (_, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
+        for name, filter_index, rect in self._get_visible_dossier_tabs():
             if rect.collidepoint(mouseup_event.pos):
                 DataFiles.sfx["click"].play()
-                self.overlay_selected_filter = i
-                self.overlay_pages[self.current_overlay] = 0
-                self._refresh_overlay_page_buttons()
+                if filter_index is None:
+                    self._change_dossier_tab_page(-1 if name == "prev" else 1)
+                else:
+                    self.overlay_selected_filter = filter_index
+                    self.overlay_pages[self.current_overlay] = 0
+                    if self.current_overlay == self.SHIPYARD:
+                        self.overlay_selected_entity = None
+                        self._refresh_overlay_action_buttons()
+                    self._refresh_overlay_page_buttons()
+                return
 
     def _select_entity(self, mouseup_event: pygame.Event):
         "Select an entity, based on the current overlay."
@@ -1606,7 +1689,10 @@ class PortMenu(Menu):
     ):
         """Draw the dossier document text, like the header and page number."""
         font = font_registry["big_pixel"]
-        section = entity_filters[self.overlay_selected_filter]
+        section = (
+            entity_filters[self.overlay_selected_filter]
+            if self.overlay_selected_filter < len(entity_filters) else "none"
+        )
         section_text = f"section: {section}"
         section_right = self.dossier_header.right - Box.WIDTH - Box.PADDING
         section_left = section_right - font.get_width(section_text, 1, 0)
@@ -1714,8 +1800,8 @@ class PortMenu(Menu):
         # Draw the dossier tabs.
         entity_filters = getattr(self, f"{self.current_overlay}_filters")
         pygame.draw.rect(surface, Color.DOSSIER, self.dossier_bg)
-        for i, (cat, rect) in enumerate(zip(entity_filters, self.dossier_tabs)):
-            if self.overlay_selected_filter == i:
+        for cat, filter_index, rect in self._get_visible_dossier_tabs():
+            if self.overlay_selected_filter == filter_index:
                 color = Color.DOSSIER
             else:
                 color = Color.DOSSIER_BACK

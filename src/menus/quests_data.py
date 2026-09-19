@@ -243,13 +243,15 @@ def shipyard_tutorial_draw_factory(highlighted_hull_types: list[str]):
             rect = rect.inflate(-Box.WIDTH / 2, -Box.HEIGHT / 2)
             draw_tb(surface, font_registry, None, rect.topright, True, False)
         elif menu_manager.port_menu.current_overlay == menu_manager.port_menu.SHIPYARD:
+            filters = menu_manager.port_menu.shipyard_filters
+            selected_filter = menu_manager.port_menu.overlay_selected_filter
+            if selected_filter >= len(filters):
+                return
             shipgirl_data = {
                 shipgirl: shipgirl_info for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
                 if shipgirl not in DataFiles.save_file["shipgirls"]
                 and shipgirl_info["faction"] in DataFiles.save_file["unlocked_factions"]
-                and shipgirl_info["faction"] == menu_manager.port_menu.shipyard_filters[
-                    menu_manager.port_menu.overlay_selected_filter
-                ]
+                and shipgirl_info["faction"] == filters[selected_filter]
             }
             tutorial_done = True
             faction_shipgirls = DataFiles.get_faction_shipgirls()
