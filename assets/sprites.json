@@ -230,12 +230,76 @@
 		},
 		"sovetsky_soyuz": { "left": 320, "top": 0, "width": 64, "height": 64 },
 
+		"crystalline_hearts": {
+			"left": 0,
+			"top": 64,
+			"width": 64,
+			"height": 64
+		},
+		"the_best_wolf_companion": {
+			"left": 64,
+			"top": 64,
+			"width": 64,
+			"height": 64
+		},
+		"the_white_cavalier's_reins": {
+			"left": 128,
+			"top": 64,
+			"width": 64,
+			"height": 64
+		},
+		"frost-shredding_blade": {
+			"left": 192,
+			"top": 64,
+			"width": 64,
+			"height": 64
+		},
+		"feline_behavioral_emulation_module": {
+			"left": 256,
+			"top": 64,
+			"width": 64,
+			"height": 64
+		},
+		"sceptre_of_sublimation": {
+			"left": 320,
+			"top": 64,
+			"width": 64,
+			"height": 64
+		},
+
 		"ning_hai": { "left": 0, "top": 128, "width": 64, "height": 64 },
 		"ping_hai": { "left": 64, "top": 128, "width": 64, "height": 64 },
 		"yat_sen": { "left": 128, "top": 128, "width": 64, "height": 64 },
 		"chang_wu": { "left": 192, "top": 128, "width": 64, "height": 64 },
 		"chen_hai": { "left": 256, "top": 128, "width": 64, "height": 64 },
 		"huan_chang": { "left": 320, "top": 128, "width": 64, "height": 64 },
+
+		"da_bao": { "left": 0, "top": 192, "width": 64, "height": 64 },
+		"baobao": { "left": 64, "top": 192, "width": 64, "height": 64 },
+		"plum-petal_poetry": {
+			"left": 128,
+			"top": 192,
+			"width": 64,
+			"height": 64
+		},
+		"the_jadecarver": {
+			"left": 192,
+			"top": 192,
+			"width": 64,
+			"height": 64
+		},
+		"peacock's_embrace": {
+			"left": 256,
+			"top": 192,
+			"width": 64,
+			"height": 64
+		},
+		"huan_chang's_fishing_rod": {
+			"left": 320,
+			"top": 192,
+			"width": 64,
+			"height": 64
+		},
 
 		"surcouf": { "left": 0, "top": 256, "width": 64, "height": 64 },
 		"le_triomphant": { "left": 64, "top": 256, "width": 64, "height": 64 },
@@ -244,6 +308,38 @@
 		"arromanches": { "left": 256, "top": 256, "width": 64, "height": 64 },
 		"richelieu": { "left": 320, "top": 256, "width": 64, "height": 64 },
 
+		"surcouf's_sunday": {
+			"left": 0,
+			"top": 320,
+			"width": 64,
+			"height": 64
+		},
+		"knight_princess's_gauntlets": {
+			"left": 64,
+			"top": 320,
+			"width": 64,
+			"height": 64
+		},
+		"blade_of_iris_aspirations": {
+			"left": 128,
+			"top": 320,
+			"width": 64,
+			"height": 64
+		},
+		"the_seraph": { "left": 192, "top": 320, "width": 64, "height": 64 },
+		"marteau_of_the_demon_king": {
+			"left": 256,
+			"top": 320,
+			"width": 64,
+			"height": 64
+		},
+		"iris's_holy_flame": {
+			"left": 320,
+			"top": 320,
+			"width": 64,
+			"height": 64
+		},
+
 		"le_malin": { "left": 0, "top": 384, "width": 64, "height": 64 },
 		"mogador": { "left": 64, "top": 384, "width": 64, "height": 64 },
 		"marseillaise": { "left": 128, "top": 384, "width": 64, "height": 64 },
@@ -251,12 +347,86 @@
 		"joffre": { "left": 256, "top": 384, "width": 64, "height": 64 },
 		"jean_bart": { "left": 320, "top": 384, "width": 64, "height": 64 },
 
-		"leonardo_da_vinci": { "left": 0, "top": 512, "width": 64, "height": 64 },
-		"vittorio_cuniberti": { "left": 64, "top": 512, "width": 64, "height": 64 },
-		"duca_degli_abruzzi": { "left": 128, "top": 512, "width": 64, "height": 64 },
+		"poisonous_elegance": {
+			"left": 0,
+			"top": 448,
+			"width": 64,
+			"height": 64
+		},
+		"cleaver_of_all_sins": {
+			"left": 64,
+			"top": 448,
+			"width": 64,
+			"height": 64
+		},
+		"the_justicar": { "left": 128, "top": 448, "width": 64, "height": 64 },
+		"bludgeon_of_faith": {
+			"left": 192,
+			"top": 448,
+			"width": 64,
+			"height": 64
+		},
+		"black_plumes_of_judgement": {
+			"left": 256,
+			"top": 448,
+			"width": 64,
+			"height": 64
+		},
+		"templar_knight's_battle_standard": {
+			"left": 320,
+			"top": 448,
+			"width": 64,
+			"height": 64
+		},
+
+		"leonardo_da_vinci": {
+			"left": 0,
+			"top": 512,
+			"width": 64,
+			"height": 64
+		},
+		"vittorio_cuniberti": {
+			"left": 64,
+			"top": 512,
+			"width": 64,
+			"height": 64
+		},
+		"duca_degli_abruzzi": {
+			"left": 128,
+			"top": 512,
+			"width": 64,
+			"height": 64
+		},
 		"napoli": { "left": 192, "top": 512, "width": 64, "height": 64 },
 		"aquila": { "left": 256, "top": 512, "width": 64, "height": 64 },
-		"littorio": { "left": 320, "top": 512, "width": 64, "height": 64 }
+		"littorio": { "left": 320, "top": 512, "width": 64, "height": 64 },
+
+		"inventor's_goggles": {
+			"left": 0,
+			"top": 576,
+			"width": 64,
+			"height": 64
+		},
+		"wand_of_the_starry_night": {
+			"left": 64,
+			"top": 576,
+			"width": 64,
+			"height": 64
+		},
+		"pursuer's_proof": {
+			"left": 128,
+			"top": 576,
+			"width": 64,
+			"height": 64
+		},
+		"siren's_requiem": {
+			"left": 192,
+			"top": 576,
+			"width": 64,
+			"height": 64
+		},
+		"the_aquilifer": { "left": 256, "top": 576, "width": 64, "height": 64 },
+		"incanto": { "left": 320, "top": 576, "width": 64, "height": 64 }
 	},
 	"user_interface": {
 		"TB_point_up": { "left": 0, "top": 0, "width": 64, "height": 64 },
@@ -285,7 +455,7 @@
 		"SN_big": { "left": 192, "top": 64, "width": 64, "height": 64 },
 		"FFNF_big": { "left": 256, "top": 0, "width": 64, "height": 64 },
 		"MNF_big": { "left": 256, "top": 64, "width": 64, "height": 64 },
-		"RN_big": {"left": 320, "top": 0, "width": 64, "height": 64},
+		"RN_big": { "left": 320, "top": 0, "width": 64, "height": 64 },
 
 		"USS": { "left": 256, "top": 128, "width": 32, "height": 32 },
 		"HMS": { "left": 288, "top": 128, "width": 32, "height": 32 },
@@ -295,7 +465,7 @@
 		"SN": { "left": 320, "top": 96, "width": 32, "height": 32 },
 		"FFNF": { "left": 352, "top": 64, "width": 32, "height": 32 },
 		"MNF": { "left": 352, "top": 96, "width": 32, "height": 32 },
-		"RN": {"left": 320, "top": 128, "width": 32, "height": 32},
+		"RN": { "left": 320, "top": 128, "width": 32, "height": 32 },
 
 		"depot": { "left": 0, "top": 192, "width": 64, "height": 64 },
 		"intel_center": { "left": 64, "top": 192, "width": 64, "height": 64 },
