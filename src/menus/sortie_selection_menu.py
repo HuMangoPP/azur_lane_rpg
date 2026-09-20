@@ -1390,7 +1390,7 @@ class SortieSelectionMenu(Menu):
     PATH_DASH_WIDTH = 3
     CAMERA_PAN_DURATION = 0.25
     CAMERA_MIN = pygame.Vector2(screen_x(0.5), -305)
-    CAMERA_MAX = pygame.Vector2(1822, screen_y(0.5))
+    CAMERA_MAX = pygame.Vector2(2200, screen_y(0.5))
 
     def __init__(self, menu_manager: MenuManager):
         self.menu_manager = menu_manager

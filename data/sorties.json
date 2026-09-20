@@ -578,157 +578,195 @@
 	{
 		"encounters": [],
 		"rewards": { "DD_blueprint": 1, "wisdom_cube": 1 },
-		"coordinates": [],
+		"coordinates": [[20, -2]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "BB_blueprint": 1, "wisdom_cube": 1 },
-		"coordinates": [],
+		"coordinates": [
+			[21, -2],
+			[21, -3]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "CA_blueprint": 1, "wisdom_cube": 1 },
-		"coordinates": [],
+		"coordinates": [[22, -3]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "CL_blueprint": 1, "wisdom_cube": 1 },
-		"coordinates": [],
+		"coordinates": [
+			[23, -3],
+			[22, -2]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "SS_blueprint": 1, "wisdom_cube": 1 },
-		"coordinates": [],
+		"coordinates": [[23, -2]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "CV_blueprint": 1, "wisdom_cube": 1 },
-		"coordinates": [],
+		"coordinates": [
+			[24, -3],
+			[24, -4]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "DD_blueprint": 2, "gunpowder": 2, "metals": 2 },
-		"coordinates": [],
+		"coordinates": [[25, -4]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "BB_blueprint": 2, "electronics": 2, "plastics": 2 },
-		"coordinates": [],
+		"coordinates": [
+			[25, -3],
+			[26, -4]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "CA_blueprint": 2, "electronics": 2, "metals": 2 },
-		"coordinates": [],
+		"coordinates": [[26, -5]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "CL_blueprint": 2, "gunpowder": 2, "plastics": 2 },
-		"coordinates": [],
+		"coordinates": [
+			[27, -5],
+			[27, -4]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "SS_blueprint": 2, "electronics": 2, "plastics": 2 },
-		"coordinates": [],
+		"coordinates": [[28, -5]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "CV_blueprint": 2, "metals": 2, "gunpowder": 2 },
-		"coordinates": [],
+		"coordinates": [
+			[28, -6],
+			[29, -6]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "electronics": 2, "plastics": 2 },
-		"coordinates": [],
+		"coordinates": [[29, -5]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "metals": 2, "plastics": 2 },
-		"coordinates": [],
+		"coordinates": [[30, -6]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "metals": 2, "electronics": 2 },
-		"coordinates": [],
+		"coordinates": [[30, -5]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "metals": 2, "gunpowder": 2 },
-		"coordinates": [],
+		"coordinates": [
+			[31, -6],
+			[31, -7],
+			[32, -7]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "electronics": 2, "plastics": 2 },
-		"coordinates": [],
+		"coordinates": [[32, -6]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "metals": 2, "plastics": 2 },
-		"coordinates": [],
+		"coordinates": [[33, -7]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "metals": 2, "electronics": 2 },
-		"coordinates": [],
+		"coordinates": [[33, -6]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "metals": 2, "gunpowder": 2 },
-		"coordinates": [],
+		"coordinates": [
+			[34, -7],
+			[34, -8],
+			[35, -8]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "electronics": 2, "plastics": 2 },
-		"coordinates": [],
+		"coordinates": [[35, -7]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "metals": 2, "plastics": 2 },
-		"coordinates": [],
+		"coordinates": [[36, -8]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "metals": 2, "electronics": 2 },
-		"coordinates": [],
+		"coordinates": [[36, -7]],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "metals": 2, "gunpowder": 2 },
-		"coordinates": [],
+		"coordinates": [
+			[37, -8],
+			[37, -9],
+			[38, -10]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": { "letter_of_recommendation": 1 },
-		"coordinates": [],
+		"coordinates": [
+			[38, -8],
+			[38, -9],
+			[39, -10],
+			[39, -9],
+			[39, -8],
+			[40, -10],
+			[40, -9]
+		],
 		"chapter": 3
 	},
 	{
 		"encounters": [],
 		"rewards": {},
 		"coordinates": [[-10, -10]],
-		"chapter": 100
+		"chapter": 4
 	}
 ]
