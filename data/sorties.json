@@ -563,7 +563,7 @@
 			}
 		],
 		"rewards": {
-			"wisdom_cube": 3
+			"letter_of_recommendation": 1
 		},
 		"coordinates": [
 			[23, -10],
@@ -576,18 +576,159 @@
 		"chapter": 2
 	},
 	{
-		"encounters": [
-			{
-				"front": ["explorer:0"],
-				"back": []
-			},
-			{
-				"front": ["explorer:0"],
-				"back": []
-			}
-		],
+		"encounters": [],
+		"rewards": { "DD_blueprint": 1, "wisdom_cube": 1 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "BB_blueprint": 1, "wisdom_cube": 1 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "CA_blueprint": 1, "wisdom_cube": 1 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "CL_blueprint": 1, "wisdom_cube": 1 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "SS_blueprint": 1, "wisdom_cube": 1 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "CV_blueprint": 1, "wisdom_cube": 1 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "DD_blueprint": 2, "gunpowder": 2, "metals": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "BB_blueprint": 2, "electronics": 2, "plastics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "CA_blueprint": 2, "electronics": 2, "metals": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "CL_blueprint": 2, "gunpowder": 2, "plastics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "SS_blueprint": 2, "electronics": 2, "plastics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "CV_blueprint": 2, "metals": 2, "gunpowder": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "electronics": 2, "plastics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "metals": 2, "plastics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "metals": 2, "electronics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "metals": 2, "gunpowder": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "electronics": 2, "plastics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "metals": 2, "plastics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "metals": 2, "electronics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "metals": 2, "gunpowder": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "electronics": 2, "plastics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "metals": 2, "plastics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "metals": 2, "electronics": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "metals": 2, "gunpowder": 2 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
+		"rewards": { "letter_of_recommendation": 1 },
+		"coordinates": [],
+		"chapter": 3
+	},
+	{
+		"encounters": [],
 		"rewards": {},
 		"coordinates": [[-10, -10]],
-		"chapter": 3
+		"chapter": 100
 	}
 ]
