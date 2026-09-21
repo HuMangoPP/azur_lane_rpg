@@ -19,6 +19,26 @@
 			[658.0, -69.0],
 			[677.0, -129.0],
 			[654.0, -200.0]
+		],
+		"3": [
+			[1105, -392],
+			[1110, -380],
+			[1107, -363],
+			[1086, -349],
+			[1064, -332],
+			[1050, -310],
+			[1049, -284],
+			[1078, -262],
+			[1094, -268],
+			[1092, -282],
+			[1075, -286],
+			[1055, -276],
+			[1046, -241],
+			[1042, -214],
+			[1017, -199],
+			[997, -180],
+			[996, -160],
+			[1025, -125]
 		]
 	},
 	"chapter_boundaries": {
@@ -93,11 +113,13 @@
 		{ "prop": "archipelago", "hex": [20, -5], "chapter": 2 },
 		{ "prop": "isle1", "hex": [17, -9], "chapter": 2 },
 		{ "prop": "tides", "hex": [22, -12], "chapter": 2 },
+		{ "prop": "whirlpool", "hex": [24, -7], "chapter": 2 },
 
-		{ "prop": "storm1", "hex": [-13, -10], "chapter": 3 },
-		{ "prop": "storm2", "hex": [-7, -10], "chapter": 3 },
-		{ "prop": "hurricane", "hex": [-10, -13], "chapter": 3 },
-		{ "prop": "tides", "hex": [-8, -13], "chapter": 3 },
+		{ "prop": "storm1", "hex": [23, -5], "chapter": 3 },
+		{ "prop": "storm2", "hex": [40, -7], "chapter": 3 },
+		{ "prop": "hurricane", "hex": [29, -8], "chapter": 3 },
+		{ "prop": "whirlpool", "hex": [35, -5], "chapter": 3 },
+		{ "prop": "tides", "hex": [31, -3], "chapter": 3 },
 
 		{ "prop": "storm1", "hex": [0, -8] },
 		{ "prop": "storm2", "hex": [4, -8] },

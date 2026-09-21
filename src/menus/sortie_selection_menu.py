@@ -567,8 +567,8 @@ class ChapterNameRibbon:
     CHAPTER_NAMES = [
         "training exercise",
         "patrol route",
-        "crimson reef",
-        "stormy sea",
+        "farreach ocean",
+        "tempest sea",
         "mirror sea",
         "placeholder",
     ]
