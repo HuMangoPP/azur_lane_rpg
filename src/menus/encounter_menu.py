@@ -738,17 +738,17 @@ class EncounterMenu(Menu):
                     # Assign quests whose triggers are based on completing certain sorties.
                     if new_sortie_progress == 11:
                         assign_quest(self.menu_manager, construct_auxiliary_equipment_quest)
-                    if new_sortie_progress == len(DataFiles.sortie_data) - 2:
+                    if new_sortie_progress == len(DataFiles.sortie_data) - 1:
                         assign_quest(self.menu_manager, complete_final_sortie_quest)
 
-                # Update chapter progress and disperse the fog on the new chapter if
-                # the player has unlocked that new chapter.
-                new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
-                if DataFiles.save_file["chapter_progress"] < new_chapter_progress:
-                    DataFiles.save_file["chapter_progress"] = new_chapter_progress
-                    self.menu_manager.sortie_selection_menu.fogs[new_chapter_progress].disperse = True
-                
-                self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
+                if new_sortie_progress < len(DataFiles.sortie_data):
+                    # Update chapter progress when the next sortie opens a new chapter.
+                    new_chapter_progress = DataFiles.sortie_data[new_sortie_progress]["chapter"]
+                    if DataFiles.save_file["chapter_progress"] < new_chapter_progress:
+                        DataFiles.save_file["chapter_progress"] = new_chapter_progress
+                        self.menu_manager.sortie_selection_menu.fogs[new_chapter_progress].disperse = True
+
+                    self.menu_manager.sortie_selection_menu.sortie_nodes[new_sortie_progress].unlocked = True
                 self.menu_manager.sortie_selection_menu.sortie_nodes[self.current_sortie].cleared = True
                 self.menu_manager.port_menu.update_encountered_sirens()
 

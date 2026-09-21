@@ -1508,9 +1508,7 @@ complete_final_sortie_post_quest_dialogue = [
 ]
 
 def complete_final_sortie_completion_criteria(menu_manager: MenuManager) -> bool:
-    # The last sortie data entry is an inaccessible development dummy. The
-    # accessible final sortie is complete when progress reaches its index.
-    return DataFiles.save_file["sortie_progress"] >= len(DataFiles.sortie_data) - 1
+    return DataFiles.save_file["sortie_progress"] >= len(DataFiles.sortie_data)
 
 def complete_final_sortie_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True

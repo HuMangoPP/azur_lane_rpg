@@ -762,11 +762,5 @@
 			[40, -9]
 		],
 		"chapter": 3
-	},
-	{
-		"encounters": [],
-		"rewards": {},
-		"coordinates": [[-10, -10]],
-		"chapter": 4
 	}
 ]

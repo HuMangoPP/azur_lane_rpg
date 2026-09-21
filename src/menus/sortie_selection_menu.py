@@ -570,7 +570,6 @@ class ChapterNameRibbon:
         "farreach ocean",
         "tempest sea",
         "mirror sea",
-        "placeholder",
     ]
 
     def __init__(self, chapter: int, sortie_nodes: list[SortieNode]):
