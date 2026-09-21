@@ -569,7 +569,8 @@ class ChapterNameRibbon:
         "patrol route",
         "crimson reef",
         "stormy sea",
-        "mirror sea"
+        "mirror sea",
+        "placeholder",
     ]
 
     def __init__(self, chapter: int, sortie_nodes: list[SortieNode]):
@@ -801,7 +802,7 @@ class Background:
 
     def draw(self, surface: pygame.Surface):
         """Draw the background waves."""
-        num_wave_reps = 10
+        num_wave_reps = 12
         vertical_movement = 4
         horizontal_movement = 32
         camera_anchor = anchor()
