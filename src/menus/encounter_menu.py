@@ -24,6 +24,8 @@ from src.menus.quests_data import (
     backup_fleet_quest,
     construct_auxiliary_equipment_quest,
     complete_final_sortie_quest,
+    first_sortie_index_in_region,
+    final_sortie_index_in_region,
 )
 from src.shipgirls import Shipgirl, LAYER_SIZE
 from src.vfx import VFXManager
@@ -736,9 +738,9 @@ class EncounterMenu(Menu):
                 if DataFiles.save_file["sortie_progress"] < new_sortie_progress:
                     DataFiles.save_file["sortie_progress"] = new_sortie_progress
                     # Assign quests whose triggers are based on completing certain sorties.
-                    if new_sortie_progress == 11:
+                    if new_sortie_progress == first_sortie_index_in_region(2):
                         assign_quest(self.menu_manager, construct_auxiliary_equipment_quest)
-                    if new_sortie_progress == len(DataFiles.sortie_data) - 1:
+                    if new_sortie_progress == final_sortie_index_in_region(2):
                         assign_quest(self.menu_manager, complete_final_sortie_quest)
 
                 if new_sortie_progress < len(DataFiles.sortie_data):

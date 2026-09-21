@@ -1494,21 +1494,38 @@ construct_three_auxiliary_equipment_quest = Quest(
     decoration_voucher_reward
 )
 
+
+def first_sortie_index_in_region(chapter: int) -> int:
+    """Get the index of the first sortie in the chapter."""
+    return min(
+        index for index, sortie in enumerate(DataFiles.sortie_data)
+        if sortie["chapter"] == chapter
+    )
+
+
+def final_sortie_index_in_region(chapter: int) -> int:
+    """Get the index of the last sortie in the chapter."""
+    return max(
+        index for index, sortie in enumerate(DataFiles.sortie_data)
+        if sortie["chapter"] == chapter
+    )
+
+
 complete_final_sortie_pre_quest_dialogue = [
-    "The final accessible sector has been unlocked.",
+    "The final sector of this region has been unlocked.",
     "Operational intelligence indicates Siren resistance beyond that of all previously recorded encounters.",
     "Review fleet composition and equipment before deployment.",
-    "Complete the final sortie and secure the remaining operational area.",
+    "Complete the final sortie and secure the region's remaining operational area.",
 ]
-complete_final_sortie_quest_line = "Complete the final available sortie."
+complete_final_sortie_quest_line = "Complete the final sortie of this region."
 complete_final_sortie_post_quest_dialogue = [
     "Final sortie complete.",
-    "All currently accessible ocean sectors have been secured.",
+    "All ocean sectors in this region have been secured.",
     "Continue developing the fleet in preparation for future operations.",
 ]
 
 def complete_final_sortie_completion_criteria(menu_manager: MenuManager) -> bool:
-    return DataFiles.save_file["sortie_progress"] >= len(DataFiles.sortie_data)
+    return DataFiles.save_file["sortie_progress"] > final_sortie_index_in_region()
 
 def complete_final_sortie_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
