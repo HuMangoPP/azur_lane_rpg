@@ -1525,7 +1525,7 @@ complete_final_sortie_post_quest_dialogue = [
 ]
 
 def complete_final_sortie_completion_criteria(menu_manager: MenuManager) -> bool:
-    return DataFiles.save_file["sortie_progress"] > final_sortie_index_in_region()
+    return DataFiles.save_file["sortie_progress"] > final_sortie_index_in_region(2)
 
 def complete_final_sortie_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
