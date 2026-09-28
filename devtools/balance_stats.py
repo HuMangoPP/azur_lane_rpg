@@ -14,14 +14,14 @@ def calculate_dps(hull_type, fp, rld):
 
 
 if __name__ == "__main__":
-    with open("data/stats.json") as f:
-        stats = json.load(f)
+    # with open("data/stats.json") as f:
+    #     stats = json.load(f)
 
-    print("Shipgirl DPS calculation:")
-    for hull_type, hull_stats in stats.items():
-        fps = stat_values(hull_stats, "firepower")
-        rlds = stat_values(hull_stats, "reload")
-        print(f"{hull_type}: {[calculate_dps(hull_type, fp, rld) for fp, rld in zip(fps, rlds)]}")
+    # print("Shipgirl DPS calculation:")
+    # for hull_type, hull_stats in stats.items():
+    #     fps = stat_values(hull_stats, "firepower")
+    #     rlds = stat_values(hull_stats, "reload")
+    #     print(f"{hull_type}: {[calculate_dps(hull_type, fp, rld) for fp, rld in zip(fps, rlds)]}")
 
     # print("Shipgirl EHP calculation:")
     # for hull_type, hull_stats in stats.items():
@@ -32,49 +32,49 @@ if __name__ == "__main__":
     #     num_evades = [math.floor(num_hit * eva / 1000) for num_hit, eva in zip(num_hits, evas)]
     #     print(f"{hull_type}: {[hp + dmg * num_evade for hp, dmg, num_evade in zip(hps, dmgs, num_evades)]}")
 
-    # with open("data/sirens.json") as f:
-    #     stats = json.load(f)
-
-    # print("Siren DPS calculation:")
-    # for hull_type, hull_stats in stats.items():
-    #     fps = stat_values(hull_stats, "firepower")
-    #     rlds = stat_values(hull_stats, "reload")
-    #     print(f"{hull_type}: {[calculate_dps(hull_type, fp, rld) for fp, rld in zip(fps, rlds)]}")
-
-    # print("Siren EHP calculation:")
-    # for hull_type, hull_stats in stats.items():
-    #     dmgs = [5 + 3 * level for level in range(10)]
-    #     hps = stat_values(hull_stats, "max_hp")
-    #     evas = stat_values(hull_stats, "evasion")
-    #     num_hits = [math.ceil(hp / dmg) for hp, dmg in zip(hps, dmgs)]
-    #     num_evades = [math.floor(num_hit * eva / 1000) for num_hit, eva in zip(num_hits, evas)]
-    #     print(f"{hull_type}: {[hp + dmg * num_evade for hp, dmg, num_evade in zip(hps, dmgs, num_evades)]}")
-
-    with open("data/stats.json") as f:
+    with open("data/sirens.json") as f:
         stats = json.load(f)
 
-    with open("data/equipment.json") as f:
-        equipment_data = json.load(f)
+    print("Siren DPS calculation:")
+    for hull_type, hull_stats in stats.items():
+        fps = stat_values(hull_stats, "firepower")
+        rlds = stat_values(hull_stats, "reload")
+        print(f"{hull_type}: {[calculate_dps(hull_type, fp, rld) for fp, rld in zip(fps, rlds)]}")
 
-    equipment = [
-        "twin_100",
-        "tri_155",
-        "tri_203",
-        "quad_305",
-        "tenrai",
-        "type_96_torp",
-    ]
+    print("Siren EHP calculation:")
+    for hull_type, hull_stats in stats.items():
+        dmgs = [5 + 3 * level for level in range(10)]
+        hps = stat_values(hull_stats, "max_hp")
+        evas = stat_values(hull_stats, "evasion")
+        num_hits = [math.ceil(hp / dmg) for hp, dmg in zip(hps, dmgs)]
+        num_evades = [math.floor(num_hit * eva / 1000) for num_hit, eva in zip(num_hits, evas)]
+        print(f"{hull_type}: {[hp + dmg * num_evade for hp, dmg, num_evade in zip(hps, dmgs, num_evades)]}")
+
+    # with open("data/stats.json") as f:
+    #     stats = json.load(f)
+
+    # with open("data/equipment.json") as f:
+    #     equipment_data = json.load(f)
+
+    # equipment = [
+    #     "twin_100",
+    #     "tri_155",
+    #     "tri_203",
+    #     "quad_305",
+    #     "tenrai",
+    #     "type_96_torp",
+    # ]
     
-    print("Shipgirl weapon DPS calculation:")
-    for equip in equipment:
-        equip_data = equipment_data[equip]
-        hull_type = equip_data["equippable_by"]
-        shipgirl_stats = stats[hull_type]
-        fps = stat_values(shipgirl_stats, "firepower")
-        fps = [fp + equip_data["firepower"] for fp in fps]
-        rlds = stat_values(shipgirl_stats, "reload")
-        rlds = [rld + equip_data["reload"] for rld in rlds]
-        print(f"{equip}: {[calculate_dps(hull_type, fp, rld) for fp, rld in zip(fps, rlds)]}")
+    # print("Shipgirl weapon DPS calculation:")
+    # for equip in equipment:
+    #     equip_data = equipment_data[equip]
+    #     hull_type = equip_data["equippable_by"]
+    #     shipgirl_stats = stats[hull_type]
+    #     fps = stat_values(shipgirl_stats, "firepower")
+    #     fps = [fp + equip_data["firepower"] for fp in fps]
+    #     rlds = stat_values(shipgirl_stats, "reload")
+    #     rlds = [rld + equip_data["reload"] for rld in rlds]
+    #     print(f"{equip}: {[calculate_dps(hull_type, fp, rld) for fp, rld in zip(fps, rlds)]}")
 
     # equipment = [
     #     "autoloader",
