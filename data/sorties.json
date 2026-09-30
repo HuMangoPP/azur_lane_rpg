@@ -384,16 +384,20 @@
 	{
 		"encounters": [
 			{
-				"front": ["tracer:6", "oceana:6"],
-				"back": ["oceana:6", "lurker:5", "lurker:5"]
+				"front": ["explorer:5", "tracer:5"],
+				"back": ["oceana:5", "breaker:5"]
 			},
 			{
 				"front": ["explorer:6", "tracer:6", "breaker:5"],
-				"back": ["oceana:6", "strategist:5"]
+				"back": ["oceana:6"]
 			},
 			{
-				"front": ["explorer:6", "tracer:6", "oceana:6"],
-				"back": ["breaker:5", "strategist:5", "lurker:5"]
+				"front": ["explorer:6", "oceana:6"],
+				"back": ["strategist:5", "lurker:5"]
+			},
+			{
+				"front": ["explorer:6", "tracer:6", "breaker:6"],
+				"back": ["oceana:6", "strategist:5"]
 			}
 		],
 		"rewards": {
@@ -521,15 +525,15 @@
 		"encounters": [
 			{
 				"front": ["tracer:8", "oceana:8"],
-				"back": ["lurker:7"]
+				"back": ["strategist:7", "lurker:7"]
 			},
 			{
 				"front": ["explorer:8", "oceana:8"],
-				"back": ["strategist:7"]
+				"back": ["strategist:7", "lurker:7"]
 			},
 			{
 				"front": ["explorer:8", "tracer:8", "breaker:7"],
-				"back": []
+				"back": ["oceana:8"]
 			},
 			{
 				"front": ["explorer:8", "tracer:8", "breaker:7"],
@@ -551,11 +555,15 @@
 		"encounters": [
 			{
 				"front": ["tracer:8", "oceana:8"],
-				"back": ["lurker:8"]
+				"back": ["strategist:7", "lurker:8"]
 			},
 			{
 				"front": ["oceana:8", "breaker:7"],
 				"back": ["strategist:7", "lurker:8"]
+			},
+			{
+				"front": ["explorer:9", "tracer:9", "oceana:9"],
+				"back": ["breaker:9"]
 			},
 			{
 				"front": ["oceana:8", "tester:3"],
