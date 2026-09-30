@@ -1239,13 +1239,23 @@ construct_additional_shipgirls_quest = Quest(
     decoration_voucher_reward
 )
 
+CONSTRUCT_ADDITIONAL_WEAPONS_REQUIRED = (
+    "twin_120",
+    "twin_150",
+    "twin_203",
+    "tri_406",
+    "g7e_torp",
+    "hellcat",
+)
+
 construct_additional_weapons_pre_quest_dialogue = [
     "The sector allotments listed for the next maritime region include blueprints and materials for additional weapon classes.",
-    "The gear lab can produce new weapons for {BB_shipgirl}, {CA_shipgirl}, {CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}.",
-    "As new sectors are secured, use their allotments to construct one weapon for each of these five hull types.",
+    "The gear lab can produce a triple 406mm gun for {BB_shipgirl}, a twin 203mm gun for {CA_shipgirl}, and a twin 150mm gun for {CL_shipgirl}.",
+    "It can also produce a G7e torpedo for {SS_shipgirl} and a Hellcat fighter for {CV_shipgirl}.",
+    "As new sectors are secured, use their allotments to construct one of each of these five designs.",
 ]
 construct_additional_weapons_quest_line = (
-    "Construct weapons for {BB_shipgirl}, {CA_shipgirl}, {CL_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}."
+    "Construct a triple 406mm gun, twin 203mm gun, twin 150mm gun, G7e torpedo, and Hellcat fighter."
 )
 construct_additional_weapons_post_quest_dialogue = [
     "Weapon production objectives complete.",
@@ -1254,13 +1264,10 @@ construct_additional_weapons_post_quest_dialogue = [
 ]
 
 def construct_additional_weapons_completion_criteria(menu_manager: MenuManager) -> bool:
-    required_hull_types = {"DD", "BB", "CA", "CL", "SS", "CV"}
-    required_weapons = [
-        equipment for equipment, equipment_data in DataFiles.equipment_data.items()
-        if equipment_data["type"] == Equipment.WEAPON_KEY
-        and equipment_data["equippable_by"] in required_hull_types
-    ]
-    return all(_owned_equipment(equipment) >= 1 for equipment in required_weapons)
+    return all(
+        _owned_equipment(equipment) >= 1
+        for equipment in CONSTRUCT_ADDITIONAL_WEAPONS_REQUIRED
+    )
 
 def construct_additional_weapons_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
@@ -1414,27 +1421,33 @@ backup_fleet_quest = Quest(
 backup_fleet_quest.swap_attempted = False
 backup_fleet_quest.encounter_finished_after_swap = False
 
+CONSTRUCT_AUXILIARY_EQUIPMENT_REQUIRED = (
+    "camoflauge",
+    "repair_toolkit",
+    "autoloader",
+    "fire_control_radar",
+)
+
 construct_auxiliary_equipment_pre_quest_dialogue = [
     "Operations in the next maritime region are expected to place greater demands on every fleet role.",
     "Auxiliary equipment can improve attributes such as durability, evasion, firepower, and reload speed.",
-    "The material allotments listed for its sectors can support production of every auxiliary equipment design.",
-    "Construct one of each auxiliary equipment item in the gear lab.",
+    "The material allotments listed for its sectors can support production of four priority designs.",
+    "Construct one each of the camouflage, repair toolkit, autoloader, and fire-control radar designs in the gear lab.",
 ]
 construct_auxiliary_equipment_quest_line = (
-    "Construct one of every auxiliary equipment item in the gear lab."
+    "Construct one each: camouflage, repair toolkit, autoloader, and fire-control radar."
 )
 construct_auxiliary_equipment_post_quest_dialogue = [
     "Initial auxiliary equipment production complete.",
-    "All current auxiliary designs are now available for fleet loadouts.",
+    "The four priority auxiliary designs are now available for fleet loadouts.",
     "Continue production as more materials are recovered so the entire fleet can be outfitted.",
 ]
 
 def construct_auxiliary_equipment_completion_criteria(menu_manager: MenuManager) -> bool:
-    auxiliary_equipment = [
-        equipment for equipment, equipment_data in DataFiles.equipment_data.items()
-        if equipment_data["type"] == Equipment.AUX_KEY
-    ]
-    return all(_owned_equipment(equipment) >= 1 for equipment in auxiliary_equipment)
+    return all(
+        _owned_equipment(equipment) >= 1
+        for equipment in CONSTRUCT_AUXILIARY_EQUIPMENT_REQUIRED
+    )
 
 def construct_auxiliary_equipment_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
@@ -1455,26 +1468,25 @@ construct_auxiliary_equipment_quest = Quest(
 )
 
 construct_three_auxiliary_equipment_pre_quest_dialogue = [
-    "The initial auxiliary equipment run produced one of every available design.",
+    "The initial auxiliary equipment run produced one each of the camouflage, repair toolkit, autoloader, and fire-control radar designs.",
     "Each shipgirl can carry two auxiliary items.",
     "As new sectors are secured, commit their material allotments to auxiliary equipment production.",
-    "Construct three copies of each auxiliary equipment item and distribute them throughout the fleet.",
+    "Construct two more copies of each of the four designs, bringing the fleet total to three of each and twelve auxiliary items overall.",
 ]
 construct_three_auxiliary_equipment_quest_line = (
-    "Construct three copies of every auxiliary equipment item in the gear lab."
+    "Construct two more of each: camouflage, repair toolkit, autoloader, and fire-control radar, for twelve total."
 )
 construct_three_auxiliary_equipment_post_quest_dialogue = [
     "Fleet-wide auxiliary equipment production complete.",
-    "Three copies of every current auxiliary design are now available.",
+    "Three copies of each of the four priority auxiliary designs are now available.",
     "Distribute all twelve items according to the attributes required by each shipgirl before the final sortie.",
 ]
 
 def construct_three_auxiliary_equipment_completion_criteria(menu_manager: MenuManager) -> bool:
-    auxiliary_equipment = [
-        equipment for equipment, equipment_data in DataFiles.equipment_data.items()
-        if equipment_data["type"] == Equipment.AUX_KEY
-    ]
-    return all(_owned_equipment(equipment) >= 3 for equipment in auxiliary_equipment)
+    return all(
+        _owned_equipment(equipment) >= 3
+        for equipment in CONSTRUCT_AUXILIARY_EQUIPMENT_REQUIRED
+    )
 
 def construct_three_auxiliary_equipment_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_gear_lab_overlay_button.active = True
