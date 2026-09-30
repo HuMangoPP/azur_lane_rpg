@@ -752,6 +752,19 @@ class FleetSelectionMenu(Menu):
             shipgirl.sprite.set_animation(Live2D.IDLE_ANIMATION)
             shipgirl.facing_left = False
 
+    def align_fleet_shipgirls_with_slots(self):
+        """Align assigned shipgirls with their markers when entering the menu."""
+        for shipgirl, slot in zip(
+            self.menu_manager.player_fleet.shipgirls,
+            self.fleet_slots,
+        ):
+            self._align_shipgirl_with_fleet_selection_slot(shipgirl, slot)
+        for shipgirl, slot in zip(
+            self.menu_manager.player_fleet.backups,
+            self.backup_fleet_slots,
+        ):
+            self._align_shipgirl_with_fleet_selection_slot(shipgirl, slot)
+
     def _drop_shipgirl(
         self, slot_shipgirls: list[Shipgirl], marker_slots: list[pygame.Rect], event: pygame.Event
     ) -> bool:

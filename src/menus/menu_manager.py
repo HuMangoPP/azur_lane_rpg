@@ -105,6 +105,8 @@ class MenuManager(BaseMenuManager):
             self.equipment_menu.selected_shipgirl = None
             self.equipment_menu.shipgirl_x = None
             self.equipment_menu.selection_activation_time = 0
+        if menu is self.fleet_selection_menu:
+            self.fleet_selection_menu.align_fleet_shipgirls_with_slots()
 
         # BGM hooks.
         if self._current_menu is None:
