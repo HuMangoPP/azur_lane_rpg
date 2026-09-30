@@ -393,7 +393,7 @@
 			},
 			{
 				"front": ["explorer:6", "oceana:6"],
-				"back": ["strategist:5", "lurker:5"]
+				"back": ["strategist:5", "breaker:5", "lurker:5"]
 			},
 			{
 				"front": ["explorer:6", "tracer:6", "breaker:6"],
@@ -445,7 +445,7 @@
 			},
 			{
 				"front": ["tracer:7", "tracer:7", "strategist:6"],
-				"back": ["oceana:7"]
+				"back": ["oceana:7", "breaker:7"]
 			}
 		],
 		"rewards": {
@@ -467,7 +467,7 @@
 			},
 			{
 				"front": ["tracer:7", "tracer:7", "breaker:7"],
-				"back": ["oceana:7"]
+				"back": ["oceana:7", "strategist:6"]
 			}
 		],
 		"rewards": {
@@ -511,7 +511,7 @@
 			},
 			{
 				"front": ["explorer:8", "tracer:8", "breaker:7"],
-				"back": ["oceana:8", "lurker:7"]
+				"back": ["oceana:8", "lurker:7", "lurker:7"]
 			}
 		],
 		"rewards": {
@@ -525,7 +525,7 @@
 		"encounters": [
 			{
 				"front": ["tracer:8", "oceana:8"],
-				"back": ["strategist:7", "lurker:7"]
+				"back": ["breaker:7", "lurker:7"]
 			},
 			{
 				"front": ["explorer:8", "oceana:8"],
@@ -533,7 +533,7 @@
 			},
 			{
 				"front": ["explorer:8", "tracer:8", "breaker:7"],
-				"back": ["oceana:8"]
+				"back": ["oceana:8", "tracer:8"]
 			},
 			{
 				"front": ["explorer:8", "tracer:8", "breaker:7"],
@@ -563,7 +563,7 @@
 			},
 			{
 				"front": ["explorer:9", "tracer:9", "oceana:9"],
-				"back": ["breaker:9"]
+				"back": ["breaker:7"]
 			},
 			{
 				"front": ["oceana:8", "tester:3"],
