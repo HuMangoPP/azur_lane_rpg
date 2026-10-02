@@ -70,7 +70,7 @@
         "wisdom_cube": 0,
         "huggy_pillow": 0,
         "dragon_cannon": 0,
-        "decoration_coin": 13,
+        "decoration_coin": 16,
         "modernized_jaeger": 0,
         "CA_blueprint": 0,
         "metals": 0,
@@ -116,9 +116,10 @@
         "buy_decoration": "completed",
         "decorate_port": "completed",
         "construct_additional_shipgirls": "completed",
-        "construct_additional_weapons": "in_progress",
+        "construct_additional_weapons": "completed",
         "backup_fleet": "completed",
-        "construct_auxiliary_equipment": "in_progress",
-        "complete_final_sortie": "completed"
+        "construct_auxiliary_equipment": "completed",
+        "complete_final_sortie": "completed",
+        "construct_three_auxiliary_equipment": "completed"
     }
 }
