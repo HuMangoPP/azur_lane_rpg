@@ -936,15 +936,15 @@
 		"encounters": [
 			{
 				"front": ["explorer:9", "tracer:9"],
-				"back": ["oceana:9", "breaker:8", "lurker:8"]
+				"back": ["oceana:9", "breaker:9", "lurker:9"]
 			},
 			{
 				"front": ["explorer:9", "oceana:9", "strategist:9"],
-				"back": ["tracer:9", "lurker:8"]
+				"back": ["tracer:9", "lurker:9"]
 			},
 			{
 				"front": ["explorer:9", "explorer:9", "breaker:9"],
-				"back": ["oceana:9", "strategist:8", "lurker:8"]
+				"back": ["oceana:9", "strategist:9", "lurker:9"]
 			}
 		],
 		"rewards": { "metals": 2, "plastics": 2 },
@@ -954,16 +954,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:9", "tracer:9", "oceana:9"],
-				"back": ["breaker:9", "lurker:8"]
+				"front": ["explorer:10", "tracer:9", "oceana:9"],
+				"back": ["breaker:9", "lurker:9"]
 			},
 			{
-				"front": ["explorer:9", "tracer:9", "breaker:9"],
-				"back": ["oceana:9", "strategist:8"]
+				"front": ["explorer:9", "tracer:10", "breaker:9"],
+				"back": ["oceana:9", "strategist:9"]
 			},
 			{
-				"front": ["tracer:9", "oceana:9", "breaker:9"],
-				"back": ["oceana:9", "strategist:8", "lurker:8"]
+				"front": ["tracer:9", "oceana:10", "breaker:9"],
+				"back": ["oceana:9", "strategist:9", "lurker:9"]
 			}
 		],
 		"rewards": { "metals": 2, "electronics": 2 },
@@ -1000,16 +1000,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:9", "tracer:9", "oceana:9"],
-				"back": ["strategist:8", "lurker:8"]
+				"front": ["explorer:10", "tracer:9", "oceana:9"],
+				"back": ["strategist:9", "lurker:9"]
 			},
 			{
-				"front": ["explorer:9", "oceana:9", "breaker:9"],
-				"back": ["tracer:9", "lurker:8"]
+				"front": ["explorer:9", "oceana:10", "breaker:9"],
+				"back": ["tracer:9", "lurker:9"]
 			},
 			{
-				"front": ["explorer:9", "tracer:9", "oceana:9"],
-				"back": ["breaker:9", "breaker:9", "lurker:8"]
+				"front": ["explorer:10", "tracer:10", "oceana:9"],
+				"back": ["breaker:9", "breaker:9", "lurker:9"]
 			}
 		],
 		"rewards": { "electronics": 2, "plastics": 2 },
@@ -1019,16 +1019,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:9", "tracer:9"],
-				"back": ["oceana:9", "breaker:9", "lurker:8"]
+				"front": ["explorer:10", "tracer:10"],
+				"back": ["oceana:9", "breaker:9", "lurker:9"]
 			},
 			{
-				"front": ["explorer:9", "oceana:9", "strategist:9"],
-				"back": ["tracer:9", "lurker:8"]
+				"front": ["explorer:10", "oceana:10", "strategist:9"],
+				"back": ["tracer:9", "lurker:9"]
 			},
 			{
-				"front": ["explorer:9", "tracer:9", "oceana:9"],
-				"back": ["breaker:9", "strategist:9", "strategist:8"]
+				"front": ["explorer:10", "tracer:10", "oceana:10"],
+				"back": ["breaker:9", "strategist:9", "strategist:9"]
 			}
 		],
 		"rewards": { "metals": 2, "plastics": 2 },
@@ -1038,16 +1038,16 @@
 	{
 		"encounters": [
 			{
-				"front": ["explorer:9", "tracer:9", "oceana:9"],
-				"back": ["breaker:9", "lurker:8"]
+				"front": ["explorer:10", "tracer:10", "oceana:10"],
+				"back": ["breaker:9", "lurker:9"]
 			},
 			{
-				"front": ["explorer:9", "tracer:9", "breaker:9"],
-				"back": ["oceana:9", "strategist:9"]
+				"front": ["explorer:9", "tracer:10", "breaker:9"],
+				"back": ["oceana:10", "strategist:9"]
 			},
 			{
-				"front": ["explorer:9", "tracer:9", "oceana:9"],
-				"back": ["breaker:9", "strategist:9", "lurker:8"]
+				"front": ["explorer:10", "tracer:10", "oceana:10"],
+				"back": ["breaker:9", "strategist:9", "lurker:9"]
 			}
 		],
 		"rewards": { "metals": 2, "electronics": 2 },
@@ -1085,19 +1085,19 @@
 		"encounters": [
 			{
 				"front": ["explorer:9", "tracer:9", "oceana:9"],
-				"back": ["breaker:9", "strategist:8", "lurker:8"]
+				"back": ["breaker:9"]
 			},
 			{
 				"front": ["explorer:9", "oceana:9", "breaker:9"],
-				"back": ["tracer:8", "strategist:9", "lurker:8"]
+				"back": ["strategist:9"]
 			},
 			{
-				"front": ["breaker:9", "breaker:9", "oceana:9"],
+				"front": ["breaker:9", "oceana:9"],
 				"back": ["tracer:9", "strategist:8", "lurker:8"]
 			},
 			{
-				"front": ["explorer:9", "tracer:9", "breaker:9"],
-				"back": ["oceana:9", "strategist:9", "tester:4"]
+				"front": ["explorer:9", "tracer:9"],
+				"back": ["oceana:9", "strategist:9", "tester:5"]
 			}
 		],
 		"rewards": { "letter_of_recommendation": 1 },

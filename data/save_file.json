@@ -6,50 +6,50 @@
         "laffey": {
             "equipment": [
                 "twin_127",
-                "repair_toolkit",
-                "fire_control_radar"
+                "ap_shell",
+                "ap_shell"
             ],
-            "exp": 16440
+            "exp": 25986
         },
         "new_jersey": {
             "equipment": [
                 "twin_457",
-                "camoflauge",
-                "autoloader"
+                "maintenance_crane",
+                "steering_gear"
             ],
-            "exp": 16440
+            "exp": 25986
         },
         "guam": {
             "equipment": [
                 "tri_234",
-                "fire_control_radar",
-                "camoflauge"
+                "maintenance_crane",
+                "steering_gear"
             ],
-            "exp": 16428
+            "exp": 25974
         },
         "san_diego": {
             "equipment": [
                 "quad_152",
-                "repair_toolkit",
-                "fire_control_radar"
+                "maintenance_crane",
+                "ap_shell"
             ],
-            "exp": 16049
+            "exp": 25595
         },
         "albacore": {
             "equipment": [
                 "mark_28_torp",
-                "autoloader",
-                "repair_toolkit"
+                "fire_control_table",
+                "fire_control_table"
             ],
-            "exp": 15376
+            "exp": 24922
         },
         "enterprise": {
             "equipment": [
                 "wyvern",
-                "autoloader",
-                "camoflauge"
+                "fire_control_table",
+                "steering_gear"
             ],
-            "exp": 14688
+            "exp": 24234
         }
     },
     "equipment": {
@@ -59,16 +59,20 @@
         "twin_150": 1,
         "g7e_torp": 1,
         "hellcat": 1,
-        "camoflauge": 0,
-        "repair_toolkit": 0,
-        "autoloader": 0,
-        "fire_control_radar": 0,
+        "camoflauge": 3,
+        "repair_toolkit": 3,
+        "autoloader": 3,
+        "fire_control_radar": 3,
         "twin_127": 0,
         "twin_457": 0,
         "tri_234": 0,
         "quad_152": 0,
         "mark_28_torp": 0,
-        "wyvern": 0
+        "wyvern": 0,
+        "steering_gear": 0,
+        "maintenance_crane": 0,
+        "fire_control_table": 0,
+        "ap_shell": 0
     },
     "inventory": {
         "DD_blueprint": 1,
@@ -89,7 +93,7 @@
         "CV_blueprint": 1,
         "prank_of_the_day": 0,
         "twenty_battle_stars": 0,
-        "letter_of_recommendation": 1
+        "letter_of_recommendation": 2
     },
     "specialized_wisdom_cubes": {},
     "decoration_depot": {
@@ -106,7 +110,7 @@
         ]
     ],
     "research_target": null,
-    "sortie_progress": 36,
+    "sortie_progress": 49,
     "chapter_progress": 3,
     "quests": {
         "choose_faction": "completed",
