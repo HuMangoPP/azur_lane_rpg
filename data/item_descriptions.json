@@ -1,5 +1,5 @@
 {
-    "decoration_coin": "Currency for buying decorations.",
+	"decoration_coin": "Currency for buying decorations.",
 
 	"DD_blueprint": "A blueprint for constructing destroyer shipgirls and their weapons.",
 	"CL_blueprint": "A blueprint for constructing light cruiser shipgirls and their weapons.",
@@ -14,6 +14,17 @@
 	"plastics": "High durabilty synthetic plastics resistant to wear and tear.",
 
 	"wisdom_cube": "An otherworldly artifact capable of converting memories into energy.",
+
+	"invitation_letter": "A letter to invite a new faction to join our port.",
+	"accepted_invitation_USS": "Accepted invitation from the eagle union faction.",
+	"accepted_invitation_HMS": "Accepted invitation from the royal navy faction.",
+	"accepted_invitation_KMS": "Accepted invitation from the ironblood faction.",
+	"accepted_invitation_IJN": "Accepted invitation from the sakura empire faction.",
+	"accepted_invitation_SN": "Accepted invitation from the northern parliament faction.",
+	"accepted_invitation_PRAN": "Accepted invitation from the dragon empery faction.",
+	"accepted_invitation_FFNF": "Accepted invitation from the iris libre faction.",
+	"accepted_invitation_MNF": "Accepted invitation from the vichya dominion faction.",
+	"accepted_invitation_RN": "Accepted invitation from the sardegna empire faction.",
 
 	"huggy_pillow": "Can I nap a little longer, please...?",
 	"star_blaster": "I am number one!",

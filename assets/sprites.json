@@ -79,7 +79,14 @@
 		"couch_single": { "left": 64, "top": 192, "width": 64, "height": 64 },
 		"couch_double": { "left": 128, "top": 192, "width": 64, "height": 64 },
 
-		"placeholder": { "left": 192, "top": 192, "width": 64, "height": 64 }
+		"placeholder": { "left": 192, "top": 192, "width": 64, "height": 64 },
+
+		"invitation_letter": {
+			"left": 256,
+			"top": 192,
+			"width": 64,
+			"height": 64
+		}
 	},
 	"entity_siren": {
 		"explorer": { "left": 0, "top": 0, "width": 64, "height": 64 },
@@ -793,8 +800,18 @@
 		"kiev": { "left": 64, "top": 256, "width": 64, "height": 64 },
 		"chapayev": { "left": 128, "top": 256, "width": 64, "height": 64 },
 		"moskva": { "left": 192, "top": 256, "width": 64, "height": 64 },
-		"admiral_nakhimov": { "left": 256, "top": 256, "width": 64, "height": 64 },
-		"sovetsky_soyuz": { "left": 320, "top": 256, "width": 64, "height": 64 },
+		"admiral_nakhimov": {
+			"left": 256,
+			"top": 256,
+			"width": 64,
+			"height": 64
+		},
+		"sovetsky_soyuz": {
+			"left": 320,
+			"top": 256,
+			"width": 64,
+			"height": 64
+		},
 
 		"ning_hai": { "left": 0, "top": 320, "width": 64, "height": 64 },
 		"ping_hai": { "left": 64, "top": 320, "width": 64, "height": 64 },
@@ -817,9 +834,24 @@
 		"joffre": { "left": 256, "top": 448, "width": 64, "height": 64 },
 		"jean_bart": { "left": 320, "top": 448, "width": 64, "height": 64 },
 
-		"leonardo_da_vinci": { "left": 0, "top": 512, "width": 64, "height": 64 },
-		"vittorio_cuniberti": { "left": 64, "top": 512, "width": 64, "height": 64 },
-		"duca_degli_abruzzi": { "left": 128, "top": 512, "width": 64, "height": 64 },
+		"leonardo_da_vinci": {
+			"left": 0,
+			"top": 512,
+			"width": 64,
+			"height": 64
+		},
+		"vittorio_cuniberti": {
+			"left": 64,
+			"top": 512,
+			"width": 64,
+			"height": 64
+		},
+		"duca_degli_abruzzi": {
+			"left": 128,
+			"top": 512,
+			"width": 64,
+			"height": 64
+		},
 		"napoli": { "left": 192, "top": 512, "width": 64, "height": 64 },
 		"aquila": { "left": 256, "top": 512, "width": 64, "height": 64 },
 		"littorio": { "left": 320, "top": 512, "width": 64, "height": 64 }

@@ -255,6 +255,9 @@ class DataFiles:
     @classmethod
     def get_entity_sprite(cls, sprite_key: str) -> pygame.Surface:
         """Get a sprite from an entity group, falling back to the item placeholder."""
+        if sprite_key.startswith("accepted_invitation"):
+            return cls.sprites["entity_item"]["invitation_letter"]
+        
         for sprite_group, sprites in cls.sprites.items():
             if sprite_group.startswith("entity_") and sprite_key in sprites:
                 return sprites[sprite_key]

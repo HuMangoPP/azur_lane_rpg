@@ -2,14 +2,14 @@
 	"unlocked_factions": [],
 	"shipgirls": {},
 	"equipment": {},
-	"inventory": {},
+	"inventory": {
+		"invitation_letter": 1
+	},
 	"specialized_wisdom_cubes": {},
 	"decoration_depot": {},
 	"decorations": [],
 	"research_target": null,
 	"sortie_progress": 0,
 	"chapter_progress": 0,
-	"quests": {
-		"choose_faction": "new"
-	}
+	"quests": {}
 }

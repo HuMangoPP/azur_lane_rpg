@@ -32,7 +32,12 @@ from live2d.live2d import (
     PreRenderTask,
     get_live2d_model_file,
 )
-from src.menus.quests_data import assign_quest, backup_fleet_quest
+from src.menus.quests_data import (
+    assign_quest,
+    backup_fleet_quest,
+    choose_faction_quest,
+    invite_second_faction_to_port_quest,
+)
 
 
 class PortWallpaper:
@@ -121,12 +126,13 @@ class PortMenu(Menu):
     DECORATION_STAMP_DISAPPEAR_TIME = 0.5
     DECORATION_PRICE = 1
 
+    FACTIONS = ["USS", "HMS", "IJN", "KMS", "PRAN", "SN", "FFNF", "MNF", "RN"]
+
     def __init__(self, menu_manager: MenuManager):
         self.menu_manager = menu_manager
         self.background = PortWallpaper()
 
         # Choose faction buttons.
-        factions = ["USS", "HMS", "IJN", "KMS", "PRAN", "SN", "FFNF", "MNF", "RN"]
         def choose_faction_factory(faction):
             def choose_faction():
                 DataFiles.save_file["unlocked_factions"].append(faction)
@@ -136,8 +142,8 @@ class PortMenu(Menu):
         
         self.choose_faction_buttons: list[AnnularSectorButton] = []
         choose_faction_center = pygame.Vector2(screen_x(0.5), screen_y(0.5))
-        choose_faction_angle_width = math.tau / len(factions)
-        for faction_index, faction in enumerate(factions):
+        choose_faction_angle_width = math.tau / len(self.FACTIONS)
+        for faction_index, faction in enumerate(self.FACTIONS):
             choose_faction_button = AnnularSectorButton(
                 inner_radius=Box.WIDTH,
                 outer_radius=Box.WIDTH * 2.5,
@@ -1488,6 +1494,12 @@ class PortMenu(Menu):
 
     def update(self, dt: float, events: list[pygame.Event]):
         """Update the port menu."""
+        if DataFiles.save_file["inventory"].get("invitation_letter", 0) > 0:
+            if DataFiles.save_file["unlocked_factions"] == 0:
+                assign_quest(self.menu_manager, choose_faction_quest)
+            elif DataFiles.save_file["unlocked_factions"] == 1:
+                assign_quest(self.menu_manager, invite_second_faction_to_port_quest)
+
         self.menu_manager.quest_manager.update(dt)
 
         for shipgirl in self.menu_manager.available_shipgirls:

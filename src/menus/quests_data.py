@@ -142,8 +142,38 @@ choose_faction_post_quest_dialogue = [
     "Your port authorization is now active, Commander.",
 ]
 
+
+def invite_faction_to_port_completion_criteria_factory(index: int):
+    def invite_faction_to_port_completion_criteria(menu_manager: MenuManager) -> bool:
+        return len(DataFiles.save_file["unlocked_factions"]) == index + 1
+
+    return invite_faction_to_port_completion_criteria
+
+
+def invite_faction_to_port_on_start(menu_manager: MenuManager):
+    unlocked_factions = DataFiles.save_file["unlocked_factions"]
+    for faction, choose_faction_button in zip(
+        menu_manager.port_menu.FACTIONS,
+        menu_manager.port_menu.choose_faction_buttons,
+    ):
+        choose_faction_button.active = faction not in unlocked_factions
+
+
+def invite_faction_to_port_on_complete_factory(index: int):
+    def invite_faction_to_port_on_complete(menu_manager: MenuManager):
+        DataFiles["save_file"]["inventory"]["invitation_letter"] = (
+            DataFiles["save_file"]["inventory"]["invitation_letter"] - 1
+        )
+        invited_faction = DataFiles.save_file["unlocked_factions"][index]
+        DataFiles["save_file"]["inventory"][f"accepted_invitation_{invited_faction}"] = 1
+        for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
+            choose_faction_button.active = False
+
+    return invite_faction_to_port_on_complete
+
+
 def choose_faction_completion_criteria(menu_manager: MenuManager) -> bool:
-    completed = len(DataFiles.save_file["unlocked_factions"]) > 0
+    completed = invite_faction_to_port_completion_criteria_factory(0)(menu_manager)
     if completed:
         chosen_faction = DataFiles.save_file["unlocked_factions"][0]
 
@@ -161,17 +191,12 @@ def choose_faction_completion_criteria(menu_manager: MenuManager) -> bool:
 
     return completed
 
-def choose_faction_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
-    pass
-
-def choose_faction_on_start(menu_manager: MenuManager):
-    faction_selection_pending = not DataFiles.save_file["unlocked_factions"]
-    for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
-        choose_faction_button.active = faction_selection_pending
 
 def choose_faction_on_complete(menu_manager: MenuManager):
     # On complete, the quest needs to convert the wisdom cubes awarded in the quest
     # into specialized wisdom cubes for the starter shipgirls.
+    invite_faction_to_port_on_complete_factory(0)(menu_manager)
+
     faction_shipgirls = DataFiles.get_faction_shipgirls()
     specialized_wisdom_cubes = DataFiles.save_file["specialized_wisdom_cubes"]
     for hull_type in ["DD", "BB"]:
@@ -203,8 +228,8 @@ choose_faction_quest = Quest(
     choose_faction_quest_line,
     choose_faction_post_quest_dialogue,
     choose_faction_completion_criteria,
-    choose_faction_tutorial_draw,
-    choose_faction_on_start,
+    empty_tutorial_draw,
+    invite_faction_to_port_on_start,
     choose_faction_on_complete,
     choose_faction_rewards
 )
@@ -1557,6 +1582,34 @@ complete_final_sortie_quest = Quest(
     decoration_voucher_reward
 )
 
+
+invite_second_faction_to_port_pre_quest_dialogue = [
+    "Region 3 operations are complete, Commander.",
+    "The route into the next region is open, but Siren activity is expected to intensify in region 4.",
+    "High Command has authorized an invitation to a second faction to diversify the fleet for the campaign ahead.",
+    "Review the available factions and choose one to welcome to the port.",
+]
+invite_second_faction_to_port_quest_line = "Choose a second faction to invite to the port."
+invite_second_faction_to_port_post_quest_dialogue = [
+    "The invitation has been accepted.",
+    "Shipgirls from the second faction are now authorized to join your fleet.",
+    "The port is better prepared for the opening operations of region 4.",
+]
+
+
+invite_second_faction_to_port_quest = Quest(
+    "invite_second_faction_to_port",
+    invite_second_faction_to_port_pre_quest_dialogue,
+    invite_second_faction_to_port_quest_line,
+    invite_second_faction_to_port_post_quest_dialogue,
+    invite_faction_to_port_completion_criteria_factory(1),
+    empty_tutorial_draw,
+    invite_faction_to_port_on_start,
+    invite_faction_to_port_on_complete_factory(1),
+    decoration_voucher_reward,
+)
+
+
 quests = [
     choose_faction_quest,
     construct_shipgirls_quest,
@@ -1576,4 +1629,5 @@ quests = [
     construct_auxiliary_equipment_quest,
     construct_three_auxiliary_equipment_quest,
     complete_final_sortie_quest,
+    invite_second_faction_to_port_quest,
 ]

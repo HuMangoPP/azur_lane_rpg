@@ -571,7 +571,7 @@
 			}
 		],
 		"rewards": {
-			"letter_of_recommendation": 1
+			"invitation_letter": 1
 		},
 		"coordinates": [
 			[23, -10],
@@ -1100,7 +1100,7 @@
 				"back": ["oceana:9", "strategist:9", "tester:5"]
 			}
 		],
-		"rewards": { "letter_of_recommendation": 1 },
+		"rewards": { "invitation_letter": 1 },
 		"coordinates": [
 			[38, -8],
 			[38, -9],
