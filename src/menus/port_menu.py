@@ -1061,7 +1061,10 @@ class PortMenu(Menu):
     def _update_no_overlay(self, events: list[pygame.Event]):
         """Update when there is no overlay."""
         for quest in self.menu_manager.quest_manager.started_quests.values():
-            quest.completed = quest.completed or quest.completion_criteria(self.menu_manager)
+            quest.completed = (
+                quest.started
+                and (quest.completed or quest.completion_criteria(self.menu_manager))
+            )
 
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
