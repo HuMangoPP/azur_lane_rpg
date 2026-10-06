@@ -1241,6 +1241,34 @@ class EquipmentMenu(Menu):
                 surface.blit(DataFiles.sprites["user_interface"]["unequip_item"], rect)
             else:
                 surface.blit(DataFiles.get_entity_sprite(equipment), rect)
+                # Render the amount of this equipment available in the depot.
+                amt = DataFiles.save_file["equipment"].get(equipment, 0)
+                font = font_registry["big_pixel"]
+                label_text = f"x{amt}"
+                label_rect = get_rect(
+                    width=font.get_width(label_text, scale=1, box_width=0) + Box.PADDING,
+                    height=font.font_height + Box.PADDING,
+                    left=rect.left + Box.OUTLINE_WIDTH,
+                    top=rect.top + Box.OUTLINE_WIDTH
+                )
+                label_shadow_rect = label_rect.move(Box.OUTLINE_WIDTH, Box.OUTLINE_WIDTH)
+
+                pygame.draw.rect(surface, Color.GREY, label_shadow_rect)
+                pygame.draw.rect(surface, Color.WHITE, label_rect)
+                pygame.draw.rect(
+                    surface,
+                    Color.GREY,
+                    label_rect,
+                    width=Box.OUTLINE_WIDTH
+                )
+                font.render(
+                    surface,
+                    label_text,
+                    label_rect.center,
+                    Color.BLACK,
+                    scale=1,
+                    style="center"
+                )
             pygame.draw.rect(surface, Color.CARGO_BOX_OUTLINE, rect, width=Box.OUTLINE_WIDTH)
 
         # Equipment depot props.

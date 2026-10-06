@@ -161,11 +161,11 @@ def invite_faction_to_port_on_start(menu_manager: MenuManager):
 
 def invite_faction_to_port_on_complete_factory(index: int):
     def invite_faction_to_port_on_complete(menu_manager: MenuManager):
-        DataFiles["save_file"]["inventory"]["invitation_letter"] = (
-            DataFiles["save_file"]["inventory"]["invitation_letter"] - 1
+        DataFiles.save_file["inventory"]["invitation_letter"] = (
+            DataFiles.save_file["inventory"]["invitation_letter"] - 1
         )
         invited_faction = DataFiles.save_file["unlocked_factions"][index]
-        DataFiles["save_file"]["inventory"][f"accepted_invitation_{invited_faction}"] = 1
+        DataFiles.save_file["inventory"][f"accepted_invitation_{invited_faction}"] = 1
         for choose_faction_button in menu_manager.port_menu.choose_faction_buttons:
             choose_faction_button.active = False
 
