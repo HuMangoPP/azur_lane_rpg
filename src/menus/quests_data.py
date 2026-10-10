@@ -1724,7 +1724,7 @@ def construct_tier_2_weapons_on_start(menu_manager: MenuManager):
 
 
 def construct_tier_2_weapons_on_complete(menu_manager: MenuManager):
-    pass
+    assign_quest(menu_manager, construct_three_tier_2_auxiliary_equipment_quest)
 
 
 construct_tier_2_weapons_quest = Quest(
@@ -1736,6 +1736,60 @@ construct_tier_2_weapons_quest = Quest(
     empty_tutorial_draw,
     construct_tier_2_weapons_on_start,
     construct_tier_2_weapons_on_complete,
+    decoration_voucher_reward,
+)
+
+
+TIER_2_AUXILIARY_EQUIPMENT_REQUIRED = (
+    "steering_gear",
+    "maintenance_crane",
+    "fire_control_table",
+    "ap_shell",
+)
+
+construct_three_tier_2_auxiliary_equipment_pre_quest_dialogue = [
+    "The expanded fleet will also require advanced auxiliary equipment.",
+    "Each shipgirl can carry two auxiliary items, so a single copy of each design will not be enough.",
+    "Construct three copies each of the steering gear, maintenance crane, fire-control table, and AP shell designs.",
+]
+construct_three_tier_2_auxiliary_equipment_quest_line = (
+    "Construct three each: steering gear, maintenance crane, fire-control table, and AP shell."
+)
+construct_three_tier_2_auxiliary_equipment_post_quest_dialogue = [
+    "Advanced auxiliary equipment production complete.",
+    "Three copies of each tier 2 auxiliary design are now available to the fleet.",
+    "Distribute all twelve items according to the attributes required by each shipgirl.",
+]
+
+
+def construct_three_tier_2_auxiliary_equipment_completion_criteria(
+    menu_manager: MenuManager,
+) -> bool:
+    return all(
+        _owned_equipment(equipment) >= 3
+        for equipment in TIER_2_AUXILIARY_EQUIPMENT_REQUIRED
+    )
+
+
+def construct_three_tier_2_auxiliary_equipment_on_start(menu_manager: MenuManager):
+    menu_manager.port_menu.open_gear_lab_overlay_button.active = True
+
+
+def construct_three_tier_2_auxiliary_equipment_on_complete(
+    menu_manager: MenuManager,
+):
+    pass
+
+
+construct_three_tier_2_auxiliary_equipment_quest = Quest(
+    "construct_three_tier_2_auxiliary_equipment",
+    construct_three_tier_2_auxiliary_equipment_pre_quest_dialogue,
+    construct_three_tier_2_auxiliary_equipment_quest_line,
+    construct_three_tier_2_auxiliary_equipment_post_quest_dialogue,
+    construct_three_tier_2_auxiliary_equipment_completion_criteria,
+    empty_tutorial_draw,
+    construct_three_tier_2_auxiliary_equipment_on_start,
+    construct_three_tier_2_auxiliary_equipment_on_complete,
     decoration_voucher_reward,
 )
 
@@ -1762,4 +1816,5 @@ quests = [
     invite_second_faction_to_port_quest,
     construct_second_faction_shipgirls_quest,
     construct_tier_2_weapons_quest,
+    construct_three_tier_2_auxiliary_equipment_quest,
 ]
