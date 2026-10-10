@@ -1583,6 +1583,33 @@ complete_final_sortie_quest = Quest(
 )
 
 
+def _second_faction_shipgirls() -> dict[str, str]:
+    second_faction = DataFiles.save_file["unlocked_factions"][1]
+    return {
+        shipgirl_info["hull_type"]: shipgirl
+        for shipgirl, shipgirl_info in DataFiles.shipgirl_data.items()
+        if shipgirl_info["faction"] == second_faction
+    }
+
+
+def _format_second_faction_quest_dialogue():
+    shipgirl_names = {
+        f"{hull_type}_shipgirl": " ".join(shipgirl.split("_"))
+        for hull_type, shipgirl in _second_faction_shipgirls().items()
+    }
+    construct_second_faction_shipgirls_quest.pre_quest_dialogue = [
+        line.format(**shipgirl_names)
+        for line in construct_second_faction_shipgirls_quest.pre_quest_dialogue
+    ]
+    construct_second_faction_shipgirls_quest.quest_line = (
+        construct_second_faction_shipgirls_quest.quest_line.format(**shipgirl_names)
+    )
+    construct_second_faction_shipgirls_quest.post_quest_dialogue = [
+        line.format(**shipgirl_names)
+        for line in construct_second_faction_shipgirls_quest.post_quest_dialogue
+    ]
+
+
 invite_second_faction_to_port_pre_quest_dialogue = [
     "Region 3 operations are complete, Commander.",
     "The route into the next region is open, but Siren activity is expected to intensify in region 4.",
@@ -1597,6 +1624,12 @@ invite_second_faction_to_port_post_quest_dialogue = [
 ]
 
 
+def invite_second_faction_to_port_on_complete(menu_manager: MenuManager):
+    invite_faction_to_port_on_complete_factory(1)(menu_manager)
+    _format_second_faction_quest_dialogue()
+    assign_quest(menu_manager, construct_second_faction_shipgirls_quest)
+
+
 invite_second_faction_to_port_quest = Quest(
     "invite_second_faction_to_port",
     invite_second_faction_to_port_pre_quest_dialogue,
@@ -1605,7 +1638,51 @@ invite_second_faction_to_port_quest = Quest(
     invite_faction_to_port_completion_criteria_factory(1),
     empty_tutorial_draw,
     invite_faction_to_port_on_start,
-    invite_faction_to_port_on_complete_factory(1),
+    invite_second_faction_to_port_on_complete,
+    decoration_voucher_reward,
+)
+
+
+construct_second_faction_shipgirls_pre_quest_dialogue = [
+    "The second faction has provided blueprints for its available shipgirls.",
+    "Research and construct {DD_shipgirl}, {CL_shipgirl}, {CA_shipgirl}, {BB_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}.",
+    "Completing these projects will make the full strength of our new allies available to the port.",
+]
+construct_second_faction_shipgirls_quest_line = (
+    "Research and construct {DD_shipgirl}, {CL_shipgirl}, {CA_shipgirl}, "
+    "{BB_shipgirl}, {SS_shipgirl}, and {CV_shipgirl}."
+)
+construct_second_faction_shipgirls_post_quest_dialogue = [
+    "Second-faction fleet development complete.",
+    "{DD_shipgirl}, {CL_shipgirl}, {CA_shipgirl}, {BB_shipgirl}, {SS_shipgirl}, and {CV_shipgirl} are now registered to your fleet.",
+    "All shipgirls offered by our new allies are ready for deployment.",
+]
+
+
+def construct_second_faction_shipgirls_completion_criteria(menu_manager: MenuManager) -> bool:
+    return all(
+        shipgirl in DataFiles.save_file["shipgirls"]
+        for shipgirl in _second_faction_shipgirls().values()
+    )
+
+
+def construct_second_faction_shipgirls_on_start(menu_manager: MenuManager):
+    menu_manager.port_menu.open_shipyard_overlay_button.active = True
+
+
+def construct_second_faction_shipgirls_on_complete(menu_manager: MenuManager):
+    pass
+
+
+construct_second_faction_shipgirls_quest = Quest(
+    "construct_second_faction_shipgirls",
+    construct_second_faction_shipgirls_pre_quest_dialogue,
+    construct_second_faction_shipgirls_quest_line,
+    construct_second_faction_shipgirls_post_quest_dialogue,
+    construct_second_faction_shipgirls_completion_criteria,
+    empty_tutorial_draw,
+    construct_second_faction_shipgirls_on_start,
+    construct_second_faction_shipgirls_on_complete,
     decoration_voucher_reward,
 )
 
@@ -1630,4 +1707,5 @@ quests = [
     construct_three_auxiliary_equipment_quest,
     complete_final_sortie_quest,
     invite_second_faction_to_port_quest,
+    construct_second_faction_shipgirls_quest,
 ]
