@@ -1628,6 +1628,7 @@ def invite_second_faction_to_port_on_complete(menu_manager: MenuManager):
     invite_faction_to_port_on_complete_factory(1)(menu_manager)
     _format_second_faction_quest_dialogue()
     assign_quest(menu_manager, construct_second_faction_shipgirls_quest)
+    assign_quest(menu_manager, construct_tier_2_weapons_quest)
 
 
 invite_second_faction_to_port_quest = Quest(
@@ -1687,6 +1688,58 @@ construct_second_faction_shipgirls_quest = Quest(
 )
 
 
+TIER_2_WEAPONS_BY_HULL_TYPE = {
+    "DD": ("twin_100", "twin_127"),
+    "CL": ("tri_155", "quad_152"),
+    "CA": ("tri_203", "tri_234"),
+    "BB": ("quad_305", "twin_457"),
+    "SS": ("type_96_torp", "mark_28_torp"),
+    "CV": ("tenrai", "wyvern"),
+}
+
+construct_tier_2_weapons_pre_quest_dialogue = [
+    "The gear lab is ready to produce more advanced weapons for the expanded fleet.",
+    "For each hull type, select either of its two tier 2 weapon designs and construct it.",
+    "Construct one weapon for each of the DD, CL, CA, BB, SS, and CV hull types.",
+]
+construct_tier_2_weapons_quest_line = (
+    "Construct one tier 2 weapon for each hull type."
+)
+construct_tier_2_weapons_post_quest_dialogue = [
+    "Advanced weapon production objectives complete.",
+    "The gear lab has produced a tier 2 weapon for every supported hull type.",
+    "Equip the new weapons wherever they best support your fleet composition.",
+]
+
+
+def construct_tier_2_weapons_completion_criteria(menu_manager: MenuManager) -> bool:
+    return all(
+        any(_owned_equipment(equipment) >= 1 for equipment in weapon_options)
+        for weapon_options in TIER_2_WEAPONS_BY_HULL_TYPE.values()
+    )
+
+
+def construct_tier_2_weapons_on_start(menu_manager: MenuManager):
+    menu_manager.port_menu.open_gear_lab_overlay_button.active = True
+
+
+def construct_tier_2_weapons_on_complete(menu_manager: MenuManager):
+    pass
+
+
+construct_tier_2_weapons_quest = Quest(
+    "construct_tier_2_weapons",
+    construct_tier_2_weapons_pre_quest_dialogue,
+    construct_tier_2_weapons_quest_line,
+    construct_tier_2_weapons_post_quest_dialogue,
+    construct_tier_2_weapons_completion_criteria,
+    empty_tutorial_draw,
+    construct_tier_2_weapons_on_start,
+    construct_tier_2_weapons_on_complete,
+    decoration_voucher_reward,
+)
+
+
 quests = [
     choose_faction_quest,
     construct_shipgirls_quest,
@@ -1708,4 +1761,5 @@ quests = [
     complete_final_sortie_quest,
     invite_second_faction_to_port_quest,
     construct_second_faction_shipgirls_quest,
+    construct_tier_2_weapons_quest,
 ]
