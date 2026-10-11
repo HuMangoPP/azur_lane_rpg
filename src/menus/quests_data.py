@@ -26,9 +26,22 @@ def assign_quest(menu_manager: MenuManager, quest: Quest):
     menu_manager.quest_manager.quests[quest.quest_id] = quest
     DataFiles.save_file["quests"][quest.quest_id] = menu_manager.quest_manager.STATUS_NEW
 
+
 def empty_tutorial_draw(menu_manager: MenuManager, surface: pygame.Surface, font_registry: dict[str, Font]):
     """Empty draw for tutorials that don't need tutorial rendering."""
     pass
+
+
+def clear_maritime_region_completion_criteria_factory(chapter: int):
+    def clear_maritime_region_completion_criteria(menu_manager: MenuManager) -> bool:
+        return DataFiles.save_file["sortie_progress"] > final_sortie_index_in_region(chapter)
+
+    return clear_maritime_region_completion_criteria
+
+
+def clear_maritime_region_on_start(menu_manager: MenuManager):
+    menu_manager.port_menu.open_select_sortie_menu_button.active = True
+
 
 def draw_tb(surface: pygame.Surface, font_registry: dict[str, Font], text: str | None, point_pos: CoordinateType, point_down: bool, point_right: bool):
     """Render the TB pointer sprite, pointing to the point pos, with a text bubble if provided."""
@@ -846,23 +859,18 @@ clear_first_maritime_region_post_quest_dialogue = [
     "High Command has authorized continued operations in the next maritime region.",
 ]
 
-def clear_first_maritime_region_completion_criteria(menu_manager: MenuManager) -> bool:
-    return DataFiles.save_file["chapter_progress"] >= 1
-
-def clear_first_maritime_region_on_start(menu_manager: MenuManager):
-    menu_manager.port_menu.open_select_sortie_menu_button.active = True
-
 def clear_first_maritime_region_on_complete(menu_manager: MenuManager):
     assign_quest(menu_manager, buy_decoration_quest)
+
 
 clear_first_maritime_region_quest = Quest(
     "clear_first_maritime_region",
     clear_first_maritime_region_pre_quest_dialogue,
     clear_first_maritime_region_quest_line,
     clear_first_maritime_region_post_quest_dialogue,
-    clear_first_maritime_region_completion_criteria,
+    clear_maritime_region_completion_criteria_factory(0),
     empty_tutorial_draw,
-    clear_first_maritime_region_on_start,
+    clear_maritime_region_on_start,
     clear_first_maritime_region_on_complete,
     decoration_voucher_reward
 )
@@ -1561,13 +1569,7 @@ clear_third_maritime_region_post_quest_dialogue = [
     "Continue developing the fleet in preparation for future operations.",
 ]
 
-def clear_third_maritime_region_completion_criteria(menu_manager: MenuManager) -> bool:
-    return DataFiles.save_file["sortie_progress"] > final_sortie_index_in_region(2)
-
-def clear_third_maritime_region_on_start(menu_manager: MenuManager):
-    menu_manager.port_menu.open_select_sortie_menu_button.active = True
-
-def clear_third_maritime_region_on_complete(menu_manager: MenuManager):
+def empty_clear_maritime_region_on_complete(menu_manager: MenuManager):
     pass
 
 clear_third_maritime_region_quest = Quest(
@@ -1575,12 +1577,13 @@ clear_third_maritime_region_quest = Quest(
     clear_third_maritime_region_pre_quest_dialogue,
     clear_third_maritime_region_quest_line,
     clear_third_maritime_region_post_quest_dialogue,
-    clear_third_maritime_region_completion_criteria,
+    clear_maritime_region_completion_criteria_factory(2),
     empty_tutorial_draw,
-    clear_third_maritime_region_on_start,
-    clear_third_maritime_region_on_complete,
+    clear_maritime_region_on_start,
+    empty_clear_maritime_region_on_complete(),
     decoration_voucher_reward
 )
+
 
 
 def _second_faction_shipgirls() -> dict[str, str]:
@@ -1794,6 +1797,34 @@ construct_three_tier_2_auxiliary_equipment_quest = Quest(
 )
 
 
+clear_fourth_maritime_region_pre_quest_dialogue = [
+    "The final sector of the fourth maritime region has been unlocked.",
+    "Siren resistance is at its strongest, and no further operational areas remain beyond this engagement.",
+    "Review fleet composition and equipment before deployment.",
+    "Complete the final sortie and secure the fourth maritime region.",
+]
+clear_fourth_maritime_region_quest_line = (
+    "Complete the final sortie in the fourth maritime region."
+)
+clear_fourth_maritime_region_post_quest_dialogue = [
+    "Final sortie complete.",
+    "The fourth maritime region is secure.",
+    "All currently charted ocean sectors have been secured.",
+]
+
+clear_fourth_maritime_region_quest = Quest(
+    "clear_fourth_maritime_region",
+    clear_fourth_maritime_region_pre_quest_dialogue,
+    clear_fourth_maritime_region_quest_line,
+    clear_fourth_maritime_region_post_quest_dialogue,
+    clear_maritime_region_completion_criteria_factory(3),
+    empty_tutorial_draw,
+    clear_maritime_region_on_start,
+    empty_clear_maritime_region_on_complete,
+    decoration_voucher_reward,
+)
+
+
 quests = [
     choose_faction_quest,
     construct_shipgirls_quest,
@@ -1817,4 +1848,5 @@ quests = [
     construct_second_faction_shipgirls_quest,
     construct_tier_2_weapons_quest,
     construct_three_tier_2_auxiliary_equipment_quest,
+    clear_fourth_maritime_region_quest,
 ]
