@@ -1548,37 +1548,37 @@ def final_sortie_index_in_region(chapter: int) -> int:
     )
 
 
-complete_final_sortie_pre_quest_dialogue = [
+clear_third_maritime_region_pre_quest_dialogue = [
     "The final sector of this region has been unlocked.",
     "Operational intelligence indicates Siren resistance beyond that of all previously recorded encounters.",
     "Review fleet composition and equipment before deployment.",
     "Complete the final sortie and secure the region's remaining operational area.",
 ]
-complete_final_sortie_quest_line = "Complete the final sortie of this region."
-complete_final_sortie_post_quest_dialogue = [
+clear_third_maritime_region_quest_line = "Complete the final sortie of this region."
+clear_third_maritime_region_post_quest_dialogue = [
     "Final sortie complete.",
     "All ocean sectors in this region have been secured.",
     "Continue developing the fleet in preparation for future operations.",
 ]
 
-def complete_final_sortie_completion_criteria(menu_manager: MenuManager) -> bool:
+def clear_third_maritime_region_completion_criteria(menu_manager: MenuManager) -> bool:
     return DataFiles.save_file["sortie_progress"] > final_sortie_index_in_region(2)
 
-def complete_final_sortie_on_start(menu_manager: MenuManager):
+def clear_third_maritime_region_on_start(menu_manager: MenuManager):
     menu_manager.port_menu.open_select_sortie_menu_button.active = True
 
-def complete_final_sortie_on_complete(menu_manager: MenuManager):
+def clear_third_maritime_region_on_complete(menu_manager: MenuManager):
     pass
 
-complete_final_sortie_quest = Quest(
-    "complete_final_sortie",
-    complete_final_sortie_pre_quest_dialogue,
-    complete_final_sortie_quest_line,
-    complete_final_sortie_post_quest_dialogue,
-    complete_final_sortie_completion_criteria,
+clear_third_maritime_region_quest = Quest(
+    "clear_third_maritime_region",
+    clear_third_maritime_region_pre_quest_dialogue,
+    clear_third_maritime_region_quest_line,
+    clear_third_maritime_region_post_quest_dialogue,
+    clear_third_maritime_region_completion_criteria,
     empty_tutorial_draw,
-    complete_final_sortie_on_start,
-    complete_final_sortie_on_complete,
+    clear_third_maritime_region_on_start,
+    clear_third_maritime_region_on_complete,
     decoration_voucher_reward
 )
 
@@ -1812,7 +1812,7 @@ quests = [
     backup_fleet_quest,
     construct_auxiliary_equipment_quest,
     construct_three_auxiliary_equipment_quest,
-    complete_final_sortie_quest,
+    clear_third_maritime_region_quest,
     invite_second_faction_to_port_quest,
     construct_second_faction_shipgirls_quest,
     construct_tier_2_weapons_quest,

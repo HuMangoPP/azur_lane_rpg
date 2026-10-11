@@ -23,7 +23,7 @@ from src.menus.quests_data import (
     first_sortie_quest,
     backup_fleet_quest,
     construct_auxiliary_equipment_quest,
-    complete_final_sortie_quest,
+    clear_third_maritime_region_quest,
     first_sortie_index_in_region,
     final_sortie_index_in_region,
 )
@@ -741,7 +741,7 @@ class EncounterMenu(Menu):
                     if new_sortie_progress == first_sortie_index_in_region(2):
                         assign_quest(self.menu_manager, construct_auxiliary_equipment_quest)
                     if new_sortie_progress == final_sortie_index_in_region(2):
-                        assign_quest(self.menu_manager, complete_final_sortie_quest)
+                        assign_quest(self.menu_manager, clear_third_maritime_region_quest)
 
                 if new_sortie_progress < len(DataFiles.sortie_data):
                     # Update chapter progress when the next sortie opens a new chapter.
