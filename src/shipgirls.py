@@ -216,7 +216,7 @@ class ShipgirlBattleComponent:
     def ignite(self, damage: float, ticks: int):
         """Apply the ignite status effect."""
         self.ignite_timer = 0
-        self.ignite_ticks = ticks
+        self.ignite_ticks += ticks
         self.ignite_damage = damage
 
     def _update_ignite(self, dt: float, rect: pygame.Surface, vfx_manager: VFXManager):
@@ -266,8 +266,8 @@ class ShipgirlBattleComponent:
             # HE shells can cause ignition, causing the target to take damage over time.
             if shell_type == Equipment.HE_SHELL:
                 ignite_chance = weapon_config.get("ignite_chance", 20)
-                ignite_damage = weapon_config.get("ignite_damage", 1)
-                ignite_ticks = weapon_config.get("ignite_ticks", 5)
+                ignite_damage = weapon_config.get("ignite_damage", 2)
+                ignite_ticks = weapon_config.get("ignite_ticks", 3)
                 if random.randint(0, 99) < ignite_chance:
                     target.battle_component.ignite(ignite_damage, ignite_ticks)
             target.battle_component.shake()

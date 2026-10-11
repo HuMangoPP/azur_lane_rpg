@@ -20,7 +20,7 @@
 		},
 		"equippable_by": "DD",
 		"firepower": 3,
-		"reload": 14,
+		"reload": 15,
 		"shell_type": "HE"
 	},
 	"twin_127": {
@@ -32,7 +32,7 @@
 		},
 		"equippable_by": "DD",
 		"firepower": 3,
-		"reload": 14,
+		"reload": 15,
 		"shell_type": "AP"
 	},
 	"twin_150": {
@@ -56,7 +56,7 @@
 		},
 		"equippable_by": "CL",
 		"firepower": 4,
-		"reload": 7,
+		"reload": 9,
 		"shell_type": "HE"
 	},
 	"quad_152": {
@@ -68,7 +68,7 @@
 		},
 		"equippable_by": "CL",
 		"firepower": 4,
-		"reload": 7,
+		"reload": 9,
 		"shell_type": "AP"
 	},
 	"twin_203": {
@@ -92,7 +92,7 @@
 		},
 		"equippable_by": "CA",
 		"firepower": 4,
-		"reload": 17,
+		"reload": 19,
 		"shell_type": "HE"
 	},
 	"tri_234": {
@@ -104,7 +104,7 @@
 		},
 		"equippable_by": "CA",
 		"firepower": 4,
-		"reload": 17,
+		"reload": 19,
 		"shell_type": "AP"
 	},
 	"tri_406": {
@@ -127,8 +127,8 @@
 			"plastics": 2
 		},
 		"equippable_by": "BB",
-		"firepower": 5,
-		"reload": 15,
+		"firepower": 6,
+		"reload": 9,
 		"shell_type": "HE"
 	},
 	"twin_457": {
@@ -139,8 +139,8 @@
 			"plastics": 2
 		},
 		"equippable_by": "BB",
-		"firepower": 5,
-		"reload": 15,
+		"firepower": 6,
+		"reload": 9,
 		"shell_type": "AP"
 	},
 	"g7e_torp": {
@@ -162,8 +162,8 @@
 			"plastics": 2
 		},
 		"equippable_by": "SS",
-		"firepower": 8,
-		"reload": 17
+		"firepower": 11,
+		"reload": 16
 	},
 	"mark_28_torp": {
 		"type": "weapon",
@@ -173,8 +173,8 @@
 			"plastics": 2
 		},
 		"equippable_by": "SS",
-		"firepower": 8,
-		"reload": 17
+		"firepower": 11,
+		"reload": 16
 	},
 	"hellcat": {
 		"type": "weapon",
@@ -195,8 +195,8 @@
 			"gunpowder": 2
 		},
 		"equippable_by": "CV",
-		"firepower": 8,
-		"reload": 19
+		"firepower": 12,
+		"reload": 15
 	},
 	"wyvern": {
 		"type": "weapon",
@@ -206,8 +206,8 @@
 			"gunpowder": 2
 		},
 		"equippable_by": "CV",
-		"firepower": 8,
-		"reload": 19
+		"firepower": 12,
+		"reload": 15
 	},
 	"steering_gear": {
 		"type": "aux",
