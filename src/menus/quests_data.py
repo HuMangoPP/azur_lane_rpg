@@ -1703,6 +1703,9 @@ TIER_2_WEAPONS_BY_HULL_TYPE = {
 construct_tier_2_weapons_pre_quest_dialogue = [
     "The gear lab is ready to produce more advanced weapons for the expanded fleet.",
     "For each hull type, select either of its two tier 2 weapon designs and construct it.",
+    "Tier 2 DD, CL, CA, and BB weapons offer a choice between AP and HE shells.",
+    "AP shells can score critical hits that deal double the shell's normal damage.",
+    "HE shells can set an enemy Siren on fire, dealing flat damage every second for several ticks.",
     "Construct one weapon for each of the DD, CL, CA, BB, SS, and CV hull types.",
 ]
 construct_tier_2_weapons_quest_line = (
