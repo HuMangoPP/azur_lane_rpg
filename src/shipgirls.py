@@ -239,7 +239,12 @@ class ShipgirlBattleComponent:
             vfx_manager.spawn_damage_counter(rect.midtop, agg_ignite_damage, Equipment.HE_SHELL)
             self.shake()
 
-    def _deal_damage(self, target: Shipgirl, vfx_manager: VFXManager) -> bool:
+    def _deal_damage(
+        self,
+        target: Shipgirl,
+        vfx_manager: VFXManager,
+        damage_multiplier: float = 1,
+    ) -> bool:
         """Deal damage to the target."""
         if target.battle_component.evasion_gauge >= 1:
             # The target evades this attack.
@@ -261,6 +266,7 @@ class ShipgirlBattleComponent:
                 if random.randint(0, 99) < crit_chance:
                     crit = True
                     damage *= crit_mult
+            damage *= damage_multiplier
             target.battle_component.hp -= damage
             vfx_manager.spawn_damage_counter(target.rect.midtop, damage, shell_type, crit)
             # HE shells can cause ignition, causing the target to take damage over time.
@@ -279,6 +285,45 @@ class ShipgirlBattleComponent:
                 target.battle_component.attack_animation = False
                 target.battle_component.attack_timer = 0
             return True
+
+    def _attack_targets(
+        self, fleet: PlayerFleet | SirenFleet | None
+    ) -> list[tuple[Shipgirl, float]]:
+        """Get the targets and damage multipliers for the current attack."""
+        if self.target_pref == "all":
+            return [
+                (shipgirl, 1)
+                for shipgirl in fleet.shipgirls
+                if shipgirl is not None and shipgirl.battle_component.hp > 0
+            ]
+
+        weapon_config = DataFiles.equipment_data.get(
+            self.equipment[Equipment.WEAPON], {}
+        )
+        attack_pattern = weapon_config.get("attack_pattern", [100])
+        targets = [(self.target, attack_pattern[0] / 100)]
+
+        if not self.is_player or fleet is None or len(attack_pattern) <= 1:
+            return targets
+
+        primary_pos = pygame.Vector2(self.target.rect.center)
+        candidates = [
+            (index, target)
+            for index, target in enumerate(fleet.fleet)
+            if target is not self.target and target.battle_component.hp > 0
+        ]
+        candidates.sort(key=lambda item: (
+            primary_pos.distance_squared_to(item[1].rect.center),
+            item[0],
+        ))
+        targets.extend(
+            (target, damage_percentage / 100)
+            for (_, target), damage_percentage in zip(
+                candidates,
+                attack_pattern[1:],
+            )
+        )
+        return targets
 
     def _spawn_attacking_effects(self, rect: pygame.Rect, vfx_manager: VFXManager):
         """Spawn vfx on attack."""
@@ -323,7 +368,7 @@ class ShipgirlBattleComponent:
     
         shell_type = self._shell_type
         start_pos = pygame.Vector2(rect.center)
-        target_pos = pygame.Vector2(self.target.rect.center)
+        target_pos = pygame.Vector2(target.rect.center)
         relpos = target_pos - start_pos
         distance = relpos.length()
         scale = distance * SHELL_SCALE
@@ -363,7 +408,13 @@ class ShipgirlBattleComponent:
 
         self._spawn_sfx()
 
-    def update(self, dt: float, rect: pygame.Rect, fleet: PlayerFleet | SirenFleet, vfx_manager: VFXManager):
+    def update(
+        self,
+        dt: float,
+        rect: pygame.Rect,
+        fleet: PlayerFleet | SirenFleet | None,
+        vfx_manager: VFXManager,
+    ):
         """Update the shipgirl battle component."""
         self.shake_time = max(0, self.shake_time - dt)
 
@@ -410,20 +461,19 @@ class ShipgirlBattleComponent:
 
 
             if self.attack_timer <= 0:
-                if self.target_pref == "all":
-                    # This siren attacks all shipgirls.
-                    for shipgirl in fleet.shipgirls:
-                        if shipgirl is None:
-                            continue
-                        if shipgirl.battle_component.hp <= 0:
-                            continue
-
-                        hit = self._deal_damage(shipgirl, vfx_manager)
-                        play_shell_impact, play_splash_impact = self._spawn_impact_effects(hit, rect, shipgirl, vfx_manager)
-                else:
-                    # This shipgirl/siren hits only the target.
-                    hit = self._deal_damage(self.target, vfx_manager)
-                    play_shell_impact, play_splash_impact = self._spawn_impact_effects(hit, rect, self.target, vfx_manager)
+                play_shell_impact = False
+                play_splash_impact = False
+                for target, damage_multiplier in self._attack_targets(fleet):
+                    hit = self._deal_damage(
+                        target,
+                        vfx_manager,
+                        damage_multiplier=damage_multiplier,
+                    )
+                    target_shell_impact, target_splash_impact = (
+                        self._spawn_impact_effects(hit, rect, target, vfx_manager)
+                    )
+                    play_shell_impact |= target_shell_impact
+                    play_splash_impact |= target_splash_impact
 
                 # Play accumulated sfx, so they are not played multiple times if multiple
                 # impacts occur simultaneously.
@@ -1111,7 +1161,12 @@ class PlayerFleet:
                 shipgirl.sprite.set_animation(Live2D.ATTACK_ANIMATION)
             shipgirl.animate(dt)
 
-    def update(self, dt: float, vfx_manager: VFXManager):
+    def update(
+        self,
+        dt: float,
+        siren_fleet: SirenFleet,
+        vfx_manager: VFXManager,
+    ):
         """Update the shipgirl battle components in the player fleet."""
         for shipgirl in self.fleet:
             if shipgirl.battle_component.hp <= 0:
@@ -1119,7 +1174,12 @@ class PlayerFleet:
             elif shipgirl.battle_component.attack_animation:
                 if shipgirl.sprite.t > ATTACK_ANIMATION_ATTACK_TIMING:
                     shipgirl.battle_component.attack(shipgirl.rect, vfx_manager)
-            shipgirl.battle_component.update(dt, shipgirl.rect, None, vfx_manager)
+            shipgirl.battle_component.update(
+                dt,
+                shipgirl.rect,
+                siren_fleet,
+                vfx_manager,
+            )
 
     def get_draw_indices(self):
         """Get the draw indices for each shipgirl in the primary and backup fleets."""

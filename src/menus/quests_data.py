@@ -705,6 +705,7 @@ craft_weapon_pre_quest_dialogue = [
     "The next sector contains materials we can use to craft new equipment.",
     "Continue the sortie and recover the materials needed for production.",
     "The gear lab is now available for equipment production.",
+    "A weapon's attack pattern shows how its damage is distributed: the first percentage applies to the selected target, and any additional percentages strike the nearest available enemies.",
     "Once you have the materials, open the gear lab and craft a twin 120mm gun for {DD_shipgirl}.",
 ]
 craft_weapon_quest_line = "Recover materials and craft the twin 120mm gun in the gear lab."
@@ -1706,6 +1707,9 @@ construct_tier_2_weapons_pre_quest_dialogue = [
     "Tier 2 DD, CL, CA, and BB weapons offer a choice between AP and HE shells.",
     "AP shells can score critical hits that deal double the shell's normal damage.",
     "HE shells can set an enemy Siren on fire, dealing flat damage every second for several ticks.",
+    "For submarines, the Type 96 torpedo trades damage for a faster reload, while the Mark 28 trades reload speed for heavier damage.",
+    "For carriers, the Tenrai's 80% / 20% / 20% attack pattern sacrifices selected-target damage to strike up to two nearby Sirens as well.",
+    "The Wyvern instead uses a 100% attack pattern that concentrates its full damage on a single Siren.",
     "Construct one weapon for each of the DD, CL, CA, BB, SS, and CV hull types.",
 ]
 construct_tier_2_weapons_quest_line = (

@@ -1986,6 +1986,12 @@ class PortMenu(Menu):
         equipment_type = selected_equipment["type"]
         display_type = "auxiliary" if equipment_type == Equipment.AUX_KEY else equipment_type
         approved_hulls = selected_equipment.get("equippable_by", Equipment.AUX_KEY)
+        attack_pattern = selected_equipment.get("attack_pattern")
+        if attack_pattern is not None:
+            attack_pattern = " / ".join(
+                f"{damage_percentage}%"
+                for damage_percentage in attack_pattern
+            )
         return {
             "name": display_name,
             "subtitle": f"{display_type} - {Equipment.HULL_TYPE_MAPPING[approved_hulls]} fitment",
@@ -1999,6 +2005,7 @@ class PortMenu(Menu):
                 ("firepower", "firepower", selected_equipment.get("firepower")),
                 ("reload", "reload cycle", selected_equipment.get("reload")),
                 ("shell_type", "ammunition", selected_equipment.get("shell_type")),
+                ("target_pref", "attack pattern", attack_pattern),
             ],
             "materials": [
                 (material, f"{inventory.get(material, 0)}/{required}", inventory.get(material, 0) >= required)

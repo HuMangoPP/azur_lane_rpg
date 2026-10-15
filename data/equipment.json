@@ -9,7 +9,8 @@
 		"equippable_by": "DD",
 		"firepower": 2,
 		"reload": 15,
-		"shell_type": "normal"
+		"shell_type": "normal",
+		"attack_pattern": [100]
 	},
 	"twin_100": {
 		"type": "weapon",
@@ -21,7 +22,8 @@
 		"equippable_by": "DD",
 		"firepower": 3,
 		"reload": 15,
-		"shell_type": "HE"
+		"shell_type": "HE",
+		"attack_pattern": [100]
 	},
 	"twin_127": {
 		"type": "weapon",
@@ -33,7 +35,8 @@
 		"equippable_by": "DD",
 		"firepower": 3,
 		"reload": 15,
-		"shell_type": "AP"
+		"shell_type": "AP",
+		"attack_pattern": [100]
 	},
 	"twin_150": {
 		"type": "weapon",
@@ -45,7 +48,8 @@
 		"equippable_by": "CL",
 		"firepower": 3,
 		"reload": 3,
-		"shell_type": "normal"
+		"shell_type": "normal",
+		"attack_pattern": [100]
 	},
 	"tri_155": {
 		"type": "weapon",
@@ -57,7 +61,8 @@
 		"equippable_by": "CL",
 		"firepower": 4,
 		"reload": 9,
-		"shell_type": "HE"
+		"shell_type": "HE",
+		"attack_pattern": [100]
 	},
 	"quad_152": {
 		"type": "weapon",
@@ -69,7 +74,8 @@
 		"equippable_by": "CL",
 		"firepower": 4,
 		"reload": 9,
-		"shell_type": "AP"
+		"shell_type": "AP",
+		"attack_pattern": [100]
 	},
 	"twin_203": {
 		"type": "weapon",
@@ -81,7 +87,8 @@
 		"equippable_by": "CA",
 		"firepower": 3,
 		"reload": 11,
-		"shell_type": "normal"
+		"shell_type": "normal",
+		"attack_pattern": [100]
 	},
 	"tri_203": {
 		"type": "weapon",
@@ -93,7 +100,8 @@
 		"equippable_by": "CA",
 		"firepower": 4,
 		"reload": 19,
-		"shell_type": "HE"
+		"shell_type": "HE",
+		"attack_pattern": [100]
 	},
 	"tri_234": {
 		"type": "weapon",
@@ -105,7 +113,8 @@
 		"equippable_by": "CA",
 		"firepower": 4,
 		"reload": 19,
-		"shell_type": "AP"
+		"shell_type": "AP",
+		"attack_pattern": [100]
 	},
 	"tri_406": {
 		"type": "weapon",
@@ -117,7 +126,8 @@
 		"equippable_by": "BB",
 		"firepower": 4,
 		"reload": 9,
-		"shell_type": "normal"
+		"shell_type": "normal",
+		"attack_pattern": [100]
 	},
 	"quad_305": {
 		"type": "weapon",
@@ -129,7 +139,8 @@
 		"equippable_by": "BB",
 		"firepower": 6,
 		"reload": 9,
-		"shell_type": "HE"
+		"shell_type": "HE",
+		"attack_pattern": [100]
 	},
 	"twin_457": {
 		"type": "weapon",
@@ -141,7 +152,8 @@
 		"equippable_by": "BB",
 		"firepower": 6,
 		"reload": 9,
-		"shell_type": "AP"
+		"shell_type": "AP",
+		"attack_pattern": [100]
 	},
 	"g7e_torp": {
 		"type": "weapon",
@@ -152,7 +164,8 @@
 		},
 		"equippable_by": "SS",
 		"firepower": 5,
-		"reload": 18
+		"reload": 18,
+		"attack_pattern": [100]
 	},
 	"type_96_torp": {
 		"type": "weapon",
@@ -162,8 +175,9 @@
 			"plastics": 2
 		},
 		"equippable_by": "SS",
-		"firepower": 11,
-		"reload": 16
+		"firepower": 7,
+		"reload": 36,
+		"attack_pattern": [100]
 	},
 	"mark_28_torp": {
 		"type": "weapon",
@@ -173,8 +187,9 @@
 			"plastics": 2
 		},
 		"equippable_by": "SS",
-		"firepower": 11,
-		"reload": 16
+		"firepower": 15,
+		"reload": 1,
+		"attack_pattern": [100]
 	},
 	"hellcat": {
 		"type": "weapon",
@@ -185,7 +200,8 @@
 		},
 		"equippable_by": "CV",
 		"firepower": 5,
-		"reload": 19
+		"reload": 19,
+		"attack_pattern": [100]
 	},
 	"tenrai": {
 		"type": "weapon",
@@ -196,7 +212,8 @@
 		},
 		"equippable_by": "CV",
 		"firepower": 12,
-		"reload": 15
+		"reload": 15,
+		"attack_pattern": [80, 20, 20]
 	},
 	"wyvern": {
 		"type": "weapon",
@@ -207,7 +224,8 @@
 		},
 		"equippable_by": "CV",
 		"firepower": 12,
-		"reload": 15
+		"reload": 15,
+		"attack_pattern": [100]
 	},
 	"steering_gear": {
 		"type": "aux",

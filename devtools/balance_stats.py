@@ -1,136 +1,123 @@
 import json
-import math
+from pathlib import Path
+
+
+LEVELS = range(10)
+MAX_DPS_DEVIATION = 0.03
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+TIER_2_POWER_BUDGETS = {
+    "CV": {"firepower": 12, "reload": 15},
+    "SS": {"firepower": 11, "reload": 16},
+}
+TIER_2_SPECIAL_WEAPONS = (
+    "type_96_torp",
+    "mark_28_torp",
+    "tenrai",
+    "wyvern",
+)
 
 
 def stat_values(stats, stat):
-    return [
-        stats[stat][0] + stats[stat][1] * level
-        for level in range(10)
-    ]
+    return [stats[stat][0] + stats[stat][1] * level for level in LEVELS]
 
 
-def calculate_dps(hull_type, fp, rld, shell_type):
+def calculate_dps(hull_type, fp, rld, shell_type=None, damage_multiplier=1):
     if shell_type == "AP":
         fp *= 1.1
     if shell_type == "HE":
         fp += 3 * 2 * 0.2
-    return fp / (1000 / rld + (5 if hull_type in ["SS", "CV"] else 0.5))
-    
+    attack_duration = 5 if hull_type in ["SS", "CV"] else 0.5
+    return fp * damage_multiplier / (1000 / rld + attack_duration)
+
+
+def weapon_dps(stats, equipment):
+    hull_type = equipment["equippable_by"]
+    hull_stats = stats[hull_type]
+    firepower = [
+        value + equipment["firepower"]
+        for value in stat_values(hull_stats, "firepower")
+    ]
+    reload = [
+        value + equipment["reload"]
+        for value in stat_values(hull_stats, "reload")
+    ]
+    shell_type = equipment.get("shell_type")
+    return [
+        calculate_dps(hull_type, fp, rld, shell_type)
+        for fp, rld in zip(firepower, reload)
+    ]
+
+
+def reference_dps(stats, hull_type):
+    return weapon_dps(
+        stats,
+        {
+            "equippable_by": hull_type,
+            **TIER_2_POWER_BUDGETS[hull_type],
+        },
+    )
+
+
+def scaled(values, multiplier):
+    return [value * multiplier for value in values]
+
+
+def deviations(values, reference):
+    return [value / baseline - 1 for value, baseline in zip(values, reference)]
+
+
+def print_comparison(name, values, reference):
+    percent_deviations = [100 * value for value in deviations(values, reference)]
+    print(f"{name} DPS: {[round(value, 4) for value in values]}")
+    print(f"{name} deviation: {[round(value, 2) for value in percent_deviations]}%")
+
+
+def validate_power_budget(name, values, reference):
+    max_deviation = max(abs(value) for value in deviations(values, reference))
+    if max_deviation > MAX_DPS_DEVIATION:
+        raise ValueError(
+            f"{name} exceeds the Tier 2 power budget tolerance: "
+            f"{max_deviation:.2%} > {MAX_DPS_DEVIATION:.2%}"
+        )
 
 
 if __name__ == "__main__":
-    with open("data/stats.json") as f:
-        stats = json.load(f)
+    with (PROJECT_ROOT / "data" / "stats.json").open() as file:
+        stats = json.load(file)
+    with (PROJECT_ROOT / "data" / "equipment.json").open() as file:
+        equipment_data = json.load(file)
 
-    print("Shipgirl DPS calculation:")
-    for hull_type, hull_stats in stats.items():
-        fps = stat_values(hull_stats, "firepower")
-        rlds = stat_values(hull_stats, "reload")
-        print(f"{hull_type}: {[calculate_dps(hull_type, fp, rld, None) for fp, rld in zip(fps, rlds)]}")
+    references = {
+        hull_type: reference_dps(stats, hull_type)
+        for hull_type in TIER_2_POWER_BUDGETS
+    }
 
-    # print("Shipgirl EHP calculation:")
-    # for hull_type, hull_stats in stats.items():
-    #     dmgs = [5 + 3 * level for level in range(10)]
-    #     hps = stat_values(hull_stats, "max_hp")
-    #     evas = stat_values(hull_stats, "evasion")
-    #     num_hits = [math.ceil(hp / dmg) for hp, dmg in zip(hps, dmgs)]
-    #     num_evades = [math.floor(num_hit * eva / 1000) for num_hit, eva in zip(num_hits, evas)]
-    #     print(f"{hull_type}: {[hp + dmg * num_evade for hp, dmg, num_evade in zip(hps, dmgs, num_evades)]}")
+    print("Tier 2 CV and SS weapon DPS calculation (levels 0-9):")
+    for weapon_name in TIER_2_SPECIAL_WEAPONS:
+        equipment = equipment_data[weapon_name]
+        hull_type = equipment["equippable_by"]
+        baseline = references[hull_type]
+        direct_dps = weapon_dps(stats, equipment)
 
-    # with open("data/sirens.json") as f:
-    #     stats = json.load(f)
-
-    # print("Siren DPS calculation:")
-    # for hull_type, hull_stats in stats.items():
-    #     fps = stat_values(hull_stats, "firepower")
-    #     rlds = stat_values(hull_stats, "reload")
-    #     print(f"{hull_type}: {[calculate_dps(hull_type, fp, rld) for fp, rld in zip(fps, rlds)]}")
-
-    # print("Siren EHP calculation:")
-    # for hull_type, hull_stats in stats.items():
-    #     dmgs = [5 + 3 * level for level in range(10)]
-    #     hps = stat_values(hull_stats, "max_hp")
-    #     evas = stat_values(hull_stats, "evasion")
-    #     num_hits = [math.ceil(hp / dmg) for hp, dmg in zip(hps, dmgs)]
-    #     num_evades = [math.floor(num_hit * eva / 1000) for num_hit, eva in zip(num_hits, evas)]
-    #     print(f"{hull_type}: {[hp + dmg * num_evade for hp, dmg, num_evade in zip(hps, dmgs, num_evades)]}")
-
-    with open("data/stats.json") as f:
-        stats = json.load(f)
-
-    with open("data/equipment.json") as f:
-        equipment_data = json.load(f)
-
-    # equipment = [
-    #     "twin_120",
-    #     "twin_150",
-    #     "twin_203",
-    #     "tri_406",
-    #     "g7e_torp",
-    #     "hellcat",
-    # ]
-    equipment = [
-        "twin_100",
-        "tri_155",
-        "tri_203",
-        "quad_305",
-        "type_96_torp",
-        "tenrai",
-    ]
-    # equipment = [
-    #     "twin_127",
-    #     "quad_152",
-    #     "tri_234",
-    #     "twin_457",
-    #     "mark_28_torp",
-    #     "wyvern",
-    # ]
-    
-    print("Shipgirl weapon DPS calculation:")
-    for equip in equipment:
-        equip_data = equipment_data[equip]
-        hull_type = equip_data["equippable_by"]
-        shell_type = equip_data.get("shell_type", None)
-        shipgirl_stats = stats[hull_type]
-        fps = stat_values(shipgirl_stats, "firepower")
-        fps = [fp + equip_data["firepower"] for fp in fps]
-        rlds = stat_values(shipgirl_stats, "reload")
-        rlds = [rld + equip_data["reload"] for rld in rlds]
-        print(f"{equip}: {[calculate_dps(hull_type, fp, rld, shell_type) for fp, rld in zip(fps, rlds)]}")
-
-    # equipment = [
-    #     "autoloader",
-    #     "fire_control_table",
-    #     "ap_shell",
-    #     "fire_control_radar",
-    # ]
-
-    # print("Shipgirl aux DPS calculation:")
-    # for equip in equipment:
-    #     equip_data = equipment_data[equip]
-    #     for hull_type, hull_stats in stats.items():
-    #         fps = stat_values(hull_stats, "firepower")
-    #         fps = [fp + equip_data.get("firepower", 0) for fp in fps]
-    #         rlds = stat_values(hull_stats, "reload")
-    #         rlds = [rld + equip_data.get("reload", 0) for rld in rlds]
-    #         print(f"{hull_type}-{equip}: {[calculate_dps(hull_type, fp, rld) for fp, rld in zip(fps, rlds)]}")
-
-    # equipment = [
-    #     "steering_gear",
-    #     "camoflauge",
-    #     "repair_toolkit",
-    #     "maintenance_crane",
-    # ]
-
-    # print("Shipgirl aux EHP calculation:")
-    # for equip in equipment:
-    #     equip_data = equipment_data[equip]
-    #     for hull_type, hull_stats in stats.items():
-    #         dmgs = [5 + 3 * level for level in range(10)]
-    #         hps = stat_values(hull_stats, "max_hp")
-    #         hps = [hp + equip_data.get("max_hp", 0) for hp in hps]
-    #         evas = stat_values(hull_stats, "evasion")
-    #         evas = [eva + equip_data.get("evasion", 0) for eva in evas]
-    #         num_hits = [math.ceil(hp / dmg) for hp, dmg in zip(hps, dmgs)]
-    #         num_evades = [math.floor(num_hit * eva / 1000) for num_hit, eva in zip(num_hits, evas)]
-    #         print(f"{hull_type}-{equip}: {[hp + dmg * num_evade for hp, dmg, num_evade in zip(hps, dmgs, num_evades)]}")
+        attack_pattern = equipment.get("attack_pattern", [100])
+        if len(attack_pattern) > 1:
+            dps_by_target_count = {}
+            for target_count in range(1, len(attack_pattern) + 1):
+                damage_multiplier = sum(attack_pattern[:target_count]) / 100
+                effective_dps = scaled(direct_dps, damage_multiplier)
+                dps_by_target_count[target_count] = effective_dps
+                target_label = "target" if target_count == 1 else "targets"
+                print_comparison(
+                    f"{weapon_name} ({target_count} {target_label})",
+                    effective_dps,
+                    baseline,
+                )
+            validate_power_budget(
+                f"{weapon_name} (2 targets)",
+                dps_by_target_count[2],
+                baseline,
+            )
+        else:
+            effective_dps = scaled(direct_dps, attack_pattern[0] / 100)
+            print_comparison(weapon_name, effective_dps, baseline)
+            validate_power_budget(weapon_name, effective_dps, baseline)

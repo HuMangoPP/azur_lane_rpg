@@ -1471,7 +1471,11 @@ class EncounterMenu(Menu):
             # If this is not the first clear of this sortie, then sirens are capable of dropping
             # loot randomly.
             afloat_sirens_before = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
-            self.menu_manager.player_fleet.update(dt, self.vfx_manager)
+            self.menu_manager.player_fleet.update(
+                dt,
+                self.menu_manager.siren_fleet,
+                self.vfx_manager,
+            )
             afloat_sirens_after = [siren for siren in self.menu_manager.siren_fleet.fleet if siren.battle_component.hp > 0]
             if self.current_sortie < DataFiles.save_file["sortie_progress"]:
                 defeated_sirens = [siren for siren in afloat_sirens_before if siren not in afloat_sirens_after]
